@@ -6,31 +6,21 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use Marvel\Console\MarvelVerification;
-use Marvel\Database\Models\Product;
-use Marvel\Database\Models\Profile;
-use Marvel\Database\Models\Settings;
-use Marvel\Database\Models\Shop;
 use Marvel\Database\Models\User;
 use Marvel\Database\Models\Wallet;
 use Marvel\Database\Repositories\UserRepository;
 use Marvel\Enums\Permission;
-use Marvel\Enums\Role;
 use App\Events\AdminLoggedIn;
-use Marvel\Events\ProcessUserData;
+use App\Events\UserRolesUpdated;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Exceptions\MarvelNotFoundException;
 use Marvel\Http\Requests\AdminCreateUserRequest;
@@ -46,10 +36,11 @@ use Marvel\Otp\Gateways\LocalGateway;
 use Marvel\Traits\ApiResponse;
 use Marvel\Traits\UsersTrait;
 use Marvel\Traits\WalletsTrait;
+use App\Enums\UserType;
 use Spatie\Newsletter\Facades\Newsletter;
 
 /**
- * @OA\Tag(name="User Management", description="User management endpoints [SUPER_ADMIN, STORE_OWNER, STAFF, CUSTOMER]")
+ * @OA\Tag(name="User Management", description="User management endpoints [SUPER_ADMIN, STAFF, CUSTOMER]")
  *
  * @OA\Schema(
  *     schema="User",
@@ -64,7 +55,7 @@ use Spatie\Newsletter\Facades\Newsletter;
  *     @OA\Property(property="shop_id", type="integer", nullable=true),
  *     @OA\Property(property="profile", type="object", @OA\Property(property="avatar", type="object"), @OA\Property(property="bio", type="string"), @OA\Property(property="contact", type="string")),
  *     @OA\Property(property="address", type="array", @OA\Items(type="object")),
- *     @OA\Property(property="permissions", type="array", @OA\Items(type="object", @OA\Property(property="name", type="string", example="store_owner")))
+ *     @OA\Property(property="permissions", type="array", @OA\Items(type="object", @OA\Property(property="name", type="string", example="super_admin")))
  * )
  */
 class UserController extends CoreController
@@ -80,10 +71,11 @@ class UserController extends CoreController
         $this->repository = $repository;
         $this->applicationIsValid = $this->repository->checkIfApplicationIsValid();
         $this->middleware("permission:" . Permission::VIEW_USERS, ["only" => ["index", "show", "admins", "adminTrashedUsers"]]);
-        $this->middleware("permission:" . Permission::CREATE_USER, ["only" => ["adminCreateUsers"]]);
-        $this->middleware("permission:" . Permission::DELETE_USER, ["only" => ["adminDeleteUsers", "adminDeleteUsersForever"]]);
+        $this->middleware("permission:" . Permission::CREATE_USER, ["only" => ["adminAddUsers"]]);
+        $this->middleware("permission:" . Permission::DELETE_USER, ["only" => ["adminDeleteUsers", "adminDeleteUsersForever", "destroy"]]);
         $this->middleware("permission:" . Permission::EDIT_USER, ["only" => ["adminUpdateActivationUsers", "update"]]);
         $this->middleware("permission:" . Permission::RESTORE_USER, ["only" => ["adminRestoreUser"]]);
+        $this->middleware("permission:" . Permission::ADD_POINTS, ["only" => ["addPoints"]]);
     }
 
     /**
@@ -115,99 +107,7 @@ class UserController extends CoreController
     }
 
 
-    /**
-     * @OA\Get(
-     *     path="/admins",
-     *     operationId="getAdmins",
-     *     tags={"User Management"},
-     *     summary="List Admin Users",
-     *     description="Get list of all admin users. Requires SUPER_ADMIN permission.",
-     *     security={{"sanctum": {}}},
-     *     @OA\Parameter(name="limit", in="query", description="Items per page", @OA\Schema(type="integer", default=15)),
-     *     @OA\Response(response=200, description="Admins retrieved successfully"),
-     *     @OA\Response(response=401, description="Unauthenticated"),
-     *     @OA\Response(response=403, description="Forbidden")
-     * )
-     */
-    // public function admins(Request $request)
-    // {
-    //     try {
-    //         $limit = $request->limit ? $request->limit : 15;
-    //         $admins = $this->repository
-    //             ->with(['permissions'])
-    //             ->where('type', 'admin')
-    //             ->paginate($limit);
-    //         return $this->apiResponse(ADMINS_LISTED_SUCCESSFULLY, 200, true, $admins);
-    //     } catch (MarvelException $e) {
-    //         throw new MarvelException(NOT_FOUND);
-    //     }
-    // }
 
-    /**
-     * @OA\Get(
-     *     path="/vendors",
-     *     operationId="getVendors",
-     *     tags={"User Management"},
-     *     summary="List Vendor Users",
-     *     description="Get list of all store owner/vendor users.",
-     *     security={{"sanctum": {}}},
-     *     @OA\Parameter(name="limit", in="query", description="Items per page", @OA\Schema(type="integer", default=15)),
-     *     @OA\Parameter(name="is_active", in="query", description="Filter by active status", @OA\Schema(type="boolean")),
-     *     @OA\Response(response=200, description="Vendors retrieved successfully"),
-     *     @OA\Response(response=401, description="Unauthenticated")
-     * )
-     */
-    // public function vendors(Request $request)
-    // {
-    //     try {
-    //         $limit = $request->limit ? $request->limit : 15;
-    //         return $this->apiResponse(VENDORS_LISTED_SUCCESSFULLY, 200, true, $this->fetchVendors($request)->paginate($limit));
-    //     } catch (MarvelException $e) {
-    //         throw new MarvelException(NOT_FOUND);
-    //     }
-    // }
-
-    // public function fetchVendors(Request $request)
-    // {
-    //     $user = $request->user();
-    //     $shopId = $request->shop_id ?? null;
-    //     $exclude = is_numeric($request?->exclude) ? $request->exclude : null;
-    //     $is_active = $request->is_active === 'true' ? true : false;
-    //     $admins = User::permission(Permission::SUPER_ADMIN)->pluck('id')->toArray();
-    //     if ($this->repository->hasPermission($user, $shopId)) {
-    //         return $this->repository->permission(Permission::STORE_OWNER)
-    //             ->where('is_active', $is_active)
-    //             ->whereNotIn('id', $admins)
-    //             ->when($exclude, fn($query) => $query->where('id', '!=', $exclude));
-    //     }
-    //     return $this->repository->permission(null);
-    // }
-
-    /**
-     * @OA\Get(
-     *     path="/customers",
-     *     operationId="getCustomers",
-     *     tags={"User Management"},
-     *     summary="List Customer Users",
-     *     description="Get list of all customer users (excluding admins, vendors, and staff).",
-     *     security={{"sanctum": {}}},
-     *     @OA\Parameter(name="limit", in="query", description="Items per page", @OA\Schema(type="integer", default=15)),
-     *     @OA\Response(response=200, description="Customers retrieved successfully"),
-     *     @OA\Response(response=401, description="Unauthenticated")
-     * )
-     */
-    // public function customers(Request $request)
-    // {
-    //     try {
-    //         $limit = $request->limit ? $request->limit : 15;
-    //         $userWithOtherPermissions = User::permission([Permission::SUPER_ADMIN, Permission::STORE_OWNER, Permission::STAFF])->pluck('id')->toArray();
-    //         $customers = $this->repository->with(['profile', 'address', 'permissions'])
-    //             ->permission(Permission::CUSTOMER)->whereNotIn('id', $userWithOtherPermissions)->paginate($limit);
-    //         return $this->apiResponse(CUSTOMERS_LISTED_SUCCESSFULLY, 200, true, $customers);
-    //     } catch (MarvelException $e) {
-    //         throw new MarvelException(NOT_FOUND);
-    //     }
-    // }
 
 
 
@@ -292,7 +192,7 @@ class UserController extends CoreController
      *             @OA\Property(property="name", type="string", example="New User"),
      *             @OA\Property(property="email", type="string", format="email", example="newuser@example.com"),
      *             @OA\Property(property="password", type="string", format="password", example="password123"),
-     *             @OA\Property(property="permission", type="string", enum={"customer", "store_owner", "staff", "editor", "super_admin"}, example="customer")
+     *             @OA\Property(property="permission", type="string", enum={"customer", "staff", "editor", "super_admin"}, example="customer")
      *         )
      *     ),
      *     @OA\Response(response=201, description="User created successfully"),
@@ -332,10 +232,10 @@ class UserController extends CoreController
 
             $user = $this->repository->findOrFail($id);
             if ($user->type === 'admin') {
-                $user->load(['roles', 'permissions'])->get();
+                $user->load(['roles', 'permissions']);
             }
             if ($user->type === 'user') {
-                $user->load(['address'])->get();
+                $user->load(['address']);
             }
             return $this->apiResponse(USER_FETCHED_SUCCESSFULLY, 200, true, UserResource::make($user));
         } catch (MarvelException $e) {
@@ -403,6 +303,9 @@ class UserController extends CoreController
     {
         try {
             $user = $this->repository->findOrFail($id);
+            if ($user->hasRole('super_admin') || $user->id === auth()->id()) {
+                return $this->apiResponse(USER_ADMIN_CANNOT_BE_DELETED, 400, false);
+            }
             $user->delete();
             return $this->apiResponse(USER_DELETED_SUCCESSFULLY, 200, true);
         } catch (MarvelException $e) {
@@ -704,7 +607,7 @@ class UserController extends CoreController
      *             @OA\Property(property="name", type="string", maxLength=255, example="John Doe"),
      *             @OA\Property(property="email", type="string", format="email", example="john@example.com"),
      *             @OA\Property(property="password", type="string", format="password", example="securePassword123"),
-     *             @OA\Property(property="permission", type="string", enum={"customer", "store_owner"}, example="customer", description="User permission level")
+     *             @OA\Property(property="permission", type="string", enum={"customer", "user", "admin"}, example="customer", description="User permission level")
      *         )
      *     ),
      *     @OA\Response(
@@ -790,7 +693,6 @@ class UserController extends CoreController
                 $banUser = User::findOrFail($request->id);
                 $banUser->is_active = false;
                 $banUser->save();
-                $this->inactiveUserShops($banUser->id);
                 return $this->apiResponse(USER_DEACTIVATED_SUCCESSFULLY, 200);
             }
             throw new AuthorizationException(NOT_AUTHORIZED);
@@ -798,16 +700,6 @@ class UserController extends CoreController
             throw new MarvelException(SOMETHING_WENT_WRONG);
         }
     }
-
-    // public function inactiveUserShops($userId)
-    // {
-    //     $shops = Shop::where('owner_id', $userId)->get();
-    //     foreach ($shops as $shop) {
-    //         $shop->is_active = false;
-    //         $shop->save();
-    //         Product::where('shop_id', '=', $shop->id)->update(['status' => 'draft']);
-    //     }
-    // }
 
     public function activeUser(Request $request)
     {
@@ -1018,6 +910,7 @@ class UserController extends CoreController
         $limit = $request->limit ?? 15;
         return $query->paginate($limit);
     }
+
 
     /**
      * @OA\Post(

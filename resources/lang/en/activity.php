@@ -6,16 +6,22 @@ return [
     'product_deleted' => 'Product deleted',
     'product_restored' => 'Product restored',
     'product_force_deleted' => 'Product permanently deleted',
+    'product_activated' => 'Product activated',
+    'product_deactivated' => 'Product deactivated',
 
     'category_created' => 'Category created',
     'category_updated' => 'Category updated',
     'category_deleted' => 'Category deleted',
     'category_restored' => 'Category restored',
+    'category_activated' => 'Category activated',
+    'category_deactivated' => 'Category deactivated',
 
     'brand_created' => 'Brand created',
     'brand_updated' => 'Brand updated',
     'brand_deleted' => 'Brand deleted',
     'brand_restored' => 'Brand restored',
+    'brand_activated' => 'Brand activated',
+    'brand_deactivated' => 'Brand deactivated',
 
     'coupon_created' => 'Coupon created',
     'coupon_updated' => 'Coupon updated',
@@ -29,6 +35,7 @@ return [
     'flash_sale_activated' => 'Flash sale activated',
     'flash_sale_deactivated' => 'Flash sale deactivated',
     'flash_sale_force_deleted' => 'Flash sale permanently deleted',
+    'flash_sale_restored' => 'Flash sale restored',
 
     'promotion_created' => 'Promotion created',
     'promotion_updated' => 'Promotion updated',

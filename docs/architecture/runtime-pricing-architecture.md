@@ -1,4 +1,6 @@
-# ADR-001: Runtime Pricing Architecture Decision (Frozen)
+# Runtime Pricing Architecture
+
+Status: Frozen
 
 ## Metadata
 - Decision ID: ADR-001

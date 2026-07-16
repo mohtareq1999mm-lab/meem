@@ -43,7 +43,7 @@ class ActivityLogController extends CoreController
 
         return response()->json([
             'success' => true,
-            'message' => __('activity.logs_fetched') ?: 'Activity logs fetched successfully.',
+            'message' => __('activity.logs_fetched'),
             'data' => ActivityLogResource::collection($logs),
             'meta' => [
                 "current_page" => $logs->currentPage(),

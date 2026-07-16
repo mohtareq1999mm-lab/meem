@@ -6,16 +6,22 @@ return [
     'product_deleted' => 'تم حذف المنتج',
     'product_restored' => 'تمت استعادة المنتج',
     'product_force_deleted' => 'تم حذف المنتج نهائيا',
+    'product_activated' => 'تم تنشيط المنتج',
+    'product_deactivated' => 'تم تعطيل المنتج',
 
     'category_created' => 'تم إنشاء الفئة',
     'category_updated' => 'تم تحديث الفئة',
     'category_deleted' => 'تم حذف الفئة',
     'category_restored' => 'تمت استعادة الفئة',
+    'category_activated' => 'تم تنشيط الفئة',
+    'category_deactivated' => 'تم تعطيل الفئة',
 
     'brand_created' => 'تم إنشاء العلامة التجارية',
     'brand_updated' => 'تم تحديث العلامة التجارية',
     'brand_deleted' => 'تم حذف العلامة التجارية',
     'brand_restored' => 'تمت استعادة العلامة التجارية',
+    'brand_activated' => 'تم تنشيط العلامة التجارية',
+    'brand_deactivated' => 'تم تعطيل العلامة التجارية',
 
     'coupon_created' => 'تم إنشاء القسيمة',
     'coupon_updated' => 'تم تحديث القسيمة',
@@ -29,6 +35,7 @@ return [
     'flash_sale_activated' => 'تم تنشيط التخفيض الفوري',
     'flash_sale_deactivated' => 'تم إلغاء تنشيط التخفيض الفوري',
     'flash_sale_force_deleted' => 'تم حذف التخفيض الفوري نهائيا',
+    'flash_sale_restored' => 'تمت استعادة التخفيض الفوري',
 
     'promotion_created' => 'تم إنشاء العرض الترويجي',
     'promotion_updated' => 'تم تحديث العرض الترويجي',

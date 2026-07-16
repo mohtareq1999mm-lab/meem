@@ -14,17 +14,17 @@ Activity logging is implemented through **queue jobs** (`LogActivityJob`) dispat
 |-------|----------|
 | `sanctum` | ✓ |
 
-Authorization is enforced at two levels:
-1. Route group: requires `super_admin` permission (via `Permission::SUPER_ADMIN` middleware)
-2. Controller: requires `view-activity-log` permission (via `$this->middleware('permission:' . Permission::VIEW_ACTIVITY_LOG)`)
+Authorization is enforced at the controller level:
+1. Controller: requires `view-activity-log` permission (via `$this->middleware('permission:' . Permission::VIEW_ACTIVITY_LOG)`)
+2. Route-level permission middleware is intentionally not used — the controller is the sole authorization source of truth
 
-The authenticated user must hold **both** `super_admin` and `view-activity-log` permissions. The `super_admin` role in the PermissionSeeder automatically receives all permissions including `view-activity-log`.
+The `super_admin` role in the PermissionSeeder automatically receives all permissions including `view-activity-log`.
 
 ---
 
 ## Endpoints
 
-### GET `/api/v1/logs/activity`
+### GET `/api/logs/activity`
 
 Fetch paginated activity logs with optional filtering.
 
@@ -290,11 +290,11 @@ $user->assignRole($role)
 ### Fix AL-01: Missing activity log route in Routes.php
 
 - **Date**: 2026-07-15
-- **Issue**: The `GET /api/v1/logs/activity` route was referenced in documentation (line 724) but did not exist in `Routes.php`. The file ended at line 638. The `ActivityLogController` existed but was orphaned — never wired to any route.
+- **Issue**: The `GET /api/logs/activity` route was referenced in documentation but did not exist in `Routes.php`. The `ActivityLogController` existed but was orphaned — never wired to any route.
 - **Root Cause**: Route registration was never completed when the Activity Log feature was implemented.
 - **Files Modified**:
-  - `packages/marvel/src/Rest/Routes.php` — Added `use Marvel\Http\Controllers\ActivityLogController` import and registered `Route::get('logs/activity', [ActivityLogController::class, 'index'])` inside the SUPER_ADMIN group (line 609).
-- **Verification**: PHP syntax check passed. Route is now accessible at `GET /api/v1/logs/activity` under SUPER_ADMIN middleware group.
+  - `packages/marvel/src/Rest/Routes.php` — Added `use Marvel\Http\Controllers\ActivityLogController` import and registered `Route::get('logs/activity', [ActivityLogController::class, 'index'])`.
+- **Verification**: PHP syntax check passed. Route is now accessible at `GET /api/logs/activity`.
 
 ### Fix AL-02: Missing VIEW_ACTIVITY_LOG constant in Permission enum
 
@@ -341,14 +341,14 @@ $user->assignRole($role)
   - `docs/cms-endpoints/activity-logs.md` — Updated route reference to line 609.
 - **Verification**: Route was added at line 609 in the SUPER_ADMIN group.
 
-### Fix AL-07: Missing route group authorization in documentation
+### Fix AL-07: Incorrect route group authorization in documentation
 
-- **Date**: 2026-07-15
-- **Issue**: Documentation only mentioned the `view-activity-log` permission but the route is inside the SUPER_ADMIN group which also requires `super_admin` permission. The endpoint actually enforces two permission layers.
-- **Root Cause**: Documentation only described the controller-level middleware, omitting the route group middleware.
+- **Date**: 2026-07-16
+- **Issue**: Documentation stated the route requires `super_admin` route middleware, but route-level permissions are intentionally not used per project architecture. The controller is the sole authorization source.
+- **Root Cause**: Documentation incorrectly described an additional authorization layer that doesn't exist.
 - **Files Modified**:
-  - `docs/cms-endpoints/activity-logs.md` — Updated Authentication section to describe both authorization layers.
-- **Verification**: Documentation now accurately reflects both middleware layers.
+  - `docs/cms-endpoints/activity-logs.md` — Updated Authentication section to state that controller middleware is the sole authorization layer.
+- **Verification**: Documentation now accurately reflects the single controller-level authorization.
 
 ### Fix AL-08: Test prefix mismatch and assertion bug
 

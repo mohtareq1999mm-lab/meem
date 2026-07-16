@@ -64,6 +64,7 @@ class UserRepository extends BaseRepository
                 'password' => Hash::make($request->password),
                 // Ensure newly created users via repository are verified by default
                 'email_verified_at' => now(),
+                'phone_number' => $request->phone_number,
             ]);
             if ($request->hasFile('image')) {
                 $this->uploadSingleImage($request, 'image', $user, 'user-image', 'users');

@@ -25,6 +25,7 @@
         "psr/log": "3.0.0",
         "spatie/eloquent-sortable": "*",
         "spatie/laravel-activitylog": "*",
+        "spatie/laravel-one-time-passwords": "^1.0",
         "spatie/laravel-translatable": "*",
         "stevebauman/purify": "6.0.2",
         "symfony/http-client": "6.3.7",

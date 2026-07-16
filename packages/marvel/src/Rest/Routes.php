@@ -573,7 +573,6 @@ Route::group(
         Route::get('my-shops', [ShopController::class, 'myShops']);
         Route::post('transfer-shop-ownership', [ShopController::class, 'transferShopOwnership']);
 
-        // Route::get('/admin/list', [UserController::class, 'admins']);
         // Route::apiResource('notify-logs', NotifyLogsController::class, [
         //     'only' => ['index'],
         // ]);
@@ -607,7 +606,6 @@ Route::group(
         Route::apiResource('terms-and-conditions', TermsAndConditionsController::class, [
             'only' => ['store', 'update', 'destroy'],
         ]);
-        Route::get('/vendors/list', [UserController::class, 'vendors']);
         // Route::post('products-request-for-flash-sale', [FlashSaleVendorRequestController::class, 'productsRequestForFlashSale']);
 
         Route::apiResource('ownership-transfer', OwnershipTransferController::class, [
@@ -736,7 +734,6 @@ Route::group([
         Route::delete('notifications', 'destroyAll');
     });
 
-    Route::get('/customers/list', [UserController::class, 'customers']);
     Route::get('my-staffs', [UserController::class, 'myStaffs']);
     Route::get('all-staffs', [UserController::class, 'allStaffs']);
     Route::resource('refund-policies', RefundPolicyController::class, [

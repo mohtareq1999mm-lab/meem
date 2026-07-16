@@ -307,40 +307,6 @@ class UserControllerTest extends TestCase
         $this->assertContains('inactive@example.com', $emails);
     }
 
-    // --- GET /admin/list tests ---
-
-    public function test_super_admin_can_list_admins(): void
-    {
-        $admin = $this->createSuperAdminUser();
-
-        Sanctum::actingAs($admin);
-
-        $response = $this->getJson(self::PREFIX . '/admin/list');
-
-        $response->assertOk();
-
-        $data = $response->json('data');
-        $emails = collect($data)->pluck('email')->toArray();
-
-        $this->assertContains('superadmin@example.com', $emails);
-    }
-
-    public function test_non_admin_cannot_list_admins(): void
-    {
-        $user = $this->createRegularUser();
-
-        Sanctum::actingAs($user);
-
-        $this->getJson(self::PREFIX . '/admin/list')
-            ->assertStatus(403);
-    }
-
-    public function test_unauthenticated_user_cannot_list_admins(): void
-    {
-        $this->getJson(self::PREFIX . '/admin/list')
-            ->assertStatus(401);
-    }
-
     // --- POST /admin-users/add tests ---
 
     public function test_super_admin_can_create_admin_user(): void
@@ -777,7 +743,6 @@ class UserControllerTest extends TestCase
         $this->postJson(self::PREFIX . '/admin-users/add', [])->assertStatus(403);
         $this->putJson(self::PREFIX . '/admin-users/update-activation', [])->assertStatus(403);
         $this->deleteJson(self::PREFIX . '/admin-users/delete/1')->assertStatus(403);
-        $this->getJson(self::PREFIX . '/admin/list')->assertStatus(403);
     }
 
     // --- Response structure tests ---
@@ -1140,15 +1105,6 @@ class UserControllerTest extends TestCase
     // ========================================================================
     // REGRESSION TESTS — Existing Endpoint Authorization
     // ========================================================================
-
-    public function test_non_admin_cannot_access_admin_list_endpoint(): void
-    {
-        $user = $this->createRegularUser();
-        Sanctum::actingAs($user);
-
-        $this->getJson(self::PREFIX . '/admin/list')
-            ->assertStatus(403);
-    }
 
     public function test_non_admin_cannot_access_users_endpoint(): void
     {
