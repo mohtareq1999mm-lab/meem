@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Enums\UserType;
 use App\Events\ContactMessageReceived;
 use App\Notifications\NewContactMessageNotification;
 use Illuminate\Support\Facades\Notification;
@@ -21,7 +22,7 @@ class SendContactMessageNotification
     {
         $adminModel = config('auth.providers.users.model');
 
-        return $adminModel::where('type', 'admin')
+        return $adminModel::where('type', UserType::ADMIN->value)
             ->where('is_active', true)
             ->get();
     }

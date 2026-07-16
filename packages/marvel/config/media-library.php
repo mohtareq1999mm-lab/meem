@@ -6,13 +6,13 @@ return [
      * The disk on which to store added files and derived images by default. Choose
      * one or more of the disks you've configured in config/filesystems.php.
      */
-    'disk_name' => env('MEDIA_DISK', config('shop.media_disk')),
+    'disk_name' => 'products',
 
     /*
      * The maximum file size of an item in bytes.
      * Adding a larger file will result in an exception.
      */
-    'max_file_size' => 1024 * 1024 * 10,
+    'max_file_size' => env('MEDIA_LIBRARY_MAX_FILE_SIZE', 1024 * 1024 * 20),
 
     /*
      * This queue will be used to generate derived and responsive images.

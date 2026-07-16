@@ -16,13 +16,10 @@ class AttributeResource extends Resource
     {
         return [
             'id'                   => $this->id,
-            'name'                 => $this->name,
-            'shop_id'              => $this->shop_id,
-            'language'             => $this->language,
-            'translated_languages' => $this->translated_languages,
+            'name'                 => request()->routeIs('attributes.index') ? $this->getTranslation('name', app()->getLocale()) : $this->getRawOriginal('name'),
             'slug'                 => $this->slug,
-            'type'                 => getResourceData($this->type,[]), // if you need extra data then pass key in array by second parameter
-            'values'               => AttributeValueResource::collection($this->values)
- ];
+            'values'               => $this->whenLoaded('values', AttributeValueResource::collection($this->values))
+
+        ];
     }
 }

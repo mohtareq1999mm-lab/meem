@@ -2,6 +2,7 @@
 
 namespace App\Services\Dashboard;
 
+use App\Enums\UserType;
 use App\Models\PaymentReconciliationResult;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -37,8 +38,8 @@ class DashboardService
 
             $totalProducts = Product::count();
 
-            $totalCustomers = User::where('type', 'user')->count();
-            $newCustomers = User::where('type', 'user')
+            $totalCustomers = User::where('type', UserType::USER->value)->count();
+            $newCustomers = User::where('type', UserType::USER->value)
                 ->whereDate('created_at', '>', Carbon::now()->subDays(30))
                 ->count();
 
@@ -300,26 +301,26 @@ class DashboardService
         return Cache::remember('dashboard_customer_analytics', 300, function () {
             $now = Carbon::now();
 
-            $totalCustomers = User::where('type', 'user')->count();
+            $totalCustomers = User::where('type', UserType::USER->value)->count();
 
-            $customersBefore = User::where('type', 'user')
+            $customersBefore = User::where('type', UserType::USER->value)
                 ->whereDate('created_at', '<=', $now->copy()->subDays(30))
                 ->count();
 
-            $customersInLast30 = User::where('type', 'user')
+            $customersInLast30 = User::where('type', UserType::USER->value)
                 ->whereDate('created_at', '>', $now->copy()->subDays(30))
                 ->count();
 
             $returningCustomers = 0;
             if ($totalCustomers > 0) {
-                $customerIds = User::where('type', 'user')->pluck('id');
+                $customerIds = User::where('type', UserType::USER->value)->pluck('id');
                 $returningCustomers = Order::whereIn('user_id', $customerIds)
                     ->whereDate('created_at', '>', $now->copy()->subDays(30))
                     ->distinct('user_id')
                     ->count('user_id');
             }
 
-            $monthlyGrowth = User::where('type', 'user')
+            $monthlyGrowth = User::where('type', UserType::USER->value)
                 ->select(
                     DB::raw($this->dateFormat('%Y-%m') . " as month"),
                     DB::raw('COUNT(*) as count')
@@ -330,7 +331,7 @@ class DashboardService
                 ->get()
                 ->map(fn ($row) => ['month' => $row->month, 'count' => (int) $row->count]);
 
-            $topByOrders = User::where('type', 'user')
+            $topByOrders = User::where('type', UserType::USER->value)
                 ->withoutGlobalScope('order')
                 ->withCount(['orders' => fn ($q) => $q->where('status', 'completed')])
                 ->reorder('orders_count', 'desc')
@@ -343,7 +344,7 @@ class DashboardService
                     'orders' => (int) $u->orders_count,
                 ]);
 
-            $topByRevenue = User::where('type', 'user')
+            $topByRevenue = User::where('type', UserType::USER->value)
                 ->withoutGlobalScope('order')
                 ->select('users.id', 'users.name', 'users.email')
                 ->join('orders', 'users.id', '=', 'orders.user_id')
@@ -360,7 +361,7 @@ class DashboardService
                     'revenue' => round((float) $u->total_revenue, 2),
                 ]);
 
-            $clv = User::where('type', 'user')
+            $clv = User::where('type', UserType::USER->value)
                 ->withoutGlobalScope('order')
                 ->select('users.id', 'users.name', 'users.email')
                 ->join('orders', 'users.id', '=', 'orders.user_id')
@@ -377,15 +378,15 @@ class DashboardService
                     'lifetime_value' => round((float) $u->lifetime_value, 2),
                 ]);
 
-            $active7 = User::where('type', 'user')
+            $active7 = User::where('type', UserType::USER->value)
                 ->whereHas('orders', fn ($q) => $q->whereDate('created_at', '>', $now->copy()->subDays(7)))
                 ->count();
 
-            $active30 = User::where('type', 'user')
+            $active30 = User::where('type', UserType::USER->value)
                 ->whereHas('orders', fn ($q) => $q->whereDate('created_at', '>', $now->copy()->subDays(30)))
                 ->count();
 
-            $active90 = User::where('type', 'user')
+            $active90 = User::where('type', UserType::USER->value)
                 ->whereHas('orders', fn ($q) => $q->whereDate('created_at', '>', $now->copy()->subDays(90)))
                 ->count();
 

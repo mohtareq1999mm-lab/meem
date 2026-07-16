@@ -13,5 +13,4 @@ final class DiscountType extends Enum
 {
     public const PERCENTAGE = 'percentage';
     public const FIXED_RATE = 'fixed_rate';
-    public const FREE_SHIPPING = 'free_shipping';
 }

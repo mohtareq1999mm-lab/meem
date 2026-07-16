@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\App;
 class Shop
 {
     public $request;
-
     public function __construct()
     {
         $this->request = app()->request;

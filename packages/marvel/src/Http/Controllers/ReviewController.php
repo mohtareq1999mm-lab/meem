@@ -3,21 +3,14 @@
 
 namespace Marvel\Http\Controllers;
 
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Marvel\Database\Models\Order;
-use Marvel\Database\Models\Review;
 use Marvel\Database\Repositories\ReviewRepository;
-use Marvel\Database\Repositories\SettingsRepository;
+use Marvel\Enums\Permission;
 use Marvel\Exceptions\MarvelException;
-use Marvel\Http\Requests\FeedbackCreateRequest;
 use Marvel\Http\Requests\ReviewCreateRequest;
 use Marvel\Http\Requests\ReviewUpdateRequest;
-use Prettus\Validator\Exceptions\ValidatorException;
-use Symfony\Component\HttpKernel\Exception\HttpException;
+use Marvel\Http\Resources\ReviewResource;
+use Marvel\Traits\ApiResponse;
 
 /**
  * @OA\Tag(name="Reviews", description="Product Reviews [CUSTOMER, PUBLIC]")
@@ -40,13 +33,14 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  */
 class ReviewController extends CoreController
 {
+    use ApiResponse;
     public $repository;
-    public $settingsRepository;
 
-    public function __construct(ReviewRepository $repository, SettingsRepository $settingsRepository)
+    public function __construct(ReviewRepository $repository)
     {
         $this->repository = $repository;
-        $this->settingsRepository = $settingsRepository;
+        $this->middleware('permission:' . Permission::APPROVE_REVIEWS, ['only' => ['toggleApproveReview']]);
+        $this->middleware('permission:' . Permission::DELETE_REVIEWS, ['only' => ['destroy']]);
     }
 
 
@@ -72,14 +66,13 @@ class ReviewController extends CoreController
      */
     public function index(Request $request)
     {
+        $request->validate([
+            'product_id' => 'required|integer|exists:products,id',
+        ]);
         $limit = $request->limit ? $request->limit : 15;
-        if (isset($request['product_id']) && !empty($request['product_id'])) {
-            if (null !== $request->user()) {
-                $request->user()->id; // need another way to force login
-            }
-            return $this->repository->where('product_id', $request['product_id'])->paginate($limit);
-        }
-        return $this->repository->paginate($limit);
+
+        $data =  $this->repository->where('product_id', $request['product_id'])->paginate($limit);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ReviewResource::collection($data));
     }
 
     /**
@@ -109,58 +102,20 @@ class ReviewController extends CoreController
      */
     public function store(ReviewCreateRequest $request)
     {
-        $setting = $this->settingsRepository->first();
-        $product_id = $request['product_id'];
-        $order_id = $request['order_id'];
         try {
-            $hasProductInOrder = Order::where('id', $order_id)->whereHas('products', function ($q) use ($product_id) {
-                $q->where('product_id', $product_id);
-            })->exists();
-
-            if (false === $hasProductInOrder) {
-                throw new ModelNotFoundException(NOT_FOUND);
-            }
-
-            $user_id = $request->user()->id;
-            $request['user_id'] = $user_id;
-
-            // check if the review is following conventional system.
-            if (!empty($setting->options['reviewSystem']['value']) && $setting->options['reviewSystem']['value'] === 'review_single_time') {
-
-                // find out if any review exists or not
-                if (isset($request['variation_option_id']) && !empty($request['variation_option_id'])) {
-                    $review = $this->repository->where('user_id', $user_id)->where('order_id', $order_id)->where('product_id', $product_id)->where('shop_id', $request['shop_id'])->where('variation_option_id', $request['variation_option_id'])->get();
-                } else {
-                    $review = $this->repository->where('user_id', $user_id)->where('order_id', $order_id)->where('product_id', $product_id)->where('shop_id', $request['shop_id'])->get();
-                }
-
-                if (count($review)) {
-                    throw new HttpException(400, ALREADY_GIVEN_REVIEW_FOR_THIS_PRODUCT);
-                }
-            }
-
-            return $this->repository->storeReview($request);
+            $review = $this->repository->storeReview($request);
+            return $this->apiResponse(REVIEW_CREATED_SUCCESSFULLY, 200, true,  ReviewResource::make($review));
         } catch (MarvelException $e) {
             throw new MarvelException(ALREADY_GIVEN_REVIEW_FOR_THIS_PRODUCT);
         }
     }
 
-    /**
-     * @OA\Get(
-     *     path="/reviews/{id}",
-     *     operationId="getReview",
-     *     tags={"Reviews"},
-     *     summary="Get Review Details",
-     *     description="Get a singel review details",
-     *     @OA\Parameter(name="id", in="path", required=true, description="Review ID", @OA\Schema(type="integer")),
-     *     @OA\Response(response=200, description="Review details", @OA\JsonContent(ref="#/components/schemas/Review")),
-     *     @OA\Response(response=404, description="Not found")
-     * )
-     */
+
     public function show($id)
     {
         try {
-            return $this->repository->findOrFail($id);
+            $review = $this->repository->findOrFail($id);
+            return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ReviewResource::make($review));
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
         }
@@ -190,7 +145,8 @@ class ReviewController extends CoreController
     {
         $request->merge(["id" => $id]);
         try {
-            return $this->updateReview($request);
+            $review = $this->updateReview($request);
+            return $this->apiResponse(REVIEW_UPDATED_SUCCESSFULLY, 200, true, ReviewResource::make($review));
         } catch (MarvelException $th) {
             throw new MarvelException(SOMETHING_WENT_WRONG);
         }
@@ -218,7 +174,19 @@ class ReviewController extends CoreController
     public function destroy($id)
     {
         try {
-            return $this->repository->findOrFail($id)->delete();
+            $review = $this->repository->findOrFail($id);
+            $review->delete();
+            return $this->apiResponse(REVIEW_DELETED_SUCCESSFULLY, 200, true);
+        } catch (MarvelException $e) {
+            throw new MarvelException(NOT_FOUND);
+        }
+    }
+
+    public function toggleApproveReview($id)
+    {
+        try {
+            $review = $this->repository->toggleApprove($id);
+            return $this->apiResponse(REVIEW_UPDATED_SUCCESSFULLY, 200, true, ReviewResource::make($review));
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
         }

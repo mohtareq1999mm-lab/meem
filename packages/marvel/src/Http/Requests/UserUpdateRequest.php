@@ -30,10 +30,9 @@ class UserUpdateRequest extends FormRequest
         return [
             'name'    => ['string', 'max:255'],
             'email'   => ['email', 'unique:users'],
-            'shop_id' => ['nullable', 'exists:Marvel\Database\Models\Shop,id'],
+            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
             'profile' => ['array'],
             'address' => ['array'],
-            // 'shop' => ['array'],
         ];
     }
 
@@ -49,6 +48,7 @@ class UserUpdateRequest extends FormRequest
             'name.max:255'       => 'Name can not be more than 255 character',
             'email.email'        => 'email is not a valid email address',
             'email.unique:users' => 'email must be unique',
+            'image.image'        => 'image is not a valid image',
             'address.array'      => 'address is not a valid json',
             'profile.array'      => 'profile is not a valid json',
         ];

@@ -2,6 +2,7 @@
 
 namespace Marvel\Http\Requests;
 
+use CodeZero\UniqueTranslation\UniqueTranslationRule;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Foundation\Http\FormRequest;
@@ -29,15 +30,14 @@ class UpdateFaqsRequest extends FormRequest
      */
     public function rules()
     {
-        // $language = $this->language ?? DEFAULT_LANGUAGE;
-
-        $rules =  [
-            'faq_title'       => ['required', 'string'],
-            'faq_description' => ['required', 'string'],
-            'slug'            => ['nullable', 'string'],
-            'language'        => ['nullable', 'string'],
+        $id = $this->route('faq');
+        return [
+            'faq_title'         => ['sometimes', 'array'],
+            'faq_title.*'       => ['sometimes', 'string', 'min:3', 'max:1000',  UniqueTranslationRule::for('faqs')->ignore($id)],
+            'faq_description'   => ['sometimes', 'array'],
+            'faq_description.*' => ['sometimes', 'string', 'min:3', 'max:1000'],
+            'status'            => ['sometimes', 'in:0,1'],
         ];
-        return $rules;
     }
 
     public function failedValidation(Validator $validator)

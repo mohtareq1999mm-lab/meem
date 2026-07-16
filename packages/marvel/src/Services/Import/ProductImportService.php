@@ -312,6 +312,15 @@ class ProductImportService
                 $product->saveQuietly();
             }
 
+            $pricing = $this->pricingService->calculateProductPricingFromData(
+                $product->toArray(),
+                $product->getActiveFlashSale()
+            );
+            $product->fill([
+                'price_after_discount' => $pricing['price_after_discount'] ?? null,
+                'price_after_flash_sale' => $pricing['price_after_flash_sale'] ?? null,
+            ])->saveQuietly();
+
             DB::commit();
             $this->successCount++;
         } catch (Exception $e) {

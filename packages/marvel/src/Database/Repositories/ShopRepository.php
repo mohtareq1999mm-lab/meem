@@ -5,6 +5,7 @@ namespace Marvel\Database\Repositories;
 
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Balance;
 use Marvel\Database\Models\OwnershipTransfer;
 use Marvel\Database\Models\Product;
@@ -16,21 +17,21 @@ use Marvel\Enums\ProductVisibilityStatus;
 use Marvel\Events\ProcessOwnershipTransition;
 use Marvel\Events\ShopMaintenance;
 use Marvel\Http\Requests\TransferShopOwnerShipRequest;
+use Marvel\Traits\MediaManager;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Prettus\Repository\Exceptions\RepositoryException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class ShopRepository extends BaseRepository
 {
+    use MediaManager;
 
     /**
      * @var array
      */
     protected $fieldSearchable = [
-        'name'        => 'like',
-        'is_active',
-        'categories.slug',
-        'users.name'
+        'name' => 'like',
+        // 'users.name'
     ];
 
     /**
@@ -40,13 +41,10 @@ class ShopRepository extends BaseRepository
         'name',
         'slug',
         'description',
-        'cover_image',
-        'logo',
-        'is_active',
+        'status',
         'address',
-        'settings',
-        'notifications',
     ];
+
 
 
     public function boot()
@@ -66,25 +64,44 @@ class ShopRepository extends BaseRepository
         return Shop::class;
     }
 
+
+
     public function storeShop($request)
     {
         try {
+            DB::beginTransaction();
             $data = $request->only($this->dataArray);
+            // $data['owner_id'] = $request->user()->id;
             $data['slug'] = $this->makeSlug($request);
-            $data['owner_id'] = $request->user()->id;
+
             $shop = $this->create($data);
-            if (isset($request['categories'])) {
-                $shop->categories()->attach($request['categories']);
+
+
+            if ($request->hasFile('logo')) {
+                if (!$this->uploadSingleImage($request, 'logo', $shop, 'shop-logo', 'shops')) {
+                    throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
+                }
             }
-            if (isset($request['balance']['payment_info'])) {
-                $shop->balance()->create($request['balance']);
+            if ($request->hasFile('cover_image')) {
+                if (!$this->uploadSingleImage($request, 'cover_image', $shop, 'shop-image', 'shops')) {
+                    throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
+                }
             }
+            // if (isset($request['categories'])) {
+            //     $shop->categories()->attach($request['categories']);
+            // }
+            // if (isset($request['balance']['payment_info'])) {
+            //     $shop->balance()->create($request['balance']);
+            // }
 
             // TODO : why this code is needed
             // $shop->categories = $shop->categories;
             // $shop->staffs = $shop->staffs;
+
+            DB::commit();
             return $shop;
         } catch (Exception $e) {
+            DB::rollBack();
             throw new HttpException(400, COULD_NOT_CREATE_THE_RESOURCE);
         }
     }
@@ -92,24 +109,38 @@ class ShopRepository extends BaseRepository
     public function updateShop($request, $id)
     {
         try {
+            DB::beginTransaction();
             $shop = $this->findOrFail($id);
-            if (isset($request['categories'])) {
-                $shop->categories()->sync($request['categories']);
+
+            // if (isset($request['categories'])) {
+            //     $shop->categories()->sync($request['categories']);
+            // }
+            // if (isset($request['balance'])) {
+            //     if (isset($request['balance']['admin_commission_rate']) && $shop->balance->admin_commission_rate !== $request['balance']['admin_commission_rate']) {
+            //         if ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
+            //             $this->updateBalance($request['balance'], $id);
+            //         }
+            //     } else {
+            //         $this->updateBalance($request['balance'], $id);
+            //     }
+            // }
+            $data = $request->only($this->dataArray);
+            if (isset($data['name'])) {
+                $data['slug'] = $this->makeSlug($request, 'slug', $shop->id);
             }
-            if (isset($request['balance'])) {
-                if (isset($request['balance']['admin_commission_rate']) && $shop->balance->admin_commission_rate !== $request['balance']['admin_commission_rate']) {
-                    if ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
-                        $this->updateBalance($request['balance'], $id);
-                    }
-                } else {
-                    $this->updateBalance($request['balance'], $id);
+
+            $shop->update($data);
+            if ($request->hasFile('logo')) {
+                if (!$this->updateSingleImage($request, 'logo', $shop, 'shop-logo', 'shops')) {
+                    throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
                 }
             }
-            $data = $request->only($this->dataArray);
-            if (!empty($request->slug) &&  $request->slug != $shop['slug']) {
-                $data['slug'] = $this->makeSlug($request);
+            if ($request->hasFile('cover_image')) {
+                if (!$this->updateSingleImage($request, 'cover_image', $shop, 'shop-image', 'shops')) {
+                    throw new HttpException(422, 'Cover image upload failed, please check the file format or size.');
+                }
             }
-            $shop->update($data);
+
 
             // TODO : why this code is needed
             // $shop->categories = $shop->categories;
@@ -118,20 +149,22 @@ class ShopRepository extends BaseRepository
 
 
             // 1. Shop owner maintenance time set korbe.. then ekta event fire hobe jeita shop notifications (email, sms) send korbe super-admin, vendor, staff, oi specific shop er front-end a ekta notice dekhabe with countdown.
-            // 2. countDown start er 1 day ago or 6 hours ago ekta final email/sms dibe vendor, staff k 
+            // 2. countDown start er 1 day ago or 6 hours ago ekta final email/sms dibe vendor, staff k
             // 3. countdown onStart a sob product private
             // 4. countdown onComplete a sob product public
 
-            if (isset($request['settings']['isShopUnderMaintenance'])) {
-                if ($request['settings']['isShopUnderMaintenance']) {
-                    event(new ShopMaintenance($shop, 'enable'));
-                } else {
-                    event(new ShopMaintenance($shop, 'disable'));
-                }
-            }
+            // if (isset($request['settings']['isShopUnderMaintenance'])) {
+            //     if ($request['settings']['isShopUnderMaintenance']) {
+            //         event(new ShopMaintenance($shop, 'enable'));
+            //     } else {
+            //         event(new ShopMaintenance($shop, 'disable'));
+            //     }
+            // }
 
+            DB::commit();
             return $shop;
         } catch (Exception $e) {
+            DB::rollBack();
             throw new HttpException(400, COULD_NOT_UPDATE_THE_RESOURCE);
         }
     }
@@ -175,19 +208,19 @@ class ShopRepository extends BaseRepository
 
         OwnershipTransfer::updateOrCreate(
             [
-                "shop_id"    => $shopId,
+                "shop_id" => $shopId,
             ],
             [
-                "from"       => $previousOwner->id,
-                "message"    => $request?->message,
-                "to"         => $newOwnerId,
+                "from" => $previousOwner->id,
+                "message" => $request?->message,
+                "to" => $newOwnerId,
                 "created_by" => $user->id,
-                "status"     => DefaultStatusType::PENDING,
+                "status" => DefaultStatusType::PENDING,
             ]
         );
 
         $optional = [
-            'message' =>  $request?->vendorMessage,
+            'message' => $request?->vendorMessage,
         ];
 
         event(new ProcessOwnershipTransition($shop, $previousOwner, $newOwner, $optional));

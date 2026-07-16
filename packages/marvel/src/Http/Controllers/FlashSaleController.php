@@ -12,8 +12,11 @@ use Marvel\Database\Repositories\FlashSaleRepository;
 use Marvel\Enums\Permission;
 use Marvel\Events\FlashSaleProcessed;
 use Marvel\Exceptions\MarvelException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Marvel\Http\Requests\CreateFlashSaleRequest;
 use Marvel\Http\Requests\UpdateFlashSaleRequest;
+use Marvel\Http\Resources\FlashSaleResource;
+use Marvel\Traits\ApiResponse;
 use Prettus\Validator\Exceptions\ValidatorException;
 use Marvel\Database\Repositories\ProductRepository;
 
@@ -39,6 +42,7 @@ use Marvel\Database\Repositories\ProductRepository;
  */
 class FlashSaleController extends CoreController
 {
+    use ApiResponse;
     public $repository;
 
     public $productRepository;
@@ -47,8 +51,11 @@ class FlashSaleController extends CoreController
     {
         $this->repository = $repository;
         $this->productRepository = $productRepository;
+        $this->middleware("permission:" . Permission::VIEW_FlASH_SALE, ["only" => ["index", "show"]]);
+        $this->middleware("permission:" . Permission::CREATE_FlASH_SALE, ["only" => ["store"]]);
+        $this->middleware("permission:" . Permission::UPDATE_FlASH_SALE, ["only" => ["update", "reorder"]]);
+        $this->middleware("permission:" . Permission::DELETE_FlASH_SALE, ["only" => ["destroy"]]);
     }
-
 
     /**
      * @OA\Get(
@@ -74,26 +81,50 @@ class FlashSaleController extends CoreController
     public function index(Request $request)
     {
         try {
-            $limit = $request->limit ? $request->limit : 10;
-            return $this->fetchFlashSales($request)->paginate($limit)->withQueryString();
-            // $data = FlashSaleResource::collection($flash_sales)->response()->getData(true);
-            // return formatAPIResourcePaginate($data);
+            $limit = $request->per_page ?? $request->limit ?? 10;
+            $flashSales =  $this->fetchFlashSales($request)->paginate($limit)->withQueryString();
+            $flashSaleData = FlashSaleResource::collection($flashSales)->response()->getData(true);
+            return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
+                "data" => $flashSaleData['data'] ?? [],
+                "page" => $flashSaleData['meta']['current_page'] ?? 0,
+                "current_page" => $flashSaleData['meta']['current_page'] ?? 0,
+                "from" => $flashSaleData['meta']['from'] ?? 0,
+                "to" => $flashSaleData['meta']['to'] ?? 0,
+                "last_page" => $flashSaleData['meta']['last_page'] ?? 0,
+                "path" => $flashSaleData['meta']['path'] ?? "",
+                "per_page" => $flashSaleData['meta']['per_page'] ?? 0,
+                "total" => $flashSaleData['meta']['total'] ?? 0,
+                "next_page_url" => $flashSaleData['links']['next'] ?? "",
+                "prev_page_url" => $flashSaleData['links']['prev'] ?? "",
+                "last_page_url" => $flashSaleData['links']['last'] ?? "",
+                "first_page_url" => $flashSaleData['links']['first'] ?? "",
+            ]);
         } catch (MarvelException $e) {
-            throw new MarvelException(SOMETHING_WENT_WRONG, $e->getMessage());
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
     }
 
     public function fetchFlashSales(Request $request)
     {
-        $language = $request->language ?? DEFAULT_LANGUAGE;
-        event(new FlashSaleProcessed('index', $language));
-
-        $flash_sales_query = $this->repository->where('language', $language)
-            ->when($request->request_from === 'vendor', function ($flash_sales_query) {
-                return $flash_sales_query->whereDate('start_date', '>', now()->toDateString());
-            });
-
-        return $flash_sales_query;
+        $active = $request->active ?? null;
+        $inactive = $request->inactive ?? null;
+        $search = $request->search ?? null;
+        $order = $request->order;
+        $sortedBy = $request->sortedBy ?? 'asc';
+        $query = $this->repository->modelQuery();
+        if ($active) {
+            $query = $query->valid();
+        }
+        if ($inactive) {
+            $query = $query->invalid();
+        }
+        if ($search) {
+            $query = $query->search('title', $search, app()->getLocale());
+        }
+        if ($order && in_array($order, ['id', 'title', 'slug', 'type', 'discount', 'status', 'start_date', 'end_date', 'created_at', 'updated_at'])) {
+            $query = $query->orderBy($order, $sortedBy === 'desc' ? 'desc' : 'asc');
+        }
+        return $query;
     }
 
     /**
@@ -106,10 +137,11 @@ class FlashSaleController extends CoreController
     public function store(CreateFlashSaleRequest $request)
     {
         try {
-            return $this->repository->storeFlashSale($request);
-            // return $this->repository->create($validatedData);
+            $flashSale =  $this->repository->storeFlashSale($request);
+            $flashSale->load('products');
+            return $this->apiResponse(CREATE_FLASH_SALE_SUCCESSFULLY, 200, true, FlashSaleResource::make($flashSale));
         } catch (MarvelException $e) {
-            throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE, $e->getMessage());
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
     }
 
@@ -130,13 +162,18 @@ class FlashSaleController extends CoreController
      *     @OA\Response(response=404, description="Flash sale not found")
      * )
      */
-    public function show(Request $request, $slug)
+    public function show(Request $request, $id)
     {
         try {
-            $language = $request->language ?? DEFAULT_LANGUAGE;
-            return $this->repository->where('language', $language)->where('slug', '=', $slug)->first();
+
+            //            $language = $request->language ?? DEFAULT_LANGUAGE;
+            $flash_sale = $this->repository
+                ->with('products')
+                ->where('id', '=', $id)
+                ->first();
+            return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, FlashSaleResource::make($flash_sale));
         } catch (MarvelException $e) {
-            throw new MarvelException(NOT_FOUND, $e->getMessage());
+            return $this->apiResponse(NOT_FOUND, 404, false);
         }
     }
 
@@ -152,16 +189,18 @@ class FlashSaleController extends CoreController
     {
         try {
             $request->merge(['id' => $id]);
-            return $this->updateFlashSale($request);
+            $flashSale =  $this->updateFlashSale($request);
+            $flashSale->load('products');
+            return $this->apiResponse(UPDATE_FLASH_SALE_SUCCESSFULLY, 200, true, FlashSaleResource::make($flashSale));
         } catch (MarvelException $e) {
-            throw new MarvelException(COULD_NOT_UPDATE_THE_RESOURCE, $e->getMessage());
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
     }
 
     /**
      * updateFlashSale
      *
-     * @param  Request $request
+     * @param Request $request
      * @return void
      */
     public function updateFlashSale(Request $request)
@@ -170,6 +209,7 @@ class FlashSaleController extends CoreController
         // return $this->repository->updateFlashSale($request, $flash_sale_id);
 
         $id = $request->id;
+
         return $this->repository->updateFlashSale($request, $id);
     }
 
@@ -180,22 +220,37 @@ class FlashSaleController extends CoreController
      * @param Request $request
      * @return JsonResponse
      */
+    public function reorder(Request $request)
+    {
+        try {
+            $request->validate([
+                'flash_sales' => 'required|array',
+                'flash_sales.*' => 'required|exists:flash_sales,id',
+            ]);
+            $this->repository->reorder($request->flash_sales);
+
+            return $this->apiResponse(FLASH_SALE_REORDERED_SUCCESSFULLY, 200, true);
+        } catch (HttpException $e) {
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
+        }
+    }
+
     public function destroy($id, Request $request)
     {
         $request->merge(['id' => $id]);
-        return $this->deleteFlashSale($request);
+        if ($this->deleteFlashSale($request)) {
+            return $this->apiResponse(DELETE_FLASH_SALE_SUCCESSFULLY, 200, true);
+        }
+        return $this->apiResponse(NOT_FOUND, 200, true);
     }
 
     public function deleteFlashSale(Request $request)
     {
         try {
             $user = $request->user();
-            if ($user && ($user->hasPermissionTo(Permission::SUPER_ADMIN) || $user->hasPermissionTo(Permission::STORE_OWNER) || $user->hasPermissionTo(Permission::STAFF))) {
-                $flashSale = $this->repository->findOrFail($request->id);
-                $flashSale->delete();
-                return $flashSale;
-            }
-            throw new AuthorizationException(NOT_AUTHORIZED);
+            $flashSale = $this->repository->findOrFail($request->id);
+            $flashSale->delete();
+            return true;
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND, $e->getMessage());
         }
@@ -204,7 +259,7 @@ class FlashSaleController extends CoreController
     /**
      * getFlashSaleInfoByProductID
      *
-     * @param  Request $request
+     * @param Request $request
      * @return void
      */
     public function getFlashSaleInfoByProductID(Request $request)
@@ -226,32 +281,36 @@ class FlashSaleController extends CoreController
     /**
      * getProductsByFlashSale
      *
-     * @param  Request $request
+     * @param Request $request
      * @return void
      */
     public function getProductsByFlashSale(Request $request)
     {
-        $limit = $request->limit ? $request->limit : 10;
+        $limit = $request->per_page ?? $request->limit ?? 10;
         return $this->fetchProductsByFlashSale($request)->paginate($limit)->withQueryString();
     }
 
     /**
      * fetchProductsByFlashSale
      *
-     * @param  Request $request
+     * @param Request $request
      * @return object
      */
     public function fetchProductsByFlashSale(Request $request)
     {
-        $language = $request->language ?? DEFAULT_LANGUAGE;
+        $flashSale = $this->repository->where('slug', '=', $request->slug)->firstOrFail();
 
-        $product_ids = $this->repository->join('flash_sale_products', 'flash_sales.id', '=', 'flash_sale_products.flash_sale_id')
-            ->join('products', 'flash_sale_products.product_id', '=', 'products.id')
-            ->where('flash_sales.slug', '=', $request->slug)
-            ->where('flash_sales.language', '=', $language)
-            ->select('products.id')
-            ->pluck('id'); // You can set your desired limit here (e.g., 10 products per page)
+        $order = $request->order;
+        $sortedBy = $request->sortedBy ?? 'asc';
 
-        return $this->productRepository->whereIn('id', $product_ids);
+        $query = $flashSale->products();
+
+        $sortableFields = ['id', 'title', 'slug', 'price', 'sale_price', 'quantity', 'created_at', 'updated_at'];
+
+        if ($order && in_array($order, $sortableFields)) {
+            $query = $query->orderBy($order, $sortedBy === 'desc' ? 'desc' : 'asc');
+        }
+
+        return $query;
     }
 }

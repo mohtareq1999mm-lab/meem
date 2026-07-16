@@ -3,12 +3,10 @@
 namespace Marvel\Database\Repositories;
 
 use App\Services\General\CartInventoryService;
-use App\Services\General\PromotionService;
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Marvel\Database\Models\Cart;
 use Marvel\Database\Models\Product;
 use Marvel\Enums\ShippingMethod;
@@ -34,60 +32,6 @@ class CartRepository extends BaseRepository
     public function model()
     {
         return Cart::class;
-    }
-
-    public function revalidatePromotion(Cart $cart): void
-    {
-        $promotionIds = $cart->items
-            ->pluck('promotion_id')
-            ->filter()
-            ->unique()
-            ->values();
-
-        if ($promotionIds->isEmpty()) {
-            return;
-        }
-
-        if ($promotionIds->count() > 1) {
-            app(PromotionService::class)->clearPromotionFromCart($cart);
-            Log::warning('Multiple promotion_ids detected on cart items — auto-cleared', [
-                'cart_id' => $cart->id,
-                'user_id' => $cart->user_id,
-                'promotion_ids' => $promotionIds->toArray(),
-            ]);
-            return;
-        }
-
-        $promotionId = (int) $promotionIds->first();
-
-        $shippingMethod = $cart->items
-            ->firstWhere(fn($item) => !is_null($item->promotion_id))
-            ?->shipping_method ?? ShippingMethod::SCHEDULED;
-
-        try {
-            app(PromotionService::class)->applySelectedPromotion(
-                $cart,
-                (int) $promotionId,
-                null,
-                $shippingMethod,
-            );
-        } catch (\InvalidArgumentException $e) {
-            app(PromotionService::class)->clearPromotionFromCart($cart);
-            Log::info('Promotion auto-cleared from cart', [
-                'cart_id' => $cart->id,
-                'user_id' => $cart->user_id,
-                'promotion_id' => $promotionId,
-                'reason' => $e->getMessage(),
-            ]);
-        } catch (\Throwable $e) {
-            Log::critical('Unexpected error during promotion revalidation', [
-                'cart_id' => $cart->id,
-                'user_id' => $cart->user_id,
-                'promotion_id' => $promotionId,
-                'error' => $e->getMessage(),
-            ]);
-            throw $e;
-        }
     }
 
     public function storeCart(Request $request)
@@ -135,12 +79,9 @@ class CartRepository extends BaseRepository
                 'total_price' => $cart->items()->sum('total_price'),
             ]);
 
-            $cart->load(['items.product', 'items.productVariant.attributeProducts.attributeValue.attribute']);
-            $this->revalidatePromotion($cart);
-
             DB::commit();
 
-            return $cart;
+            return $cart->load(['items.product', 'items.productVariant.attributeProducts.attributeValue.attribute']);
         } catch (AuthorizationException $e) {
             DB::rollBack();
             throw new HttpException(401, $e->getMessage());

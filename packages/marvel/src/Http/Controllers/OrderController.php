@@ -21,7 +21,6 @@ use Marvel\Database\Repositories\OrderRepository;
 use Marvel\Enums\PaymentGatewayType;
 use Marvel\Enums\Permission;
 use Marvel\Exceptions\MarvelException;
-use Marvel\Exports\OrderExport;
 use Marvel\Http\Requests\OrderCreateRequest;
 use Marvel\Http\Requests\OrderUpdateRequest;
 use Marvel\Traits\OrderManagementTrait;
@@ -494,31 +493,6 @@ class OrderController extends CoreController
             return route('export_order.token', ['token' => $newToken->token]);
         } catch (MarvelException $e) {
             throw new MarvelException(SOMETHING_WENT_WRONG, $e->getMessage());
-        }
-    }
-
-    /**
-     * Export order to excel sheet
-     *
-     * @param string $token
-     * @return void
-     */
-    public function exportOrder($token)
-    {
-        $shop_id = 0;
-        try {
-            $downloadToken = DownloadToken::where('token', $token)->first();
-
-            $shop_id = $downloadToken->payload;
-            $downloadToken->delete();
-        } catch (MarvelException $e) {
-            throw new MarvelException(TOKEN_NOT_FOUND);
-        }
-
-        try {
-            return Excel::download(new OrderExport($this->repository, $shop_id), 'orders.xlsx');
-        } catch (MarvelException $e) {
-            throw new MarvelException(NOT_FOUND);
         }
     }
 

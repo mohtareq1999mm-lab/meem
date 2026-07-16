@@ -2,6 +2,7 @@
 
 namespace Marvel\Http\Resources;
 
+use App\Services\Coupon\CouponValidator;
 use Illuminate\Http\Request;
 
 class CouponResource extends Resource
@@ -15,22 +16,25 @@ class CouponResource extends Resource
     public function toArray($request)
     {
         return [
-            'id'                   => $this->id,
-            'code'                 => $this->code,
-            'language'             => $this->language,
-            'description'          => $this->description,
-            'image'                => $this->image,
-            'type'                 => $this->type,
-            'amount'               => $this->amount,
-            'minimum_cart_amount'  => $this->minimum_cart_amount,
-            'active_from'          => $this->active_from,
-            'expire_at'            => $this->expire_at,
-            'is_valid'            => $this->is_valid,
-            'target'               => $this->target,
-            'is_approve'           => $this->is_approve,
-            'translated_languages' => $this->translated_languages,
-            'shop_id'              => $this->shop_id,
-            'user_id'              => $this->user_id,
+            'id'            => $this->id,
+            'code'          => $this->code,
+            'name'          => $this->getTranslation('name', app()->getLocale()),
+            'image'         => [
+                'desktop' => $this->getFirstMediaUrl('coupons-desktop') ?: null,
+                'mobile'  => $this->getFirstMediaUrl('coupons-mobile') ?: null,
+            ],
+            'borderColor'   => $this->border_color ?? null,
+            'borderless'    => (bool) ($this->borderless ?? false),
+            'discount'      => $this->discount,
+            'discount_type' => $this->typeByLang(), // percentage أو fixed
+            'max_discount_amount' => $this->max_discount_amount,
+            'start_date'    => $this->start_date,
+            'end_date'      => $this->end_date,
+            'limiter'       => $this->limiter,
+            'used'          => $this->used,
+            'status'        => (bool) $this->status,
+            'is_valid'      => CouponValidator::validate($this)['valid'],
+            'created_at'    => $this->created_at?->toIso8601String(),
         ];
     }
 }

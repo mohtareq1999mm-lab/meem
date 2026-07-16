@@ -402,7 +402,8 @@ trait CreatesTestTables
         Schema::create('attributes', function (Blueprint $table) {
             $table->id();
             $table->string('slug')->unique();
-            $table->string('name');
+            $table->text('name');
+            $table->string('language', 10)->default('en');
             $table->timestamps();
         });
 
@@ -410,7 +411,8 @@ trait CreatesTestTables
             $table->id();
             $table->foreignId('attribute_id')->constrained('attributes')->cascadeOnDelete();
             $table->string('slug')->unique();
-            $table->string('value');
+            $table->text('value');
+            $table->string('language', 10)->default('en');
             $table->timestamps();
         });
 

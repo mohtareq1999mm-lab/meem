@@ -11,6 +11,7 @@ use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\CmsPageRequest;
 use Marvel\Http\Resources\CmsPageResource;
 use Marvel\Services\CmsPageService;
+use Marvel\Traits\ApiResponse;
 use OpenApi\Annotations as OA;
 
 /**
@@ -108,6 +109,7 @@ use OpenApi\Annotations as OA;
  */
 class CmsPageController extends CoreController
 {
+    use ApiResponse;
     public function __construct(
         private readonly CmsPageService $service
     ) {
@@ -129,9 +131,23 @@ class CmsPageController extends CoreController
         $limit = (int) ($request->get('limit') ?? 10);
 
         $pages = $this->service->paginate([], $limit);
-        $data = CmsPageResource::collection($pages)->response()->getData(true);
+        $pageData = CmsPageResource::collection($pages)->response()->getData(true);
 
-        return response()->json(formatAPIResourcePaginate($data));
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
+            "data" => $pageData['data'] ?? [],
+            "page" => $pageData['meta']['current_page'] ?? 0,
+            "current_page" => $pageData['meta']['current_page'] ?? 0,
+            "from" => $pageData['meta']['from'] ?? 0,
+            "to" => $pageData['meta']['to'] ?? 0,
+            "last_page" => $pageData['meta']['last_page'] ?? 0,
+            "path" => $pageData['meta']['path'] ?? "",
+            "per_page" => $pageData['meta']['per_page'] ?? 0,
+            "total" => $pageData['meta']['total'] ?? 0,
+            "next_page_url" => $pageData['links']['next'] ?? "",
+            "prev_page_url" => $pageData['links']['prev'] ?? "",
+            "last_page_url" => $pageData['links']['last'] ?? "",
+            "first_page_url" => $pageData['links']['first'] ?? "",
+        ]);
     }
 
     /**

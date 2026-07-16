@@ -14,6 +14,7 @@ use Marvel\Enums\Permission;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\AuthorRequest;
 use Marvel\Http\Resources\AuthorResource;
+use Marvel\Traits\ApiResponse;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
@@ -52,6 +53,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  */
 class AuthorController extends CoreController
 {
+    use ApiResponse;
     public $repository;
 
     public function __construct(AuthorRepository $repository)
@@ -76,8 +78,22 @@ class AuthorController extends CoreController
     {
         $limit = $request->limit ? $request->limit : 15;
         $authors = $this->fetchAuthors($request)->paginate($limit);
-        $data = AuthorResource::collection($authors)->response()->getData(true);
-        return formatAPIResourcePaginate($data);
+        $authorData = AuthorResource::collection($authors)->response()->getData(true);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
+            "data" => $authorData['data'] ?? [],
+            "page" => $authorData['meta']['current_page'] ?? 0,
+            "current_page" => $authorData['meta']['current_page'] ?? 0,
+            "from" => $authorData['meta']['from'] ?? 0,
+            "to" => $authorData['meta']['to'] ?? 0,
+            "last_page" => $authorData['meta']['last_page'] ?? 0,
+            "path" => $authorData['meta']['path'] ?? "",
+            "per_page" => $authorData['meta']['per_page'] ?? 0,
+            "total" => $authorData['meta']['total'] ?? 0,
+            "next_page_url" => $authorData['links']['next'] ?? "",
+            "prev_page_url" => $authorData['links']['prev'] ?? "",
+            "last_page_url" => $authorData['links']['last'] ?? "",
+            "first_page_url" => $authorData['links']['first'] ?? "",
+        ]);
     }
 
     public function fetchAuthors(Request $request)

@@ -5,25 +5,26 @@ namespace Marvel\Database\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Review extends Model
+class Review extends Model implements HasMedia
 {
-    use SoftDeletes;
+    use SoftDeletes, InteractsWithMedia;
 
     protected $table = 'reviews';
 
-    public $guarded = [];
-
-    protected $casts = [
-        'photos' => 'json',
+    public $fillable = [
+        'user_id',
+        'product_id',
+        'comment',
+        'rating',
+        'approved',
     ];
 
-    protected $appends = [
-        'positive_feedbacks_count',
-        'negative_feedbacks_count',
-        'my_feedback',
-        'abusive_reports_count'
-    ];
+
+
+
 
     /**
      * @return BelongsTo
@@ -78,7 +79,7 @@ class Review extends Model
      */
     public function getMyFeedbackAttribute()
     {
-        if(auth()->user()) {
+        if (auth()->user()) {
             return $this->feedbacks()->where('user_id', auth()->user()->id)->first();
         }
         return null;
@@ -88,8 +89,19 @@ class Review extends Model
      * Count no of abusive reports in the review.
      * @return int
      */
-    public function getAbusiveReportsCountAttribute() {
+    public function getAbusiveReportsCountAttribute()
+    {
         return $this->abusive_reports()->count();
     }
 
+
+    public function scopeApproved($query)
+    {
+        return $query->where('approved', true);
+    }
+
+    public function scopeNotApproved($query)
+    {
+        return $query->where('approved', false);
+    }
 }

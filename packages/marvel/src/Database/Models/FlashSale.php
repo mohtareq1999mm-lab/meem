@@ -8,47 +8,47 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Marvel\Traits\TranslationTrait;
+use Spatie\EloquentSortable\Sortable;
+use Spatie\EloquentSortable\SortableTrait;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\Translatable\HasTranslations;
+use Marvel\Services\Pricing\ProductPricingService;
+use Illuminate\Support\Str;
 
-class FlashSale extends Model
+
+class FlashSale extends Model implements HasMedia, Sortable
 {
-    use TranslationTrait, SoftDeletes, Sluggable;
+    use HasTranslations, SoftDeletes, InteractsWithMedia, SortableTrait;
 
     protected $table = 'flash_sales';
 
-    protected $appends = ['translated_languages'];
-
-    public $guarded = [];
-
-    protected $casts = [
-        'cover_image'  => 'json',
-        'sale_builder' => 'json',
-        'image'        => 'json'
+    public $sortable = [
+        'order_column_name' => 'order',
+        'sort_when_creating' => true,
     ];
 
-    /**
-     * Return the sluggable configuration array for this model.
-     *
-     * @return array
-     */
-    public function sluggable(): array
-    {
-        return [
-            'slug' => [
-                'source' => 'title',
-            ]
-        ];
-    }
+    public array $translatable = ["title", "description"];
+    public $fillable = [
+        'title',
+        'slug',
+        'description',
+        'start_date',
+        'end_date',
+        'status',
+        'type',
+        'discount',
+        'max_discount_amount',
+        'order',
+    ];
 
-    public function scopeWithUniqueSlugConstraints(Builder $query, Model $model): Builder
-    {
-        return $query->where('language', $model->language);
-    }
+    protected $casts = [
+        'status' => 'boolean',
+        'start_date' => 'date',
+        'end_date' => 'date',
+    ];
 
-    /**
-     * @return BelongsToMany
-     */
-    public function products(): BelongsToMany
+        public function products(): BelongsToMany
     {
         return $this->belongsToMany(Product::class, 'flash_sale_products')->withPivot('flash_sale_id', 'product_id');
     }
@@ -60,4 +60,85 @@ class FlashSale extends Model
     {
         return $this->hasMany(FlashSaleRequests::class);
     }
+
+    public function typeByLang()
+    {
+        $map = [
+            'ar' => [
+                'fixed_rate' => 'خصم من السعر بالقيمة',
+                'percentage' => 'خصم بالنسبة المئوية',
+                'final_price' => 'السعر النهائي',
+            ],
+            'en' => [
+                'fixed_rate' => 'Fixed discount',
+                'percentage' => 'Percentage discount',
+                'final_price' => 'Final price',
+            ],
+        ];
+
+        $locale = app()->getLocale();
+        return $map[$locale][$this->type] ?? $this->type;
+    }
+
+    public function calcPrice($price)
+    {
+        return app(ProductPricingService::class)->calculateFlashSalePrice($this, $price);
+    }
+
+    /**
+     * Determine if this flash sale is currently valid (active).
+     *
+     * @return bool
+     */
+    public function isValid(): bool
+    {
+        $today = today();
+
+        return $this->status
+            && (!$this->start_date || $this->start_date->lte($today))
+            && (!$this->end_date || $this->end_date->gte($today));
+    }
+
+
+    public function scopeValid(Builder $query)
+    {
+        return $query->where('status', true)
+            ->where(function ($query) {
+                $query->whereNull('start_date')
+                    ->orWhereDate('start_date', '<=', today());
+            })
+            ->where(function ($query) {
+                $query->whereNull('end_date')
+                    ->orWhereDate('end_date', '>=', today());
+            });
+    }
+    public function scopeInvalid(Builder $query)
+    {
+        return $query->where(function ($query) {
+            $query->where('status', false)
+                ->orWhere(function ($query) {
+                    $query->whereNotNull('start_date')
+                        ->whereDate('start_date', '>', today());
+                })
+
+                ->orWhere(function ($query) {
+                    $query->whereNotNull('end_date')
+                        ->whereDate('end_date', '<', today());
+                });
+        });
+    }
+    public function scopeSearch($query, $field, $term, $locale)
+    {
+        return $query->where(function ($q) use ($field, $term, $locale) {
+            $translatable = $this->translatable ?? [];
+            if (in_array($field, $translatable)) {
+                $q->where($field . '->' . $locale, 'like', "%$term%")
+                    ->orWhere($field, 'like', "%$term%");
+            } else {
+                $q->where($field, 'like', "%$term%");
+            }
+        });
+    }
+
+    
 }

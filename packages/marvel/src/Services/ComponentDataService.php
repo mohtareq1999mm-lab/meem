@@ -12,7 +12,7 @@ use Marvel\Database\Models\Type;
 
 /**
  * Service to provide data for Puck page builder components.
- * 
+ *
  * These endpoints are optimized for frontend component rendering,
  * returning only the fields needed for each component type.
  */
@@ -20,7 +20,7 @@ class ComponentDataService
 {
     /**
      * Get active flash sale products for ProductFlashSaleBlock.
-     * 
+     *
      * @param int $limit Maximum number of products to return
      * @param string|null $language Language filter
      * @return array<int, array>
@@ -78,7 +78,7 @@ class ComponentDataService
 
     /**
      * Get categories for CategoryBlock.
-     * 
+     *
      * @param int $limit Maximum number of categories to return
      * @param string|null $language Language filter
      * @param bool $topLevelOnly Only return top-level categories (no parent)
@@ -97,12 +97,13 @@ class ComponentDataService
                 'icon',
                 'image',
                 'details',
-                'parent',
+                'parent_id',
+                'level',
                 'type_id',
             ]);
 
         if ($topLevelOnly) {
-            $query->whereNull('parent');
+            $query->whereNull('parent_id');
         }
 
         if ($language) {
@@ -117,7 +118,7 @@ class ComponentDataService
 
     /**
      * Get collections (Types) for CollectionBlock.
-     * 
+     *
      * @param int $limit Maximum number of collections to return
      * @param string|null $language Language filter
      * @return array<int, array>
@@ -148,7 +149,7 @@ class ComponentDataService
 
     /**
      * Get featured/popular products.
-     * 
+     *
      * @param int $limit Maximum number of products to return
      * @param string|null $language Language filter
      * @return array<int, array>
@@ -184,9 +185,9 @@ class ComponentDataService
 
     /**
      * Get best selling products.
-     * 
+     *
      * @param int $limit Maximum number of products to return
-     * @param string|null $language Language filter  
+     * @param string|null $language Language filter
      * @return array<int, array>
      */
     public function getBestSellingProducts(int $limit = 10, ?string $language = null): array

@@ -14,17 +14,12 @@ use Marvel\Events\DigitalProductUpdateEvent;
 use Marvel\Events\FlashSaleProcessed;
 use Marvel\Events\Maintenance;
 use Marvel\Events\MessageSent;
-use Marvel\Events\OrderCancelled;
-use Marvel\Events\OrderCreated;
 use Marvel\Events\OrderDelivered;
 use Marvel\Events\OrderProcessed;
 use Marvel\Events\OrderReceived;
-use Marvel\Events\OrderStatusChanged;
 use Marvel\Events\OwnershipTransferStatusControl;
 use Marvel\Events\StoreNoticeEvent;
-use Marvel\Events\PaymentFailed;
 use Marvel\Events\PaymentMethods;
-use Marvel\Events\PaymentSuccess;
 use Marvel\Events\ProcessUserData;
 use Marvel\Events\ProductReviewApproved;
 use Marvel\Events\ProductReviewRejected;
@@ -43,21 +38,13 @@ use Marvel\Listeners\DigitalProductNotifyLogsListener;
 use Marvel\Listeners\FlashSaleProductProcess;
 use Marvel\Listeners\MaintenanceNotification;
 use Marvel\Listeners\OwnershipTransferStatusControlListener;
-use Marvel\Listeners\ProductInventoryDecrement;
-use Marvel\Listeners\ProductInventoryRestore;
 use Marvel\Listeners\ProductReviewApprovedListener;
 use Marvel\Listeners\ProductReviewRejectedListener;
 use Marvel\Listeners\Refund\SendRefundUpdateNotification;
-use Marvel\Listeners\SendOrderCreationNotification;
-use Marvel\Listeners\SendOrderCancelledNotification;
 use Marvel\Listeners\SendOrderDeliveredNotification;
 use Marvel\Listeners\SendOrderReceivedNotification;
-use Marvel\Listeners\SendOrderStatusChangedNotification;
-use Marvel\Listeners\SendPaymentFailedNotification;
-use Marvel\Listeners\SendPaymentSuccessNotification;
 use Marvel\Listeners\SendRefundRequestedNotification;
 use Marvel\Listeners\StoredMessagedNotifyLogsListener;
-use Marvel\Listeners\StoredOrderNotifyLogsListener;
 use Marvel\Listeners\StoredStoreNoticeNotifyLogsListener;
 use Marvel\Listeners\TransferredShopOwnershipNotification;
 
@@ -84,35 +71,21 @@ class EventServiceProvider extends ServiceProvider
             SendMessageNotification::class,
             StoredMessagedNotifyLogsListener::class
         ],
-        OrderCreated::class => [
-            SendOrderCreationNotification::class,
-            StoredOrderNotifyLogsListener::class
-        ],
         OrderReceived::class => [
             SendOrderReceivedNotification::class
         ],
         OrderProcessed::class => [
-            ProductInventoryDecrement::class,
-        ],
-        OrderCancelled::class => [
-            ProductInventoryRestore::class,
-            SendOrderCancelledNotification::class
+            // ProductInventoryDecrement is intentionally removed:
+            // Stock is already decremented synchronously in OrderRepository::deductStock().
+            // This listener was redundant AND broken (relied on commented-out ->products() relationship).
         ],
         OrderDelivered::class => [
             SendOrderDeliveredNotification::class
         ],
-        OrderStatusChanged::class => [
-            SendOrderStatusChangedNotification::class
-        ],
         OwnershipTransferStatusControl::class => [
             OwnershipTransferStatusControlListener::class
         ],
-        PaymentSuccess::class => [
-            SendPaymentSuccessNotification::class
-        ],
-        PaymentFailed::class => [
-            SendPaymentFailedNotification::class
-        ],
+
         PaymentMethods::class => [
             CheckAndSetDefaultCard::class
         ],
@@ -132,7 +105,8 @@ class EventServiceProvider extends ServiceProvider
             SendQuestionAnsweredNotification::class
         ],
         RefundApproved::class => [
-            RatingRemoved::class
+            RatingRemoved::class,
+            \App\Listeners\RestoreInventoryOnRefund::class,
         ],
         ReviewCreated::class => [
             SendReviewNotification::class

@@ -10,6 +10,8 @@ use Marvel\Database\Repositories\AddressRepository;
 use Marvel\Enums\Permission;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\AddressRequest;
+use Marvel\Http\Resources\AddressResource;
+use Marvel\Traits\ApiResponse;
 use Prettus\Validator\Exceptions\ValidatorException;
 
 /**
@@ -30,6 +32,7 @@ use Prettus\Validator\Exceptions\ValidatorException;
  */
 class AddressController extends CoreController
 {
+    use ApiResponse;
     public $repository;
 
     public function __construct(AddressRepository $repository)
@@ -56,7 +59,8 @@ class AddressController extends CoreController
      */
     public function index(Request $request)
     {
-        return $this->repository->with('customer')->all();
+        $addresses = $this->repository->where('customer_id', $request->user()->id)->get();
+        return $this->apiResponse("success", 200, true, AddressResource::collection($addresses));
     }
 
     /**
@@ -86,8 +90,9 @@ class AddressController extends CoreController
     public function store(AddressRequest $request)
     {
         try {
-            $validatedData = $request->all();
-            return $this->repository->create($validatedData);
+            $validatedData = $request->merge(['customer_id' => $request->user()->id])->all();
+            $address = $this->repository->create($validatedData);
+            return $this->apiResponse(COULD_NOT_CREATE_THE_RESOURCE, 201, true, AddressResource::make($address));
         } catch (MarvelException $e) {
             throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE);
         }
@@ -108,11 +113,13 @@ class AddressController extends CoreController
      */
     public function show($id)
     {
-        try {
-            return $this->repository->with('customer')->findOrFail($id);
-        } catch (MarvelException $e) {
-            throw new MarvelException(NOT_FOUND);
+        $address = $this->repository->where('customer_id', request()->user()->id)->find($id);
+
+        if (!$address) {
+            return $this->apiResponse(ADDRESS_NOT_FOUND, 404, false);
         }
+
+        return $this->apiResponse(ADDRESS_FOUND, 200, true, AddressResource::make($address));
     }
 
     /**
@@ -136,8 +143,13 @@ class AddressController extends CoreController
     public function update(AddressRequest $request, $id)
     {
         try {
-            $validatedData = $request->all();
-            return $this->repository->findOrFail($id)->update($validatedData);
+            $validatedData = $request->except('customer_id');
+            $address = $this->repository->where('customer_id', request()->user()->id)->find($id);
+            if (!$address) {
+                return $this->apiResponse(ADDRESS_NOT_FOUND, 404, false);
+            }
+            $address->update($validatedData);
+            return $this->apiResponse(ADDRESS_UPDATED, 200, true, AddressResource::make($address));
         } catch (MarvelException $e) {
             throw new MarvelException(COULD_NOT_UPDATE_THE_RESOURCE);
         }
@@ -161,14 +173,12 @@ class AddressController extends CoreController
     {
         try {
             $user = $request->user();
-            if ($user && $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
-                return $this->repository->findOrFail($id)->delete();
-            } else {
-                $address = $this->repository->findOrFail($id);
-                if ($address->customer_id == $user->id) {
-                    return $address->delete();
-                }
+            $address = $this->repository->where('customer_id', $user->id)->find($id);
+            if (!$address) {
+                return $this->apiResponse(ADDRESS_NOT_FOUND, 404, false);
             }
+            $address->delete();
+            return $this->apiResponse(ADDRESS_DELETED, 200, true);
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
         }

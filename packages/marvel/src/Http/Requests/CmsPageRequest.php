@@ -46,7 +46,7 @@ class CmsPageRequest extends FormRequest
             'content' => ['nullable', 'array'],
             'content.*.type' => ['sometimes', 'string'],
             'content.*.props' => ['nullable', 'array'],
-            // Note: 'order' removed - Puck uses array position for ordering
+            'content.*.order' => ['nullable', 'integer'],
 
             // Puck data format (root, content, zones)
             'data' => ['nullable', 'array'],

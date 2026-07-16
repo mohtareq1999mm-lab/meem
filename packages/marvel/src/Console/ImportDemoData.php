@@ -5,7 +5,7 @@ namespace Marvel\Console;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\DB;
-use function Laravel\Prompts\info;
+
 
 
 class ImportDemoData extends Command
@@ -17,13 +17,7 @@ class ImportDemoData extends Command
     public function handle()
     {
 
-        info('Copying necessary files for seeding....');
-
         (new Filesystem)->copyDirectory(__DIR__ . '/../../stubs/sql/' . config('shop.dummy_data_path'), public_path('sql'));
-
-        info('File copying successful');
-
-        info('Seeding....');
 
         $this->seedDemoData();
     }
@@ -198,6 +192,6 @@ class ImportDemoData extends Command
         $commissions_sql = file_get_contents($commissions);
         DB::statement($commissions_sql);
 
-        info('Seed completed successfully!');
+
     }
 }

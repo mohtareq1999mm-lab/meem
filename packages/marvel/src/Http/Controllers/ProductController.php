@@ -14,6 +14,7 @@ use Marvel\Database\Models\Wishlist;
 use Marvel\Database\Models\Variation;
 use Marvel\Exceptions\MarvelException;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
 use Marvel\Database\Models\Author;
 use Marvel\Database\Models\Category;
@@ -22,14 +23,19 @@ use Marvel\Http\Requests\ProductCreateRequest;
 use Marvel\Http\Requests\ProductUpdateRequest;
 use Marvel\Database\Repositories\ProductRepository;
 use Marvel\Database\Repositories\SettingsRepository;
+use Marvel\Traits\ApiResponse;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Marvel\Database\Models\Settings;
 use Marvel\Database\Models\Tag;
 use Marvel\Exceptions\MarvelNotFoundException;
 use \OpenAI;
 use Marvel\Enums\Permission;
+use Marvel\Http\Requests\BulkDeleteProductsRequest;
 use Marvel\Http\Resources\GetSingleProductResource;
+use Marvel\Http\Resources\product\ProductCollection;
 use Marvel\Http\Resources\ProductResource;
+
+use const Dom\NOT_FOUND_ERR;
 
 /**
  * @OA\Tag(name="Products", description="Product catalog endpoints - browse, search, and manage products")
@@ -88,6 +94,7 @@ use Marvel\Http\Resources\ProductResource;
  */
 class ProductController extends CoreController
 {
+    use ApiResponse;
     public $repository;
 
     public $settings;
@@ -96,120 +103,81 @@ class ProductController extends CoreController
     {
         $this->repository = $repository;
         $this->settings = $settings;
+        $this->middleware("permission:" . Permission::VIEW_PRODUCTS, ["only" => ["index", "show"]]);
+        $this->middleware("permission:" . Permission::CREATE_PRODUCT, ["only" => ["store"]]);
+        $this->middleware("permission:" . Permission::UPDATE_PRODUCT, ["only" => ["update"]]);
+        $this->middleware("permission:" . Permission::DELETE_PRODUCT, ["only" => ["destroy" , 'destroyAll', 'destroyBulk']]);
     }
 
 
+
     /**
-     * @OA\Get(
-     *     path="/products",
-     *     operationId="getProducts",
-     *     tags={"Products"},
-     *     summary="List all products",
-     *     description="Retrieve a paginated list of products with optional filtering by category, shop, type, price range, and more.",
-     *     @OA\Parameter(
-     *         name="limit",
-     *         in="query",
-     *         description="Number of products per page",
-     *         required=false,
-     *         @OA\Schema(type="integer", default=15, minimum=1, maximum=100, example=15)
-     *     ),
-     *     @OA\Parameter(
-     *         name="page",
-     *         in="query",
-     *         description="Page number for pagination",
-     *         required=false,
-     *         @OA\Schema(type="integer", default=1, minimum=1, example=1)
-     *     ),
-     *     @OA\Parameter(
-     *         name="language",
-     *         in="query",
-     *         description="Language code for product translations",
-     *         required=false,
-     *         @OA\Schema(type="string", default="en", example="en")
-     *     ),
-     *     @OA\Parameter(
-     *         name="search",
-     *         in="query",
-     *         description="Search term to filter products by name or description",
-     *         required=false,
-     *         @OA\Schema(type="string", example="shirt")
-     *     ),
-     *     @OA\Parameter(
-     *         name="shop_id",
-     *         in="query",
-     *         description="Filter by shop ID",
-     *         required=false,
-     *         @OA\Schema(type="integer", example=2)
-     *     ),
-     *     @OA\Parameter(
-     *         name="type_id",
-     *         in="query",
-     *         description="Filter by type/collection ID",
-     *         required=false,
-     *         @OA\Schema(type="integer", example=13)
-     *     ),
-     *     @OA\Parameter(
-     *         name="category",
-     *         in="query",
-     *         description="Filter by category slug",
-     *         required=false,
-     *         @OA\Schema(type="string", example="men")
-     *     ),
-     *     @OA\Parameter(
-     *         name="min_price",
-     *         in="query",
-     *         description="Minimum price filter",
-     *         required=false,
-     *         @OA\Schema(type="number", format="float", example=20.00)
-     *     ),
-     *     @OA\Parameter(
-     *         name="max_price",
-     *         in="query",
-     *         description="Maximum price filter",
-     *         required=false,
-     *         @OA\Schema(type="number", format="float", example=500.00)
-     *     ),
-     *     @OA\Parameter(
-     *         name="status",
-     *         in="query",
-     *         description="Filter by product status",
-     *         required=false,
-     *         @OA\Schema(type="string", enum={"publish", "draft", "approved", "rejected", "under_review"}, example="publish")
-     *     ),
-     *     @OA\Parameter(
-     *         name="orderBy",
-     *         in="query",
-     *         description="Field to order by",
-     *         required=false,
-     *         @OA\Schema(type="string", enum={"created_at", "name", "price", "min_price", "max_price"}, example="created_at")
-     *     ),
-     *     @OA\Parameter(
-     *         name="sortedBy",
-     *         in="query",
-     *         description="Sort direction",
-     *         required=false,
-     *         @OA\Schema(type="string", enum={"asc", "desc"}, default="desc", example="desc")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Products retrieved successfully",
-     *         @OA\JsonContent(ref="#/components/schemas/PaginatedProducts")
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Validation error",
-     *         @OA\JsonContent(ref="#/components/schemas/ValidationError")
-     *     )
-     * )
+     * Display a paginated listing of products.
+     *
+     * @param  Request $request
+     * @return JsonResponse
      */
     public function index(Request $request)
     {
         $limit = $request->limit ? $request->limit : 15;
-        $products = $this->fetchProducts($request)->paginate($limit)->withQueryString();
-        $data = ProductResource::collection($products)->response()->getData(true);
-        return formatAPIResourcePaginate($data);
+        $term = trim((string) $request->get('search', ''));
+        $sort = trim((string) $request->get('sort', ''));
+        $orderBy = trim((string) $request->get('orderBy', 'created_at'));
+        $orderDir = trim((string) $request->get('orderDir', 'desc'));
+
+        $products = $this->fetchProducts($request)->with(['variations', 'categories', 'flash_sales']);
+
+        if ($term !== '') {
+            $this->applyProductSearch($products, $term, app()->getLocale());
+        }
+
+        $sortable = ['created_at', 'updated_at', 'name', 'price', 'sold_quantity', 'sku', 'id'];
+        if ($sort !== '') {
+            $dir = strtolower($sort) === 'asc' ? 'asc' : 'desc';
+            $products = $products->orderBy('created_at', $dir);
+        } elseif (in_array($orderBy, $sortable)) {
+            $dir = strtolower($orderDir) === 'asc' ? 'asc' : 'desc';
+            if ($orderBy === 'name') {
+                $products = $products->orderBy('name->' . app()->getLocale(), $dir);
+            } else {
+                $products = $products->orderBy($orderBy, $dir);
+            }
+        } else {
+            $products = $products->orderBy('created_at', 'desc');
+        }
+
+        $products = $products->paginate($limit)->withQueryString();
+        $data = new ProductCollection($products);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $data);
     }
 
+    private function applyProductSearch($query, string $term, string $locale): void
+    {
+        $query->where(function (Builder $builder) use ($term, $locale) {
+            $this->applyTranslatableLike($builder, 'name', $term, $locale);
+
+            $builder->orWhere(function (Builder $sub) use ($term, $locale) {
+                $this->applyTranslatableLike($sub, 'description', $term, $locale);
+            });
+
+            $builder->orWhere('sku', 'like', "%{$term}%");
+
+            $builder->orWhereHas('variations', function (Builder $variantQuery) use ($term) {
+                $variantQuery->where('sku', 'like', "%{$term}%");
+            });
+        });
+    }
+
+    /**
+     * Apply a LIKE search on a translatable JSON field for the given locale.
+     */
+    private function applyTranslatableLike(Builder $query, string $field, string $term, string $locale): void
+    {
+        $query->where(function ($q) use ($field, $term, $locale) {
+            $q->where($field . '->' . $locale, 'like', "%$term%")
+                ->orWhere($field, 'like', "%$term%");
+        });
+    }
 
 
     /**
@@ -220,22 +188,38 @@ class ProductController extends CoreController
      */
     public function fetchProducts(Request $request)
     {
-        $unavailableProducts = [];
-        $language = $request->language ? $request->language : DEFAULT_LANGUAGE;
+        $products_query = $this->repository;
 
-        $products_query = $this->repository->where('language', $language);
-
-        if (isset($request->date_range)) {
-            $dateRange = explode('//', $request->date_range);
-            $unavailableProducts = $this->repository->getUnavailableProducts($dateRange[0], $dateRange[1]);
+        if ($request->has('status') && $request->status !== null) {
+            $products_query = $products_query->where('status', '=', $request->status);
         }
-        if (in_array('variation_options.digital_files', explode(';', $request->with)) || in_array('digital_files', explode(';', $request->with))) {
-            throw new AuthorizationException(NOT_AUTHORIZED);
-        }
-        $products_query = $products_query->whereNotIn('id', $unavailableProducts);
 
-        if ($request->flash_sale_builder) {
-            $products_query = $this->repository->processFlashSaleProducts($request, $products_query);
+        if ($request->has('category')) {
+            $categorySlug = trim((string) $request->category);
+            $products_query->whereHas('categories', function (Builder $q) use ($categorySlug) {
+                $q->where('slug', $categorySlug);
+            });
+        }
+
+        if ($request->has('banner')) {
+            $bannerSlug = trim((string) $request->banner);
+            $products_query->whereHas('banners', function (Builder $q) use ($bannerSlug) {
+                $q->where('slug', $bannerSlug);
+            });
+        }
+
+        if ($request->has('flash_sale')) {
+            $flashSaleSlug = trim((string) $request->flash_sale);
+            $products_query->whereHas('flash_sales', function (Builder $q) use ($flashSaleSlug) {
+                $q->where('slug', $flashSaleSlug);
+            });
+        }
+
+        if ($request->has('slider')) {
+            $sliderSlug = trim((string) $request->slider);
+            $products_query->whereHas('sliders', function (Builder $q) use ($sliderSlug) {
+                $q->where('slug', $sliderSlug);
+            });
         }
 
         return $products_query;
@@ -244,63 +228,15 @@ class ProductController extends CoreController
 
 
     /**
-     * @OA\Post(
-     *     path="/products",
-     *     operationId="createProduct",
-     *     tags={"Products"},
-     *     summary="Create a new product",
-     *     description="Create a new product. Requires STAFF or STORE_OWNER permissions.",
-     *     security={{"sanctum": {}}},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"name", "type_id", "shop_id", "product_type", "unit"},
-     *             @OA\Property(property="name", type="string", maxLength=255, example="Dido Pilot Glass"),
-     *             @OA\Property(property="slug", type="string", nullable=true, example="dido-pilot-glass"),
-     *             @OA\Property(property="description", type="string", maxLength=10000, example="Polarized sunglasses reduce glare reflected off of roads, bodies of water, snow and other horizontal surfaces."),
-     *             @OA\Property(property="type_id", type="integer", example=15),
-     *             @OA\Property(property="shop_id", type="integer", example=2),
-     *             @OA\Property(property="price", type="number", format="float", nullable=true, example=350.00),
-     *             @OA\Property(property="sale_price", type="number", format="float", nullable=true, example=300.00, description="Must be less than or equal to price"),
-     *             @OA\Property(property="quantity", type="integer", nullable=true, example=500),
-     *             @OA\Property(property="sku", type="string", example="SKU-GLASS-001"),
-     *             @OA\Property(property="unit", type="string", example="1 pc"),
-     *             @OA\Property(property="product_type", type="string", enum={"simple", "variable"}, example="simple"),
-     *             @OA\Property(property="status", type="string", enum={"draft", "publish", "approved", "rejected", "under_review", "unpublish"}, example="publish"),
-     *             @OA\Property(property="in_stock", type="boolean", example=true),
-     *             @OA\Property(property="is_taxable", type="boolean", example=false),
-     *             @OA\Property(property="is_digital", type="boolean", example=false),
-     *             @OA\Property(property="is_external", type="boolean", example=false),
-     *             @OA\Property(property="is_rental", type="boolean", example=false),
-     *             @OA\Property(property="height", type="string", nullable=true),
-     *             @OA\Property(property="width", type="string", nullable=true),
-     *             @OA\Property(property="length", type="string", nullable=true),
-     *             @OA\Property(property="external_product_url", type="string", nullable=true),
-     *             @OA\Property(property="external_product_button_text", type="string", nullable=true),
-     *             @OA\Property(property="categories", type="array", @OA\Items(type="integer"), example={3, 6}),
-     *             @OA\Property(property="tags", type="array", @OA\Items(type="integer"), example={1, 2}),
-     *             @OA\Property(property="image", type="object", @OA\Property(property="id", type="integer"), @OA\Property(property="original", type="string"), @OA\Property(property="thumbnail", type="string")),
-     *             @OA\Property(property="gallery", type="array", @OA\Items(type="object")),
-     *             @OA\Property(property="language", type="string", example="en")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="Product created successfully",
-     *         @OA\JsonContent(ref="#/components/schemas/Product")
-     *     ),
-     *     @OA\Response(response=401, description="Unauthenticated"),
-     *     @OA\Response(response=403, description="Forbidden - insufficient permissions"),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Validation error",
-     *         @OA\JsonContent(ref="#/components/schemas/ValidationError")
-     *     )
-     * )
+     * Store a newly created product via REST API.
+     *
+     * @param  ProductCreateRequest $request
+     * @return JsonResponse
      */
     public function store(ProductCreateRequest $request)
     {
-        return $this->ProductStore($request);
+        $product = $this->ProductStore($request);
+        return $this->apiResponse(CREATE_PRODUCT_SUCCESSFULLY, 201, true, ProductResource::make($product));
     }
 
 
@@ -314,13 +250,7 @@ class ProductController extends CoreController
     public function ProductStore(Request $request)
     {
         try {
-            // inform_purchased_customer
-            $setting = $this->settings->first();
-            if ($this->repository->hasPermission($request->user(), $request->shop_id)) {
-                return $this->repository->storeProduct($request, $setting);
-            } else {
-                throw new AuthorizationException(NOT_AUTHORIZED);
-            }
+            return $this->repository->storeProduct($request);
         } catch (MarvelException $e) {
             throw new MarvelException(SOMETHING_WENT_WRONG, $e->getMessage());
         }
@@ -329,53 +259,17 @@ class ProductController extends CoreController
 
 
     /**
-     * @OA\Get(
-     *     path="/products/{slug}",
-     *     operationId="getProduct",
-     *     tags={"Products"},
-     *     summary="Get a single product",
-     *     description="Retrieve detailed product information by slug or ID. Includes related products.",
-     *     @OA\Parameter(
-     *         name="slug",
-     *         in="path",
-     *         description="Product slug or ID",
-     *         required=true,
-     *         @OA\Schema(type="string", example="hoppister-tops")
-     *     ),
-     *     @OA\Parameter(
-     *         name="language",
-     *         in="query",
-     *         description="Language code for translations",
-     *         required=false,
-     *         @OA\Schema(type="string", default="en", example="en")
-     *     ),
-     *     @OA\Parameter(
-     *         name="with",
-     *         in="query",
-     *         description="Relationships to include (separated by semicolon)",
-     *         required=false,
-     *         @OA\Schema(type="string", example="categories;tags;shop;type")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Product retrieved successfully",
-     *         @OA\JsonContent(ref="#/components/schemas/Product")
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Product not found",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="MARVEL_ERROR.NOT_FOUND")
-     *         )
-     *     )
-     * )
+     * Display the specified product.
+     *
+     * @param  Request $request
+     * @param  int $id
+     * @return JsonResponse
      */
-    public function show(Request $request, $slug)
+    public function show(Request $request, $id)
     {
-        $request->merge(['slug' => $slug]);
         try {
-            $product = $this->fetchSingleProduct($request);
-            return new GetSingleProductResource($product);
+            $product = $this->fetchSingleProduct($request, $id);
+            return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ProductResource::make($product));
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
         }
@@ -389,75 +283,33 @@ class ProductController extends CoreController
      * @param $slug
      * @return JsonResponse
      */
-    public function fetchSingleProduct(Request $request)
+    public function fetchSingleProduct(Request $request, $id)
     {
         try {
-            $slug = $request->slug;
-            $language = $request->language ?? DEFAULT_LANGUAGE;
-            $user = $request->user();
-            $limit = isset($request->limit) ? $request->limit : 10;
-            $product = $this->repository->where('language', $language)->where('slug', $slug)->orWhere('id', $slug)->firstOrFail();
-            if (
-                in_array('variation_options.digital_file', explode(';', $request->with)) || in_array('digital_file', explode(';', $request->with))
-            ) {
-                if (!$this->repository->hasPermission($user, $product->shop_id)) {
-                    throw new AuthorizationException(NOT_AUTHORIZED);
-                }
-            }
-            $related_products = $this->repository->fetchRelated($slug, $limit, $language);
+            $limit = $request->limit ?? 10;
+            $product = $this->repository->where('id', $id)->firstOrFail();
+            $related_products = $this->repository->fetchRelated($id, $limit);
             $product->setRelation('related_products', $related_products);
 
-            return $product;
+            return $product->load('variations', 'categories', 'flash_sales', 'banners', 'sliders', 'brands', 'reviews');
         } catch (Exception $e) {
-            throw new MarvelNotFoundException();
+            throw new MarvelNotFoundException(NOT_FOUND);
         }
     }
 
-
     /**
-     * @OA\Put(
-     *     path="/products/{id}",
-     *     operationId="updateProduct",
-     *     tags={"Products"},
-     *     summary="Update a product",
-     *     description="Update an existing product. Requires STAFF or STORE_OWNER permissions for the shop.",
-     *     security={{"sanctum": {}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Product ID",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             @OA\Property(property="name", type="string", maxLength=255, example="Updated Hoppister Tops"),
-     *             @OA\Property(property="description", type="string", example="Updated description for this product."),
-     *             @OA\Property(property="price", type="number", format="float", example=399.00),
-     *             @OA\Property(property="sale_price", type="number", format="float", example=350.00),
-     *             @OA\Property(property="quantity", type="integer", example=1500),
-     *             @OA\Property(property="status", type="string", enum={"draft", "publish"}, example="publish"),
-     *             @OA\Property(property="categories", type="array", @OA\Items(type="integer"), example={3, 6}),
-     *             @OA\Property(property="tags", type="array", @OA\Items(type="integer"))
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Product updated successfully",
-     *         @OA\JsonContent(ref="#/components/schemas/Product")
-     *     ),
-     *     @OA\Response(response=401, description="Unauthenticated"),
-     *     @OA\Response(response=403, description="Forbidden - you don't have permission to update this product"),
-     *     @OA\Response(response=404, description="Product not found"),
-     *     @OA\Response(response=422, description="Validation error")
-     * )
+     * Update the specified product via REST API.
+     *
+     * @param  ProductUpdateRequest $request
+     * @param  int $id
+     * @return JsonResponse
      */
     public function update(ProductUpdateRequest $request, $id)
     {
         try {
             $request->id = $id;
-            return $this->updateProduct($request);
+            $product =  $this->updateProduct($request);
+            return $this->apiResponse(UPDATE_PRODUCT_SUCCESSFULLY, 200, true, ProductResource::make($product));
         } catch (MarvelException $e) {
             throw new MarvelException(COULD_NOT_UPDATE_THE_RESOURCE);
         }
@@ -472,40 +324,22 @@ class ProductController extends CoreController
      */
     public function updateProduct(Request $request)
     {
-        $setting = $this->settings->first();
-        if ($this->repository->hasPermission($request->user(), $request->shop_id)) {
+        try {
             $id = $request->id;
-            return $this->repository->updateProduct($request, $id, $setting);
-        } else {
+            return $this->repository->updateProduct($request, $id);
+        } catch (MarvelException $e) {
             throw new AuthorizationException(NOT_AUTHORIZED);
         }
     }
 
 
+
     /**
-     * @OA\Delete(
-     *     path="/products/{id}",
-     *     operationId="deleteProduct",
-     *     tags={"Products"},
-     *     summary="Delete a product",
-     *     description="Soft delete a product. Requires STAFF or STORE_OWNER permissions for the shop.",
-     *     security={{"sanctum": {}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Product ID to delete",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Product deleted successfully",
-     *         @OA\JsonContent(ref="#/components/schemas/Product")
-     *     ),
-     *     @OA\Response(response=401, description="Unauthenticated"),
-     *     @OA\Response(response=403, description="Forbidden - you don't have permission to delete this product"),
-     *     @OA\Response(response=404, description="Product not found")
-     * )
+     * Remove the specified product from storage via REST API.
+     *
+     * @param  Request $request
+     * @param  int $id
+     * @return JsonResponse
      */
     public function destroy(Request $request, $id)
     {
@@ -514,27 +348,72 @@ class ProductController extends CoreController
     }
 
 
-    /**
-     * destroyProduct
-     *
-     * @param  Request $request
-     * @return void
-     */
+
     public function destroyProduct(Request $request)
     {
         try {
             $product = $this->repository->findOrFail($request->id);
-            if ($this->repository->hasPermission($request->user(), $product->shop_id)) {
-                $product->delete();
-                return $product;
-            }
-            throw new AuthorizationException(NOT_AUTHORIZED);
+            $this->forceDeleteProduct($product);
+            return $this->apiResponse(DELETE_PRODUCT_SUCCESSFULLY, 200, true);
         } catch (MarvelException $e) {
             throw new MarvelException($e->getMessage());
         }
     }
 
 
+        public function destroyAll(Request $request)
+    {
+        try {
+            $count = Product::count();
+
+            Product::chunk(100, function ($products) {
+                foreach ($products as $product) {
+                    $this->deleteProduct($product);
+                }
+            });
+
+            return $this->apiResponse(PRODUCTS_DELETED_SUCCESSFULLY, 200, true, [
+                'deleted_count' => $count,
+            ]);
+        } catch (MarvelException $e) {
+            throw new MarvelException($e->getMessage());
+        }
+    }
+
+
+    /**
+     * destroyBulk
+     *
+     * Force delete specific products by IDs with their variants, relations, and media.
+     *
+     * @param  BulkDeleteProductsRequest $request
+     * @return JsonResponse
+     */
+    public function destroyBulk(BulkDeleteProductsRequest $request): JsonResponse
+    {
+        try {
+            $ids = $request->input('ids');
+
+            Product::whereIn('id', $ids)->chunk(100, function ($products) {
+                foreach ($products as $product) {
+                    $this->deleteProduct($product);
+                }
+            });
+
+            return $this->apiResponse(PRODUCTS_DELETED_SUCCESSFULLY, 200, true, [
+                'deleted_ids' => $ids,
+            ]);
+        } catch (MarvelException $e) {
+            throw new MarvelException($e->getMessage());
+        }
+    }
+
+
+    private function deleteProduct(Product $product): void
+    {
+
+        $product->delete();
+    }
 
     /**
      * relatedProducts
@@ -546,8 +425,7 @@ class ProductController extends CoreController
     {
         $limit = isset($request->limit) ? $request->limit : 10;
         $slug = $request->slug;
-        $language = $request->language ?? DEFAULT_LANGUAGE;
-        return $this->repository->fetchRelated($slug, $limit, $language);
+        return $this->repository->fetchRelated($slug, $limit);
     }
 
 
@@ -1127,8 +1005,7 @@ class ProductController extends CoreController
      */
     public function fetchDraftedProducts(Request $request)
     {
-        $user = $request->user() ?? null;
-        ;
+        $user = $request->user() ?? null;;
         $language = $request->language ? $request->language : DEFAULT_LANGUAGE;
 
         $products_query = $this->repository->with(['type', 'shop'])->where('language', $language);
@@ -1198,7 +1075,7 @@ class ProductController extends CoreController
         $user = $request->user();
         $language = $request->language ? $request->language : DEFAULT_LANGUAGE;
 
-        $products_query = $this->repository->with(['type', 'shop'])->where('language', $language)->where('quantity', '<', 10);
+        $products_query = $this->repository->with(['type', 'shop'])->where('language', $language)->where('stock_quantity', '<', 10);
 
         switch ($user) {
             case $user->hasPermissionTo(Permission::SUPER_ADMIN):
@@ -1234,5 +1111,35 @@ class ProductController extends CoreController
         }
 
         return $products_query;
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/api/products/{id}/fast-shipping",
+     *     tags={"Products"},
+     *     summary="Toggle fast shipping availability for a product",
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="is_fast_shipping_available", type="boolean", example=true)
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Fast shipping status updated"),
+     *     @OA\Response(response=404, description="Product not found")
+     * )
+     */
+    public function toggleFastShipping(Request $request, $id): JsonResponse
+    {
+        try {
+            $product = Product::findOrFail($id);
+            $validated = $request->validate([
+                'is_fast_shipping_available' => ['required', 'boolean'],
+            ]);
+            $product->update($validated);
+            return $this->apiResponse(UPDATE_PRODUCT_SUCCESSFULLY, 200, true, ProductResource::make($product->load('variations', 'categories', 'flash_sales')));
+        } catch (MarvelException $e) {
+            throw new MarvelException(NOT_FOUND);
+        }
     }
 }

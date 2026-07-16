@@ -2,13 +2,13 @@
 
 namespace Marvel\Listeners;
 
-use Exception;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Marvel\Database\Models\FlashSale;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\Variation;
 use Marvel\Enums\ProductType;
+use Marvel\Services\Pricing\ProductPricingService;
 use Marvel\Events\FlashSaleProcessed;
 
 
@@ -67,11 +67,13 @@ class FlashSaleProductProcess implements ShouldQueue
     /**
      * processNewlyAddedProductInFlashSale
      *
-     * @param  mixed $products
+     * @param  mixed $data
      * @return void
      */
     public function processNewlyAddedProductInFlashSale($data)
     {
+        $pricingService = app(ProductPricingService::class);
+
         if (isset($data['attached_product_ids'])) {
             $current_date = date("Y-m-d");
             $start_date = Carbon::parse($data['requested_flash_sale']->start_date)->toDateString();
@@ -85,13 +87,13 @@ class FlashSaleProductProcess implements ShouldQueue
                         case 'percentage':
                             if ($product->product_type === ProductType::VARIABLE) {
                                 foreach ($product->variation_options as $key => $variation) {
-                                    $sale_price = $variation->price - ($variation->price * ($flash_sale->rate / 100));
+                                    $sale_price = $pricingService->calculateVariantCurrentPrice($product, $variation, $flash_sale);
                                     Variation::where('id', $variation->id)->update(['sale_price' => $sale_price]);
                                 }
                             }
 
                             if ($product->product_type === ProductType::SIMPLE) {
-                                $product->sale_price = $product->price - ($product->price * ($flash_sale->rate / 100));
+                                $product->sale_price = $pricingService->calculateProductPricing($product, $flash_sale)['final_price'];
                             }
 
                             break;
@@ -99,15 +101,13 @@ class FlashSaleProductProcess implements ShouldQueue
                         case 'fixed_rate':
                             if ($product->product_type === ProductType::VARIABLE) {
                                 foreach ($product->variation_options as $key => $variation) {
-                                    $sale_price = $variation->price - $flash_sale->rate;
-                                    $sale_price = $sale_price <= 0 ? null : $sale_price;
+                                    $sale_price = $pricingService->calculateVariantCurrentPrice($product, $variation, $flash_sale);
                                     Variation::where('id', $variation->id)->update(['sale_price' => $sale_price]);
                                 }
                             }
 
                             if ($product->product_type === ProductType::SIMPLE) {
-                                $sale_price = $product->price - $flash_sale->rate <= 0 ? null : $product->price - $flash_sale->rate;
-                                $product->sale_price = $sale_price;
+                                $product->sale_price = $pricingService->calculateProductPricing($product, $flash_sale)['final_price'];
                             }
 
                             break;
@@ -129,6 +129,7 @@ class FlashSaleProductProcess implements ShouldQueue
      */
     public function processFlashSaleProducts($flash_sale)
     {
+        $pricingService = app(ProductPricingService::class);
         $current_date = date("Y-m-d");
         $start_date = Carbon::parse($flash_sale->start_date)->toDateString();
 
@@ -138,19 +139,19 @@ class FlashSaleProductProcess implements ShouldQueue
             foreach ($product_ids as $key => $product_id) {
                 $product = Product::where('id', '=', $product_id)->with(['variation_options'])->first();
 
-                if ($flash_sale->sale_status == 1) {
+                if ($flash_sale->status == 1) {
                     if ($current_date === $start_date) {
                         switch ($flash_sale->type) {
                             case 'percentage':
                                 if ($product->product_type === ProductType::VARIABLE) {
                                     foreach ($product->variation_options as $key => $variation) {
-                                        $sale_price = $variation->price - ($variation->price * ($flash_sale->rate / 100));
+                                        $sale_price = $pricingService->calculateVariantCurrentPrice($product, $variation, $flash_sale);
                                         Variation::where('id', $variation->id)->update(['sale_price' => $sale_price]);
                                     }
                                 }
 
                                 if ($product->product_type === ProductType::SIMPLE) {
-                                    $product->sale_price = $product->price - ($product->price * ($flash_sale->rate / 100));
+                                    $product->sale_price = $pricingService->calculateProductPricing($product, $flash_sale)['final_price'];
                                 }
 
                                 break;
@@ -158,15 +159,13 @@ class FlashSaleProductProcess implements ShouldQueue
                             case 'fixed_rate':
                                 if ($product->product_type === ProductType::VARIABLE) {
                                     foreach ($product->variation_options as $key => $variation) {
-                                        $sale_price = $variation->price - $flash_sale->rate;
-                                        $sale_price = $sale_price <= 0 ? null : $sale_price;
+                                        $sale_price = $pricingService->calculateVariantCurrentPrice($product, $variation, $flash_sale);
                                         Variation::where('id', $variation->id)->update(['sale_price' => $sale_price]);
                                     }
                                 }
 
                                 if ($product->product_type === ProductType::SIMPLE) {
-                                    $sale_price = $product->price - $flash_sale->rate <= 0 ? null : $product->price - $flash_sale->rate;
-                                    $product->sale_price = $sale_price;
+                                    $product->sale_price = $pricingService->calculateProductPricing($product, $flash_sale)['final_price'];
                                 }
 
                                 break;
@@ -206,7 +205,7 @@ class FlashSaleProductProcess implements ShouldQueue
      */
     public function processSoftDeletedFlashSales($flash_sale)
     {
-        $flash_sale->sale_status = false;
+        $flash_sale->status = false;
         $flash_sale->products()->detach($flash_sale['sale_builder']['product_ids']);
         $flash_sale->save();
 

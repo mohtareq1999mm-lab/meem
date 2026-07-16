@@ -13,4 +13,6 @@ final class RefundPolicyStatus extends Enum
 {
     public const APPROVED = 'approved';
     public const PENDING = 'pending';
+    public const REJECTED = 'rejected';
+    public const PROCESSING = 'processing';
 }

@@ -75,20 +75,20 @@ class InstallCommand extends Command
 
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        Permission::firstOrCreate(['name' => UserPermission::SUPER_ADMIN]);
-        Permission::firstOrCreate(['name' => UserPermission::CUSTOMER]);
-        Permission::firstOrCreate(['name' => UserPermission::STORE_OWNER]);
-        Permission::firstOrCreate(['name' => UserPermission::STAFF]);
+        Permission::firstOrCreate(['name' => UserPermission::SUPER_ADMIN, 'guard_name' => 'api']);
+        Permission::firstOrCreate(['name' => UserPermission::CUSTOMER,    'guard_name' => 'api']);
+        Permission::firstOrCreate(['name' => UserPermission::STORE_OWNER, 'guard_name' => 'api']);
+        Permission::firstOrCreate(['name' => UserPermission::STAFF,       'guard_name' => 'api']);
 
         $superAdminPermissions = [UserPermission::SUPER_ADMIN, UserPermission::STORE_OWNER, UserPermission::CUSTOMER];
         $storeOwnerPermissions = [UserPermission::STORE_OWNER, UserPermission::CUSTOMER];
         $staffPermissions = [UserPermission::STAFF, UserPermission::CUSTOMER];
         $customerPermissions = [UserPermission::CUSTOMER];
 
-        Role::firstOrCreate(['name' => UserRole::SUPER_ADMIN])->syncPermissions($superAdminPermissions);
-        Role::firstOrCreate(['name' => UserRole::STORE_OWNER])->syncPermissions($storeOwnerPermissions);
-        Role::firstOrCreate(['name' => UserRole::STAFF])->syncPermissions($staffPermissions);
-        Role::firstOrCreate(['name' => UserRole::CUSTOMER])->syncPermissions($customerPermissions);
+        Role::firstOrCreate(['name' => UserRole::SUPER_ADMIN,  'guard_name' => 'api'])->syncPermissions($superAdminPermissions);
+        Role::firstOrCreate(['name' => UserRole::STORE_OWNER,  'guard_name' => 'api'])->syncPermissions($storeOwnerPermissions);
+        Role::firstOrCreate(['name' => UserRole::STAFF,        'guard_name' => 'api'])->syncPermissions($staffPermissions);
+        Role::firstOrCreate(['name' => UserRole::CUSTOMER,     'guard_name' => 'api'])->syncPermissions($customerPermissions);
 
         $this->call('marvel:create-admin'); // creating Admin
 

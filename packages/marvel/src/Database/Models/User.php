@@ -2,12 +2,16 @@
 
 namespace Marvel\Database\Models;
 
-use App\Enums\RoleType;
 // DISABLED: Email verification not needed
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Notifications\Notifiable;
+use App\Events\UserRolesUpdated;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -15,14 +19,27 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 // DISABLED: Notifiable trait causes SMTP connection attempts
 // use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Database\Factories\UserFactory;
 use Marvel\Enums\OrderStatus;
-use Marvel\Enums\PaymentStatus;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\OneTimePasswords\Models\Concerns\HasOneTimePasswords;
 
-class User extends Authenticatable // Removed: implements MustVerifyEmail
+class User extends Authenticatable implements MustVerifyEmail, HasMedia
 {
     // DISABLED: use Notifiable;
-    use HasRoles;
+    use HasRoles {
+        assignRole as protected assignRoleViaTrait;
+        syncRoles as protected syncRolesViaTrait;
+        removeRole as protected removeRoleViaTrait;
+    }
     use HasApiTokens;
+    use Notifiable;
+    use SoftDeletes;
+    use InteractsWithMedia;
+    use HasFactory;
+    use HasOneTimePasswords;
+
 
 
     protected $guard_name = 'api';
@@ -37,9 +54,11 @@ class User extends Authenticatable // Removed: implements MustVerifyEmail
         'email',
         'password',
         'is_active',
-        'shop_id',
+        'type',
         // Allow setting verification timestamp explicitly on creation/update
         'email_verified_at',
+        'phone_number',
+        'remember_token',
     ];
 
     /**
@@ -58,6 +77,11 @@ class User extends Authenticatable // Removed: implements MustVerifyEmail
 
     protected $appends = ['email_verified'];
 
+    protected static function newFactory()
+    {
+        return UserFactory::new();
+    }
+
     protected static function boot()
     {
         parent::boot();
@@ -65,6 +89,42 @@ class User extends Authenticatable // Removed: implements MustVerifyEmail
         static::addGlobalScope('order', function (Builder $builder) {
             $builder->orderBy('updated_at', 'desc');
         });
+    }
+
+    public function assignRole(...$roles)
+    {
+        $oldRoles = $this->roles->pluck('name')->toArray();
+        $result = $this->assignRoleViaTrait(...$roles);
+        $this->unsetRelation('roles');
+        $newRoles = $this->roles->pluck('name')->toArray();
+        if ($oldRoles !== $newRoles) {
+            event(new UserRolesUpdated($this, $oldRoles, $newRoles));
+        }
+        return $result;
+    }
+
+    public function syncRoles(...$roles)
+    {
+        $oldRoles = $this->roles->pluck('name')->toArray();
+        $result = $this->syncRolesViaTrait(...$roles);
+        $this->unsetRelation('roles');
+        $newRoles = $this->roles->pluck('name')->toArray();
+        if ($oldRoles !== $newRoles) {
+            event(new UserRolesUpdated($this, $oldRoles, $newRoles));
+        }
+        return $result;
+    }
+
+    public function removeRole($role)
+    {
+        $oldRoles = $this->roles->pluck('name')->toArray();
+        $result = $this->removeRoleViaTrait($role);
+        $this->unsetRelation('roles');
+        $newRoles = $this->roles->pluck('name')->toArray();
+        if ($oldRoles !== $newRoles) {
+            event(new UserRolesUpdated($this, $oldRoles, $newRoles));
+        }
+        return $result;
     }
 
     public function getEmailVerifiedAttribute(): bool
@@ -82,6 +142,15 @@ class User extends Authenticatable // Removed: implements MustVerifyEmail
     }
 
     /**
+     * @return HasOne
+     */
+
+    public function cart()
+    {
+        return $this->hasOne(Cart::class);
+    }
+
+    /**
      * @return HasMany
      */
     public function conversations(): HasMany
@@ -94,7 +163,7 @@ class User extends Authenticatable // Removed: implements MustVerifyEmail
      */
     public function orders(): HasMany
     {
-        return $this->hasMany(Order::class, 'customer_id')->with(['products.variation_options', 'reviews']);
+        return $this->hasMany(Order::class, 'user_id');
     }
 
     /**
@@ -213,11 +282,31 @@ class User extends Authenticatable // Removed: implements MustVerifyEmail
     /**
      * coupons
      *
+     * @return BelongsToMany
+     */
+    public function coupons(): BelongsToMany
+    {
+        return $this->belongsToMany(Coupon::class, 'coupon_usages')
+            ->withPivot(['order_id', 'used_at'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Backward-compatible alias for the coupon relation.
+     *
+     * @return BelongsToMany
+     */
+    public function coupon(): BelongsToMany
+    {
+        return $this->coupons();
+    }
+
+    /**
      * @return HasMany
      */
-    public function coupon(): HasMany
+    public function couponUsages(): HasMany
     {
-        return $this->HasMany(Coupon::class);
+        return $this->hasMany(CouponUsage::class, 'user_id');
     }
 
     public function loadLastOrder()
@@ -228,5 +317,30 @@ class User extends Authenticatable // Removed: implements MustVerifyEmail
         $this->setRelation('last_order', $data);
 
         return $this;
+    }
+
+    /**
+     * Backward-compatible method for verifying one-time passwords.
+     * Delegates to the Spatie one-time-passwords consumer and returns
+     * a boolean indicating whether the password was valid.
+     *
+     * @param string $password
+     * @return bool
+     */
+    public function verifyOneTimePassword(string $password): bool
+    {
+        $result = $this->consumeOneTimePassword($password);
+
+        return method_exists($result, 'isOk') ? $result->isOk() : false;
+    }
+
+    public function receivesBroadcastNotificationsOn(): string
+    {
+        return 'users.' . $this->id;
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('user-image')->useDisk('users');
     }
 }

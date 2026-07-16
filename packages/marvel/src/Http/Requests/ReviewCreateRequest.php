@@ -28,13 +28,11 @@ class ReviewCreateRequest extends FormRequest
     public function rules()
     {
         return [
-            'order_id'              => ['required', 'exists:Marvel\Database\Models\Order,id'],
             'product_id'            => ['required', 'exists:Marvel\Database\Models\Product,id'],
-            'variation_option_id'   => ['integer', 'exists:Marvel\Database\Models\Variation,id'],
             'comment'               => ['required', 'string'],
             'rating'                => ['required', 'integer', 'min:1', 'max:5'],
-            'shop_id'               => ['required', 'exists:Marvel\Database\Models\Shop,id'],
-            'photos'                => ['array'],
+            // 'images'                        => ['sometimes', 'array'],
+            // 'images.*'                      => ['required_with:images', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
         ];
     }
 

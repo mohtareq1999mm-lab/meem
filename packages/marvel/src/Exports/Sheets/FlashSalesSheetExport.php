@@ -24,7 +24,7 @@ class FlashSalesSheetExport implements FromCollection, WithTitle, WithHeadings
 
     public function collection()
     {
-        $query = Product::query()->with(['flash_sales' => fn($q) => $q->valid()]);
+        $query = Product::query()->with('flash_sales');
 
         $products = $query->get();
         $rows = [];

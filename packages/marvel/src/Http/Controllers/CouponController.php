@@ -13,8 +13,11 @@ use Marvel\Database\Repositories\CouponRepository;
 use Prettus\Validator\Exceptions\ValidatorException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Marvel\Database\Models\Coupon;
 use Marvel\Enums\Permission;
 use Marvel\Http\Resources\CouponResource;
+use Marvel\Traits\ApiResponse;
+use Svg\Tag\Rect;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Throwable;
 
@@ -37,11 +40,16 @@ use Throwable;
  */
 class CouponController extends CoreController
 {
+    use ApiResponse;
     public $repository;
 
     public function __construct(CouponRepository $repository)
     {
         $this->repository = $repository;
+        $this->middleware("permission:" . Permission::VIEW_COUPONS, ["only" => ["index", "show"]]);
+        $this->middleware("permission:" . Permission::CREATE_COUPON, ["only" => ["store"]]);
+        $this->middleware("permission:" . Permission::UPDATE_COUPON, ["only" => ["update"]]);
+        $this->middleware("permission:" . Permission::DELETE_COUPON, ["only" => ["destroy"]]);
     }
 
     /**
@@ -69,80 +77,55 @@ class CouponController extends CoreController
     public function index(Request $request)
     {
         $limit = $request->limit ?? 15;
-        $language = $request->language ?? DEFAULT_LANGUAGE;
-        $coupons = $this->fetchCoupons($request, $language)->paginate($limit)->withQueryString();
-        return formatAPIResourcePaginate(CouponResource::collection($coupons)->response()->getData(true));
+        $query = $this->fetchCoupons($request);
+        $coupons = $query->paginate($limit)->withQueryString();
+        $couponData = CouponResource::collection($coupons)->response()->getData(true);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
+            "data" => $couponData['data'] ?? [],
+            "page" => $couponData['meta']['current_page'] ?? 0,
+            "current_page" => $couponData['meta']['current_page'] ?? 0,
+            "from" => $couponData['meta']['from'] ?? 0,
+            "to" => $couponData['meta']['to'] ?? 0,
+            "last_page" => $couponData['meta']['last_page'] ?? 0,
+            "path" => $couponData['meta']['path'] ?? "",
+            "per_page" => $couponData['meta']['per_page'] ?? 0,
+            "total" => $couponData['meta']['total'] ?? 0,
+            "next_page_url" => $couponData['links']['next'] ?? "",
+            "prev_page_url" => $couponData['links']['prev'] ?? "",
+            "last_page_url" => $couponData['links']['last'] ?? "",
+            "first_page_url" => $couponData['links']['first'] ?? "",
+        ]);
     }
     public function fetchCoupons(Request $request)
     {
-        try {
-            $language = $request->language ?? DEFAULT_LANGUAGE;
-            $user = $request->user();
-            $query = $this->repository->whereNotNull('id')->with('shop');
-            if ($user) {
-                switch (true) {
-                    case $user->hasPermissionTo(Permission::SUPER_ADMIN):
-                        $query->where('language', $language);
-                        break;
-
-                    case $user->hasPermissionTo(Permission::STORE_OWNER):
-                        $this->repository->hasPermission($user, $request->shop_id)
-                            ? $query->where('shop_id', $request->shop_id)
-                            : $query->where('user_id', $user->id)->whereIn('shop_id', $user->shops->pluck('id'));
-                        $query->where('language', $language);
-                        break;
-
-                    case $user->hasPermissionTo(Permission::STAFF):
-                        $query->where('shop_id', $request->shop_id)->where('language', $language);
-                        break;
-
-                    default:
-                        $query->where('language', $language);
-                        break;
-                }
-            } else {
-                if ($request->shop_id) {
-                    $query->where('shop_id', $request->shop_id);
-                }
-                $query->where('language', $language);
-            }
-            return $query;
-        } catch (MarvelException $e) {
-            throw new MarvelException(SOMETHING_WENT_WRONG, $e->getMessage());
+        $active = $request->active ?? null;
+        $Inactive = $request->inactive ?? null;
+        $search = $request->search ?? null;
+        $order = $request->order;
+        $sortedBy = $request->sortedBy ?? 'asc';
+        $query = $this->repository->modelQuery();
+        if ($active) {
+            $query = $query->valid();
         }
+        if ($Inactive) {
+            $query = $query->invalid();
+        }
+        if ($search) {
+            $query = $query->search('name', $search, app()->getLocale())
+                ->orWhere('code', 'like', "%$search%");
+        }
+        if ($order && in_array($order, ['id', 'code', 'name', 'discount', 'discount_type', 'start_date', 'end_date', 'limiter', 'used', 'status', 'created_at', 'updated_at'])) {
+            $query = $query->orderBy($order, $sortedBy === 'desc' ? 'desc' : 'asc');
+        }
+        return $query;
     }
-
-    /**
-     * @OA\Post(
-     *     path="/coupons",
-     *     operationId="storeCoupon",
-     *     tags={"Coupons"},
-     *     summary="Create new coupon",
-     *     description="Create a new coupon for a shop. Accessible by Store Owners and Super Admins.",
-     *     security={{"sanctum": {}}},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"code", "type", "amount", "shop_id"},
-     *             @OA\Property(property="code", type="string", example="SUMMER24"),
-     *             @OA\Property(property="type", type="string", enum={"percentage", "fixed", "free_shipping"}),
-     *             @OA\Property(property="amount", type="number", example=20),
-     *             @OA\Property(property="shop_id", type="integer", example=1),
-     *             @OA\Property(property="minimum_cart_amount", type="number", example=100),
-     *             @OA\Property(property="active_from", type="string", format="date-time"),
-     *             @OA\Property(property="expire_at", type="string", format="date-time")
-     *         )
-     *     ),
-     *     @OA\Response(response=201, description="Coupon created", @OA\JsonContent(ref="#/components/schemas/Coupon")),
-     *     @OA\Response(response=422, description="Validation error")
-     * )
-     */
     public function store(CouponRequest $request)
     {
         try {
-            return $this->repository->storeCoupon($request);
+            $coupon =  $this->repository->storeCoupon($request);
+            return $this->apiResponse(CREATED_COUPON_SUCCESSFULLY, 201, true, CouponResource::make($coupon));
         } catch (MarvelException $e) {
-            throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE, $e->getMessage());
+            return $this->apiResponse(COULD_NOT_CREATE_THE_RESOURCE, 400, false);
         }
     }
 
@@ -159,21 +142,14 @@ class CouponController extends CoreController
      *     @OA\Response(response=404, description="Coupon not found")
      * )
      */
-    public function show(Request $request, $params)
+    public function show(Request $request, $id)
     {
         try {
-            $language = $request->language ?? DEFAULT_LANGUAGE;
-            try {
-                if (is_numeric($params)) {
-                    $params = (int) $params;
-                    return $this->repository->where('id', $params)->firstOrFail();
-                }
-                return $this->repository->where('code', $params)->where('language', $language)->firstOrFail();
-            } catch (Throwable $e) {
-                throw new ModelNotFoundException(NOT_FOUND);
-            }
-        } catch (MarvelException $e) {
-            throw new MarvelException(NOT_FOUND);
+
+            $coupon =  $this->repository->where('id', $id)->orWhere('code', $id)->firstOrFail();
+            return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, CouponResource::make($coupon));
+        } catch (Throwable $e) {
+            return $this->apiResponse(NOT_FOUND, 404, false);
         }
     }
     /**
@@ -195,18 +171,18 @@ class CouponController extends CoreController
      *     @OA\Response(response=404, description="Coupon not found or invalid")
      * )
      */
-    public function verify(Request $request)
-    {
-        $request->validate([
-            'code' => 'required|string',
-            'sub_total' => 'required|numeric',
-        ]);
-        try {
-            return $this->repository->verifyCoupon($request);
-        } catch (MarvelException $e) {
-            throw new MarvelException(NOT_FOUND);
-        }
-    }
+    // public function verify(Request $request)
+    // {
+    //     $request->validate([
+    //         'code' => 'required|string',
+    //         'sub_total' => 'required|numeric',
+    //     ]);
+    //     try {
+    //         return $this->repository->verifyCoupon($request);
+    //     } catch (MarvelException $e) {
+    //         throw new MarvelException(NOT_FOUND);
+    //     }
+    // }
 
     /**
      * @OA\Put(
@@ -231,47 +207,12 @@ class CouponController extends CoreController
     public function update(UpdateCouponRequest $request, $id)
     {
         try {
-            $request->id = $id;
-            return $this->updateCoupon($request);
+            $coupon = $this->repository->updateCoupon($id, $request);
+            return $this->apiResponse(UPDATED_COUPON_SUCCESSFULLY, 200, true, CouponResource::make($coupon));
         } catch (MarvelException $th) {
-            throw new MarvelException();
+            return $this->apiResponse(COULD_NOT_UPDATE_THE_RESOURCE, 400, false);
         }
     }
-
-    /**
-     * Undocumented function
-     *
-     * @param  $request
-     * @return void
-     */
-    public function updateCoupon(Request $request)
-    {
-        $id = $request->id;
-        $dataArray = $this->repository->getDataArray();
-
-        try {
-            $code = $this->repository->findOrFail($id);
-
-            if ($request->has('language') && $request['language'] === DEFAULT_LANGUAGE) {
-                $updatedCoupon = $request->only($dataArray);
-                if (!$request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
-                    $updatedCoupon['is_approve'] = false;
-                }
-                $nonTranslatableKeys = ['language', 'image', 'description', 'id'];
-                foreach ($nonTranslatableKeys as $key) {
-                    if (isset($updatedCoupon[$key])) {
-                        unset($updatedCoupon[$key]);
-                    }
-                }
-                $this->repository->where('code', $code->code)->update($updatedCoupon);
-            }
-
-            return $this->repository->update($request->only($dataArray), $id);
-        } catch (Exception $e) {
-            throw new HttpException(404, NOT_FOUND);
-        }
-    }
-
 
     /**
      * @OA\Delete(
@@ -288,9 +229,24 @@ class CouponController extends CoreController
     public function destroy($id)
     {
         try {
-            return $this->repository->findOrFail($id)->delete();
+            $this->repository->findOrFail($id)->delete();
+            return $this->apiResponse(DELETED_COUPON_SUCCESSFULLY, 200, true);
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
+        }
+    }
+
+
+    public function addCouponToCart(Request $request)
+    {
+        try {
+            $request->validate([
+                'code' => 'required|string|exists:coupons,code',
+            ]);
+            $coupon = $this->repository->addCouponToCart($request->code);
+            return $this->apiResponse(COUPON_ADDED_TO_CART_SUCCESSFULLY, 200, true);
+        } catch (MarvelException $e) {
+            return $this->apiResponse(COULD_NOT_ADD_COUPON_TO_CART, 400, false);
         }
     }
 
@@ -317,14 +273,10 @@ class CouponController extends CoreController
      */
     public function approveCoupon(Request $request)
     {
-
         try {
-            if (!$request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
-                throw new MarvelException(NOT_AUTHORIZED);
-            }
             $coupon = $this->repository->findOrFail($request->id);
             $coupon->update(['is_approve' => true]);
-            return $coupon;
+            return $this->apiResponse(UPDATED_COUPON_SUCCESSFULLY, 200, true, CouponResource::make($coupon));
         } catch (MarvelException $th) {
             throw new MarvelException(SOMETHING_WENT_WRONG);
         }
@@ -354,13 +306,10 @@ class CouponController extends CoreController
     public function disApproveCoupon(Request $request)
     {
         try {
-            if (!$request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
-                throw new MarvelException(NOT_AUTHORIZED);
-            }
             $coupon = $this->repository->findOrFail($request->id);
             $coupon->is_approve = false;
             $coupon->save();
-            return $coupon;
+            return $this->apiResponse(UPDATED_COUPON_SUCCESSFULLY, 200, true, CouponResource::make($coupon));
         } catch (MarvelException $th) {
             throw new MarvelException(SOMETHING_WENT_WRONG);
         }

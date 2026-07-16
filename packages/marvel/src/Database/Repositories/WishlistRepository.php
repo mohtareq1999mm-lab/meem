@@ -30,7 +30,7 @@ class WishlistRepository extends BaseRepository
     protected $dataArray = [
         'user_id',
         'product_id',
-        'variation_option_id'
+        'product_variant_id'
     ];
 
     /**
@@ -49,11 +49,13 @@ class WishlistRepository extends BaseRepository
     {
         try {
             $user_id = $request->user()->id;
-            $wishlist = $this->findOneWhere((['user_id' => $user_id, 'product_id' => $request['product_id']]));
+            $wishlist = $this->findOneWhere((['user_id' => $user_id, 'product_id' => $request['product_id'] , 'product_variant_id' => $request['product_variant_id']]));
             if (empty($wishlist)) {
                 $request['user_id'] = $user_id;
                 $wishlistInput = $request->only($this->dataArray);
                 return $this->create($wishlistInput);
+            }else {
+                throw new HttpException(400, ALREADY_ADDED_TO_WISHLIST_FOR_THIS_PRODUCT);
             }
         } catch (\Exception $e) {
             throw new HttpException(400, ALREADY_ADDED_TO_WISHLIST_FOR_THIS_PRODUCT);
@@ -68,7 +70,7 @@ class WishlistRepository extends BaseRepository
     {
         try {
             $user_id = $request->user()->id;
-            $wishlist = $this->findOneWhere((['user_id' => $user_id, 'product_id' => $request['product_id']]));
+            $wishlist = $this->findOneWhere((['user_id' => $user_id, 'product_id' => $request['product_id'], 'product_variant_id' => $request['product_variant_id']]));
             if (empty($wishlist)) {
                 $request['user_id'] = $user_id;
                 $wishlistInput = $request->only($this->dataArray);

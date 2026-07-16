@@ -740,10 +740,6 @@ $query->where('has_flash_sale', true)
                 $reviewQuery->where('comment', 'like', '%' . $term . '%');
             });
 
-            // $builder->orWhereHas('shops', function (Builder $shopQuery) use ($term, $locale) {
-            //     $this->applyTranslatableLike($shopQuery, 'name', $term, $locale);
-            // });
-
             $builder->orWhereHas('categories', function (Builder $categoryQuery) use ($term, $locale) {
                 $this->applyTranslatableLike($categoryQuery, 'name', $term, $locale);
             });

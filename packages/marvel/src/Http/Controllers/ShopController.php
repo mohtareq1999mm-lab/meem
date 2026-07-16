@@ -10,6 +10,10 @@ use Marvel\Database\Models\User;
 use Illuminate\Http\JsonResponse;
 use Marvel\Database\Models\Balance;
 use Marvel\Database\Models\Product;
+use Marvel\Database\Models\CategoryShop;
+use Marvel\Database\Models\CouponShop;
+use Marvel\Database\Models\ProductShop;
+use Marvel\Database\Models\FlashSaleShop;
 use Illuminate\Support\Facades\Hash;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\ShopCreateRequest;
@@ -22,6 +26,9 @@ use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Settings;
 use Marvel\Database\Repositories\ShopRepository;
 use Marvel\Enums\Role;
+use Marvel\Http\Resources\ShopCollection;
+use Marvel\Http\Resources\ShopResource;
+use Marvel\Traits\ApiResponse;
 use Marvel\Traits\OrderStatusManagerWithPaymentTrait;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -77,12 +84,22 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  */
 class ShopController extends CoreController
 {
-    use OrderStatusManagerWithPaymentTrait;
+    use OrderStatusManagerWithPaymentTrait, ApiResponse;
+
     public $repository;
 
     public function __construct(ShopRepository $repository)
     {
         $this->repository = $repository;
+        $this->middleware("permission:" . Permission::VIEW_SHOPS, ["only" => ["index", "show"]]);
+        $this->middleware("permission:" . Permission::CREATE_SHOP, ["only" => ["store"]]);
+        $this->middleware("permission:" . Permission::UPDATE_SHOP, ["only" => [
+            "update",
+            "syncShopRelation",
+            "attachShopRelation",
+            "detachShopRelation",
+        ]]);
+        $this->middleware("permission:" . Permission::DELETE_SHOP, ["only" => ["destroy"]]);
     }
 
     /**
@@ -100,12 +117,28 @@ class ShopController extends CoreController
     public function index(Request $request)
     {
         $limit = $request->limit ? $request->limit : 15;
-        return $this->fetchShops($request)->paginate($limit)->withQueryString();
+
+        $shops = $this->fetchShops($request)->paginate($limit)->withQueryString();
+        $data =   new ShopCollection($shops);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $data);
     }
 
     public function fetchShops(Request $request)
     {
-        return $this->repository->withCount(['orders', 'products'])->with(['owner.profile', 'ownership_history'])->where('id', '!=', null);
+        $active = $request->active ?? null;
+        $Inactive = $request->inactive ?? null;
+        $search = $request->search ?? null;
+        $query = $this->repository->withCount(['categories', 'products']);
+        if ($active) {
+            $query->active();
+        }
+        if ($Inactive) {
+            $query->inactive();
+        }
+        if ($search) {
+            $query->search('name', $search, app()->getLocale());
+        }
+        return $query;
     }
 
     /**
@@ -137,12 +170,10 @@ class ShopController extends CoreController
     public function store(ShopCreateRequest $request)
     {
         try {
-            if ($request->user()->hasPermissionTo(Permission::STORE_OWNER)) {
-                return $this->repository->storeShop($request);
-            }
-            throw new AuthorizationException(NOT_AUTHORIZED);
+            $shop = $this->repository->storeShop($request);
+            return $this->apiResponse(SHOP_CREATE_SUCCESSFULLY, 201, true, ShopResource::make($shop));
         } catch (MarvelException $th) {
-            throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE);
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
     }
 
@@ -160,20 +191,46 @@ class ShopController extends CoreController
      */
     public function show($slug, Request $request)
     {
-        $shop = $this->repository
-            ->with(['categories', 'owner', 'ownership_history'])
-            ->withCount(['orders', 'products']);
-        if ($request->user() && ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN) || $request->user()->shops->contains('slug', $slug))) {
-            $shop = $shop->with('balance');
+        $query = $this->repository
+            ->with(['categories'])
+            ->withCount('products');
+
+        $user = $request->user();
+
+        // if ($user && (
+        //         $user->hasRole(Role::SUPER_ADMIN) ||
+        //         $user->shops()->where('slug', $slug)->exists()
+        //     )) {
+        //     $query->with('balance');
+        // }
+
+        $shop = is_numeric($slug)
+            ? $query->where('id', $slug)->first()
+            : $query->where('slug', $slug)->first();
+
+        if (!$shop) {
+            return $this->apiResponse(NOT_FOUND, 404, false);
         }
-        try {
-            return match (true) {
-                is_numeric($slug) => $shop->where('id', $slug)->firstOrFail(),
-                is_string($slug) => $shop->where('slug', $slug)->firstOrFail(),
-            };
-        } catch (MarvelException $e) {
-            throw new MarvelException(NOT_FOUND);
-        }
+        return $this->apiResponse(SHOP_RETRIEVED_SUCCESSFULLY, 200, true, ShopResource::make($shop));
+
+        //        $shop = $this->repository
+        //            ->with(['categories', 'owner', 'ownership_history'])
+        //            ->withCount(['orders', 'products']);
+        //        if ($request->user() && ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN) || $request->user()->shops->contains('slug', $slug))) {
+        //            $shop = $shop->with('balance');
+        //        }
+        //        if (!$shop) {
+        //            return response()->json([
+        //                'message' => NOT_FOUND,
+        //                'status' => false
+        //            ]);
+        //        }
+        //
+        //        return match (true) {
+        //            is_numeric($slug) => $shop->where('id', $slug)->firstOrFail(),
+        //            is_string($slug) => $shop->where('slug', $slug)->firstOrFail(),
+        //        };
+
     }
 
     /**
@@ -202,20 +259,76 @@ class ShopController extends CoreController
     public function update(ShopUpdateRequest $request, $id)
     {
         try {
-            $request->id = $id;
-            return $this->updateShop($request);
+            $request->merge(['id' => $id]);
+            $shop = $this->updateShop($request);
+            return $this->apiResponse(SHOP_UPDATED_SUCCESSFULLY, 200, true, ShopResource::make($shop));
         } catch (MarvelException $th) {
-            throw new MarvelException(COULD_NOT_UPDATE_THE_RESOURCE);
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
     }
 
     public function updateShop(Request $request)
     {
         $id = $request->id;
-        if ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN) || ($request->user()->hasPermissionTo(Permission::STORE_OWNER) && ($request->user()->shops->contains($id)))) {
+        if ($request->user()->hasPermissionTo(Permission::UPDATE_SHOP)) {
             return $this->repository->updateShop($request, $id);
+        } else {
+            throw new MarvelException(NOT_AUTHORIZED);
         }
-        throw new AuthorizationException(NOT_AUTHORIZED);
+    }
+
+    public function syncShopRelation(Request $request, $id, $relation)
+    {
+        return $this->applyRelationAction($request, $id, $relation);
+    }
+
+
+    private function applyRelationAction(Request $request, $id, $relation)
+    {
+        $relationMap = [
+            'categories' => 'categories',
+            'products' => 'products',
+            'coupons' => 'coupons',
+            'promotions' => 'promotions',
+            'flashSales' => 'flashSales',
+        ];
+        $relationTableMap = [
+            'categories' => 'categories',
+            'products' => 'products',
+            'coupons' => 'coupons',
+            'promotions' => 'promotions',
+            'flashSales' => 'flash_sales',
+        ];
+
+        if (!array_key_exists($relation, $relationMap)) {
+            return $this->apiResponse(ACTION_NOT_VALID, 400, false);
+        }
+
+        $table = $relationTableMap[$relation];
+
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => "integer|exists:${table},id",
+        ]);
+
+
+        $shop = $this->repository->find($id);
+        if (!$shop) {
+            return $this->apiResponse(NOT_FOUND, 404, false);
+        }
+        $relationName = $relationMap[$relation];
+        $ids = $validated['ids'];
+
+        $shop->{$relationName}()->sync($ids);
+
+
+        $currentIds = $shop->{$relationName}()->pluck($table . '.id');
+
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
+            'shop_id' => $shop->id,
+            'relation' => $relation,
+            'ids' => $currentIds,
+        ]);
     }
 
     public function shopMaintenanceEvent(Request $request)
@@ -246,26 +359,35 @@ class ShopController extends CoreController
     public function destroy(Request $request, $id)
     {
         try {
-            $request->id = $id;
+            $request->merge(['id' => $id]);
+            $request->validate([
+                'id' => 'required|exists:shops,id'
+            ]);
             return $this->deleteShop($request);
         } catch (MarvelException $th) {
-            throw new MarvelException(COULD_NOT_DELETE_THE_RESOURCE);
+            return $this->apiResponse(COULD_NOT_DELETE_THE_RESOURCE, 500, false);
         }
     }
 
     public function deleteShop(Request $request)
     {
         $id = $request->id;
-        if ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN) || ($request->user()->hasPermissionTo(Permission::STORE_OWNER) && ($request->user()->shops->contains($id)))) {
-            try {
-                $shop = $this->repository->findOrFail($id);
-            } catch (\Exception $e) {
-                throw new ModelNotFoundException(NOT_FOUND);
-            }
+
+        try {
+            $shop = $this->repository->findOrFail($id);
+
+            // Soft-delete only the pivot rows belonging to this shop,
+            // NOT the related Category / Product / Coupon / FlashSale models.
+            CategoryShop::where('shop_id', $id)->delete();
+            CouponShop::where('shop_id', $id)->delete();
+            ProductShop::where('shop_id', $id)->delete();
+            FlashSaleShop::where('shop_id', $id)->delete();
+
             $shop->delete();
-            return $shop;
+            return $this->apiResponse(SHOP_DELETED_SUCCESSFULLY, 200, true);
+        } catch (\Exception $e) {
+            throw new ModelNotFoundException(NOT_FOUND);
         }
-        throw new AuthorizationException(NOT_AUTHORIZED);
     }
 
     /**
@@ -716,10 +838,10 @@ class ShopController extends CoreController
                 ->where('settings->location->lng', '!=', null)
                 ->select(
                     "shops.*",
-                    DB::raw("6371 * acos(cos(radians(" . $lat . ")) 
-        * cos(radians(json_unquote(json_extract(`shops`.`settings`, '$.\"location\".\"lat\"')))) 
-        * cos(radians(json_unquote(json_extract(`shops`.`settings`, '$.\"location\".\"lng\"'))) - radians(" . $lng . ")) 
-        + sin(radians(" . $lat . ")) 
+                    DB::raw("6371 * acos(cos(radians(" . $lat . "))
+        * cos(radians(json_unquote(json_extract(`shops`.`settings`, '$.\"location\".\"lat\"'))))
+        * cos(radians(json_unquote(json_extract(`shops`.`settings`, '$.\"location\".\"lng\"'))) - radians(" . $lng . "))
+        + sin(radians(" . $lat . "))
         * sin(radians(json_unquote(json_extract(`shops`.`settings`, '$.\"location\".\"lat\"'))))) AS distance")
                 )
                 ->orderBy('distance', 'ASC')

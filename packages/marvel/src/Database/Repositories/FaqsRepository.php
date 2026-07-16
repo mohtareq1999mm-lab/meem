@@ -9,6 +9,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Prettus\Repository\Exceptions\RepositoryException;
 use Illuminate\Http\Request;
 use Marvel\Database\Models\Shop;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class FaqsRepository extends BaseRepository
 {
@@ -18,10 +19,6 @@ class FaqsRepository extends BaseRepository
      */
     protected $fieldSearchable = [
         'faq_title' => 'like',
-        'shop_id',
-        'language',
-        'faq_type',
-        'issued_by'
     ];
 
     /**
@@ -30,7 +27,7 @@ class FaqsRepository extends BaseRepository
     protected $dataArray = [
         'faq_title',
         'faq_description',
-        'language',
+        'status',
     ];
 
 
@@ -62,23 +59,15 @@ class FaqsRepository extends BaseRepository
     public function storeFaqs($request)
     {
         try {
-            if (isset($request['shop_id'])) {
-                $shop = Shop::findOrFail($request['shop_id']);
-            }
+           
 
             $faqs                    = [];
             $faqs['faq_title']       = $request['faq_title'];
             $faqs['faq_description'] = $request['faq_description'];
-            $faqs['user_id']         = $request->user()->id;
-            $faqs['shop_id']         = isset($request['shop_id']) ? $request['shop_id'] : null;
-            $faqs['faq_type']        = isset($request['shop_id']) ? 'shop' : 'global';
-            $faqs['issued_by']       = isset($request['shop_id']) ? $shop->name : 'Super Admin';
-            $faqs['language']        = $request['language'] ?? DEFAULT_LANGUAGE;
-
-            $this->create($faqs);
+            $faqs = $this->create($faqs);
             return $faqs;
         } catch (Exception $th) {
-            throw new Exception(SOMETHING_WENT_WRONG, $th->getMessage());
+            throw new Exception(SOMETHING_WENT_WRONG, 500);
         }
     }
 
@@ -93,10 +82,20 @@ class FaqsRepository extends BaseRepository
     public function updateFaqs(Request $request, Faqs $faqs)
     {
         try {
-            $faqs->update($request->only($this->dataArray));
+          $faqs->update($request->only($this->dataArray));
+
             return $faqs;
         } catch (Exception $e) {
-            throw new Exception(SOMETHING_WENT_WRONG, $e->getMessage());
+            throw new Exception(SOMETHING_WENT_WRONG, 500);
+        }
+    }
+
+    public function reorder(array $faqs)
+    {
+        try {
+            $this->setNewOrder($faqs);
+        } catch (Exception $e) {
+            throw new HttpException(500, $e->getMessage());
         }
     }
 }

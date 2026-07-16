@@ -27,10 +27,9 @@ class AttributeValueRequest extends FormRequest
     public function rules()
     {
         return [
-            'value'         => ['required', 'string', 'max:255'],
-            'meta'          => ['nullable', 'string'],
-            'price'         => ['numeric'],
-            'shop_id'       => ['required', 'exists:Marvel\Database\Models\Shop,id'],
+            'value'         => ['required', 'array'],
+            'value.en'      => ['required', 'string', 'max:255'],
+            'value.ar'      => ['required', 'string', 'max:255'],
             'attribute_id'  => ['required', 'exists:Marvel\Database\Models\Attribute,id'],
         ];
     }

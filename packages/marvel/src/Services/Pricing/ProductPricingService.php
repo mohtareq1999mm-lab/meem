@@ -27,7 +27,8 @@ class ProductPricingService
     {
         return $this->runSafely(function () use ($product, $flashSale): array {
             $basePrice = $this->normalizeMoney($product->price);
-            $flashSalePrice = $this->calculateFlashSalePrice($flashSale, $basePrice);
+            $resolvedFlashSale = $flashSale ?? $this->resolveActiveFlashSale($product);
+            $flashSalePrice = $this->calculateFlashSalePrice($resolvedFlashSale, $basePrice);
             $discountPrice = $flashSalePrice === null && $this->isDiscountActive($product)
                 ? $this->calculateDiscountedPrice($basePrice, $product->discount_type ?? DiscountType::PERCENTAGE, $product->discount_amount ?? 0)
                 : null;
@@ -99,7 +100,7 @@ class ProductPricingService
                 $product->discount_type ?? DiscountType::PERCENTAGE,
                 $product->discount_amount ?? 0,
                 $this->isDiscountActive($product),
-                $flashSale
+                $flashSale ?? $this->resolveActiveFlashSale($product)
             );
 
             return $pricing['final_price'];
@@ -210,24 +211,26 @@ class ProductPricingService
     }
 
     /**
-     * Resolve the active flash sale from the product's loaded flash_sales relation.
-     * Does NOT execute any database queries — requires relation to be pre-loaded.
+     * Resolve the active flash sale for a product, optionally filtering by a specific flash sale ID.
      *
-     * @param  Product $product
+     * @param  Product   $product
+     * @param  int|null  $flashSaleId
      * @return FlashSale|null
      */
-    public function resolveActiveFlashSale(Product $product): ?FlashSale
+    public function resolveActiveFlashSale(Product $product, ?int $flashSaleId = null): ?FlashSale
     {
-        return $this->runSafely(function () use ($product): ?FlashSale {
-            if (!$product->relationLoaded('flash_sales')) {
-                return null;
+        return $this->runSafely(function () use ($product, $flashSaleId): ?FlashSale {
+            if ($flashSaleId) {
+                return FlashSale::query()
+                    ->whereKey($flashSaleId)
+                    ->valid()
+                    ->first();
             }
 
-            return $product->flash_sales
-                ->sortByDesc('start_date')
-                ->first(fn(FlashSale $fs) => $fs->status
-                    && (!$fs->start_date || $fs->start_date->isToday() || $fs->start_date->isPast())
-                    && (!$fs->end_date || $fs->end_date->isToday() || $fs->end_date->isFuture()));
+            return $product->flash_sales()
+                ->valid()
+                ->orderBy('start_date', 'desc')
+                ->first();
         }, null);
     }
 
@@ -351,11 +354,11 @@ class ProductPricingService
         }
 
         if ($flashSale->type === FlashSaleType::FIXED_RATE) {
-            return $discountUnits;
+            return max(0, $baseUnits - $discountUnits);
         }
 
         if ($flashSale->type === FlashSaleType::FINAL_PRICE) {
-            return max(0, $baseUnits - $discountUnits);
+            return $discountUnits;
         }
 
         return null;
@@ -392,7 +395,7 @@ class ProductPricingService
      * @param  Product $product
      * @return bool
      */
-    public function isDiscountActive($product): bool
+    private function isDiscountActive($product): bool
     {
         if (!$product || empty($product->has_discount)) {
             return false;
@@ -416,7 +419,7 @@ class ProductPricingService
     }
 
     /**
-     * Check whether a discount is currently active based on raw array data (used before model persistence).
+     * Check whether a discount is active based on raw array data (used before model persistence).
      *
      * @param  array $data
      * @return bool

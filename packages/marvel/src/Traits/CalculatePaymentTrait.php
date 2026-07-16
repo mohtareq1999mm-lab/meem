@@ -51,11 +51,14 @@ trait CalculatePaymentTrait
     public function calculateEachItemTotal($item, $quantity)
     {
         $total = 0;
-        if ($item->sale_price) {
-            $total += $item->sale_price * $quantity;
-        } else {
-            $total += $item->price * $quantity;
+        $salePrice = $item->sale_price ?? null;
+
+        if ($salePrice !== null) {
+            $total += $salePrice * $quantity;
+            return $total;
         }
+
+        $total += $item->price * $quantity;
         return $total;
     }
 

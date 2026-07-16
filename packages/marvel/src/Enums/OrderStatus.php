@@ -19,4 +19,5 @@ final class OrderStatus extends Enum
     public const FAILED = 'order-failed';
     public const AT_LOCAL_FACILITY = 'order-at-local-facility';
     public const OUT_FOR_DELIVERY = 'order-out-for-delivery';
+    public const READY_FOR_PICKUP = 'order-ready-for-pickup';
 }

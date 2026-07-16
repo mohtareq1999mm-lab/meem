@@ -6,7 +6,8 @@ namespace Marvel\Http\Requests;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
-
+use Illuminate\Validation\Rule;
+use Marvel\Database\Models\Product;
 
 class WishlistCreateRequest extends FormRequest
 {
@@ -29,7 +30,16 @@ class WishlistCreateRequest extends FormRequest
     {
         return [
             'product_id'            => ['required', 'exists:Marvel\Database\Models\Product,id'],
-            'variation_option_id'   => ['integer', 'exists:Marvel\Database\Models\Variation,id'],
+            'product_variant_id' => [
+                Rule::requiredIf(function () {
+                    $product = Product::find(request('product_id'));
+
+                    return $product && $product->variations()->exists();
+                }),
+                'sometimes',
+                'integer',
+                'exists:product_variants,id',
+            ],
         ];
     }
 

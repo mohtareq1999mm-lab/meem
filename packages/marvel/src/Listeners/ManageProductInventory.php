@@ -13,12 +13,12 @@ class ManageProductInventory implements ShouldQueue
     protected function updateProductInventory($product)
     {
         try {
-            $updatedQuantity = $product->quantity - $product->pivot->order_quantity;
+            $updatedQuantity = $product->stock_quantity - $product->pivot->order_quantity;
             if ($updatedQuantity > -1) {
                 if (TRANSLATION_ENABLED) {
                     $this->updateTranslationsInventory($product, $updatedQuantity);
                 } else {
-                    Product::find($product->id)->update(['quantity' => $updatedQuantity]);
+                    Product::find($product->id)->update(['stock_quantity' => $updatedQuantity]);
                 }
                 if (!empty($product->pivot->variation_option_id)) {
                     $variationOption = Variation::findOrFail($product->pivot->variation_option_id);
@@ -37,7 +37,7 @@ class ManageProductInventory implements ShouldQueue
 
     public function updateTranslationsInventory($product, $updatedQuantity)
     {
-        Product::where('sku', $product->sku)->update(['quantity' => $updatedQuantity]);
+        Product::where('sku', $product->sku)->update(['stock_quantity' => $updatedQuantity]);
     }
 
     public function updateVariationTranslationsInventory($variationOption, $updatedQuantity)

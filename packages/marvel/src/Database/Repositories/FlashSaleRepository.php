@@ -4,24 +4,26 @@
 namespace Marvel\Database\Repositories;
 
 use Exception;
-use Illuminate\Auth\Access\AuthorizationException;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Prettus\Repository\Exceptions\RepositoryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Marvel\Database\Models\FlashSale;
 use Marvel\Database\Models\Product;
-use Marvel\Enums\Permission;
+use Marvel\Traits\MediaManager;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class FlashSaleRepository extends BaseRepository
 {
+    use MediaManager;
 
     /**
      * @var array
      */
     protected $fieldSearchable = [
         'title' => 'like',
-        'language',
-        'slug'
+        //        'language',
     ];
 
     /**
@@ -29,17 +31,14 @@ class FlashSaleRepository extends BaseRepository
      */
     protected $dataArray = [
         'title',
+        'slug',
         'description',
         'start_date',
         'end_date',
-        'language',
-        'slug',
-        'image',
-        'cover_image',
-        'rate',
         'type',
-        'sale_status',
-        'sale_builder'
+        'status',
+        'max_discount_amount',
+        'discount',
     ];
 
 
@@ -60,6 +59,10 @@ class FlashSaleRepository extends BaseRepository
         return FlashSale::class;
     }
 
+    public function modelQuery()
+    {
+        return FlashSale::query();
+    }
 
 
     /**
@@ -68,29 +71,44 @@ class FlashSaleRepository extends BaseRepository
      * @param  mixed $request
      * @return void
      */
-    public function storeFlashSale($request)
+    public function storeFlashSale($request): FlashSale
     {
         try {
             // only admin can create flash deals
-            if ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
-                $data = $request->only($this->dataArray);
-                $flash_sale = $this->create($data);
-                if (isset($request['sale_builder']['product_ids'])) {
-                    $flash_sale->products()->attach($request['sale_builder']['product_ids']);
-                    $this->setProductInFlashSale($request['sale_builder']['product_ids']);
+            DB::beginTransaction();
+            $request['slug'] = $this->makeSlug($request);
+            $data = $request->only($this->dataArray);
+            $flash_sale = $this->create($data);
+
+            if ($request->hasFile('image-desktop')) {
+                if (!$this->uploadSingleImage($request, 'image-desktop', $flash_sale, 'flash-sales-desktop', 'flashSales')) {
+                    throw new HttpException(422, 'Flash sale image upload failed, please check the file format or size.');
                 }
-                return $flash_sale;
             }
 
-            throw new AuthorizationException(NOT_AUTHORIZED);
+            if ($request->hasFile('image-mobile')) {
+                if (!$this->uploadSingleImage($request, 'image-mobile', $flash_sale, 'flash-sales-mobile', 'flashSales')) {
+                    throw new HttpException(422, 'Flash sale image upload failed, please check the file format or size.');
+                }
+            }
+
+            if ($request->has('products')) {
+                $flash_sale->products()->sync($request->products);
+                $this->setProductInFlashSale($request->products);
+            }
+
+            DB::commit();
+            return $flash_sale;
         } catch (Exception $th) {
-            throw new Exception(SOMETHING_WENT_WRONG, $th->getMessage());
+            DB::rollBack();
+            Log::error('FlashSale store failed: ' . $th->getMessage(), ['trace' => $th->getTraceAsString()]);
+            throw new HttpException(500, SOMETHING_WENT_WRONG);
         }
     }
 
 
     /**
-     * updateFlashSale 
+     * updateFlashSale
      *
      * @param  mixed $request
      * @param  mixed $id
@@ -100,26 +118,37 @@ class FlashSaleRepository extends BaseRepository
     {
         try {
             // only admin can update flash deals
-            if ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
-                $flash_sale = $this->findOrFail($id);
+            DB::beginTransaction();
+            $flash_sale = $this->findOrFail($id);
+            $request['slug'] = $this->makeSlug($request, 'slug', $flash_sale->id);
+            $flash_sale->update($request->except('image-desktop', 'image-mobile'));
 
-                $data = $request->only($this->dataArray);
-                if (isset($request['sale_builder']['product_ids'])) {
-                    $flash_sale->products()->sync($request['sale_builder']['product_ids']);
-                    $this->setProductInFlashSale($request['sale_builder']['product_ids']);
+            if ($request->hasFile('image-desktop')) {
+                if (!$this->updateSingleImage($request, 'image-desktop', $flash_sale, 'flash-sales-desktop', 'flashSales')) {
+                    throw new HttpException(422, 'Flash sale image upload failed, please check the file format or size.');
                 }
-
-                if ($flash_sale['sale_builder']['product_ids'] != $request['sale_builder']['product_ids']) {
-                    $this->unsetProductFromFlashSale($flash_sale['sale_builder']['product_ids'], $request['sale_builder']['product_ids']);
-                }
-
-                $flash_sale->update($data);
-                return $flash_sale;
             }
 
-            throw new AuthorizationException(NOT_AUTHORIZED);
+            if ($request->hasFile('image-mobile')) {
+                if (!$this->updateSingleImage($request, 'image-mobile', $flash_sale, 'flash-sales-mobile', 'flashSales')) {
+                    throw new HttpException(422, 'Flash sale image upload failed, please check the file format or size.');
+                }
+            }
+
+            if ($request->has('products')) {
+                $oldProductIds = $flash_sale->products()->pluck('product_id')->toArray();
+                $products = array_filter(array_map('intval', (array) $request->products), fn($id) => $id > 0);
+                $flash_sale->products()->sync($products);
+                $this->unsetProductFromFlashSale($oldProductIds, $products);
+                $this->setProductInFlashSale($products);
+            }
+
+            DB::commit();
+            $this->updateFlashSaleProductPrices($flash_sale);
+            return $flash_sale;
         } catch (Exception $e) {
-            throw new Exception(SOMETHING_WENT_WRONG, $e->getMessage());
+            DB::rollBack();
+            throw new HttpException(500, SOMETHING_WENT_WRONG);
         }
     }
 
@@ -131,9 +160,9 @@ class FlashSaleRepository extends BaseRepository
      */
     public function setProductInFlashSale($product_ids)
     {
-        foreach ($product_ids as $key => $product_id) {
+        foreach ($product_ids as $product_id) {
             $product = Product::findOrFail($product_id);
-            $product->in_flash_sale = true;
+            $product->has_flash_sale = true;
             $product->save();
         }
     }
@@ -153,9 +182,40 @@ class FlashSaleRepository extends BaseRepository
         if (isset($final_list)) {
             foreach ($final_list as $key => $product_id) {
                 $product = Product::findOrFail($product_id);
-                $product->in_flash_sale = false;
+                $product->has_flash_sale = false;
                 $product->save();
             }
+        }
+    }
+
+    public function reorder(array $flashSales)
+    {
+        try {
+            $this->setNewOrder($flashSales);
+        } catch (\Exception $e) {
+            throw new HttpException(500, $e->getMessage());
+        }
+    }
+
+    private function updateFlashSaleProductPrices(FlashSale $flashSale)
+    {
+        $flashSale->load('products');
+        $now = now();
+        $isActive = $flashSale->status
+            && $flashSale->start_date
+            && $flashSale->end_date
+            && $now->between($flashSale->start_date, $flashSale->end_date);
+
+        foreach ($flashSale->products as $product) {
+            if (!$isActive) {
+                $product->price_after_flash_sale = null;
+                $product->save();
+                continue;
+            }
+
+            $basePrice = $product->getDiscountedPrice() ?? $product->price;
+            $product->price_after_flash_sale = $flashSale->calcPrice($basePrice);
+            $product->save();
         }
     }
 }

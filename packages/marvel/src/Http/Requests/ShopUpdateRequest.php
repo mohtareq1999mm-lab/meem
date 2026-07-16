@@ -2,6 +2,7 @@
 
 namespace Marvel\Http\Requests;
 
+use CodeZero\UniqueTranslation\UniqueTranslationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -25,16 +26,24 @@ class ShopUpdateRequest extends FormRequest
      */
     public function rules()
     {
+        $id = $this->route('shop');
         return [
-            'name'                   => ['required', 'string', 'max:255'],
-            'categories'             => ['array'],
-            'is_active'              => ['boolean'],
-            'description'            => ['nullable', 'string', 'max:10000'],
-            'balance'                => ['array'],
-            'image'                  => ['nullable', 'array'],
-            'cover_image'            => ['nullable', 'array'],
-            'settings'               => ['array'],
-            'address'                => ['array'],
+        'name'                       => ['sometimes', 'array'],
+        'name.*'                     => ['sometimes', 'string', 'max:50',"min:3",UniqueTranslationRule::for('shops')->ignore($id) ],
+        'description'                => ['nullable', 'array'],
+        'description.*'              => ['nullable', 'string', 'max:2000',"min:3"],
+        'logo'                       => ['sometimes', 'file', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
+        'cover_image'                => ['sometimes', 'file', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
+        'address'                    => ['sometimes', 'array'],
+        'address.*.street_address' => ['sometimes', 'array'],
+        'address.*.street_address.*' => ['sometimes', 'string', 'max:2000',"min:3"],
+        'address.*.city'             => ['sometimes', 'array'],
+        'address.*.city.*'             => ['sometimes', 'string', 'max:2000',"min:3"],
+        'address.*.state'            => ['sometimes', 'array'],
+        'address.*.state.*'            => ['sometimes', 'string', 'max:2000',"min:3"],
+        'address.*.country'          => ['sometimes', 'array'],
+        'address.*.country.*'          => ['sometimes', 'string', 'max:2000',"min:3"],
+        'status'                  => ['nullable', "in:1,0"],
         ];
     }
 

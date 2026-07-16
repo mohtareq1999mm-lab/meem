@@ -12,6 +12,7 @@ use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\TagCreateRequest;
 use Marvel\Http\Requests\TagUpdateRequest;
 use Marvel\Http\Resources\TagResource;
+use Marvel\Traits\ApiResponse;
 use Prettus\Validator\Exceptions\ValidatorException;
 
 /**
@@ -44,6 +45,7 @@ use Prettus\Validator\Exceptions\ValidatorException;
  */
 class TagController extends CoreController
 {
+    use ApiResponse;
     public $repository;
 
     public function __construct(TagRepository $repository)
@@ -67,8 +69,22 @@ class TagController extends CoreController
         $language = $request->language ?? DEFAULT_LANGUAGE;
         $limit = $request->limit ? $request->limit : 15;
         $tags = $this->repository->where('language', $language)->with(['type'])->paginate($limit);
-        $data = TagResource::collection($tags)->response()->getData(true);
-        return formatAPIResourcePaginate($data);
+        $tagData = TagResource::collection($tags)->response()->getData(true);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
+            "data" => $tagData['data'] ?? [],
+            "page" => $tagData['meta']['current_page'] ?? 0,
+            "current_page" => $tagData['meta']['current_page'] ?? 0,
+            "from" => $tagData['meta']['from'] ?? 0,
+            "to" => $tagData['meta']['to'] ?? 0,
+            "last_page" => $tagData['meta']['last_page'] ?? 0,
+            "path" => $tagData['meta']['path'] ?? "",
+            "per_page" => $tagData['meta']['per_page'] ?? 0,
+            "total" => $tagData['meta']['total'] ?? 0,
+            "next_page_url" => $tagData['links']['next'] ?? "",
+            "prev_page_url" => $tagData['links']['prev'] ?? "",
+            "last_page_url" => $tagData['links']['last'] ?? "",
+            "first_page_url" => $tagData['links']['first'] ?? "",
+        ]);
     }
 
     /**

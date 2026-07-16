@@ -13,7 +13,9 @@ Two additional legacy endpoints exist for listing users:
 - `GET /admin/list` — List admin users (raw paginator return)
 - `GET /users` — List all users with filtering (raw paginator return)
 
-**Soft delete is NOT implemented.** The `users` table has no `deleted_at` column. The `adminDeleteUsers` endpoint performs a hard delete, with guards against deleting super_admin users or yourself.
+**Admin Identification:** Admin users are identified by `type = 'admin'` in the `users` table (single source of truth). Route authorization uses Spatie permission middleware (`permission:super_admin`) for backward compatibility with the Marvel package.
+
+**Soft delete is NOT implemented.** The `users` table has no `deleted_at` column. The `adminDeleteUsers` endpoint performs a hard delete, with guards against deleting admin users or yourself.
 
 ---
 
@@ -451,17 +453,41 @@ Retrieve a paginated, filterable list of all users. Supports filtering by type, 
 
 ---
 
+## Architecture Decision — Admin Identification
+
+The project has ONLY two user types: **Admin** and **User**.
+
+- **Admin** — identified by `type = 'admin'` in the `users` table (single source of truth)
+- **User** — identified by `type = 'user'` (default)
+
+The Application layer (`app/`) has **zero** references to `Permission::SUPER_ADMIN`. Admin identification in the app layer uses `where('type', 'admin')` exclusively.
+
+The following Marvel legacy permissions are NOT used for admin identification in the Application:
+- `SUPER_ADMIN`, `STORE_OWNER`, `STAFF`, `CUSTOMER`
+
+### Marvel Boundary
+
+Marvel package retains internal permission-based admin identification (`Permission::SUPER_ADMIN`) for:
+- Internal trait queries (`UsersTrait::getAdminUsers()`, `SmsTrait::adminList()`)
+- Route authorization middleware (`permission:super_admin`)
+- Internal controller identification (e.g., `admins()` endpoint)
+
+This boundary ensures:
+- Marvel operates independently without modification
+- The Application maintains its own single source of truth
+- New admin users receive both `type = 'admin'` and the `super_admin` permission upon creation
+
 ## Implementation Status
 
-| # | Endpoint | Main Branch | feature/admin-users Branch | Status |
-|---|---|---|---|---|
-| 1 | `GET /admin/list` | Exists | Exists | ✅ Active |
-| 2 | `POST /admin-users/add` | ❌ Missing | Exists | 🔄 Pending merge |
-| 3 | `PUT /admin-users/update-activation` | ❌ Missing | Exists | 🔄 Pending merge |
-| 4 | `DELETE /admin-users/delete/{id}` | ❌ Missing | Exists | 🔄 Pending merge |
-| 5 | `DELETE /admin-users/delete-forever/{id}` | ❌ Missing | ❌ Missing | ❌ Not planned |
-| 6 | `PUT /admin-users/restore/{id}` | ❌ Missing | ❌ Missing | ❌ Not planned |
-| 7 | `GET /admin-users/trashed` | ❌ Missing | ❌ Missing | ❌ Not planned |
-| 8 | `GET /users` | Exists | Exists | ✅ Active |
+| # | Endpoint | Status |
+|---|---|---|
+| 1 | `GET /admin/list` | ✅ Active |
+| 2 | `POST /admin-users/add` | ✅ Active |
+| 3 | `PUT /admin-users/update-activation` | ✅ Active |
+| 4 | `DELETE /admin-users/delete/{id}` | ✅ Active |
+| 5 | `DELETE /admin-users/delete-forever/{id}` | ❌ Not planned |
+| 6 | `PUT /admin-users/restore/{id}` | ❌ Not planned |
+| 7 | `GET /admin-users/trashed` | ❌ Not planned |
+| 8 | `GET /users` | ✅ Active |
 
-Endpoints 5-7 were removed from the requirements. Soft delete is not implemented and not planned. The intended implementation is the `feature/admin-users` branch which provides hard-delete with business logic guards.
+Soft delete is NOT implemented and not planned. All admin-user management endpoints use hard-delete with business logic guards.

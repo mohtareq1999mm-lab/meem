@@ -20,7 +20,7 @@ class ProductInventoryDecrement implements ShouldQueue
 
                 $fetchedProduct->update(
                     [
-                        'quantity' => $currentQuantity,
+                        'stock_quantity' => $currentQuantity,
                         'sold_quantity' => $sold_quantity
                     ]
                 );

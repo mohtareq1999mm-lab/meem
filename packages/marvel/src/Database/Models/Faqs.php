@@ -2,55 +2,48 @@
 
 namespace Marvel\Database\Models;
 
-use Cviebrock\EloquentSluggable\Sluggable;
+// use Cviebrock\EloquentSluggable\Sluggable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Marvel\Database\Models\Shop;
-use Marvel\Traits\TranslationTrait;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\EloquentSortable\Sortable;
+use Spatie\EloquentSortable\SortableTrait;
+use Spatie\Translatable\HasTranslations;
 
-class Faqs extends Model
+class Faqs extends Model implements Sortable
 {
-    use TranslationTrait, SoftDeletes, Sluggable;
+    use HasTranslations, SoftDeletes, SortableTrait;
 
     protected $table = 'faqs';
 
-    protected $appends = ['translated_languages'];
+    public array $translatable = ['faq_title', 'faq_description'];
 
-    public $guarded = [];
+    public $sortable = [
+        'order_column_name' => 'order',
+        'sort_when_creating' => true,
+    ];
 
-    /**
-     * Return the sluggable configuration array for this model.
-     *
-     * @return array
-     */
-    public function sluggable(): array
-    {
-        return [
-            'slug' => [
-                'source' => 'faq_title',
-            ]
-        ];
-    }
+    public $fillable = [
+        'faq_title',
+        'faq_description',
+        'status',
+        'order',
+    ];
 
-    public function scopeWithUniqueSlugConstraints(Builder $query, Model $model): Builder
-    {
-        return $query->where('language', $model->language);
-    }
-    /**
-     * @return BelongsTo
-     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * @return BelongsTo
-     */
     public function shop(): BelongsTo
     {
         return $this->belongsTo(Shop::class);
+    }
+
+    public function scopeActive (Builder $query): Builder
+    {
+        return $query->where('status', 1);
     }
 }

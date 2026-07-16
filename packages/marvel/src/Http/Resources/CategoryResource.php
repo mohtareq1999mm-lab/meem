@@ -4,6 +4,7 @@ namespace Marvel\Http\Resources;
 
 use Illuminate\Http\Request;
 
+
 class CategoryResource extends Resource
 {
     /**
@@ -12,24 +13,38 @@ class CategoryResource extends Resource
      * @param  Request  $request
      * @return array
      */
-    public function toArray($request)
+    public function toArray(Request $request)
     {
-
         return [
             'id'                   => $this->id,
-            'name'                 => $this->name,
+            'name'                 => request()->routeIs('categories.index') ? $this->getTranslation('name', app()->getLocale()) : $this->getRawOriginal('name'),
             'slug'                 => $this->slug,
-            'language'             => $this->language,
-            'translated_languages' => $this->translated_languages,
-            'parent'               => ['name' => $this->parentCategory->name ?? null],
-            'children'             => ChildrenCategoryResource::collection($this->children),
-            'products_count'       => $this->products_count,
-            'details'              => $this->details,
-            'image'                => $this->image,
-            'icon'                 => $this->icon,
-            'type_id'              => $this->type_id,
-            'banner_image'         => $this->banner_image,
-            'type'                 => getResourceData($this->type, []) // if you need extra data then pass key in array by second parameter
+            'parent_id'            => $this->parent_id,
+            'level'                => $this->level,
+            'image'                => [
+                'desktop' => $this->getFirstMediaUrl('categories-desktop') ?: null,
+                'mobile'  => $this->getFirstMediaUrl('categories-mobile') ?: null,
+            ],
+            'is_featured'          => (bool) $this->is_featured,
+            'products_count'       => (int) ($this->products_count ?? $this->products()->count()),
+            'status'               => (bool)$this->status,
+            $this->mergeWhen(!request()->routeIs('categories.index'), [
+                'details' => $this->getRawOriginal('details'),
+            ]),
+            $this->mergeWhen($this->relationLoaded('children') && $this->children->isNotEmpty(), [
+                'children' => ChildrenCategoryResource::collection($this->children),
+            ]),
+            $this->mergeWhen($this->relationLoaded('products'), [
+                'products' => $this->products->map(fn($product) => [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'slug' => $product->slug,
+                    'status' => $product->status,
+                    'image' => [
+                        'thumbnail' => $product->getFirstMediaUrl('products'),
+                    ],
+                ]),
+            ]),
         ];
     }
 }

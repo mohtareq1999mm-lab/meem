@@ -2,12 +2,12 @@
 
 namespace Marvel\Http\Requests;
 
+use CodeZero\UniqueTranslation\UniqueTranslationRule;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
-
+use Marvel\Enums\FlashSaleType;
 
 class UpdateFlashSaleRequest extends FormRequest
 {
@@ -31,15 +31,27 @@ class UpdateFlashSaleRequest extends FormRequest
     {
         // $language = $this->language ?? DEFAULT_LANGUAGE;
 
+        $id = $this->route("flash_sale");
         $rules =  [
-            'title'       => ['required', 'string'],
-            'description' => ['required', 'string', 'max:10000'],
-            'start_date'  => ['required', 'string'],
-            'end_date'    => ['required', 'string'],
-            'slug'        => ['nullable', 'string'],
-            'language'    => ['nullable', 'string'],
-            'image'       => ['nullable', 'array'],
-            'cover_image' => ['nullable', 'array'],
+            'title'        => ['sometimes', 'array'],
+            'title.*' => ['sometimes', 'string', 'min:3', 'max:70', UniqueTranslationRule::for('flash_sales', "title")->ignore($id)],
+            'description'        => ['sometimes', 'array'],
+            'description.*'  => ['sometimes', 'string', 'max:1000'],
+            'image-desktop'        => ['sometimes', 'image', 'mimes:jpeg,png,jpg,webp'],
+            'image-mobile'        => ['sometimes', 'image', 'mimes:jpeg,png,jpg,webp'],
+            'start_date'   => ['sometimes', 'date'],
+            'end_date'     => ['sometimes', 'date'],
+            'type' => ['sometimes', Rule::in(FlashSaleType::getValues())],
+            'discount' => ['sometimes', 'numeric', 'min:0'],
+            'max_discount_amount' => [
+                'required_if:type,percentage',
+                'numeric',
+                'min:1'
+            ],
+            'status' => ['sometimes', 'in:1,0'],
+            "products" => "sometimes|array",
+            "products.*" => "integer|exists:products,id",
+
         ];
         return $rules;
     }

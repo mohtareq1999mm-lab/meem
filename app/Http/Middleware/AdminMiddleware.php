@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\UserType;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -12,7 +13,7 @@ class AdminMiddleware
     {
         $user = $request->user();
 
-        if (!$user || $user->type !== 'admin') {
+        if (!$user || $user->type !== UserType::ADMIN->value) {
             abort(403, 'NOT_AUTHORIZED');
         }
 

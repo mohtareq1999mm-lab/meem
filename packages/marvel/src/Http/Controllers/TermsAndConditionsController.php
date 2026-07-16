@@ -14,6 +14,8 @@ use Marvel\Http\Requests\UpdateTermsAndConditionsRequest;
 use Prettus\Validator\Exceptions\ValidatorException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Marvel\Http\Resources\TermsConditionResource;
+use Marvel\Traits\ApiResponse;
+
 
 /**
  * @OA\Tag(name="Terms & Conditions", description="Public and shop-specific terms and conditions management")
@@ -34,6 +36,7 @@ use Marvel\Http\Resources\TermsConditionResource;
  */
 class TermsAndConditionsController extends CoreController
 {
+    use ApiResponse;
     public $repository;
 
     public function __construct(TermsAndConditionsRepository $repository)
@@ -68,8 +71,22 @@ class TermsAndConditionsController extends CoreController
         $limit = $request->limit ? $request->limit : 10;
         // $language = $request->language ?? DEFAULT_LANGUAGE;
         $termsAndConditions = $this->fetchTermsAndConditions($request)->paginate($limit)->withQueryString();
-        $data = TermsConditionResource::collection($termsAndConditions)->response()->getData(true);
-        return formatAPIResourcePaginate($data);
+        $termsData = TermsConditionResource::collection($termsAndConditions)->response()->getData(true);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
+            "data" => $termsData['data'] ?? [],
+            "page" => $termsData['meta']['current_page'] ?? 0,
+            "current_page" => $termsData['meta']['current_page'] ?? 0,
+            "from" => $termsData['meta']['from'] ?? 0,
+            "to" => $termsData['meta']['to'] ?? 0,
+            "last_page" => $termsData['meta']['last_page'] ?? 0,
+            "path" => $termsData['meta']['path'] ?? "",
+            "per_page" => $termsData['meta']['per_page'] ?? 0,
+            "total" => $termsData['meta']['total'] ?? 0,
+            "next_page_url" => $termsData['links']['next'] ?? "",
+            "prev_page_url" => $termsData['links']['prev'] ?? "",
+            "last_page_url" => $termsData['links']['last'] ?? "",
+            "first_page_url" => $termsData['links']['first'] ?? "",
+        ]);
     }
 
     public function fetchTermsAndConditions(Request $request)

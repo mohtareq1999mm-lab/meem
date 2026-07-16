@@ -14,8 +14,7 @@ class AttributeValueRepository extends BaseRepository
      * @var array
      */
     protected $fieldSearchable = [
-        'value'        => 'like',
-        'shop_id',
+        'value' => 'like',
         'language',
     ];
 

@@ -2,7 +2,6 @@
 
 namespace Marvel\Http\Resources;
 
- 
 class WishlistResource extends Resource
 {
     public function toArray($request): array
@@ -13,15 +12,13 @@ class WishlistResource extends Resource
             'slug'                   => $this->slug,
             'price'                 => $this->product_type === 'simple'
                 ? $this->current_price
-                : ($this->relationLoaded('variations') && $this->variations->isNotEmpty()
-                    ? ($this->variations->first()->current_price ?? $this->price)
-                    : $this->price),
+                : $this->variations[0]->current_price ?? $this->variations[0]->price ?? null,
             'current_price'          => $this->current_price,
+            'price_after_discount'   => $this->price_after_discount,
+            'price_after_flash_sale' => $this->price_after_flash_sale,
             'in_stock'               => $this->in_stock,
             'has_flash_sale'         => $this->has_flash_sale,
             'has_discount'           => $this->has_discount,
-            'discount_active'        => (bool) $this->discount_active,
-            'flash_sale_active'      => (bool) $this->flash_sale_active,
             "images"                 => $this->getFirstMediaUrl('products'),
             "variants"                => $this->whenLoaded('variations', function () {
                 return $this->variations->map(function ($variant) {

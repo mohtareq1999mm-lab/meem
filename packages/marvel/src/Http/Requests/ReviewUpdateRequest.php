@@ -30,7 +30,8 @@ class ReviewUpdateRequest extends FormRequest
         return [
             'comment'               => ['required', 'string'],
             'rating'                => ['required', 'integer', 'min:1', 'max:5'],
-            'photos'                => ['array'],
+            // 'images'                        => ['sometimes', 'array'],
+            // 'images.*'                      => ['required_with:images', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
         ];
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Enums\UserType;
 use App\Events\OrderCreated;
 use App\Jobs\LogActivityJob;
 use App\Notifications\NewOrderNotification;
@@ -44,7 +45,7 @@ class SendNewOrderNotification implements ShouldQueue
     {
         $adminModel = config('auth.providers.users.model');
 
-        return $adminModel::query()->where('type', 'admin')
+        return $adminModel::query()->where('type', UserType::ADMIN->value)
             ->where('is_active', true)
             ->get();
     }

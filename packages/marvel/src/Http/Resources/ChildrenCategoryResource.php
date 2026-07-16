@@ -16,12 +16,13 @@ class ChildrenCategoryResource extends Resource
     {
         return [
             'id'                   => $this->id,
-            'name'                 => $this->name,
+            'name'                 => request()->routeIs('categories.index') ? $this->getTranslation('name', app()->getLocale()) : $this->getRawOriginal('name'),
             'slug'                 => $this->slug,
-            'language'             => $this->language,
-            'translated_languages' => $this->translated_languages,
-            'products_count'       => $this->products_count,
-            'image'                => $this->image,
+            'products_count'       => (int) ($this->products_count ?? $this->products()->count()),
+            'image'                => [
+                'desktop' => $this->getFirstMediaUrl('categories-desktop') ?: null,
+                'mobile'  => $this->getFirstMediaUrl('categories-mobile') ?: null,
+            ],
         ];
     }
 }

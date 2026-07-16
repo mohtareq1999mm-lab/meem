@@ -10,9 +10,11 @@ use Exception;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Marvel\Database\Models\Review;
 use Marvel\Exceptions\MarvelException;
+use Marvel\Traits\MediaManager;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Prettus\Repository\Exceptions\RepositoryException;
 use Prettus\Validator\Exceptions\ValidatorException;
@@ -20,12 +22,12 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class ReviewRepository extends BaseRepository
 {
+    use MediaManager;
     /**
      * @var array
      */
     protected $fieldSearchable = [
         'rating',
-        'shop_id',
         'product_id',
     ];
 
@@ -33,14 +35,10 @@ class ReviewRepository extends BaseRepository
      * @var array[]
      */
     protected $dataArray = [
-        'order_id',
         'product_id',
-        'variation_option_id',
         'user_id',
-        'shop_id',
         'comment',
         'rating',
-        'photos'
     ];
 
     public function boot()
@@ -69,12 +67,20 @@ class ReviewRepository extends BaseRepository
     {
         // add logic to verified purchase and only one rating on each product
         try {
+            DB::beginTransaction();
             $reviewInput = $request->only($this->dataArray);
+            $reviewInput['user_id'] = auth()->id();
             $review = $this->create($reviewInput);
-
-            event(new ReviewCreated($review));
+            if ($request->has('images')) {
+                if (!$this->uploadImages($request, 'images', $review, 'reviews', 'reviews')) {
+                    throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
+                }
+            }
+            // event(new ReviewCreated($review));
+            DB::commit();
             return $review;
         } catch (Exception $e) {
+            DB::rollBack();
             throw new HttpException(400, SOMETHING_WENT_WRONG);
         }
     }
@@ -82,8 +88,28 @@ class ReviewRepository extends BaseRepository
     public function updateReview($request, $id)
     {
         try {
+            DB::beginTransaction();
             $review = $this->findOrFail($id);
             $review->update($request->only($this->dataArray));
+            if ($request->has('images')) {
+                if (!$this->updateImages($request, 'images', $review, 'reviews', 'reviews')) {
+                    throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
+                }
+            }
+            DB::commit();
+            return $review;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw new HttpException(400, SOMETHING_WENT_WRONG);
+        }
+    }
+
+    public function toggleApprove($id)
+    {
+        try {
+            $review = $this->findOrFail($id);
+            $review->approved = !$review->approved;
+            $review->save();
             return $review;
         } catch (Exception $e) {
             throw new HttpException(400, SOMETHING_WENT_WRONG);

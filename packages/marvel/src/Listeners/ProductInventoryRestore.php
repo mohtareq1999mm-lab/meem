@@ -5,74 +5,38 @@ namespace Marvel\Listeners;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Marvel\Database\Models\Product;
-use Marvel\Database\Models\Variation;
+use Marvel\Database\Models\ProductVariant;
 
 class ProductInventoryRestore implements ShouldQueue
 {
-    protected function updateProductInventory($eventData)
+    public function handle($event)
     {
         try {
-            $fetchedProduct = Product::findOrFail($eventData->id);
-            $current_quantity = $fetchedProduct->quantity + (int) $eventData->pivot->order_quantity;
-            $sold_quantity = $fetchedProduct->sold_quantity - (int) $eventData->pivot->order_quantity;
+            $orderItems = $event->order->orderItems;
 
-            if ($current_quantity > -1) {
+            foreach ($orderItems as $item) {
+                if ($item->is_gift) {
+                    continue;
+                }
 
-                $fetchedProduct->update(
-                    [
-                        'quantity' => $current_quantity,
-                        'sold_quantity' => $sold_quantity
-                    ]
-                );
+                $product = Product::find($item->product_id);
+                if ($product && !$product->is_rental && !$product->is_digital) {
+                    $product->stock_quantity = max(0, (int) $product->stock_quantity + (int) $item->product_quantity);
+                    $product->sold_quantity = max(0, (int) $product->sold_quantity - (int) $item->product_quantity);
+                    $product->save();
+                }
 
-
-                // ****** there was a cause for this condition
-
-                // if (TRANSLATION_ENABLED) {
-                //     $this->updateTranslationsInventory($eventData, $current_quantity);
-                // } else {
-                //     Product::find($eventData->id)->update(['quantity' => $current_quantity]);
-                // }
-
-                if (!empty($eventData->pivot->variation_option_id)) {
-                    $variationOption = Variation::findOrFail($eventData->pivot->variation_option_id);
-                    $currentVariationOptionQuantity = $variationOption->quantity + (int) $eventData->pivot->order_quantity;
-                    $variationOptionSoldQuantity = $variationOption->sold_quantity - (int) $eventData->pivot->order_quantity;
-
-                    $variationOption->update([
-                        'quantity' => $currentVariationOptionQuantity,
-                        'sold_quantity' => $variationOptionSoldQuantity
-                    ]);
-
-                    // ****** there was a cause for this condition
-
-                    // if (TRANSLATION_ENABLED) {
-                    //     $this->updateVariationTranslationsInventory($variationOption, $variationOption->quantity);
-                    // } else {
-                    //     $variationOption->update([['quantity' => $variationOption->quantity]]);
-                    // }
+                if ($item->product_variant_id) {
+                    $variant = ProductVariant::find($item->product_variant_id);
+                    if ($variant) {
+                        $variant->stock_quantity = max(0, (int) $variant->stock_quantity + (int) $item->product_quantity);
+                        $variant->sold_quantity = max(0, (int) $variant->sold_quantity - (int) $item->product_quantity);
+                        $variant->save();
+                    }
                 }
             }
         } catch (Exception $th) {
             //
-        }
-    }
-
-    // public function updateTranslationsInventory($product, $updatedQuantity)
-    // {
-    //     Product::where('sku', $product->sku)->update(['quantity' => $updatedQuantity]);
-    // }
-
-    // public function updateVariationTranslationsInventory($variationOption, $updatedQuantity)
-    // {
-    //     Variation::where('sku', $variationOption->sku)->update(['quantity' => $updatedQuantity]);
-    // }
-
-    public function handle($event)
-    {
-        $products = $event->order->products;
-        foreach ($products as $product) {
-            $this->updateProductInventory($product);
         }
     }
 }

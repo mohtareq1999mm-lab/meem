@@ -264,8 +264,8 @@ $user->assignRole($role)
 | Listener | `app/Listeners/LogUserRolesUpdated.php` (implements `ShouldQueue`) |
 | Translations | `resources/lang/{en,ar}/activity.php` |
 | Package | `spatie/laravel-activitylog` |
-
-Note: `ActivityLogService` (`app/Services/ActivityLog/ActivityLogService.php`) is **no longer** used by observers or listeners. All activity logging is now performed through `LogActivityJob` dispatches.
+| Observer Registration | `app/Providers/EventServiceProvider.php` (`$observers` property) |
+| Event Registration | `app/Providers/EventServiceProvider.php` (`$listen` property) |
 
 ---
 
@@ -281,6 +281,7 @@ Note: `ActivityLogService` (`app/Services/ActivityLog/ActivityLogService.php`) i
 | `promotions` | `PromotionObserver` | created, updated, deleted, statusChanged |
 | `roles` | `RoleObserver` | created, updated, deleted |
 | `users` | `UserObserver` + `LogUserRolesUpdated` | created, updated, deleted, restored, forceDeleted, statusChanged, roleUpdated |
+| `pickup_locations` | `PickupLocationObserver` | created, updated, deleted, statusChanged |
 
 ---
 
@@ -357,3 +358,23 @@ Note: `ActivityLogService` (`app/Services/ActivityLog/ActivityLogService.php`) i
 - **Files Modified**:
   - `tests/Feature/ActivityLogApiTest.php` — Changed `PREFIX` from `/api/v1` to `/api`. Changed `meta.total` assertion from `2` to `1`.
 - **Verification**: Test now uses correct URL prefix matching the actual route registration.
+
+### Fix AL-09: Observers unregistered — entire activity logging system non-functional
+
+- **Date**: 2026-07-16
+- **Issue**: All 9 observers (`ProductObserver`, `CategoryObserver`, `BrandObserver`, `CouponObserver`, `FlashSaleObserver`, `PromotionObserver`, `RoleObserver`, `UserObserver`, `PickupLocationObserver`) existed as classes but were never registered. No `Model::observe()` calls existed anywhere in the codebase. Similarly, `UserRolesUpdated` event was never dispatched and `LogUserRolesUpdated` listener was never registered in any EventServiceProvider. `ActivityLogService` was dead code.
+- **Root Cause**: Observers were created during development but observer registration (`EventServiceProvider::$observers`) was never configured. The event/listener pair for role changes was never wired into `EventServiceProvider::$listen`. The old `ActivityLogService` was replaced by `LogActivityJob` but never removed.
+- **Files Modified**:
+  - `app/Providers/EventServiceProvider.php` — Added `$observers` property with all 9 observer registrations. Added `UserRolesUpdated::class => [LogUserRolesUpdated::class]` to `$listen`.
+  - `packages/marvel/src/Http/Controllers/RoleAndPermissionController.php` — Added `UserRolesUpdated::dispatch()` in `assignRole()` and `removeRoleFromUser()`.
+  - `packages/marvel/src/Http/Controllers/UserController.php` — Added `UserRolesUpdated::dispatch()` in `makeOrRevokeAdmin()`.
+  - `app/Services/ActivityLog/ActivityLogService.php` — **Deleted** (dead code, replaced by `LogActivityJob`).
+- **Database Changes**: None.
+- **Route Changes**: None.
+- **API Changes**: None (backward-compatible).
+- **Architecture Changes**: None (registration was missing, now added).
+- **Test Changes**: None required (existing tests pass).
+- **Documentation Changes**: Removed `ActivityLogService` dead-code note. Added observer registration and event registration to dependencies table. Added `PickupLocationObserver` to Log Name Reference. Added this audit history entry.
+- **Breaking Changes**: None.
+- **Legacy Dependency Reported**: `ShopController::addStaff()` (legacy Marvel shop/staff logic) was intentionally excluded from `UserRolesUpdated` dispatch per Project Constitution. Role changes via `addStaff()` will not be logged until the shop module is removed or migrated to active architecture.
+- **Final Verification**: All 9 observers now registered via `EventServiceProvider::$observers`. `UserRolesUpdated` event dispatched from 3 active-architecture role-change entry points. `LogUserRolesUpdated` listener registered in `EventServiceProvider::$listen`. `ActivityLogService` removed. Activity logging system is now fully functional for active architecture.

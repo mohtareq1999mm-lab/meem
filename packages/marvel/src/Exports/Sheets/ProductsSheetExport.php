@@ -25,7 +25,7 @@ class ProductsSheetExport implements FromQuery, WithTitle, WithHeadings, WithMap
 
     public function query()
     {
-        $query = Product::query()->with(['variations', 'categories', 'brands', 'flash_sales' => fn($q) => $q->valid(), 'sliders']);
+        $query = Product::query()->with(['variations', 'categories', 'brands', 'flash_sales', 'sliders']);
 
         if (isset($this->filters['status'])) {
             $query->where('status', $this->filters['status']);

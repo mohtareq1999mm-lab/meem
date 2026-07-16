@@ -13,11 +13,13 @@ use Marvel\Enums\OrderStatus;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Exceptions\MarvelNotFoundException;
 use Marvel\Http\Resources\OwnershipTransferResource;
+use Marvel\Traits\ApiResponse;
 use Marvel\Enums\Permission;
 use Marvel\Events\OwnershipTransferStatusControl;
 
 class OwnershipTransferController extends CoreController
 {
+    use ApiResponse;
     public $repository;
 
     public function __construct(OwnershipTransferRepository $repository)
@@ -37,8 +39,22 @@ class OwnershipTransferController extends CoreController
     {
         $limit = $request->limit ?   $request->limit : 15;
         $ownershipHistory = $this->fetchOwnershipTransferHistories($request)->paginate($limit)->withQueryString();
-        $data = OwnershipTransferResource::collection($ownershipHistory)->response()->getData(true);
-        return formatAPIResourcePaginate($data);
+        $ownershipData = OwnershipTransferResource::collection($ownershipHistory)->response()->getData(true);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
+            "data" => $ownershipData['data'] ?? [],
+            "page" => $ownershipData['meta']['current_page'] ?? 0,
+            "current_page" => $ownershipData['meta']['current_page'] ?? 0,
+            "from" => $ownershipData['meta']['from'] ?? 0,
+            "to" => $ownershipData['meta']['to'] ?? 0,
+            "last_page" => $ownershipData['meta']['last_page'] ?? 0,
+            "path" => $ownershipData['meta']['path'] ?? "",
+            "per_page" => $ownershipData['meta']['per_page'] ?? 0,
+            "total" => $ownershipData['meta']['total'] ?? 0,
+            "next_page_url" => $ownershipData['links']['next'] ?? "",
+            "prev_page_url" => $ownershipData['links']['prev'] ?? "",
+            "last_page_url" => $ownershipData['links']['last'] ?? "",
+            "first_page_url" => $ownershipData['links']['first'] ?? "",
+        ]);
     }
 
     public function fetchOwnershipTransferHistories(Request $request)

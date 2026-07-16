@@ -7,6 +7,7 @@ use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Model;
 use Marvel\Traits\TranslationTrait;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Marvel\Services\Pricing\ProductPricingService;
 
 class Variation extends Model
 {
@@ -16,7 +17,7 @@ class Variation extends Model
 
   public $guarded = [];
 
-  protected $appends = ['blocked_dates'];
+  protected $appends = ['blocked_dates', 'current_price', 'sale_price', 'final_price'];
 
   protected $casts = [
     'options'   => 'json',
@@ -26,8 +27,8 @@ class Variation extends Model
   protected function sku(): Attribute
   {
     return Attribute::make(
-      get: fn (string $value) => $value,
-      set: fn (string $value) => globalSlugify((string)$value, Variation::class, 'sku', '_'),
+      get: fn(string $value) => $value,
+      set: fn(string $value) => globalSlugify((string)$value, Variation::class, 'sku', '_'),
     );
   }
 
@@ -74,5 +75,26 @@ class Variation extends Model
   public function product()
   {
     return $this->belongsTo(Product::class, 'product_id');
+  }
+
+  public function getCurrentPriceAttribute()
+  {
+    return $this->getSalePriceAttribute();
+  }
+
+  public function getFinalPriceAttribute()
+  {
+    return $this->getSalePriceAttribute();
+  }
+
+  public function getSalePriceAttribute()
+  {
+    $product = $this->relationLoaded('product') ? $this->product : $this->product()->with('flash_sales')->first();
+
+    if (!$product) {
+      return $this->price;
+    }
+
+    return app(ProductPricingService::class)->calculateVariantCurrentPrice($product, $this);
   }
 }

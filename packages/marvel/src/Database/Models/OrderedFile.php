@@ -22,8 +22,8 @@ class OrderedFile extends Model
     /**
      * @return BelongsTo
      */
-    public function order(): BelongsTo
-    {
-        return $this->belongsTo(Order::class, 'tracking_number', 'tracking_number');
-    }
+    // public function order(): BelongsTo
+    // {
+    //     return $this->belongsTo(Order::class, 'tracking_number', 'tracking_number');
+    // }
 }

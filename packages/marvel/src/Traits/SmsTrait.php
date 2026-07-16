@@ -7,7 +7,6 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Marvel\Database\Models\Profile;
-use Marvel\Database\Models\Settings;
 use Marvel\Database\Models\User;
 use Marvel\Enums\EventType;
 use Marvel\Enums\Permission;
@@ -152,17 +151,6 @@ trait SmsTrait
         if (in_array($eventName, [EventType::ORDER_PAYMENT_FAILED, EventType::ORDER_PAYMENT_SUCCESS])) {
             $eventName = EventType::ORDER_PAYMENT;
         }
-        $userArray = ['customer' => false, 'admin' => false, 'vendor' => false];
-        $settings = Settings::getData($language);
-        if (!isset($settings->options[$eventType])) return $userArray;
-        $options = $settings->options;
-        foreach ($userArray as $key => $value) {
-            if (isset($options[$eventType][$key][$eventName])) {
-                $userArray[$key] = $options[$eventType][$key][$eventName];
-            }
-        }
-        //send a test email
-
-        return $userArray;
+        return ['customer' => true, 'admin' => true, 'vendor' => true];
     }
 }

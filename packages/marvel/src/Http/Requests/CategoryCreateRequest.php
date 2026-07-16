@@ -3,6 +3,7 @@
 
 namespace Marvel\Http\Requests;
 
+use CodeZero\UniqueTranslation\UniqueTranslationRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -28,15 +29,14 @@ class CategoryCreateRequest extends FormRequest
     public function rules()
     {
         return [
-            'name'         => ['required', 'string'],
-            'slug'         => ['nullable', 'string'],
-            // 'type_id'   => ['required', 'integer'],
-            'icon'         => ['nullable', 'string'],
-            'image'        => ['array'],
-            'banner_image' => ['array'],
-            'details'      => ['nullable', 'string'],
-            'language'     => ['nullable', 'string'],
-            'parent'       => ['nullable', 'integer'],
+            'name' => ['required', 'array'],
+            'name.*' => ['required', 'string', UniqueTranslationRule::for('categories', 'name')],
+            'image-desktop' => ['required', 'file', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
+            'image-mobile' => ['required', 'file', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
+            'parent_id' => ['nullable', 'integer', 'exists:categories,id'],
+            'details'      => ['sometimes', 'string', 'min:3', 'max:2500'],
+            "products" => "sometimes|array",
+            "products.*" => "exists:products,id",
         ];
     }
 
@@ -48,14 +48,16 @@ class CategoryCreateRequest extends FormRequest
     public function messages()
     {
         return [
-            'name.required'       => 'Name field is required',
-            'name.string'         => 'Name is not a valid string',
-            'name.max:255'        => 'Name can not be more than 255 character',
-            'icon.string'         => 'Icon is not a valid string',
-            'image.string'        => 'Image is not a valid image',
-            'banner_image.string' => 'Banner image is not a valid image',
-            'details.string'      => 'Details is not a valid string',
-            'parent.integer'      => 'Parent is not a valid integer',
+            'name.required' => 'Name field is required',
+            'name.unique' => 'Name already exists',
+            'name.*.string' => 'Name is not a valid string',
+            'name.*.max:255' => 'Name can not be more than 255 character',
+            'image-desktop.mimes' => 'Desktop image must be a file of type: jpeg, png, jpg, gif, svg',
+            'image-desktop.max' => 'Desktop image must not be greater than 2048 kilobytes',
+            'image-mobile.mimes' => 'Mobile image must be a file of type: jpeg, png, jpg, gif, svg',
+            'image-mobile.max' => 'Mobile image must not be greater than 2048 kilobytes',
+            'details.string' => 'Details is not a valid string',
+            'parent.integer' => 'Parent is not a valid integer',
         ];
     }
 

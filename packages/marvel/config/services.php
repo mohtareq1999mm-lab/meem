@@ -52,6 +52,10 @@ return [
     'messagebird' => [
         'api_key' => env('MESSAGEBIRD_API_KEY'),
         'originator' => env('MESSAGEBIRD_ORIGINATOR')
-    ]
+    ],
+     'myfatoorah' => [
+        'api_key' => env('MYFATOORAH_API_KEY'),
+        'base_url' => env('MYFATOORAH_BASE_URL', 'https://apitest.myfatoorah.com/v2/'),
+    ],
 
 ];

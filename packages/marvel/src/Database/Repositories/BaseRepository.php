@@ -32,11 +32,11 @@ abstract class BaseRepository extends Repository implements CacheableInterface
         return $model->first();
     }
 
-    
+
     /**
      * The function finds a model by a specific field and value, and throws an exception if it is not
      * found.
-     * 
+     *
      * @param string field The "field" parameter is used to specify the column name in the database table that
      * you want to search for. It is typically a string value representing the name of the column.
      * @param mixed value The "value" parameter is the value that you want to search for in the specified
@@ -46,7 +46,7 @@ abstract class BaseRepository extends Repository implements CacheableInterface
      * from the database table should be retrieved. By default, it is set to ['*'], which means all
      * columns will be retrieved. However, you can pass an array of specific column names to retrieve
      * only those columns.
-     * 
+     *
      * @return \Illuminate\Database\Eloquent\Model first model that matches the given field and value.
      */
     public function findOneByFieldOrFail($field, $value = null, $columns = ['*'])
@@ -220,10 +220,10 @@ abstract class BaseRepository extends Repository implements CacheableInterface
 
     /**
      * It takes a request object, and a key, and returns a slug.
-     * 
+     *
      * @param Request request The request object
      * @param string key The key of the request that you want to slugify.
-     * 
+     *
      * @return string A string
      */
     public function makeSlug(Request $request, string $key = '', ?int $update = null): string
@@ -235,10 +235,13 @@ abstract class BaseRepository extends Repository implements CacheableInterface
             !empty($request[$key])  => $request[$key],
             empty($request->slug)   => 'auto-generated-string',
         };
+        if (is_array($slugText)) {
+            $slugText = $slugText['en'] ?? reset($slugText);
+        }
         if (empty($key)) {
             return globalSlugify(slugText: $slugText, model: $this->model(), update: $update);
         }
-        return globalSlugify(slugText: $request[$key], model: $this->model(), key: $key, update: $update);
+        return globalSlugify(slugText: $slugText, model: $this->model(), key: $key, update: $update);
     }
 
     public function findBySlugOrId(int | string $value, string $language = DEFAULT_LANGUAGE)

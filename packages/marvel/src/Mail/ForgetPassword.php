@@ -30,6 +30,11 @@ class ForgetPassword extends Mailable
      */
     public function build()
     {
-        return $this->markdown('emails.forget-password');
+        return $this->from(config('app.name').'@chawkbazar.com', 'ChawkBazar')
+            ->subject('Password Reset Token')
+            ->markdown('emails.forget-password')
+            ->with([
+                'token' => $this->token,
+            ]);
     }
 }

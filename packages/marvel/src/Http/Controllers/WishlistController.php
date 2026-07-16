@@ -6,16 +6,14 @@ namespace Marvel\Http\Controllers;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
 use Marvel\Database\Models\Product;
 use Illuminate\Support\Facades\Auth;
 use Marvel\Exceptions\MarvelException;
-use Marvel\Database\Models\AbusiveReport;
-use Illuminate\Database\Eloquent\Collection;
 use Marvel\Http\Requests\WishlistCreateRequest;
 use Marvel\Database\Repositories\WishlistRepository;
-use Marvel\Http\Requests\AbusiveReportCreateRequest;
-use Prettus\Validator\Exceptions\ValidatorException;
+use Marvel\Http\Resources\ProductResource;
+use Marvel\Http\Resources\WishlistResource;
+use Marvel\Traits\ApiResponse;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
@@ -23,6 +21,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  */
 class WishlistController extends CoreController
 {
+    use ApiResponse;
     public $repository;
 
     public function __construct(WishlistRepository $repository)
@@ -55,8 +54,19 @@ class WishlistController extends CoreController
     public function index(Request $request)
     {
         $limit = $request->limit ? $request->limit : 15;
-        $wishlist = $this->repository->pluck('product_id');
-        return Product::whereIn('id', $wishlist)->paginate($limit);
+        $wishlist = $this->repository->get();
+
+        $productIds = $wishlist->pluck('product_id');
+        $variantIds = $wishlist->pluck('product_variant_id')->filter();
+        $products = Product::whereIn('id', $productIds)
+            ->with([
+                'variations' => function ($query) use ($variantIds) {
+                    $query->whereIn('id', $variantIds);
+                },
+                'variations.attributeProducts.attributeValue.attribute',
+            ])
+            ->paginate($limit);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, WishlistResource::collection($products));
     }
 
     /**
@@ -81,9 +91,10 @@ class WishlistController extends CoreController
     public function store(WishlistCreateRequest $request)
     {
         try {
-            return $this->repository->storeWishlist($request);
+            $wishlist = $this->repository->storeWishlist($request);
+            return $this->apiResponse(ADDED_TO_WISHLIST_SUCCESSFULLY, 200, true, $wishlist);
         } catch (MarvelException $th) {
-            throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE);
+            throw new MarvelException(SOMETHING_WENT_WRONG);
         }
     }
 
@@ -109,7 +120,8 @@ class WishlistController extends CoreController
     public function toggle(WishlistCreateRequest $request)
     {
         try {
-            return $this->repository->toggleWishlist($request);
+            $result = $this->repository->toggleWishlist($request);
+            return $this->apiResponse($result ? ADDED_TO_WISHLIST_SUCCESSFULLY : REMOVED_FROM_WISHLIST_SUCCESSFULLY, 200, true);
         } catch (MarvelException $th) {
             throw new MarvelException(SOMETHING_WENT_WRONG);
         }
@@ -132,10 +144,14 @@ class WishlistController extends CoreController
     public function destroy(Request $request, $id)
     {
         try {
-            $request->id = $id;
-            return $this->delete($request);
+            $request->merge(['id' => $id]);
+            if ( $request->query('variant_id')) {
+                $request->merge(['variant_id' => $request->query('variant_id')]);
+            }
+            $deletedWishlist = $this->delete($request);
+            return $this->apiResponse(REMOVED_FROM_WISHLIST_SUCCESSFULLY, 200, true, $deletedWishlist);
         } catch (MarvelException $th) {
-            throw new MarvelException(COULD_NOT_DELETE_THE_RESOURCE);
+            throw new MarvelException(SOMETHING_WENT_WRONG);
         }
     }
 
@@ -146,13 +162,24 @@ class WishlistController extends CoreController
                 throw new AuthorizationException(NOT_AUTHORIZED);
             }
             $product = Product::where('id', $request->id)->first();
-            $wishlist = $this->repository->where('product_id', $product->id)->where('user_id', auth()->user()->id)->first();
+            if (!$product) {
+                throw new MarvelException(NOT_FOUND);
+            }
+            $wishlist = $this->repository
+                ->where('product_id', $product->id)
+                ->where('user_id', auth()->id())
+                ->when($request->product_variant_id, function ($query) use ($request) {
+                    $query->where('product_variant_id', $request->variant_id);
+                }, function ($query) {
+                    $query->whereNull('product_variant_id');
+                })
+                ->first();
             if (!empty($wishlist)) {
                 return $wishlist->delete();
             }
-            throw new HttpException(404, NOT_FOUND);
+            throw new MarvelException(SOMETHING_WENT_WRONG);
         } catch (MarvelException $th) {
-            throw new MarvelException(COULD_NOT_DELETE_THE_RESOURCE);
+            throw new MarvelException(SOMETHING_WENT_WRONG);
         }
     }
 
@@ -162,10 +189,13 @@ class WishlistController extends CoreController
      * @param int $product_id
      * @return JsonResponse
      */
-    public function in_wishlist(Request $request, $product_id)
+    public function in_wishlist(Request $request, $product_id): JsonResponse
     {
-        $request->product_id = $product_id;
-        return $this->inWishlist($request);
+        $request->merge(['product_id' => $product_id]);
+
+        return response()->json([
+            'data' => $this->inWishlist($request),
+        ]);
     }
 
     public function inWishlist(Request $request)

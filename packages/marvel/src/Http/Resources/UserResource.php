@@ -20,9 +20,9 @@ class UserResource extends Resource
             'email' => $this->email,
             'email_verified_at' => $this->email_verified_at,
             'is_active' => $this->is_active,
-            'shop_id' => $this->shop_id,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at
+            'image' => $this->getFirstMediaUrl('user-image') ?: null,
+            'roles' => RoleResource::collection($this->whenLoaded('roles')),
+            'permissions' => PermissionResource::collection($this->getPermissionsViaRoles()),
         ];
     }
 }

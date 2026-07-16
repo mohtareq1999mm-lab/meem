@@ -17,9 +17,18 @@ class BannerResource extends Resource
         return [
             'id'          => $this->id,
             'title'       => $this->title,
-            'type_id'     => $this->type_id,
             'description' => $this->description,
-            'image'       => $this->image
+            'image'       => [
+                "desktop" => $this->when($this->getFirstMediaUrl('banners-desktop'), $this->getFirstMediaUrl('banners-desktop')),
+                "mobile" => $this->when($this->getFirstMediaUrl('banners-mobile'), $this->getFirstMediaUrl('banners-mobile')),
+            ],
+            "status"   => (bool)$this->status,
+            "products"    => $this->whenLoaded('products', function () {
+                return ProductResource::collection($this->products);
+            }),
         ];
+
     }
+
+
 }

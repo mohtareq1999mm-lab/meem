@@ -8,125 +8,122 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Marvel\Database\Repositories\AttributeValueRepository;
+use Marvel\Enums\Permission;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\AttributeValueRequest;
 use Marvel\Http\Resources\AttributeValueResource;
+use Marvel\Traits\ApiResponse;
 use Prettus\Validator\Exceptions\ValidatorException;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 
 class AttributeValueController extends CoreController
 {
+    use ApiResponse;
     public $repository;
 
     public function __construct(AttributeValueRepository $repository)
     {
         $this->repository = $repository;
+        $this->middleware("permission:" . Permission::VIEW_ATTRIBUTES, ["only" => ["index", "show"]]);
+        $this->middleware("permission:" . Permission::CREATE_ATTRIBUTE, ["only" => ["store"]]);
+        $this->middleware("permission:" . Permission::UPDATE_ATTRIBUTE, ["only" => ["update"]]);
+        $this->middleware("permission:" . Permission::DELETE_ATTRIBUTE, ["only" => ["destroy"]]);
     }
 
-
-    /**
-     * Display a listing of the resource.
-     *
-     * @param Request $request
-     */
     public function index(Request $request)
     {
-        $attributesValue = $this->repository->with('attribute')->all();
-        return AttributeValueResource::collection($attributesValue);
+        $limit = $request->limit ?? 15;
+        $order = $request->order;
+        $sortedBy = $request->sortedBy ?? 'asc';
+
+        $attributesValue = $this->repository->with('attribute');
+
+        if ($order && in_array($order, ['id', 'value', 'attribute_id', 'slug', 'created_at', 'updated_at'])) {
+            $attributesValue = $attributesValue->orderBy($order, $sortedBy === 'desc' ? 'desc' : 'asc');
+        }
+
+        $attributesValue = $attributesValue->paginate($limit)->withQueryString();
+        $attributeValueData = AttributeValueResource::collection($attributesValue)->response()->getData(true);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
+            "data" => $attributeValueData['data'] ?? [],
+            "page" => $attributeValueData['meta']['current_page'] ?? 0,
+            "current_page" => $attributeValueData['meta']['current_page'] ?? 0,
+            "from" => $attributeValueData['meta']['from'] ?? 0,
+            "to" => $attributeValueData['meta']['to'] ?? 0,
+            "last_page" => $attributeValueData['meta']['last_page'] ?? 0,
+            "path" => $attributeValueData['meta']['path'] ?? "",
+            "per_page" => $attributeValueData['meta']['per_page'] ?? 0,
+            "total" => $attributeValueData['meta']['total'] ?? 0,
+            "next_page_url" => $attributeValueData['links']['next'] ?? "",
+            "prev_page_url" => $attributeValueData['links']['prev'] ?? "",
+            "last_page_url" => $attributeValueData['links']['last'] ?? "",
+            "first_page_url" => $attributeValueData['links']['first'] ?? "",
+        ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param AttributeValueRequest $request
-     * @return mixed
-     * @throws ValidatorException
-     */
     public function store(AttributeValueRequest $request)
     {
         try {
-            if ($this->repository->hasPermission($request->user(), $request->shop_id)) {
-                $validatedData = $request->validated();
-                return $this->repository->create($validatedData);
-            }
-            throw new AuthorizationException(NOT_AUTHORIZED);
+
+            $validatedData = $request->validated();
+            $attributeValue = $this->repository->create($validatedData);
+            return $this->apiResponse(ATTRIBUTE_VALUE_CREATED_SUCCESSFULLY, 201, true, AttributeValueResource::make($attributeValue));
+
         } catch (MarvelException $th) {
-            throw new MarvelException(SOMETHING_WENT_WRONG);
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param $id
-     * @return JsonResponse
-     */
     public function show($id)
     {
         try {
-            return $this->repository->with('attribute')->findOrFail($id);
+            $attributeValue = $this->repository->with('attribute')->findOrFail($id);
+            return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, AttributeValueResource::make($attributeValue));
         } catch (MarvelException $th) {
-            throw new MarvelException(NOT_FOUND);
+            return $this->apiResponse(NOT_FOUND, 404, false);
         }
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param AttributeValueRequest $request
-     * @param int $id
-     * @return JsonResponse
-     */
     public function update(AttributeValueRequest $request, $id)
     {
         try {
             $request->id = $id;
-            return $this->updateAttributeValues($request);
+            $attributeValue = $this->updateAttributeValues($request);
+            return $this->apiResponse(ATTRIBUTE_VALUE_UPDATED_SUCCESSFULLY, 200, true, AttributeValueResource::make($attributeValue));
         } catch (MarvelException $th) {
-            throw new MarvelException(COULD_NOT_UPDATE_THE_RESOURCE);
+            return $this->apiResponse(COULD_NOT_UPDATE_THE_RESOURCE, 400, false);
         }
-    }
-    public function updateAttributeValues(AttributeValueRequest $request)
-    {
-        if ($this->repository->hasPermission($request->user(), $request->shop_id)) {
-            try {
-                $validatedData = $request->except('id');
-                return $this->repository->findOrFail($request->id)->update($validatedData);
-            } catch (\Exception $e) {
-                throw new ModelNotFoundException(NOT_FOUND);
-            }
-        }
-        throw new AuthorizationException(NOT_AUTHORIZED);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param int $id
-     * @return JsonResponse
-     */
+    public function updateAttributeValues(AttributeValueRequest $request)
+    {
+        try {
+            $attributeValue = $this->repository->findOrFail($request->id);
+            $attributeValue->update($request->except('id'));
+            return $attributeValue->fresh();
+        } catch (\Exception $e) {
+            throw new ModelNotFoundException(NOT_FOUND);
+        }
+    }
+
     public function destroy($id, Request $request)
     {
         try {
             $request->id = $id;
-            return $this->destroyAttributeValues($request);
+            $this->destroyAttributeValues($request);
+            return $this->apiResponse(ATTRIBUTE_VALUE_DELETED_SUCCESSFULLY, 200, true);
         } catch (MarvelException $th) {
-            throw new MarvelException(COULD_NOT_DELETE_THE_RESOURCE);
+            return $this->apiResponse(COULD_NOT_DELETE_THE_RESOURCE, 400, false);
         }
     }
-    /**
-     * It deletes an attribute from the database
-     * 
-     * @param Request request The request object.
-     * @return JsonResponse
-     */
+
     public function destroyAttributeValues(Request $request)
     {
         $shop_id = $this->repository->findOrFail($request->id)->attribute->shop_id;
         if ($this->repository->hasPermission($request->user(), $shop_id)) {
             $attributesValue =  $this->repository->findOrFail($request->id);
             $attributesValue->delete();
-            return $attributesValue;
+            return;
         }
         throw new AuthorizationException(NOT_AUTHORIZED);
     }

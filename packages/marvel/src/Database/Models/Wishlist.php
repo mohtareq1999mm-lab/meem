@@ -9,9 +9,13 @@ class Wishlist extends Model
 {
     protected $table = 'wishlists';
 
-    public $guarded = [];
+    public $fillable = [
+        'user_id',
+        'product_id',
+        'product_variant_id'
+    ];
 
-    protected $data_array = ['product_id'];
+    protected $data_array = ['product_id', 'product_variant_id', 'user_id'];
 
     /**
      * Get the product that owns the wishlist.
@@ -21,9 +25,9 @@ class Wishlist extends Model
         return $this->belongsTo(Product::class);
     }
 
-    function veriation()
+    function variation()
     {
-        return $this->belongsTo(Variation::class);
+        return $this->belongsTo(ProductVariant::class);
     }
 
     /**

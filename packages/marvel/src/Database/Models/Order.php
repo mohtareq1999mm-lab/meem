@@ -8,119 +8,135 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Marvel\Traits\TranslationTrait;
+use Marvel\Enums\PaymentStatus;
 
 class Order extends Model
 {
     use SoftDeletes;
-    use TranslationTrait;
-
 
     protected $table = 'orders';
 
-    public $guarded = [];
+    public $fillable = [
+        'user_id',
+        'governorate_id',
+        'name',
+        'user_phone',
+        'user_email',
+        'address',
+        'notes',
+        'shipping_method',
+        'expected_delivery_at',
+        'fast_shipping_fee',
+        'fulfillment_type',
+        'payment_method',
+        'payment_gateway',
+        'pickup_location_id',
+        'pickup_location_name',
+        'pickup_location_address',
+        'pickup_location_phone',
+        'pickup_location_coordinates',
+        'price',
+        'shipping_price',
+        'total_price',
+        'coupon',
+        'coupon_discount',
+        'coupon_discount_type',
+        'coupon_discount_max_amount',
+        'promotion_id',
+        'promotion_code',
+        'promotion_type',
+        'promotion_discount',
+        'status',
+    ];
 
     protected $casts = [
-        'shipping_address'    => 'json',
-        'billing_address'     => 'json',
-        'payment_intent_info' => 'json',
+        'address' => 'array',
+        'expected_delivery_at' => 'datetime',
     ];
 
     protected $hidden = [
-        //        'created_at',
-        'updated_at',
         'deleted_at'
     ];
 
     protected static function boot()
     {
         parent::boot();
-        // Order by created_at desc
         static::addGlobalScope('order', function (Builder $builder) {
             $builder->orderBy('created_at', 'desc');
         });
     }
 
-    protected $with = ['customer', 'products.variation_options'];
-
-    /**
-     * @return belongsToMany
-     */
-    public function products(): belongsToMany
+    public function user(): BelongsTo
     {
-        return $this->belongsToMany(Product::class)
-            ->withPivot('order_quantity', 'unit_price', 'subtotal', 'variation_option_id')
-            ->withTimestamps();
+        return $this->belongsTo(User::class);
     }
 
-    /**
-     * @return belongsTo
-     */
-    public function coupon(): belongsTo
+    public function orderItems(): HasMany
     {
-        return $this->belongsTo(Coupon::class, 'coupon_id');
+        return $this->hasMany(OrderProduct::class);
     }
 
-    /**
-     * @return belongsTo
-     */
-    public function customer(): belongsTo
+    public function transactions(): HasMany
     {
-        return $this->belongsTo(User::class, 'customer_id');
+        return $this->hasMany(Transaction::class);
     }
 
-    /**
-     * @return BelongsTo
-     */
-    public function shop(): BelongsTo
+    public function pickupLocation(): BelongsTo
     {
-        return $this->belongsTo(Shop::class, 'shop_id');
+        return $this->belongsTo(PickupLocation::class, 'pickup_location_id');
     }
 
-    /**
-     * @return HasMany
-     */
-    public function children()
+    public function scopeForUser(Builder $query, int $userId): Builder
     {
-        return $this->hasMany('Marvel\Database\Models\Order', 'parent_id', 'id');
+        return $query->where('user_id', $userId);
     }
 
-    /**
-     * @return HasOne
-     */
-    public function parent_order()
+    public function scopeScheduled(Builder $query): Builder
     {
-        return $this->hasOne('Marvel\Database\Models\Order', 'id', 'parent_id');
+        return $query->where('shipping_method', 'SCHEDULED');
     }
 
-    /**
-     * @return HasOne
-     */
-    public function refund()
+    public function scopeFast(Builder $query): Builder
     {
-        return $this->hasOne(Refund::class, 'order_id');
-    }
-    /**
-     * @return HasOne
-     */
-    public function wallet_point()
-    {
-        return $this->hasOne(OrderWalletPoint::class, 'order_id');
+        return $query->where('shipping_method', 'FAST');
     }
 
-    /**
-     * @return HasMany
-     */
-    public function payment_intent()
+    public function scopeDelivery(Builder $query): Builder
     {
-        return $this->hasMany(PaymentIntent::class);
+        return $query->where('fulfillment_type', 'delivery');
     }
-    
-    /**
-     * @return HasMany
-     */
-    public function reviews(): HasMany
+
+    public function scopePickup(Builder $query): Builder
     {
-        return $this->hasMany(Review::class);
+        return $query->where('fulfillment_type', 'pickup');
+    }
+
+    public function getOrderNumberAttribute(): string
+    {
+        return 'ORD-' . str_pad((string) $this->id, 8, '0', STR_PAD_LEFT);
+    }
+
+    public function getPaymentStatusAttribute(): string
+    {
+        if (in_array($this->payment_method, ['cod', 'pay_at_cashier'])) {
+            $latestTransaction = $this->transactions()->latest()->first();
+            if ($latestTransaction) {
+                return match ($latestTransaction->status) {
+                    'paid' => PaymentStatus::SUCCESS,
+                    'failed' => PaymentStatus::FAILED,
+                    default => PaymentStatus::PENDING,
+                };
+            }
+            if (in_array($this->status, ['completed', 'delivered'])) {
+                return PaymentStatus::SUCCESS;
+            }
+            return PaymentStatus::PENDING;
+        }
+
+        return match ($this->status) {
+            'completed', 'delivered' => PaymentStatus::SUCCESS,
+            'cancelled' => PaymentStatus::FAILED,
+            default => PaymentStatus::PENDING,
+        };
     }
 }

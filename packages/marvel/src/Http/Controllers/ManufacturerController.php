@@ -12,6 +12,7 @@ use Marvel\Database\Repositories\ManufacturerRepository;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\ManufacturerRequest;
 use Marvel\Http\Resources\ManufacturerResource;
+use Marvel\Traits\ApiResponse;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
@@ -48,6 +49,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  */
 class ManufacturerController extends CoreController
 {
+    use ApiResponse;
     public $repository;
 
     public function __construct(ManufacturerRepository $repository)
@@ -73,8 +75,22 @@ class ManufacturerController extends CoreController
         $language = $request->language ?? DEFAULT_LANGUAGE;
         $limit = $request->limit ? $request->limit : 15;
         $manufacturers = $this->repository->where('language', $language)->with('type')->paginate($limit);
-        $data = ManufacturerResource::collection($manufacturers)->response()->getData(true);
-        return formatAPIResourcePaginate($data);
+        $manufacturerData = ManufacturerResource::collection($manufacturers)->response()->getData(true);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
+            "data" => $manufacturerData['data'] ?? [],
+            "page" => $manufacturerData['meta']['current_page'] ?? 0,
+            "current_page" => $manufacturerData['meta']['current_page'] ?? 0,
+            "from" => $manufacturerData['meta']['from'] ?? 0,
+            "to" => $manufacturerData['meta']['to'] ?? 0,
+            "last_page" => $manufacturerData['meta']['last_page'] ?? 0,
+            "path" => $manufacturerData['meta']['path'] ?? "",
+            "per_page" => $manufacturerData['meta']['per_page'] ?? 0,
+            "total" => $manufacturerData['meta']['total'] ?? 0,
+            "next_page_url" => $manufacturerData['links']['next'] ?? "",
+            "prev_page_url" => $manufacturerData['links']['prev'] ?? "",
+            "last_page_url" => $manufacturerData['links']['last'] ?? "",
+            "first_page_url" => $manufacturerData['links']['first'] ?? "",
+        ]);
     }
 
     /**

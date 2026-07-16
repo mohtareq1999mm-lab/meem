@@ -4,11 +4,10 @@ namespace Marvel\Http\Resources;
 
 use App\Http\Resources\Coupons\CouponResource;
 use Illuminate\Http\Request;
+use Marvel\Database\Models\Coupon;
 
 class CartResource extends Resource
 {
-    public bool $hasEligiblePromotion = false;
-
     public function toArray(Request $request)
     {
         $items = $this->whenLoaded('items');
@@ -21,11 +20,9 @@ class CartResource extends Resource
             $fastItems = collect();
         }
 
-        $couponObject = null;
-        if ($this->coupon && $this->relationLoaded('couponModel')) {
-            $coupon = $this->couponModel;
-            $couponObject = $coupon ? CouponResource::make($coupon) : null;
-        }
+        $couponObject = $this->coupon
+            ? CouponResource::make(Coupon::where('code', $this->coupon)->first())
+            : null;
 
         return [
             'id' => $this->id,
@@ -42,7 +39,6 @@ class CartResource extends Resource
             'fast_items_count' => $fastItems->count(),
             'normal_items' => CartItemResource::collection($normalItems),
             'fast_items' => CartItemResource::collection($fastItems),
-            'has_eligible_promotion' => $this->hasEligiblePromotion,
         ];
     }
 }

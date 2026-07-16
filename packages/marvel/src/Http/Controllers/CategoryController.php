@@ -3,16 +3,18 @@
 
 namespace Marvel\Http\Controllers;
 
+use App\Services\General\CategoryHierarchyService;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Category;
 use Marvel\Database\Repositories\CategoryRepository;
+use Marvel\Enums\Permission;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\CategoryCreateRequest;
 use Marvel\Http\Requests\CategoryUpdateRequest;
 use Marvel\Http\Resources\CategoryResource;
-use Prettus\Validator\Exceptions\ValidatorException;
+use Marvel\Traits\ApiResponse;
 
 
 /**
@@ -89,11 +91,17 @@ use Prettus\Validator\Exceptions\ValidatorException;
  */
 class CategoryController extends CoreController
 {
+    use ApiResponse;
     public $repository;
 
     public function __construct(CategoryRepository $repository)
     {
         $this->repository = $repository;
+        $this->middleware("permission:" . Permission::VIEW_CATEGORIES, ["only" => ["index", "show", "fetchFeaturedCategories"]]);
+        $this->middleware("permission:" . Permission::CREATE_CATEGORY, ["only" => ["store"]]);
+        $this->middleware("permission:" . Permission::UPDATE_CATEGORY, ["only" => ["update"]]);
+        $this->middleware("permission:" . Permission::DELETE_CATEGORY, ["only" => ["destroy"]]);
+        $this->middleware("permission:" . Permission::UPDATE_CATEGORY, ["only" => ["addOrRemoveCategoryFromFeature"]]);
     }
 
     // /**
@@ -102,17 +110,16 @@ class CategoryController extends CoreController
     //  * @param Request $request
     //  * @return Collection|Category[]
     //  */
-    // public function fetchOnlyParent(Request $request)
-    // {
-    //     $limit = $request->limit ?   $request->limit : 15;
-    //     return $this->repository->withCount(['products'])->with(['type', 'parent', 'children'])->where('parent', null)->paginate($limit);
-    //     // $limit = $request->limit ?   $request->limit : 15;
-    //     // return $this->repository->withCount(['children', 'products'])->with(['type', 'parent', 'children.type', 'children.children.type', 'children.children' => function ($query) {
-    //     //     $query->withCount('products');
-    //     // },  'children' => function ($query) {
-    //     //     $query->withCount('products');
-    //     // }])->where('parent', null)->paginate($limit);
-    // }
+//     public function fetchOnlyParent(Request $request)
+//     {
+//         $limit = $request->limit ? $request->limit : 15;
+//         $categories = $this->repository->withCount(['products'])
+// //            ->with(['type', 'parent', 'children'])
+//             ->with(['children'])
+//             ->where('parent', null)->paginate($limit);
+
+    //             return $this->apiResponse("Categories fetched successfully", 200, true, CategoryResource::collection($categories));
+//     }
 
     // /**
     //  * Display a listing of the resource.
@@ -169,24 +176,57 @@ class CategoryController extends CoreController
      */
     public function index(Request $request)
     {
-        $language = $request->language ?? DEFAULT_LANGUAGE;
-        $parent = $request->parent;
-        $selfId = $request->self ?? null;
-        $limit = $request->limit ?? 15;
+        $parent = $request->parent ?? null;
+        $selfId = $request->exceptSelf ?? null;
+        $limit = $request->per_page ?? $request->limit ?? 15;
+        $active = $request->active ?? null;
+        $Inactive = $request->inactive ?? null;
+        $search = $request->search ?? null;
+        $featureCategory = $request->input('feature-category');
+        $order = $request->order;
+        $sortedBy = $request->sortedBy ?? 'asc';
+        $categoriesQuery = $this->repository
+            ->withCount(['products']);
 
-        $categoriesQuery = $this->repository->with(['type', 'parent', 'children'])
-            ->where('language', $language)->withCount(['products']);
-
-        if ($parent === 'null') {
-            $categoriesQuery->whereNull('parent');
+        if ($featureCategory) {
+            $categoriesQuery = $categoriesQuery->where('is_featured', true);
+        }
+        if ($order && in_array($order, ['id', 'name', 'slug', 'products_count', 'created_at', 'updated_at', 'level'])) {
+            $categoriesQuery = $categoriesQuery->orderBy($order, $sortedBy === 'desc' ? 'desc' : 'asc');
+        }
+        if ($parent) {
+            $categoriesQuery = $categoriesQuery->whereNull('parent_id');
         }
         if ($selfId) {
-            $categoriesQuery->where('id', '!=', $selfId);
+            $categoriesQuery = $categoriesQuery->where('id', '!=', $selfId);
+        }
+        if ($active) {
+            $categoriesQuery = $categoriesQuery->active();
+        }
+        if ($Inactive) {
+            $categoriesQuery = $categoriesQuery->inactive();
+        }
+        if ($search) {
+            $categoriesQuery = $categoriesQuery->search('name', $search, app()->getLocale());
         }
 
         $categories = $categoriesQuery->paginate($limit);
         $data = CategoryResource::collection($categories)->response()->getData(true);
-        return formatAPIResourcePaginate($data);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
+            "data" => $data['data'] ?? [],
+            "page" => $data['meta']['current_page'] ?? 0,
+            "current_page" => $data['meta']['current_page'] ?? 0,
+            "from" => $data['meta']['from'] ?? 0,
+            "to" => $data['meta']['to'] ?? 0,
+            "last_page" => $data['meta']['last_page'] ?? 0,
+            "path" => $data['meta']['path'] ?? "",
+            "per_page" => $data['meta']['per_page'] ?? 0,
+            "total" => $data['meta']['total'] ?? 0,
+            "next_page_url" => $data['links']['next'] ?? "",
+            "prev_page_url" => $data['links']['prev'] ?? "",
+            "last_page_url" => $data['links']['last'] ?? "",
+            "first_page_url" => $data['links']['first'] ?? "",
+        ]);
     }
 
     /**
@@ -225,14 +265,12 @@ class CategoryController extends CoreController
     public function store(CategoryCreateRequest $request)
     {
         try {
-            return $this->repository->saveCategory($request);
+            $category = $this->repository->saveCategory($request);
+            $category->load('products');
+            return $this->apiResponse(CATEGORY_CREATED_SUCCESSFULLY, 200, true, CategoryResource::make($category));
         } catch (MarvelException $th) {
             throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE);
         }
-        // $language = $request->language ?? DEFAULT_LANGUAGE;
-        // $translation_item_id = $request->translation_item_id ?? null;
-        // $category->storeTranslation($translation_item_id, $language);
-        // return $category;
     }
 
     /**
@@ -267,17 +305,14 @@ class CategoryController extends CoreController
      *     )
      * )
      */
-    public function show(Request $request, $params)
+    public function show(Request $request, $id)
     {
         try {
-            $language = $request->language ?? DEFAULT_LANGUAGE;
-            if (is_numeric($params)) {
-                $params = (int) $params;
-                $category = $this->repository->with(['type', 'parentCategory', 'children'])->where('id', $params)->firstOrFail();
-                return new CategoryResource($category);
-            }
-            $category = $this->repository->with(['type', 'parentCategory', 'children'])->where('slug', $params)->firstOrFail();
-            return new CategoryResource($category);
+            $category = $this->repository->with(['parent', 'products'])
+                ->withCount('products')
+                ->where('id', $id)->firstOrFail();
+            app(CategoryHierarchyService::class)->loadDirectChildren($category, true);
+            return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, CategoryResource::make($category));
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
         }
@@ -323,17 +358,20 @@ class CategoryController extends CoreController
     {
         try {
             $request->merge(['id' => $id]);
-            return $this->categoryUpdate($request);
+            $category = $this->categoryUpdate($request);
+            return $this->apiResponse(CATEGORY_UPDATED_SUCCESSFULLY, 200, true, CategoryResource::make($category));
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
         }
     }
 
 
-    public function categoryUpdate(CategoryUpdateRequest $request)
+    public function categoryUpdate(CategoryUpdateRequest $request): Category
     {
         $category = $this->repository->findOrFail($request->id);
-        return $this->repository->updateCategory($request, $category);
+        $category = $this->repository->updateCategory($request, $category);
+        $category->load('products');
+        return $category;
     }
 
     /**
@@ -363,9 +401,12 @@ class CategoryController extends CoreController
     public function destroy($id)
     {
         try {
-            return $this->repository->findOrFail($id)->delete();
-        } catch (MarvelException $e) {
+            $this->repository->findOrFail($id)->delete();
+            return $this->apiResponse(CATEGORY_DELETED_SUCCESSFULLY, 200, true);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             throw new MarvelException(NOT_FOUND);
+        } catch (\Illuminate\Database\QueryException $e) {
+            throw new MarvelException(CANNOT_DELETE_CATEGORY_WITH_ASSOCIATED_RESOURCES);
         }
     }
 
@@ -395,11 +436,29 @@ class CategoryController extends CoreController
      */
     public function fetchFeaturedCategories(Request $request)
     {
-        //        $limit = isset($request->limit) ? $request->limit : 3;
-        //        return $this->repository->with(['products'])->take($limit)->get()->map(function ($category) {
-        //            $category->setRelation('products', $category->products->withCount('orders')->sortBy('orders_count', "desc")->take(3));
-        //            return $category;
-        //        });
-        return $this->repository->with(['products'])->limit(3);
+        $limit = isset($request->limit) ? $request->limit : 3;
+        //                return $this->repository->with(['products'])->take($limit)->get()->map(function ($category) {
+        //                    $category->setRelation('products', $category->products->withCount('orders')->sortBy('orders_count', "desc")->take(3));
+        //                    return $category;
+        //                });
+        $categories = $this->repository->with(['products'])
+            ->withCount('products')
+            ->orderByDesc('products_count')
+            ->limit($limit)
+            ->get();
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, CategoryResource::collection($categories));
+    }
+
+    public function addOrRemoveCategoryFromFeature(Request $request)
+    {
+        $request->validate([
+           "id"=>'required|integer|exists:categories,id',
+        ]);
+
+        $category = Category::find($request->id);
+        $category->is_featured = !$category->is_featured;
+        $category->save();
+
+        return $this->apiResponse(CATEGORY_FEATURE_TOGGLED_SUCCESSFULLY, 200, true);
     }
 }

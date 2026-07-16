@@ -2,8 +2,10 @@
 
 namespace Marvel\Http\Controllers;
 
-use App\Events\QuestionAnswered;
 use App\Events\RefundApproved;
+use App\Events\QuestionAnswered;
+use App\Exceptions\UnsupportedGatewayException;
+use App\Services\Payment\PaymentGatewayFactory;
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Collection;
@@ -21,6 +23,7 @@ use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\RefundRequest;
 use Marvel\Http\Resources\GetSingleRefundResource;
 use Marvel\Http\Resources\RefundResource;
+use Marvel\Traits\ApiResponse;
 use Marvel\Traits\WalletsTrait;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -45,12 +48,15 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  */
 class RefundController extends CoreController
 {
+    use ApiResponse;
     use WalletsTrait;
 
     public $repository;
 
-    public function __construct(RefundRepository $repository)
-    {
+    public function __construct(
+        RefundRepository $repository,
+        private PaymentGatewayFactory $paymentGatewayFactory,
+    ) {
         $this->repository = $repository;
     }
 
@@ -81,8 +87,22 @@ class RefundController extends CoreController
     {
         $limit = $request->limit;
         $refunds = $this->fetchRefunds($request)->paginate($limit);
-        $data = RefundResource::collection($refunds)->response()->getData(true);
-        return formatAPIResourcePaginate($data);
+        $refundData = RefundResource::collection($refunds)->response()->getData(true);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
+            "data" => $refundData['data'] ?? [],
+            "page" => $refundData['meta']['current_page'] ?? 0,
+            "current_page" => $refundData['meta']['current_page'] ?? 0,
+            "from" => $refundData['meta']['from'] ?? 0,
+            "to" => $refundData['meta']['to'] ?? 0,
+            "last_page" => $refundData['meta']['last_page'] ?? 0,
+            "path" => $refundData['meta']['path'] ?? "",
+            "per_page" => $refundData['meta']['per_page'] ?? 0,
+            "total" => $refundData['meta']['total'] ?? 0,
+            "next_page_url" => $refundData['links']['next'] ?? "",
+            "prev_page_url" => $refundData['links']['prev'] ?? "",
+            "last_page_url" => $refundData['links']['last'] ?? "",
+            "first_page_url" => $refundData['links']['first'] ?? "",
+        ]);
     }
 
     public function fetchRefunds(Request $request)
@@ -230,6 +250,20 @@ class RefundController extends CoreController
             }
 
             if ($request->status == RefundStatus::APPROVED) {
+                // Call gateway refund BEFORE database transaction
+                if ($refund->order && $refund->order->payment_gateway) {
+                    try {
+                        $gateway = $this->paymentGatewayFactory->make($refund->order->payment_gateway);
+                        $result = $gateway->refund($refund->order, (float) $refund->amount);
+
+                        if (!$result->success) {
+                            throw new HttpException(400, $result->errorMessage ?? 'Refund failed at payment gateway');
+                        }
+                    } catch (UnsupportedGatewayException $e) {
+                        // Offline or unsupported payment method — skip gateway refund
+                    }
+                }
+
                 // Wrap entire refund approval in a transaction with proper locking
                 // to prevent race conditions and ensure data consistency
                 return DB::transaction(function () use ($request, $refund) {
@@ -268,7 +302,11 @@ class RefundController extends CoreController
                     $wallet->increment('total_points', $walletPoints);
                     $wallet->increment('available_points', $walletPoints);
 
-                    return $refund->fresh();
+                    $refreshed = $refund->fresh();
+
+                    event(new RefundApproved($refreshed));
+
+                    return $refreshed;
                 });
             }
 

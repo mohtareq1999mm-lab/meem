@@ -8,19 +8,25 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Marvel\Database\Models\Address;
 use Marvel\Database\Repositories\SettingsRepository;
+use Marvel\Enums\Permission;
 use Marvel\Events\Maintenance;
 use Marvel\Exceptions\MarvelException;
 use Illuminate\Support\Facades\Cache;
 use Marvel\Http\Requests\SettingsRequest;
+use Marvel\Http\Resources\SettingResource;
+use Marvel\Traits\ApiResponse;
 use Prettus\Validator\Exceptions\ValidatorException;
 
 class SettingsController extends CoreController
 {
+    use ApiResponse;
     public $repository;
 
     public function __construct(SettingsRepository $repository)
     {
         $this->repository = $repository;
+        // $this->middleware("permission:" . Permission::VIEW_SETTINGS, ["only" => ["index", "show"]]);
+        $this->middleware("permission:" . Permission::UPDATE_SETTINGS, ["only" => ["store", "update"]]);
     }
 
     /**
@@ -31,36 +37,38 @@ class SettingsController extends CoreController
      */
     public function index(Request $request)
     {
-        $language = $request->language ?? DEFAULT_LANGUAGE;
+        // $language = $request->language ?? DEFAULT_LANGUAGE;
 
-        $data = Cache::rememberForever(
-            'cached_settings_' . $language,
-            function () use ($request) {
-                return $this->repository->getData($request->language);
-            }
-        );
+        // $data = Cache::rememberForever(
+        //     'cached_settings_' . $language,
+        //     function () use ($request) {
+        //         return $this->repository->getData($request->language);
+        //     }
+        // );
 
-        // Safely handle maintenance data
-        $maintenanceStart = $maintenanceUntil = null;
+        // // Safely handle maintenance data
+        // $maintenanceStart = $maintenanceUntil = null;
 
-        if (!empty($data['options']['maintenance']) && is_array($data['options']['maintenance'])) {
-            $maintenanceStart = isset($data['options']['maintenance']['start'])
-                ? Carbon::parse($data['options']['maintenance']['start'])->format('F j, Y h:i A')
-                : null;
+        // if (!empty($data['options']['maintenance']) && is_array($data['options']['maintenance'])) {
+        //     $maintenanceStart = isset($data['options']['maintenance']['start'])
+        //         ? Carbon::parse($data['options']['maintenance']['start'])->format('F j, Y h:i A')
+        //         : null;
 
-            $maintenanceUntil = isset($data['options']['maintenance']['until'])
-                ? Carbon::parse($data['options']['maintenance']['until'])->format('F j, Y h:i A')
-                : null;
-        }
+        //     $maintenanceUntil = isset($data['options']['maintenance']['until'])
+        //         ? Carbon::parse($data['options']['maintenance']['until'])->format('F j, Y h:i A')
+        //         : null;
+        // }
 
-        $formattedMaintenance = [
-            "start" => $maintenanceStart,
-            "until" => $maintenanceUntil,
-        ];
+        // $formattedMaintenance = [
+        //     "start" => $maintenanceStart,
+        //     "until" => $maintenanceUntil,
+        // ];
 
-        $data['maintenance'] = $formattedMaintenance;
+        // $data['maintenance'] = $formattedMaintenance;
+        $settings = $this->repository->getApplicationSettings();
 
-        return $data;
+
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, SettingResource::make($settings));
     }
 
     /**
@@ -149,10 +157,10 @@ class SettingsController extends CoreController
         $settings = $this->repository->first();
 
         if (isset($settings->id)) {
-            return $this->repository->update($request->only(['options']), $settings->id);
-        } else {
-            return $this->repository->create(['options' => $request['options']]);
+            $settings = $this->repository->updateSetting($request, $settings->id);
         }
+        return $this->apiResponse(SETTINGS_UPDATED_SUCCESSFULLY, 200, true, SettingResource::make($settings));
+
     }
 
     /**

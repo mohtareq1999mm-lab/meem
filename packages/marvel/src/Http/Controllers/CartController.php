@@ -4,14 +4,11 @@ namespace Marvel\Http\Controllers;
 
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Marvel\Database\Repositories\CartRepository;
 use App\Services\General\CartInventoryService;
-use App\Services\General\PromotionService;
 use Marvel\Database\Models\Cart;
 use Marvel\Http\Requests\CartCreateRequest;
 use Marvel\Http\Requests\CartUpdateRequest;
-use Marvel\Database\Models\Coupon;
 use Marvel\Http\Resources\CartResource;
 use Marvel\Traits\ApiResponse;
 
@@ -21,23 +18,11 @@ class CartController extends CoreController
 
     public $repository;
     public $inventoryService;
-    public $promotionService;
 
-    public function __construct(CartRepository $repository, CartInventoryService $inventoryService, PromotionService $promotionService)
+    public function __construct(CartRepository $repository, CartInventoryService $inventoryService)
     {
         $this->repository = $repository;
         $this->inventoryService = $inventoryService;
-        $this->promotionService = $promotionService;
-    }
-
-    private function enrichCartResource(CartResource $resource, Cart $cart): CartResource
-    {
-        $cart->loadMissing(['items.product', 'items.productVariant']);
-        if ($cart->coupon) {
-            $cart->setRelation('couponModel', Coupon::where('code', $cart->coupon)->first());
-        }
-        $resource->hasEligiblePromotion = $this->promotionService->hasEligiblePromotion($cart);
-        return $resource;
     }
 
     public function index(Request $request)
@@ -51,9 +36,6 @@ class CartController extends CoreController
         }
 
         $carts = $query->paginate($limit)->withQueryString();
-        $carts->getCollection()->transform(function (Cart $cart) {
-            return $this->enrichCartResource(CartResource::make($cart), $cart);
-        });
         $cartData = CartResource::collection($carts)->response()->getData(true);
 
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
@@ -77,7 +59,7 @@ class CartController extends CoreController
     {
         try {
             $cart = $this->repository->storeCart($request);
-            return $this->apiResponse(CREATE_CART_SUCCESSFULLY, 201, true, $this->enrichCartResource(CartResource::make($cart), $cart));
+            return $this->apiResponse(CREATE_CART_SUCCESSFULLY, 201, true, CartResource::make($cart));
         } catch (\Exception $e) {
             return $this->apiResponse($e->getMessage(), 400, false);
         }
@@ -92,14 +74,14 @@ class CartController extends CoreController
             throw new AuthorizationException(NOT_AUTHORIZED);
         }
 
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $this->enrichCartResource(CartResource::make($cart), $cart));
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, CartResource::make($cart));
     }
 
     public function update(CartUpdateRequest $request)
     {
         try {
             $cart = $this->repository->updateCart($request);
-            return $this->apiResponse(UPDATE_CART_SUCCESSFULLY, 200, true, $this->enrichCartResource(CartResource::make($cart), $cart));
+            return $this->apiResponse(UPDATE_CART_SUCCESSFULLY, 200, true, CartResource::make($cart));
         } catch (\Exception $e) {
             return $this->apiResponse($e->getMessage(), 400, false);
         }
@@ -126,10 +108,6 @@ class CartController extends CoreController
         }
 
         $cart->update(['total_price' => $cart->items()->sum('total_price')]);
-        $cart = Cart::whereKey($cart->id)->with(['items.product', 'items.productVariant'])->first();
-        if ($cart) {
-            $this->repository->revalidatePromotion($cart);
-        }
         return $this->apiResponse(DELETE_CART_ITEM_SUCCESSFULLY, 200, true);
     }
 
@@ -179,7 +157,7 @@ class CartController extends CoreController
             $tempRequest->replace(['item' => $item]);
             $this->repository->storeCart($tempRequest);
         }
-        $cart = auth()->user()->cart->load('items');
-        return $this->apiResponse(CREATE_CART_SUCCESSFULLY, 201, true, $this->enrichCartResource(CartResource::make($cart), $cart));
+        $cart = auth()->user()->cart;
+        return $this->apiResponse(CREATE_CART_SUCCESSFULLY, 201, true, CartResource::make($cart->load('items')));
     }
 }

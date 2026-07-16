@@ -2,73 +2,84 @@
 
 namespace Marvel\Database\Models;
 
+use App\Services\General\CategoryHierarchyService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Cviebrock\EloquentSluggable\Sluggable;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
-use Illuminate\Database\Eloquent\Relations\HasOne;
-use Marvel\Traits\TranslationTrait;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\Translatable\HasTranslations;
+use Str;
 
-class Category extends Model
+class Category extends Model implements HasMedia
 {
-    use TranslationTrait, Sluggable;
+    use HasTranslations, InteractsWithMedia;
 
 
     protected $table = 'categories';
+    public array $translatable = ['name', 'details'];
 
-    public $guarded = [];
+    public $fillable = ['name', 'details', 'slug','is_featured', 'parent_id', 'level', 'status'];
 
     protected $casts = [
-        'image' => 'json',
-        'banner_image' => 'json',
+        'parent_id' => 'integer',
+        'level' => 'integer',
+        'status' => 'boolean',
+        'is_featured' => 'boolean',
     ];
 
-    protected $appends = ['parent_id', 'translated_languages'];
-
-    /**
-     * Get the user's full name.
-     *
-     * @return string
-     */
-    public function getParentIdAttribute()
+    protected static function booted(): void
     {
-        if (isset($this->attributes['parent'])) {
-            return $this->parent;
-        }
+        static::saving(function (self $category) {
+            app(CategoryHierarchyService::class)->syncHierarchy($category);
+        });
+        static::saving(function ($category) {
+            $enName = $category->getTranslation('name', 'en', false);
+            $category->slug = $enName ? Str::slug($enName) : null;
+        });
+
+        static::retrieved(function ($category) {
+            if (is_string($category->slug) && str_starts_with($category->slug, '{')) {
+                $decoded = json_decode($category->slug, true);
+                if (is_array($decoded) && isset($decoded['en'])) {
+                    $category->slug = $decoded['en'];
+                }
+            }
+        });
     }
 
 
-    public function scopeWithUniqueSlugConstraints(Builder $query, Model $model): Builder
+
+
+
+
+    public  function scopeActive($query)
     {
-        return $query->where('language', $model->language);
+        return $query->where('status', 1);
+    }
+    public  function scopeInactive($query)
+    {
+        return $query->where('status', 0);
     }
 
-    /**
-     * Return the sluggable configuration array for this model.
-     *
-     * @return array
-     */
-    public function sluggable(): array
+    public function scopeSearch($query, $field, $term, $locale)
     {
-        return [
-            'slug' => [
-                'source' => 'name'
-            ]
-        ];
+        return $query->where(function ($q) use ($field, $term, $locale) {
+            $translatable = $this->translatable ?? [];
+            if (in_array($field, $translatable)) {
+                $q->where($field . '->' . $locale, 'like', "%$term%")
+                    ->orWhere($field, 'like', "%$term%");
+            } else {
+                $q->where($field, 'like', "%$term%");
+            }
+        });
     }
 
-
-    /**
-     * @return BelongsTo
-     */
-    public function type(): BelongsTo
+    public function shops()
     {
-        return $this->belongsTo(Type::class, 'type_id');
+        return $this->belongsToMany(Shop::class, 'category_shop');
     }
-
     /**
      * @return BelongsToMany
      */
@@ -77,35 +88,18 @@ class Category extends Model
         return $this->belongsToMany(Product::class, 'category_product');
     }
 
-    /**
-     * @return HasMany
-     */
-    public function children()
+
+    public function children(): HasMany
     {
-        return $this->hasMany('Marvel\Database\Models\Category', 'parent', 'id')->with('children')->withCount('products');
+        return $this->hasMany(self::class, 'parent_id', 'id');
     }
 
-    /**
-     * @return HasMany
-     */
-    public function subCategories()
-    {
-        return $this->hasMany('Marvel\Database\Models\Category', 'parent', 'id')->with('subCategories', 'parent')->withCount('products');
-    }
 
     /**
-     * @return HasOne
+     * @return BelongsTo
      */
-    public function parent()
+    public function parent(): BelongsTo
     {
-        return $this->hasOne('Marvel\Database\Models\Category', 'id', 'parent')->with('parent');
-    }
-    
-    /**
-     * @return HasOne
-     */
-    public function parentCategory()
-    {
-        return $this->hasOne('Marvel\Database\Models\Category', 'id', 'parent')->with('parentCategory');
+        return $this->belongsTo(self::class, 'parent_id', 'id');
     }
 }

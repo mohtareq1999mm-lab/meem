@@ -3,7 +3,6 @@
 namespace Marvel\Database\Repositories;
 
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Marvel\Database\Models\User;
 use Prettus\Validator\Exceptions\ValidatorException;
@@ -15,12 +14,14 @@ use Marvel\Mail\ForgetPassword;
 use Illuminate\Support\Facades\Mail;
 use Marvel\Database\Models\Address;
 use Marvel\Database\Models\Profile;
-use Marvel\Database\Models\Settings;
-use Marvel\Database\Models\Shop;
 use Marvel\Exceptions\MarvelException;
+use Marvel\Traits\MediaManager;
+use Spatie\Permission\Models\Role;
 
 class UserRepository extends BaseRepository
 {
+    use MediaManager;
+
     /**
      * @var array
      */
@@ -64,17 +65,9 @@ class UserRepository extends BaseRepository
                 // Ensure newly created users via repository are verified by default
                 'email_verified_at' => now(),
             ]);
-            $user->givePermissionTo(UserPermission::CUSTOMER);
-            if (isset($request['address']) && count($request['address'])) {
-                $user->address()->createMany($request['address']);
+            if ($request->hasFile('image')) {
+                $this->uploadSingleImage($request, 'image', $user, 'user-image', 'users');
             }
-            if (isset($request['profile'])) {
-                $user->profile()->create($request['profile']);
-            }
-            $user->profile = $user->profile;
-            $user->address = $user->address;
-            $user->shop = $user->shop;
-            $user->managed_shop = $user->managed_shop;
             return $user;
         } catch (ValidatorException $e) {
             throw new MarvelException(SOMETHING_WENT_WRONG);
@@ -95,20 +88,12 @@ class UserRepository extends BaseRepository
                 }
             }
 
-            if (isset($request['profile'])) {
-                if (isset($request['profile']['id'])) {
-                    Profile::findOrFail($request['profile']['id'])->update($request['profile']);
-                } else {
-                    $profile = $request['profile'];
-                    $profile['customer_id'] = $user->id;
-                    Profile::create($profile);
-                }
+          
+            if ($request->hasFile('image')) {
+                $this->updateSingleImage($request, 'image', $user, 'user-image', 'users');
             }
             $user->update($request->only($this->dataArray));
-            $user->profile = $user->profile;
-            $user->address = $user->address;
-            $user->shop = $user->shop;
-            $user->managed_shop = $user->managed_shop;
+            $user->load([ 'address']);
             return $user;
         } catch (ValidationException $e) {
             throw new MarvelException(SOMETHING_WENT_WRONG);
@@ -149,5 +134,30 @@ class UserRepository extends BaseRepository
         // return $useMustVerifyLicense;
 
         return true;
+    }
+
+    public function addUserWithRole($request)
+    {
+        try {
+            $user = $this->create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'email_verified_at' => now(),
+                'type' =>'admin',
+                "phone_number"=> $request->phone_number,
+                'is_active'=> isset($request->is_active) ? $request->is_active : 0,
+            ]);
+            if ($request->hasFile('image')) {
+                $this->uploadSingleImage($request, 'image', $user, 'user-image', 'users');
+            }
+            $role = Role::whereIn('id', $request->roles)->get();
+            if ($role->count() > 0) {
+                $user->assignRole($role);
+            }
+            return $user;
+        } catch (ValidatorException $e) {
+            throw new MarvelException(SOMETHING_WENT_WRONG);
+        }
     }
 }

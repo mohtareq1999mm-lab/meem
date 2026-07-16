@@ -14,6 +14,8 @@ use Marvel\Exceptions\MarvelNotFoundException;
 use Marvel\Http\Requests\StoreRefundPolicyRequest;
 use Marvel\Http\Requests\UpdateRefundPolicyRequest;
 use Marvel\Http\Resources\RefundPolicyResource;
+use Marvel\Traits\ApiResponse;
+
 
 /**
  * @OA\Tag(name="Refund Policies", description="Public and shop-specific refund policy management")
@@ -34,6 +36,7 @@ use Marvel\Http\Resources\RefundPolicyResource;
  */
 class RefundPolicyController extends CoreController
 {
+    use ApiResponse;
 
     public function __construct(private readonly RefundPolicyRepository $repository)
     {
@@ -64,8 +67,22 @@ class RefundPolicyController extends CoreController
     {
         $limit = $request->limit ?   $request->limit : 15;
         $refundPolicies =  $this->fetchRefundPolicies($request)->paginate($limit);
-        $data = RefundPolicyResource::collection($refundPolicies)->response()->getData(true);
-        return formatAPIResourcePaginate($data);
+        $policyData = RefundPolicyResource::collection($refundPolicies)->response()->getData(true);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
+            "data" => $policyData['data'] ?? [],
+            "page" => $policyData['meta']['current_page'] ?? 0,
+            "current_page" => $policyData['meta']['current_page'] ?? 0,
+            "from" => $policyData['meta']['from'] ?? 0,
+            "to" => $policyData['meta']['to'] ?? 0,
+            "last_page" => $policyData['meta']['last_page'] ?? 0,
+            "path" => $policyData['meta']['path'] ?? "",
+            "per_page" => $policyData['meta']['per_page'] ?? 0,
+            "total" => $policyData['meta']['total'] ?? 0,
+            "next_page_url" => $policyData['links']['next'] ?? "",
+            "prev_page_url" => $policyData['links']['prev'] ?? "",
+            "last_page_url" => $policyData['links']['last'] ?? "",
+            "first_page_url" => $policyData['links']['first'] ?? "",
+        ]);
     }
 
     public function fetchRefundPolicies(Request $request)

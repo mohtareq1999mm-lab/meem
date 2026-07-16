@@ -2,11 +2,12 @@
 
 namespace Marvel\Http\Requests;
 
+use CodeZero\UniqueTranslation\UniqueTranslationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
-use Marvel\Database\Models\FlashSale;
+use Marvel\Enums\FlashSaleType;
 
 class CreateFlashSaleRequest extends FormRequest
 {
@@ -28,15 +29,25 @@ class CreateFlashSaleRequest extends FormRequest
     public function rules()
     {
         return [
-            'title'        => ['required', 'string'],
-            'description'  => ['required', 'string', 'max:10000'],
+            'title'        => ['required', 'array'],
+            'title.*' => ['required', 'string', 'min:3', 'max:70', UniqueTranslationRule::for('flash_sales', "title")],
+            'description'        => ['required', 'array'],
+            'description.*'  => ['required', 'string', 'max:1000'],
+            'image-desktop'        => ['required', 'image', 'mimes:jpeg,png,jpg,webp'],
+            'image-mobile'        => ['required', 'image', 'mimes:jpeg,png,jpg,webp'],
             'start_date'   => ['required', 'date'],
             'end_date'     => ['required', 'date'],
-            'slug'         => ['nullable', 'string'],
-            'language'     => ['nullable', 'string'],
-            'image'        => ['nullable', 'array'],
-            'cover_image'  => ['nullable', 'array'],
-            'sale_builder' => ['required', 'array']
+            'type' => ['required', Rule::in(FlashSaleType::getValues())],
+            'discount' => ['required', 'numeric', 'min:0'],
+            'max_discount_amount' => [
+                'required_if:type,percentage',
+                'numeric',
+                'min:1'
+            ],
+            'status' => ['required', 'in:1,0'],
+            "products" => "sometimes|array",
+            "products.*" => "integer|exists:products,id",
+
         ];
     }
 

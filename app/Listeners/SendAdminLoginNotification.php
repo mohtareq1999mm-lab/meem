@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Enums\UserType;
 use App\Events\AdminLoggedIn;
 use App\Notifications\AdminLoggedInNotification;
 use Illuminate\Support\Facades\Notification;
@@ -25,7 +26,7 @@ class SendAdminLoginNotification
     {
         $adminModel = config('auth.providers.users.model');
 
-        return $adminModel::where('type', 'admin')
+        return $adminModel::where('type', UserType::ADMIN->value)
             ->where('is_active', true)
             ->get();
     }

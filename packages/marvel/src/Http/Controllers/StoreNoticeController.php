@@ -18,6 +18,7 @@ use Marvel\Http\Requests\StoreNoticeRequest;
 use Marvel\Http\Requests\StoreNoticeUpdateRequest;
 use Marvel\Http\Resources\GetSingleStoreNoticeResource;
 use Marvel\Http\Resources\StoreNoticeResource;
+use Marvel\Traits\ApiResponse;
 use Prettus\Validator\Exceptions\ValidatorException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -36,6 +37,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  */
 class StoreNoticeController extends CoreController
 {
+    use ApiResponse;
     public $repository;
 
     private $repositoryPivot;
@@ -77,8 +79,22 @@ class StoreNoticeController extends CoreController
         try {
             $limit = $request->limit ? $request->limit : 15;
             $storeNotices = $this->fetchStoreNotices($request)->paginate($limit);
-            $data = StoreNoticeResource::collection($storeNotices)->response()->getData(true);
-            return formatAPIResourcePaginate($data);
+            $noticeData = StoreNoticeResource::collection($storeNotices)->response()->getData(true);
+            return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
+                "data" => $noticeData['data'] ?? [],
+                "page" => $noticeData['meta']['current_page'] ?? 0,
+                "current_page" => $noticeData['meta']['current_page'] ?? 0,
+                "from" => $noticeData['meta']['from'] ?? 0,
+                "to" => $noticeData['meta']['to'] ?? 0,
+                "last_page" => $noticeData['meta']['last_page'] ?? 0,
+                "path" => $noticeData['meta']['path'] ?? "",
+                "per_page" => $noticeData['meta']['per_page'] ?? 0,
+                "total" => $noticeData['meta']['total'] ?? 0,
+                "next_page_url" => $noticeData['links']['next'] ?? "",
+                "prev_page_url" => $noticeData['links']['prev'] ?? "",
+                "last_page_url" => $noticeData['links']['last'] ?? "",
+                "first_page_url" => $noticeData['links']['first'] ?? "",
+            ]);
         } catch (MarvelException $th) {
             throw new MarvelException(SOMETHING_WENT_WRONG, $th->getMessage());
         }

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\UserType;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -51,7 +52,7 @@ class DashboardDataSeeder extends Seeder
         }
 
         $products = Product::all();
-        $customers = User::where('type', 'user')->where('email', 'not like', '%@demo.com')->where('email', 'not like', '%@cms.com')->get();
+        $customers = User::where('type', UserType::USER->value)->where('email', 'not like', '%@demo.com')->where('email', 'not like', '%@cms.com')->get();
         $coupons = Coupon::all();
 
         if ($products->isEmpty()) {

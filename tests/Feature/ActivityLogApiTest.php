@@ -42,6 +42,13 @@ class ActivityLogApiTest extends TestCase
 
     private function createTables(): void
     {
+        Schema::create('settings', function (Blueprint $table) {
+            $table->id();
+            $table->string('language')->default('en');
+            $table->text('options')->nullable();
+            $table->timestamps();
+        });
+
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -51,7 +58,7 @@ class ActivityLogApiTest extends TestCase
             $table->rememberToken();
             $table->boolean('is_active')->default(true);
             $table->string('type')->default('user');
-            $table->string('phone_number')->unique();
+            $table->string('phone_number')->nullable()->unique();
             $table->unsignedBigInteger('shop_id')->nullable();
             $table->softDeletes();
             $table->timestamps();

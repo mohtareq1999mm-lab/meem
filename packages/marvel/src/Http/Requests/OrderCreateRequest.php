@@ -2,11 +2,11 @@
 
 namespace Marvel\Http\Requests;
 
-use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Marvel\Enums\PaymentGatewayType;
+use Illuminate\Validation\Rule;
+use Marvel\Enums\FulfillmentType;
 
 class OrderCreateRequest extends FormRequest
 {
@@ -27,29 +27,50 @@ class OrderCreateRequest extends FormRequest
      */
     public function rules()
     {
+        $fulfillmentValues = [FulfillmentType::DELIVERY, FulfillmentType::PICKUP];
+
         return [
-            'coupon_id'               => 'nullable|exists:Marvel\Database\Models\Coupon,id',
-            'shop_id'                 => 'nullable|exists:Marvel\Database\Models\Shop,id',
-            'customer_id'             => 'nullable|exists:Marvel\Database\Models\User,id',
-            'language'                => ['nullable', 'string'],
-            'amount'                  => 'required|numeric',
-            'paid_total'              => 'required|numeric',
-            'total'                   => 'required|numeric',
-            'delivery_time'           => 'nullable|string',
-            'customer_contact'        => 'string|required',
-            'customer_name'           => 'nullable|string',
-            'payment_gateway'         => ['required', Rule::in(PaymentGatewayType::getValues())],
-            'altered_payment_gateway' => 'nullable|string',
-            'products'                => 'required|array',
-            'card'                    => 'array',
-            'token'                   => 'nullable|string',
-            'use_wallet_points'       => 'nullable|boolean',
-            'shipping_address'        => 'array',
-            'billing_address'         => 'array',
-            'note'                    => 'nullable|string',
+            'name' => ['required', 'string', 'max:255'],
+            'user_phone' => ['required', 'string', 'max:255'],
+            'user_email' => ['required', 'email', 'max:255'],
+            'address' => ['required', 'array'],
+            'notes' => ['nullable', 'string'],
+            'selected_promotion_id' => ['nullable', 'integer', 'exists:promotions,id'],
+            'selected_gift_product_id' => ['nullable', 'integer', 'exists:products,id'],
+            'type' => ['nullable', 'in:mobile,web'],
+            'fulfillment_type' => [
+                'nullable',
+                'string',
+                Rule::in($this->input('payment_method') === 'pay_at_cashier'
+                    ? [FulfillmentType::PICKUP]
+                    : $fulfillmentValues
+                ),
+            ],
+            'payment_method' => ['nullable', 'string', 'in:online,cod,pay_at_cashier'],
+            'gateway' => ['nullable', 'string', 'max:50'],
+            'governorate_id' => [
+                Rule::requiredIf(fn () => $this->input('fulfillment_type') === FulfillmentType::DELIVERY),
+                'integer',
+                'exists:governorates,id',
+            ],
+            'pickup_location_id' => [
+                'nullable',
+                'integer',
+                Rule::requiredIf(fn () => $this->input('fulfillment_type') === FulfillmentType::PICKUP),
+                'exists:pickup_locations,id',
+            ],
         ];
     }
 
+
+    public function messages(): array
+    {
+        $messages = [];
+        if ($this->input('payment_method') === 'pay_at_cashier') {
+            $messages['fulfillment_type.in'] = __('checkout.pay_at_cashier_requires_pickup');
+        }
+        return $messages;
+    }
 
     public function failedValidation(Validator $validator)
     {

@@ -2,6 +2,7 @@
 
 namespace Marvel\Database\Models;
 
+use Marvel\Services\Pricing\ProductPricingService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Database\Factories\ProductVariantFactory;
@@ -13,18 +14,7 @@ class ProductVariant extends Model
 {
     use HasFactory;
 
-    protected $appends = [];
-
-    public function getCurrentPriceAttribute()
-    {
-        return $this->attributes['current_price'] ?? null;
-    }
-
-    public function getSalePriceAttribute()
-    {
-        return $this->attributes['sale_price'] ?? null;
-    }
-
+    protected $appends = ['current_price', 'sale_price', 'final_price'];
 
     protected static function boot()
     {
@@ -65,7 +55,41 @@ class ProductVariant extends Model
         return $this->hasMany(AttributeProduct::class);
     }
 
+    /**
+     * Get the current price attribute (alias for sale price).
+     *
+     * @return float|null
+     */
+    public function getCurrentPriceAttribute()
+    {
+        return $this->getSalePriceAttribute();
+    }
 
+    /**
+     * Get the final price attribute (alias for sale price).
+     *
+     * @return float|null
+     */
+    public function getFinalPriceAttribute()
+    {
+        return $this->getSalePriceAttribute();
+    }
+
+    /**
+     * Get the computed sale price considering parent product discounts and active flash sales.
+     *
+     * @return float|null
+     */
+    public function getSalePriceAttribute()
+    {
+        $product = $this->relationLoaded('product') ? $this->product : $this->product()->with('flash_sales')->first();
+
+        if (!$product) {
+            return $this->price;
+        }
+
+        return app(ProductPricingService::class)->calculateVariantCurrentPrice($product, $this);
+    }
 
     /**
      * Get the available stock quantity (stock minus reserved).
