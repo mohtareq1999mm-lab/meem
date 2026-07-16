@@ -1,0 +1,128 @@
+# =============================================================================
+# Render.com Blueprint - ChawkBazar Laravel API
+# =============================================================================
+# This file enables Infrastructure as Code for Render deployments.
+# Place in repository root and connect to Render for auto-configuration.
+# Docs: https://render.com/docs/blueprint-spec
+# =============================================================================
+
+services:
+  # ===========================================================================
+  # Laravel API Web Service
+  # ===========================================================================
+  - type: web
+    name: chawkbazar-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    
+    # Region - choose closest to your users
+    region: frankfurt  # Options: oregon, ohio, virginia, frankfurt, singapore
+    
+    # Instance type (adjust based on needs)
+    plan: starter  # Options: free, starter, standard, pro
+    
+    # Health check configuration
+    healthCheckPath: /api
+    
+    # Auto-deploy on push to main branch
+    autoDeploy: true
+    branch: main
+    
+    # Build-time commands (runs before Dockerfile)
+    # buildCommand: ""
+    
+    # Pre-deploy command (runs after build, before deploy)
+    # Useful for migrations without modifying entrypoint
+    # preDeployCommand: php artisan migrate --force
+    
+    # Environment variables
+    envVars:
+      # =======================================================================
+      # Application Core
+      # =======================================================================
+      - key: APP_NAME
+        value: ChawkBazar
+      
+      - key: APP_ENV
+        value: production
+      
+      - key: APP_DEBUG
+        value: "false"
+      
+      - key: APP_KEY
+        sync: false  # Set manually in Render dashboard (secret)
+      
+      - key: APP_URL
+        fromService:
+          type: web
+          name: chawkbazar-api
+          property: host
+          # This auto-populates with your Render URL
+      
+      # =======================================================================
+      # Database (TiDB Cloud - MySQL Compatible)
+      # =======================================================================
+      - key: DB_CONNECTION
+        value: mysql
+      
+      - key: DB_HOST
+        sync: false  # Set in Render dashboard
+      
+      - key: DB_PORT
+        value: "4000"  # TiDB default port
+      
+      - key: DB_DATABASE
+        sync: false  # Set in Render dashboard
+      
+      - key: DB_USERNAME
+        sync: false  # Set in Render dashboard
+      
+      - key: DB_PASSWORD
+        sync: false  # Set in Render dashboard
+      
+      # SSL Certificate for TiDB Cloud
+      - key: MYSQL_ATTR_SSL_CA
+        value: /etc/ssl/certs/ca-certificates.crt
+      
+      # =======================================================================
+      # Cache & Session (File-based for simplicity)
+      # =======================================================================
+      - key: CACHE_DRIVER
+        value: file
+      
+      - key: SESSION_DRIVER
+        value: file
+      
+      - key: QUEUE_CONNECTION
+        value: sync  # Use 'database' if you need queues
+      
+      # =======================================================================
+      # Migration Control
+      # =======================================================================
+      - key: RUN_MIGRATIONS
+        value: "false"  # Set to 'true' for first deploy only
+      
+      # =======================================================================
+      # Logging
+      # =======================================================================
+      - key: LOG_CHANNEL
+        value: stderr  # Sends logs to Render dashboard
+      
+      - key: LOG_LEVEL
+        value: warning
+
+# =============================================================================
+# Notes:
+# =============================================================================
+# 1. After connecting this repo to Render, go to the service dashboard
+#    and manually set the 'sync: false' values (secrets).
+#
+# 2. First deployment:
+#    - Set RUN_MIGRATIONS=true or use Render Shell to run:
+#      php artisan migrate --force
+#      php artisan db:seed --force (if needed)
+#
+# 3. Generate APP_KEY locally:
+#    php artisan key:generate --show
+#    Copy the output (base64:xxx...) to Render dashboard.
+# =============================================================================

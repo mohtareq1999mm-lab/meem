@@ -1,0 +1,576 @@
+openapi: 3.0.3
+info:
+  title: Puck Page Builder API
+  description: |
+    API endpoints for the Puck-based page builder integration.
+    
+    These endpoints allow the frontend to:
+    - Fetch and save page layouts using the Puck JSON format
+    - Retrieve optimized data for individual page builder components
+    
+    ## Authentication
+    - GET endpoints are publicly accessible
+    - POST/PUT endpoints require `Bearer` token authentication (Sanctum)
+    - User must have `EDITOR` or `SUPER_ADMIN` permissions for mutations
+    
+  version: 1.0.0
+  contact:
+    name: API Support
+
+servers:
+  - url: /api
+    description: API Base URL
+
+tags:
+  - name: Puck Pages
+    description: Page layout management for Puck page builder
+  - name: Component Data
+    description: Data endpoints for Puck components (optimized for SSR)
+
+paths:
+  /puck/page:
+    get:
+      tags:
+        - Puck Pages
+      summary: Get page by path
+      description: |
+        Fetches a page by its URL path. Used by the frontend to load page content
+        for rendering. Returns the full Puck data structure.
+      operationId: getPageByPath
+      parameters:
+        - name: path
+          in: query
+          required: false
+          description: URL path of the page (e.g., "/", "/about", "/products/category")
+          schema:
+            type: string
+            default: "/"
+            example: "/"
+      responses:
+        '200':
+          description: Page found successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PuckPageResponse'
+              example:
+                path: "/"
+                data:
+                  root:
+                    props: {}
+                  content:
+                    - type: "HeroSlider"
+                      props:
+                        title: "Welcome"
+                        slides: []
+                    - type: "ProductFlashSaleBlock"
+                      props:
+                        dataSource: "Flash Sale Products"
+                        limit: 10
+                  zones: {}
+        '404':
+          description: Page not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: "null"
+              example:
+                data: null
+
+    post:
+      tags:
+        - Puck Pages
+      summary: Create or update page
+      description: |
+        Creates a new page or updates an existing one (upsert by path).
+        Requires authentication with EDITOR or SUPER_ADMIN permissions.
+      operationId: savePuckPage
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PuckPageRequest'
+            example:
+              path: "/"
+              title: "Homepage"
+              data:
+                root:
+                  props: {}
+                content:
+                  - type: "HeroSlider"
+                    props:
+                      title: "Welcome to Our Store"
+                      slides:
+                        - image: "/images/slide1.jpg"
+                          link: "/products"
+                  - type: "ProductFlashSaleBlock"
+                    props:
+                      dataSource: "Flash Sale Products"
+                      limit: 10
+                zones: {}
+      responses:
+        '200':
+          description: Page saved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PuckPageSaveResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /component-data/flash-sale-products:
+    get:
+      tags:
+        - Component Data
+      summary: Get flash sale products
+      description: |
+        Returns currently active flash sale with its products.
+        Used by ProductFlashSaleBlock component for SSR.
+      operationId: getFlashSaleProducts
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/language'
+      responses:
+        '200':
+          description: Flash sale data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlashSaleProductsResponse'
+
+  /component-data/categories:
+    get:
+      tags:
+        - Component Data
+      summary: Get categories
+      description: |
+        Returns categories for display in CategoryBlock component.
+        Includes icon, image, and other display properties.
+      operationId: getCategories
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/language'
+        - name: top_level
+          in: query
+          required: false
+          description: Only return top-level categories (no parent)
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: Categories retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoriesResponse'
+
+  /component-data/collections:
+    get:
+      tags:
+        - Component Data
+      summary: Get collections (types)
+      description: |
+        Returns collections/types for display in CollectionBlock component.
+        Includes banners and promotional sliders.
+      operationId: getCollections
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/language'
+      responses:
+        '200':
+          description: Collections retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectionsResponse'
+
+  /component-data/popular-products:
+    get:
+      tags:
+        - Component Data
+      summary: Get popular products
+      description: |
+        Returns products sorted by order count (popularity).
+        Used for popular products component rendering.
+      operationId: getPopularProducts
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/language'
+      responses:
+        '200':
+          description: Popular products retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductsResponse'
+
+  /component-data/best-selling-products:
+    get:
+      tags:
+        - Component Data
+      summary: Get best selling products
+      description: |
+        Returns products sorted by sold quantity.
+        Used for best sellers component rendering.
+      operationId: getBestSellingProducts
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/language'
+      responses:
+        '200':
+          description: Best selling products retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductsResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Sanctum authentication token
+
+  parameters:
+    limit:
+      name: limit
+      in: query
+      required: false
+      description: Maximum number of items to return
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+    language:
+      name: language
+      in: query
+      required: false
+      description: Language code for filtering (e.g., "en", "ar")
+      schema:
+        type: string
+        example: "en"
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Unauthenticated."
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Not authorized."
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties:
+              type: array
+              items:
+                type: string
+          example:
+            path: ["The path field is required."]
+            title: ["The title field is required."]
+
+  schemas:
+    PuckPageRequest:
+      type: object
+      required:
+        - path
+        - title
+      properties:
+        path:
+          type: string
+          description: URL path for the page
+          example: "/"
+        slug:
+          type: string
+          nullable: true
+          description: URL-friendly slug (auto-generated from path if not provided)
+        title:
+          type: string
+          description: Page title
+          example: "Homepage"
+        data:
+          $ref: '#/components/schemas/PuckData'
+        content:
+          type: array
+          deprecated: true
+          description: Legacy content format (use data.content instead)
+          items:
+            $ref: '#/components/schemas/PuckComponent'
+        meta:
+          type: object
+          nullable: true
+          description: Additional metadata (SEO, etc.)
+          additionalProperties: true
+
+    PuckPageResponse:
+      type: object
+      properties:
+        path:
+          type: string
+          example: "/"
+        data:
+          $ref: '#/components/schemas/PuckData'
+
+    PuckPageSaveResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        path:
+          type: string
+          example: "/"
+        data:
+          $ref: '#/components/schemas/PuckData'
+
+    PuckData:
+      type: object
+      description: Full Puck editor data structure
+      properties:
+        root:
+          type: object
+          description: Root-level configuration
+          properties:
+            props:
+              type: object
+              additionalProperties: true
+        content:
+          type: array
+          description: Array of page components
+          items:
+            $ref: '#/components/schemas/PuckComponent'
+        zones:
+          type: object
+          description: Named zones for component placement
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/PuckComponent'
+
+    PuckComponent:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          description: Component type identifier
+          enum:
+            - HeroSlider
+            - ProductFlashSaleBlock
+            - CategoryBlock
+            - CollectionBlock
+            - BannerCarouselBlock
+            - Heading
+            - Paragraph
+            - Image
+            - CTA
+          example: "ProductFlashSaleBlock"
+        props:
+          type: object
+          description: Component-specific properties
+          additionalProperties: true
+          example:
+            dataSource: "Flash Sale Products"
+            limit: 10
+
+    FlashSaleProductsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            flash_sale:
+              type: object
+              properties:
+                id:
+                  type: integer
+                title:
+                  type: string
+                slug:
+                  type: string
+                start_date:
+                  type: string
+                  format: date-time
+                end_date:
+                  type: string
+                  format: date-time
+                rate:
+                  type: number
+            products:
+              type: array
+              items:
+                $ref: '#/components/schemas/ProductSummary'
+
+    CategoriesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
+
+    CollectionsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Collection'
+
+    ProductsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductSummary'
+
+    ProductSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        price:
+          type: number
+        sale_price:
+          type: number
+          nullable: true
+        min_price:
+          type: number
+          nullable: true
+        max_price:
+          type: number
+          nullable: true
+        product_type:
+          type: string
+        quantity:
+          type: integer
+        image:
+          type: object
+          nullable: true
+        shop:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            slug:
+              type: string
+        type:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            slug:
+              type: string
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        icon:
+          type: string
+          nullable: true
+        image:
+          type: object
+          nullable: true
+        details:
+          type: string
+          nullable: true
+        parent:
+          type: integer
+          nullable: true
+        type_id:
+          type: integer
+          nullable: true
+
+    Collection:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        icon:
+          type: string
+          nullable: true
+        promotional_sliders:
+          type: array
+          items:
+            type: object
+        images:
+          type: array
+          items:
+            type: object
+        settings:
+          type: object
+          nullable: true
+        banners:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              type_id:
+                type: integer
+              title:
+                type: string
+              description:
+                type: string
+              image:
+                type: object
