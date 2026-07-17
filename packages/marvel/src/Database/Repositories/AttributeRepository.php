@@ -52,11 +52,9 @@ class AttributeRepository extends BaseRepository
             $attribute = $this->create($request->only($this->dataArray));
             if (isset($request['values']) && count($request['values'])) {
                 foreach ($request['values'] as  $value) {
-                    $value['slug'] = $this->makeSlug($request);
                     AttributeValue::create([
                         'value' => $value['value'],
                         'attribute_id' => $attribute->id,
-                        'slug' => $value['slug'],
                     ]);
                 }
             }
@@ -79,11 +77,9 @@ class AttributeRepository extends BaseRepository
             if (isset($request['values']) && count($request['values'])) {
                 $attribute->values()->delete();
                 foreach ($request['values'] as  $value) {
-                    $value['slug'] = $this->makeSlug($request);
                     AttributeValue::create([
                         'value' => $value['value'],
                         'attribute_id' => $attribute->id,
-                        'slug' => $value['slug'],
                     ]);
                 }
             }

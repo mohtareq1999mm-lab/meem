@@ -2,10 +2,7 @@
 
 namespace Marvel\Http\Controllers;
 
-use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Marvel\Database\Repositories\AttributeValueRepository;
 use Marvel\Enums\Permission;
@@ -13,8 +10,6 @@ use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\AttributeValueRequest;
 use Marvel\Http\Resources\AttributeValueResource;
 use Marvel\Traits\ApiResponse;
-use Prettus\Validator\Exceptions\ValidatorException;
-use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 
 class AttributeValueController extends CoreController
 {
@@ -119,12 +114,7 @@ class AttributeValueController extends CoreController
 
     public function destroyAttributeValues(Request $request)
     {
-        $shop_id = $this->repository->findOrFail($request->id)->attribute->shop_id;
-        if ($this->repository->hasPermission($request->user(), $shop_id)) {
-            $attributesValue =  $this->repository->findOrFail($request->id);
-            $attributesValue->delete();
-            return;
-        }
-        throw new AuthorizationException(NOT_AUTHORIZED);
+        $attributesValue = $this->repository->findOrFail($request->id);
+        $attributesValue->delete();
     }
 }

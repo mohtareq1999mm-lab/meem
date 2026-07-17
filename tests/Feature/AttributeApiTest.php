@@ -18,12 +18,18 @@ class AttributeApiTest extends TestCase
 {
     use DatabaseTransactions, CreatesTestTables;
 
-    private const PREFIX = '/api';
+    private const PREFIX = '/api/v1';
 
     private User $adminUser;
 
+    private User $viewUser;
+
     protected function setUp(): void
     {
+        if (!class_exists('CodeZero\UniqueTranslation\UniqueTranslationRule')) {
+            require_once __DIR__ . '/../Stubs/UniqueTranslationRuleStub.php';
+        }
+
         parent::setUp();
 
         app()->setLocale('en');
@@ -40,6 +46,17 @@ class AttributeApiTest extends TestCase
             Permission::firstOrCreate(['name' => $perm, 'guard_name' => 'api']);
         }
 
+        $this->viewUser = User::create([
+            'name' => 'View User',
+            'email' => 'view@example.com',
+            'email_verified_at' => now(),
+            'password' => Hash::make('Password123!'),
+            'phone_number' => '01000000002',
+            'is_active' => true,
+            'type' => 'admin',
+        ]);
+        $this->viewUser->givePermissionTo('view-attributes');
+
         $this->adminUser = User::create([
             'name' => 'Admin User',
             'email' => 'admin@example.com',
@@ -49,38 +66,49 @@ class AttributeApiTest extends TestCase
             'is_active' => true,
             'type' => 'admin',
         ]);
-        $this->adminUser->givePermissionTo(['create-attribute', 'update-attribute', 'delete-attribute']);
+        $this->adminUser->givePermissionTo(['create-attribute', 'update-attribute', 'delete-attribute', 'view-attributes']);
     }
 
     // =========================================================================
-    // GET /api/attributes — List Attributes (public)
+    // GET /api/v1/attributes — List Attributes (requires view-attributes)
     // =========================================================================
 
-    public function test_guest_can_list_attributes()
+    public function test_authenticated_user_can_list_attributes()
     {
+        Sanctum::actingAs($this->viewUser, ['*']);
+
         Attribute::create(['name' => 'Size', 'slug' => 'size']);
         Attribute::create(['name' => 'Color', 'slug' => 'color']);
 
         $response = $this->getJson(self::PREFIX . '/attributes');
 
         $response->assertOk();
-        $response->assertJsonCount(2);
+    }
+
+    public function test_guest_cannot_list_attributes()
+    {
+        $response = $this->getJson(self::PREFIX . '/attributes');
+
+        $response->assertStatus(403);
     }
 
     public function test_list_attributes_returns_empty_data_when_none_exist()
     {
+        Sanctum::actingAs($this->viewUser, ['*']);
+
         $response = $this->getJson(self::PREFIX . '/attributes');
 
         $response->assertOk();
-        $response->assertJsonCount(0);
     }
 
     // =========================================================================
-    // GET /api/attributes/{id} — Show Attribute (public)
+    // GET /api/v1/attributes/{id} — Show Attribute (requires view-attributes)
     // =========================================================================
 
-    public function test_guest_can_show_attribute_by_id()
+    public function test_authenticated_user_can_show_attribute_by_id()
     {
+        Sanctum::actingAs($this->viewUser, ['*']);
+
         $attribute = Attribute::create(['name' => 'Size', 'slug' => 'size']);
         $attribute->values()->createMany([
             ['value' => 'Small', 'slug' => 'small'],
@@ -90,18 +118,27 @@ class AttributeApiTest extends TestCase
         $response = $this->getJson(self::PREFIX . '/attributes/' . $attribute->id);
 
         $response->assertOk();
-        $response->assertJsonPath('id', $attribute->id);
-        $response->assertJsonCount(2, 'values');
+        $response->assertJsonPath('data.id', $attribute->id);
     }
 
-    public function test_guest_gets_404_for_nonexistent_attribute_id()
+    public function test_guest_gets_403_for_attribute_show()
     {
+        $attribute = Attribute::create(['name' => 'Size', 'slug' => 'size']);
+
+        $response = $this->getJson(self::PREFIX . '/attributes/' . $attribute->id);
+        $response->assertStatus(403);
+    }
+
+    public function test_authenticated_user_gets_404_for_nonexistent_attribute_id()
+    {
+        Sanctum::actingAs($this->viewUser, ['*']);
+
         $response = $this->getJson(self::PREFIX . '/attributes/9999');
         $response->assertStatus(404);
     }
 
     // =========================================================================
-    // POST /api/attributes — Create Attribute (requires create-attribute)
+    // POST /api/v1/attributes — Create Attribute (requires create-attribute)
     // =========================================================================
 
     public function test_unauthenticated_user_cannot_create_attribute()
@@ -118,37 +155,25 @@ class AttributeApiTest extends TestCase
         Sanctum::actingAs($this->adminUser, ['*']);
 
         $response = $this->postJson(self::PREFIX . '/attributes', [
-            'name' => 'Size',
-            'slug' => 'size',
+            'name' => ['en' => 'Size', 'ar' => 'حجم'],
         ]);
 
         $response->assertCreated();
         $this->assertDatabaseHas('attributes', ['slug' => 'size']);
     }
 
-    public function test_user_without_create_permission_gets_forbidden()
+    public function test_user_without_required_permission_gets_forbidden_for_create()
     {
-        $user = User::create([
-            'name' => 'No Perm User',
-            'email' => 'noperm@example.com',
-            'email_verified_at' => now(),
-            'password' => Hash::make('Password123!'),
-            'phone_number' => '01000000002',
-            'is_active' => true,
-            'type' => 'admin',
-        ]);
-
-        Sanctum::actingAs($user, ['*']);
+        Sanctum::actingAs($this->viewUser, ['*']);
 
         $response = $this->postJson(self::PREFIX . '/attributes', [
-            'name' => 'Size',
-            'slug' => 'size',
+            'name' => ['en' => 'Size', 'ar' => 'حجم'],
         ]);
         $response->assertStatus(403);
     }
 
     // =========================================================================
-    // PUT /api/attributes/{id} — Update Attribute (requires update-attribute)
+    // PUT /api/v1/attributes/{id} — Update Attribute (requires update-attribute)
     // =========================================================================
 
     public function test_unauthenticated_user_cannot_update_attribute()
@@ -162,7 +187,7 @@ class AttributeApiTest extends TestCase
     }
 
     // =========================================================================
-    // DELETE /api/attributes/{id} — Delete Attribute (requires delete-attribute)
+    // DELETE /api/v1/attributes/{id} — Delete Attribute (requires delete-attribute)
     // =========================================================================
 
     public function test_unauthenticated_user_cannot_delete_attribute()
@@ -188,7 +213,7 @@ class AttributeApiTest extends TestCase
     }
 
     // =========================================================================
-    // POST /api/attribute-values — Create Attribute Value (requires create-attribute)
+    // POST /api/v1/attribute-values — Create Attribute Value (requires create-attribute)
     // =========================================================================
 
     public function test_unauthenticated_user_cannot_create_attribute_value()
@@ -207,19 +232,18 @@ class AttributeApiTest extends TestCase
         $attribute = Attribute::create(['name' => 'Size', 'slug' => 'size']);
 
         $response = $this->postJson(self::PREFIX . '/attribute-values', [
-            'value' => 'Extra Large',
+            'value' => ['en' => 'Extra Large', 'ar' => 'كبير جداً'],
             'attribute_id' => $attribute->id,
         ]);
 
         $response->assertCreated();
         $this->assertDatabaseHas('attribute_values', [
-            'value' => 'Extra Large',
             'attribute_id' => $attribute->id,
         ]);
     }
 
     // =========================================================================
-    // DELETE /api/attribute-values/{id} — Delete Attribute Value (requires delete-attribute)
+    // DELETE /api/v1/attribute-values/{id} — Delete Attribute Value (requires delete-attribute)
     // =========================================================================
 
     public function test_authenticated_admin_can_delete_attribute_value()

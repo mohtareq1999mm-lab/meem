@@ -202,7 +202,7 @@ class AttributeController extends CoreController
             $attributeUpdates =  $this->updateAttribute($request);
             return $this->apiResponse(ATTRIBUTE_UPDATED_SUCCESSFULLY, 200, true, AttributeResource::make($attributeUpdates));
         } catch (MarvelException $e) {
-            throw new MarvelException(COULD_NOT_DELETE_THE_RESOURCE);
+            throw new MarvelException(COULD_NOT_UPDATE_THE_RESOURCE);
         }
     }
 

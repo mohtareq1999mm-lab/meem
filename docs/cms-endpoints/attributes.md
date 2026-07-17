@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Attributes module manages product attribute definitions (e.g., Size, Color) and their values (e.g., S, M, L, XL). Attributes are used to define product variants and filterable product properties. Attribute values can be associated with products and product variants.
+The Attributes module manages product attribute definitions (e.g., Size, Color) and their values (e.g., S, M, L, XL). Attributes are used to define product variants and filterable product properties.
 
 ---
 
@@ -13,8 +13,8 @@ The Attributes module manages product attribute definitions (e.g., Size, Color) 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | `id` | bigint | PK, AUTO_INCREMENT | Unique identifier |
-| `name` | json | NOT NULL | Translatable name (e.g., "Size", "Color") |
-| `slug` | varchar(255) | NOT NULL | Auto-generated from English name |
+| `name` | json | NOT NULL | Translatable name (Spatie HasTranslations) |
+| `slug` | varchar(255) | NOT NULL, UNIQUE | Auto-generated from English name |
 | `created_at` | timestamp | NULLABLE | Creation time |
 | `updated_at` | timestamp | NULLABLE | Last update |
 
@@ -23,8 +23,8 @@ The Attributes module manages product attribute definitions (e.g., Size, Color) 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | `id` | bigint | PK, AUTO_INCREMENT | Unique identifier |
-| `value` | json | NOT NULL | Translatable value (e.g., "Small", "Red") |
-| `slug` | varchar(255) | NOT NULL | Auto-generated from value |
+| `value` | json | NOT NULL | Translatable value (Spatie HasTranslations) |
+| `slug` | varchar(255) | NOT NULL, UNIQUE | Auto-generated from value |
 | `attribute_id` | bigint | FK → attributes.id, CASCADE | Parent attribute reference |
 | `created_at` | timestamp | NULLABLE | Creation time |
 | `updated_at` | timestamp | NULLABLE | Last update |
@@ -36,6 +36,8 @@ The Attributes module manages product attribute definitions (e.g., Size, Color) 
 | `id` | bigint | PK, AUTO_INCREMENT | Unique identifier |
 | `product_variant_id` | bigint | FK → product_variants.id | Variant reference |
 | `attribute_value_id` | bigint | FK → attribute_values.id | Attribute value reference |
+| `created_at` | timestamp | NULLABLE | Creation time |
+| `updated_at` | timestamp | NULLABLE | Last update |
 
 ---
 
@@ -52,6 +54,8 @@ All endpoints return:
 }
 ```
 
+Pagination endpoints return pagination fields at the top level alongside `data`.
+
 ---
 
 ## Resource Structure
@@ -61,18 +65,70 @@ All endpoints return:
 | Field | Type | Description |
 |-------|------|-------------|
 | `id` | int | Attribute ID |
-| `name` | string | Translated name |
+| `name` | string/object | Translated string on `index`; raw JSON object on `show` |
 | `slug` | string | URL slug |
-| `values` | array | Attribute values (only when loaded via `show`) |
+| `values` | array | Attribute values (only when loaded) |
 
 ### AttributeValueResource
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `id` | int | Attribute value ID |
-| `value` | string | Translated value |
+| `value` | string/object | Translated string on `index`; raw JSON object on `show` |
 | `slug` | string | URL slug |
 | `attribute_id` | int | Parent attribute ID |
+
+**Translation Behavior:** Index endpoints return translated strings in the current application locale. Show endpoints return the raw original JSON object containing all translations. This behavior is automatic via Spatie HasTranslations and requires no query parameters.
+
+---
+
+## Route Structure
+
+Routes are registered in two groups within `packages/marvel/src/Rest/Routes.php`:
+
+### Public Group (controller permission middleware only)
+
+| Method | Endpoint | Controller Method |
+|--------|----------|-------------------|
+| GET | `/attributes` | `index` |
+| GET | `/attributes/{id}` | `show` |
+| GET | `/attribute-values` | `index` |
+| GET | `/attribute-values/{id}` | `show` |
+
+### Protected Group (`auth:sanctum` + `email.verified`)
+
+| Method | Endpoint | Controller Method |
+|--------|----------|-------------------|
+| POST | `/attributes` | `store` |
+| PUT | `/attributes/{id}` | `update` |
+| DELETE | `/attributes/{id}` | `destroy` |
+| POST | `/attribute-values` | `store` |
+| PUT | `/attribute-values/{id}` | `update` |
+| DELETE | `/attribute-values/{id}` | `destroy` |
+
+### Import/Export (no permission middleware)
+
+| Method | Endpoint | Controller Method | Middleware |
+|--------|----------|-------------------|------------|
+| POST | `/import-attributes` | `importAttributes` | `throttle:uploads` |
+| GET | `/export-attributes/{id}` | `exportAttributes` | None |
+
+---
+
+## Permissions Map
+
+Permissions are enforced via controller middleware. Only the following permissions exist in middleware:
+
+| Permission | Middleware Applied On | Controller Methods |
+|------------|----------------------|-------------------|
+| `view-attributes` | `AttributeController`, `AttributeValueController` | `index`, `show` |
+| `create-attribute` | `AttributeController`, `AttributeValueController` | `store` |
+| `update-attribute` | `AttributeController`, `AttributeValueController` | `update` |
+| `delete-attribute` | `AttributeController`, `AttributeValueController` | `destroy` |
+
+**No permission middleware is applied** to `importAttributes` or `exportAttributes`.
+
+Permissions are enforced at the controller level via `$this->middleware` in each controller's constructor. The `store`, `update`, and `destroy` routes additionally sit behind an `auth:sanctum` + `email.verified` middleware group at the route level.
 
 ---
 
@@ -80,13 +136,13 @@ All endpoints return:
 
 ### GET /attributes — List Attributes
 
-**Purpose:** List all attributes with their values. Supports pagination, search, sorting, and filtering.
+**Purpose:** List all attributes with their values. Supports pagination, sorting, and search.
 
 **Method:** `GET`
 
 **URL:** `/attributes`
 
-**Authentication:** Optional
+**Authentication:** Required (via `view-attributes` permission middleware)
 
 **Permissions:** `view-attributes`
 
@@ -95,7 +151,7 @@ All endpoints return:
 | Param | Type | Default | Description |
 |-------|------|---------|-------------|
 | `limit` | int | 15 | Items per page |
-| `order` | string | — | Sort column (`id`, `name`, `slug`, `shop_id`, `created_at`, `updated_at`) |
+| `order` | string | — | Sort column (`id`, `name`, `slug`, `created_at`, `updated_at`) |
 | `sortedBy` | `asc`/`desc` | `asc` | Sort direction |
 | `search` | string | — | Search term (matches `name` via LIKE) |
 
@@ -109,10 +165,10 @@ GET /attributes?search=color&limit=5
 ```
 
 **Business Logic:**
-1. Applies optional `order`/`sortedBy` sorting
-2. `RequestCriteria` handles `search`, `shop_id` and other field filters automatically
-3. Eager-loads `values` relation
-4. Returns paginated `AttributeResource` collection
+1. Applies optional `order`/`sortedBy` sorting (validated against allowed columns).
+2. `RequestCriteria` handles `search` filter automatically via `AttributeRepository.fieldSearchable`.
+3. Eager-loads `values` relation.
+4. Returns paginated `AttributeResource` collection with translated name values.
 
 **Success Response (200):**
 ```json
@@ -165,7 +221,7 @@ GET /attributes?search=color&limit=5
 
 **Authentication:** Required
 
-**Permissions:** `create-attribute`
+**Permissions:** `create-attribute` (route requires `auth:sanctum` + `email.verified`)
 
 **Request Body (JSON):**
 
@@ -177,7 +233,6 @@ GET /attributes?search=color&limit=5
 | `values` | array | No | Array of value objects |
 | `values.*` | object | No | Value object |
 | `values.*.value` | object | No | Translatable value array |
-| `values.*.value.*` | string | No | `string`, `min:2`, `max:50` |
 
 **Example Request:**
 ```json
@@ -195,12 +250,11 @@ GET /attributes?search=color&limit=5
 ```
 
 **Business Logic:**
-1. Validates via `AttributeRequest`
-2. Generates slug from English name via `Sluggable` trait
-3. Creates the attribute
-4. If `values` provided, creates each `AttributeValue` linked to the attribute (generates slug per value)
-5. Uses database transaction for atomicity
-6. Returns attribute with loaded values
+1. Validates via `AttributeRequest`.
+2. Generates slug from English name via `Sluggable` trait.
+3. Creates the attribute inside a database transaction.
+4. If `values` provided, creates each `AttributeValue` linked to the attribute.
+5. Returns attribute with loaded values.
 
 **Success Response (201):**
 ```json
@@ -210,12 +264,15 @@ GET /attributes?search=color&limit=5
     "success": true,
     "data": {
         "id": 1,
-        "name": "Size",
+        "name": {
+            "en": "Size",
+            "ar": "حجم"
+        },
         "slug": "size",
         "values": [
-            { "id": 1, "value": "Small", "slug": "small", "attribute_id": 1 },
-            { "id": 2, "value": "Medium", "slug": "medium", "attribute_id": 1 },
-            { "id": 3, "value": "Large", "slug": "large", "attribute_id": 1 }
+            { "id": 1, "value": { "en": "Small", "ar": "صغير" }, "slug": "small", "attribute_id": 1 },
+            { "id": 2, "value": { "en": "Medium", "ar": "متوسط" }, "slug": "medium", "attribute_id": 1 },
+            { "id": 3, "value": { "en": "Large", "ar": "كبير" }, "slug": "large", "attribute_id": 1 }
         ]
     }
 }
@@ -225,7 +282,7 @@ GET /attributes?search=color&limit=5
 | Status | Condition |
 |--------|-----------|
 | 401 | Unauthenticated |
-| 403 | Missing `create-attribute` permission |
+| 403 | Missing `create-attribute` permission or role |
 | 422 | Validation failure |
 
 ---
@@ -238,14 +295,14 @@ GET /attributes?search=color&limit=5
 
 **URL:** `/attributes/{id}`
 
-**Authentication:** Optional
+**Authentication:** Required (via `view-attributes` permission middleware)
 
 **Permissions:** `view-attributes`
 
 **Business Logic:**
-1. If `{id}` is numeric, finds by `id`; otherwise finds by `slug`
-2. Eager-loads `values` relation
-3. Returns attribute resource
+1. If `{id}` is numeric, finds by `id`; otherwise finds by `slug`.
+2. Eager-loads `values` relation.
+3. Returns attribute resource with raw original name (all translations).
 
 **Success Response (200):**
 ```json
@@ -255,12 +312,15 @@ GET /attributes?search=color&limit=5
     "success": true,
     "data": {
         "id": 1,
-        "name": "Size",
+        "name": {
+            "en": "Size",
+            "ar": "حجم"
+        },
         "slug": "size",
         "values": [
-            { "id": 1, "value": "Small", "slug": "small", "attribute_id": 1 },
-            { "id": 2, "value": "Medium", "slug": "medium", "attribute_id": 1 },
-            { "id": 3, "value": "Large", "slug": "large", "attribute_id": 1 }
+            { "id": 1, "value": { "en": "Small", "ar": "صغير" }, "slug": "small", "attribute_id": 1 },
+            { "id": 2, "value": { "en": "Medium", "ar": "متوسط" }, "slug": "medium", "attribute_id": 1 },
+            { "id": 3, "value": { "en": "Large", "ar": "كبير" }, "slug": "large", "attribute_id": 1 }
         ]
     }
 }
@@ -285,7 +345,7 @@ GET /attributes?search=color&limit=5
 
 **Authentication:** Required
 
-**Permissions:** `update-attribute`
+**Permissions:** `update-attribute` (route requires `auth:sanctum` + `email.verified`)
 
 **Request Body (JSON):**
 
@@ -295,8 +355,6 @@ GET /attributes?search=color&limit=5
 | `name.en` | string | No | `string`, `min:2`, `max:50`, unique translation (ignores self) |
 | `name.ar` | string | No | `string`, `min:2`, `max:50`, unique translation (ignores self) |
 | `values` | array | No | Array of value objects (replaces all existing values) |
-| `values.*` | object | No | Value object |
-| `values.*.value` | object | No | Translatable value array |
 
 **Example Request:**
 ```json
@@ -313,11 +371,11 @@ GET /attributes?search=color&limit=5
 ```
 
 **Business Logic:**
-1. Validates via `AttributeRequest`
-2. Finds attribute by ID
-3. Updates attribute fields with new slug
-4. If `values` provided, **deletes all existing values** and creates new ones from the input
-5. Returns updated attribute with values
+1. Validates via `AttributeRequest`.
+2. Finds attribute by ID.
+3. Updates attribute fields inside a database transaction.
+4. If `values` provided, **deletes all existing values** and creates new ones from the input.
+5. Returns updated attribute with values.
 
 **Success Response (200):**
 ```json
@@ -327,11 +385,14 @@ GET /attributes?search=color&limit=5
     "success": true,
     "data": {
         "id": 1,
-        "name": "Size Updated",
+        "name": {
+            "en": "Size Updated",
+            "ar": "حجم محدث"
+        },
         "slug": "size-updated",
         "values": [
-            { "id": 4, "value": "XS", "slug": "xs", "attribute_id": 1 },
-            { "id": 5, "value": "XL", "slug": "xl", "attribute_id": 1 }
+            { "id": 4, "value": { "en": "XS", "ar": "صغير جداً" }, "slug": "xs", "attribute_id": 1 },
+            { "id": 5, "value": { "en": "XL", "ar": "كبير جداً" }, "slug": "xl", "attribute_id": 1 }
         ]
     }
 }
@@ -341,7 +402,7 @@ GET /attributes?search=color&limit=5
 | Status | Condition |
 |--------|-----------|
 | 401 | Unauthenticated |
-| 403 | Missing `update-attribute` permission |
+| 403 | Missing `update-attribute` permission or role |
 | 404 | Attribute not found |
 | 422 | Validation failure |
 
@@ -349,7 +410,7 @@ GET /attributes?search=color&limit=5
 
 ### DELETE /attributes/{id} — Delete Attribute
 
-**Purpose:** Delete an attribute and its values.
+**Purpose:** Delete an attribute and its values (cascade).
 
 **Method:** `DELETE`
 
@@ -357,12 +418,12 @@ GET /attributes?search=color&limit=5
 
 **Authentication:** Required
 
-**Permissions:** `delete-attribute`
+**Permissions:** `delete-attribute` (route requires `auth:sanctum` + `email.verified`)
 
 **Business Logic:**
-1. Finds attribute by ID
-2. Deletes the record (cascades to attribute_values)
-3. Returns success message
+1. Finds attribute by ID.
+2. Deletes the record (database cascade removes attribute_values).
+3. Returns success message.
 
 **Success Response (200):**
 ```json
@@ -377,7 +438,7 @@ GET /attributes?search=color&limit=5
 | Status | Condition |
 |--------|-----------|
 | 401 | Unauthenticated |
-| 403 | Missing `delete-attribute` permission |
+| 403 | Missing `delete-attribute` permission or role |
 | 404 | Attribute not found |
 
 ---
@@ -392,26 +453,40 @@ GET /attributes?search=color&limit=5
 
 **Authentication:** Required
 
-**Permissions:** `super_admin` or `store_owner`
+**Permissions:** No permission middleware applied. Route has `throttle:uploads` middleware. Controller checks repository-level `hasPermission`.
+
+**Request:** Multipart form data with CSV file.
 
 **Business Logic:**
-1. Uploads CSV file to `public/csv-files/`
-2. Parses CSV into array
-3. For each row, creates/finds attribute by name + shop_id
-4. Parses comma-separated `values` column and creates attribute values
-5. Uses `firstOrCreate` to avoid duplicates
+1. Route is rate-limited via `throttle:uploads` middleware.
+2. Uploads CSV file to `public/csv-files/`.
+3. Parses CSV into array.
+4. For each row, creates/finds attribute by name.
+5. Parses comma-separated `values` column and creates attribute values.
+6. Uses `firstOrCreate` to avoid duplicates.
+
+**CSV Format:**
+Expected columns: `name`, `values` (comma-separated).
 
 ---
 
-### GET /export-attributes/{shop_id} — Export Attributes as CSV
+### GET /export-attributes/{id} — Export Attributes as CSV
+
+**Purpose:** Export all attributes as a CSV download.
 
 **Method:** `GET`
 
-**URL:** `/export-attributes/{shop_id}`
+**URL:** `/export-attributes/{id}`
 
 **Authentication:** Required
 
-**Description:** Exports all attributes for a shop as a CSV download.
+**Permissions:** No permission middleware applied.
+
+**Business Logic:**
+1. Queries attributes with eager-loaded `values`.
+2. Returns CSV file download.
+3. Excludes columns: `id`, `created_at`, `updated_at`, `slug`, `translated_languages`.
+4. Values column is flattened to comma-separated string.
 
 ---
 
@@ -419,13 +494,13 @@ GET /attributes?search=color&limit=5
 
 ### GET /attribute-values — List Attribute Values
 
-**Purpose:** List all attribute values with their parent attribute. Supports pagination, search, sorting, and filtering.
+**Purpose:** List all attribute values with their parent attribute. Supports pagination, sorting, and search.
 
 **Method:** `GET`
 
 **URL:** `/attribute-values`
 
-**Authentication:** Optional
+**Authentication:** Required (via `view-attributes` permission middleware)
 
 **Permissions:** `view-attributes`
 
@@ -437,7 +512,6 @@ GET /attributes?search=color&limit=5
 | `order` | string | — | Sort column (`id`, `value`, `attribute_id`, `slug`, `created_at`, `updated_at`) |
 | `sortedBy` | `asc`/`desc` | `asc` | Sort direction |
 | `search` | string | — | Search term (matches `value` via LIKE) |
-| `language` | string | — | Filter by language |
 
 **Example URLs:**
 ```
@@ -445,14 +519,13 @@ GET /attribute-values?limit=10
 GET /attribute-values?search=small
 GET /attribute-values?order=value&sortedBy=desc
 GET /attribute-values?limit=20&order=created_at&sortedBy=desc
-GET /attribute-values?search=large&language=en
 ```
 
 **Business Logic:**
-1. Applies optional `order`/`sortedBy` sorting
-2. `RequestCriteria` handles `search`, `shop_id`, `language` and other field filters automatically
-3. Eager-loads `attribute` relation
-4. Returns paginated `AttributeValueResource` collection
+1. Applies optional `order`/`sortedBy` sorting (validated against allowed columns).
+2. `RequestCriteria` handles `search` filter automatically.
+3. Eager-loads `attribute` relation.
+4. Returns paginated `AttributeValueResource` collection with translated value strings.
 
 **Success Response (200):**
 ```json
@@ -501,7 +574,7 @@ GET /attribute-values?search=large&language=en
 
 **Authentication:** Required
 
-**Permissions:** `create-attribute`
+**Permissions:** `create-attribute` (route requires `auth:sanctum` + `email.verified`)
 
 **Request Body (JSON):**
 
@@ -510,7 +583,7 @@ GET /attribute-values?search=large&language=en
 | `value` | object | **Yes** | Translatable array |
 | `value.en` | string | **Yes** | `string`, `max:255` |
 | `value.ar` | string | **Yes** | `string`, `max:255` |
-| `attribute_id` | int | **Yes** | `exists:attributes,id` |
+| `attribute_id` | int | **Yes** | `exists:Marvel\Database\Models\Attribute,id` |
 
 **Example Request:**
 ```json
@@ -524,9 +597,10 @@ GET /attribute-values?search=large&language=en
 ```
 
 **Business Logic:**
-1. Validates via `AttributeValueRequest`
-2. Creates attribute value with translatable `value` field
-3. Returns created resource
+1. Validates via `AttributeValueRequest`.
+2. Creates attribute value with translatable `value` field.
+3. Slug auto-generated from value via `Sluggable` trait.
+4. Returns created resource.
 
 **Success Response (201):**
 ```json
@@ -550,7 +624,7 @@ GET /attribute-values?search=large&language=en
 | Status | Condition |
 |--------|-----------|
 | 401 | Unauthenticated |
-| 403 | Missing `create-attribute` permission or shop access |
+| 403 | Missing `create-attribute` permission or role |
 | 422 | Validation failure |
 
 ---
@@ -563,13 +637,13 @@ GET /attribute-values?search=large&language=en
 
 **URL:** `/attribute-values/{id}`
 
-**Authentication:** Optional
+**Authentication:** Required (via `view-attributes` permission middleware)
 
 **Permissions:** `view-attributes`
 
 **Business Logic:**
-1. Finds by ID with `attribute` relation
-2. Returns resource
+1. Finds by ID with `attribute` relation.
+2. Returns resource with raw original value (all translations).
 
 **Success Response (200):**
 ```json
@@ -589,6 +663,10 @@ GET /attribute-values?search=large&language=en
 }
 ```
 
+---
+
+### PUT /attribute-values/{id} — Update Attribute Value
+
 **Purpose:** Update an attribute value.
 
 **Method:** `PUT`
@@ -597,7 +675,7 @@ GET /attribute-values?search=large&language=en
 
 **Authentication:** Required
 
-**Permissions:** `update-attribute`
+**Permissions:** `update-attribute` (route requires `auth:sanctum` + `email.verified`)
 
 **Request Body (JSON):**
 
@@ -606,7 +684,7 @@ GET /attribute-values?search=large&language=en
 | `value` | object | No | Translatable array |
 | `value.en` | string | No | `string`, `max:255` |
 | `value.ar` | string | No | `string`, `max:255` |
-| `attribute_id` | int | No | `exists:attributes,id` |
+| `attribute_id` | int | No | `exists:Marvel\Database\Models\Attribute,id` |
 
 **Example Request:**
 ```json
@@ -619,9 +697,9 @@ GET /attribute-values?search=large&language=en
 ```
 
 **Business Logic:**
-1. Checks `hasPermission` for the user + shop
-2. Updates the attribute value
-3. Returns fresh resource
+1. Validates via `AttributeValueRequest`.
+2. Updates the attribute value.
+3. Returns fresh resource.
 
 **Success Response (200):**
 ```json
@@ -653,13 +731,12 @@ GET /attribute-values?search=large&language=en
 
 **Authentication:** Required
 
-**Permissions:** `delete-attribute`
+**Permissions:** `delete-attribute` (route requires `auth:sanctum` + `email.verified`)
 
 **Business Logic:**
-1. Retrieves the attribute value's parent attribute `shop_id`
-2. Checks `hasPermission` for the user + that shop
-3. Deletes the attribute value
-4. Returns success message
+1. Finds the attribute value by ID.
+2. Deletes the attribute value.
+3. Returns success message.
 
 **Success Response (200):**
 ```json
@@ -674,39 +751,8 @@ GET /attribute-values?search=large&language=en
 | Status | Condition |
 |--------|-----------|
 | 401 | Unauthenticated |
-| 403 | Missing `delete-attribute` permission or shop access |
+| 403 | Missing `delete-attribute` permission or role |
 | 404 | Attribute value not found |
-
----
-
-## Route Definitions
-
-```php
-// Public routes (no auth)
-Route::apiResource('attributes', AttributeController::class, ['only' => ['index', 'show']]);
-Route::apiResource('attribute-values', AttributeValueController::class, ['only' => ['index', 'show']]);
-
-// Import/Export (auth)
-Route::post('import-attributes', [AttributeController::class, 'importAttributes']);
-Route::get('export-attributes/{shop_id}', [AttributeController::class, 'exportAttributes']);
-
-// Admin routes (auth + permissions)
-Route::apiResource('attributes', AttributeController::class, ['only' => ['store', 'update', 'destroy']]);
-Route::apiResource('attribute-values', AttributeValueController::class, ['only' => ['store', 'update', 'destroy']]);
-```
-
-Source: `packages/marvel/src/Rest/Routes.php`
-
----
-
-## Permissions Map
-
-| Permission Enum | String | Applied To |
-|----------------|--------|------------|
-| `VIEW_ATTRIBUTES` | `view-attributes` | `AttributeController@index`, `AttributeController@show`, `AttributeValueController@index`, `AttributeValueController@show` |
-| `CREATE_ATTRIBUTE` | `create-attribute` | `AttributeController@store`, `AttributeValueController@store` |
-| `UPDATE_ATTRIBUTE` | `update-attribute` | `AttributeController@update`, `AttributeValueController@update` |
-| `DELETE_ATTRIBUTE` | `delete-attribute` | `AttributeController@destroy`, `AttributeValueController@destroy` |
 
 ---
 
@@ -717,8 +763,9 @@ Source: `packages/marvel/src/Rest/Routes.php`
 - **Relations:**
   - `Attribute hasMany AttributeValue`
   - `AttributeValue belongsTo Attribute`
-  - `AttributeValue belongsToMany Product` via `attribute_product` pivot
-  - `AttributeValue belongsToMany ProductVariant` via `attribute_product` pivot
+  - `AttributeValue belongsToMany ProductVariant` via `attribute_product` pivot (foreign key: `attribute_value_id`, related key: `product_variant_id`)
+  - `AttributeProduct belongsTo ProductVariant` (foreign key: `product_variant_id`)
+  - `AttributeProduct belongsTo AttributeValue` (foreign key: `attribute_value_id`)
 
 ---
 
@@ -743,35 +790,114 @@ Source: `packages/marvel/src/Rest/Routes.php`
 
 ## Translations
 
+Translation keys are defined in `packages/marvel/src/` language files.
+
 | Key | English | Arabic |
 |-----|---------|--------|
-| `MESSAGE.ATTRIBUTE_CREATED_SUCCESSFULLY` | Attribute created successfully | تم إنشاء السمة بنجاح |
-| `MESSAGE.ATTRIBUTE_UPDATED_SUCCESSFULLY` | Attribute updated successfully | تم تحديث السمة بنجاح |
-| `MESSAGE.ATTRIBUTE_DELETED_SUCCESSFULLY` | Attribute deleted successfully | تم حذف السمة بنجاح |
-| `MESSAGE.ATTRIBUTE_VALUE_CREATED_SUCCESSFULLY` | Attribute value created successfully | تم إنشاء قيمة السمة بنجاح |
-| `MESSAGE.ATTRIBUTE_VALUE_UPDATED_SUCCESSFULLY` | Attribute value updated successfully | تم تحديث قيمة السمة بنجاح |
-| `MESSAGE.ATTRIBUTE_VALUE_DELETED_SUCCESSFULLY` | Attribute value deleted successfully | تم حذف قيمة السمة بنجاح |
+| `ATTRIBUTE_CREATED_SUCCESSFULLY` | Attribute created successfully | تم إنشاء السمة بنجاح |
+| `ATTRIBUTE_UPDATED_SUCCESSFULLY` | Attribute updated successfully | تم تحديث السمة بنجاح |
+| `ATTRIBUTE_DELETED_SUCCESSFULLY` | Attribute deleted successfully | تم حذف السمة بنجاح |
+| `ATTRIBUTE_VALUE_CREATED_SUCCESSFULLY` | Attribute value created successfully | تم إنشاء قيمة السمة بنجاح |
+| `ATTRIBUTE_VALUE_UPDATED_SUCCESSFULLY` | Attribute value updated successfully | تم تحديث قيمة السمة بنجاح |
+| `ATTRIBUTE_VALUE_DELETED_SUCCESSFULLY` | Attribute value deleted successfully | تم حذف قيمة السمة بنجاح |
 
 ---
 
-## Notes
+## Architecture Notes
 
-- Attribute values are **fully replaced** on update — send the complete desired list
-- Update uses `delete()` on all existing values before recreating; there is no partial sync
-- The `slug` is auto-generated from the English translation and is read-only
-- Attribute names are unique per translation via `UniqueTranslationRule`
-- CSV import expects columns: `name`, `values` (comma-separated), `shop_id`
+### Execution Flow
+
+```
+Request
+   ↓
+Controller (permission middleware applied)
+   ↓
+Repository (storeAttribute / updateAttribute)
+   ↓
+Model (Attribute / AttributeValue)
+   ↓
+Resource (AttributeResource / AttributeValueResource)
+   ↓
+JSON Response
+```
+
+### Key Architecture Decisions
+
+1. **Repository Pattern:** All database operations (create, update, delete) are handled by `AttributeRepository` and `AttributeValueRepository`. Controllers delegate to repositories.
+
+2. **Database Transactions:** `AttributeRepository::storeAttribute` wraps attribute + values creation in a `DB::beginTransaction` / `DB::commit` / `DB::rollBack` block for atomicity.
+
+3. **Value Replacement on Update:** `AttributeRepository::updateAttribute` deletes all existing values and recreates them from the input. There is no partial sync or individual value update through the attribute endpoint.
+
+4. **Translation Handling:** Translatable fields (`Attribute.name`, `AttributeValue.value`) use Spatie HasTranslations. Resources switch behavior based on route: `index` returns translated string (`getTranslation`), `show` returns raw JSON object (`getRawOriginal`).
+
+5. **Permission Architecture:** The controller constructor applies `permission:...` middleware. The `store`/`update`/`destroy` routes additionally sit behind an `auth:sanctum` + `email.verified` middleware group.
+
+6. **Slug Generation:** Slugs are auto-generated from the English translation value and are read-only after creation.
+
+### Known Constraints
+
+1. **Attribute values are fully replaced on update** — there is no partial update support. Clients must send the complete desired list of values.
+
+2. **No individual attribute value update via attribute endpoint** — individual values can only be updated via the dedicated `/attribute-values/{id}` endpoint.
+
+3. **Slug uniqueness is global** — slug uniqueness is enforced via database unique constraint without language scoping.
+
+4. **Missing `codezero/laravel-unique-translation` dependency** — The `AttributeRequest` uses `CodeZero\UniqueTranslation\UniqueTranslationRule` but the package is not declared in `composer.json`. The create/update endpoints would throw a 500 error in production when this class is not autoloadable.
 
 ---
 
-## Logic Review Findings
+## Testing Coverage
 
-| Issue | Severity | Status |
-|-------|----------|--------|
-| `AttributeValueController` lacked `ApiResponse` trait and returned raw models | High | **Fixed** |
-| `AttributeValueController` had no permission middleware | High | **Fixed** |
-| `AttributeController::deleteAttribute` missing `true` success flag | Low | **Fixed** |
-| `AttributeValueResource` had `slug` commented out | Low | **Fixed** |
-| No `ATTRIBUTE_VALUE_*` constants defined | Medium | **Fixed** |
-| No `ATTRIBUTE_VALUE_*` translations in en/ar message files | Medium | **Fixed** |
-| Missing public routes for `attribute-values` index/show | Medium | **Fixed** |
+### Existing Tests (`tests/Feature/AttributeApiTest.php`)
+
+**Index (requires `view-attributes`):**
+- ✔ `test_authenticated_user_can_list_attributes` — GET `/api/v1/attributes` returns 200
+- ✔ `test_guest_cannot_list_attributes` — GET without auth returns 403
+- ✔ `test_list_attributes_returns_empty_data_when_none_exist` — GET with no data returns 200
+
+**Show (requires `view-attributes`):**
+- ✔ `test_authenticated_user_can_show_attribute_by_id` — GET `/api/v1/attributes/{id}` returns attribute
+- ✔ `test_guest_gets_403_for_attribute_show` — GET without auth returns 403
+- ✔ `test_authenticated_user_gets_404_for_nonexistent_attribute_id` — GET with invalid ID returns 404
+
+**Create (requires `create-attribute`):**
+- ✔ `test_unauthenticated_user_cannot_create_attribute` — POST without auth returns 401
+- ✔ `test_authenticated_admin_can_create_attribute` — POST with auth + permission returns 201
+- ✔ `test_user_without_required_permission_gets_forbidden_for_create` — POST without required route authorization returns 403
+
+**Update (requires `update-attribute`):**
+- ✔ `test_unauthenticated_user_cannot_update_attribute` — PUT without auth returns 401
+
+**Delete (requires `delete-attribute`):**
+- ✔ `test_unauthenticated_user_cannot_delete_attribute` — DELETE without auth returns 401
+- ✔ `test_authenticated_admin_can_delete_attribute` — DELETE with auth returns 200
+
+**Attribute Values - Create (requires `create-attribute`):**
+- ✔ `test_unauthenticated_user_cannot_create_attribute_value` — POST without auth returns 401
+- ✔ `test_authenticated_admin_can_create_attribute_value` — POST with auth returns 201
+
+**Attribute Values - Delete (requires `delete-attribute`):**
+- ✔ `test_authenticated_admin_can_delete_attribute_value` — DELETE with auth returns 200
+
+**Cascade:**
+- ✔ `test_deleting_attribute_cascades_to_its_values` — DELETE attribute removes associated values
+
+### Missing Test Coverage
+
+- ✗ Validation failure tests (422 responses)
+- ✗ Update attribute with permission (PUT success)
+- ✗ Show attribute by slug
+- ✗ Pagination edge cases (limit, page boundary)
+- ✗ Search/filter behavior
+- ✗ Sorting behavior (various columns, directions)
+- ✗ Update attribute value (PUT /attribute-values/{id})
+- ✗ Show attribute value (GET /attribute-values/{id})
+- ✗ Translation serialization (index returns translated string, show returns raw JSON)
+- ✗ Resource serialization structure (JSON shape assertions)
+- ✗ Database persistence assertions (verify attribute/value saved to DB)
+- ✗ Duplicate data (unique translation enforcement)
+- ✗ Mass assignment protection
+- ✗ Import/export endpoints
+- ✗ Transaction rollback scenarios
+- ✗ Response envelope structure assertions (status, message, success, data keys)

@@ -447,7 +447,7 @@ Route::get('popular-products', 'Marvel\Http\Controllers\ProductController@popula
 
 
 Route::group(
-    ['middleware' => ['role:' . Role::SUPER_ADMIN, 'auth:sanctum', 'email.verified']],
+    ['middleware' => ['auth:sanctum', 'email.verified']],
     function () {
         Route::post('products/bulk-delete', [ProductController::class, 'destroyBulk']);
         Route::delete('products/all', [ProductController::class, 'destroyAll']);

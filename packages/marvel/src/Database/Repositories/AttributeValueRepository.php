@@ -15,7 +15,6 @@ class AttributeValueRepository extends BaseRepository
      */
     protected $fieldSearchable = [
         'value' => 'like',
-        'language',
     ];
 
     public function boot()

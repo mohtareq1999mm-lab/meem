@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Cviebrock\EloquentSluggable\Sluggable;
-use Illuminate\Database\Eloquent\Builder;
 use Spatie\Translatable\HasTranslations;
 
 class AttributeValue extends Model
@@ -43,14 +42,6 @@ class AttributeValue extends Model
         return $this->belongsTo(Attribute::class, 'attribute_id');
     }
 
-
-    /**
-     * @return BelongsToMany
-     */
-    public function products(): BelongsToMany
-    {
-        return $this->belongsToMany(Product::class, 'attribute_product');
-    }
 
     /**
      * @return BelongsToMany
