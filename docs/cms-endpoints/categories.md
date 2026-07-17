@@ -13,7 +13,7 @@ The Categories module manages hierarchical product categories with parent/child 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | `id` | bigint | PK, AUTO_INCREMENT | Unique identifier |
-| `name` | json | NOT NULL, UNIQUE | Translatable name |
+| `name` | varchar(255) | NOT NULL, UNIQUE | Translatable name (stored as JSON via Spatie HasTranslations) |
 | `slug` | varchar(255) | NOT NULL | Auto-generated from English name |
 | `details` | text | NULLABLE | Translatable description |
 | `parent_id` | bigint | FK → categories.id, RESTRICT ON DELETE | Parent category |
@@ -524,9 +524,9 @@ Images are sent as file fields (`image-desktop`, `image-mobile`) in the multipar
 
 ---
 
-### PUT /categories/feature — Toggle Featured Categories
+### PUT /categories/feature — Toggle Featured Category
 
-**Purpose:** Toggle the `is_featured` flag on one or more categories. Passes `NOT is_featured` to flip the boolean value atomically.
+**Purpose:** Toggle the `is_featured` flag on a single category. Flips `NOT is_featured` atomically.
 
 **Method:** `PUT`
 
@@ -540,19 +540,18 @@ Images are sent as file fields (`image-desktop`, `image-mobile`) in the multipar
 
 | Field | Type | Required | Validation |
 |-------|------|----------|------------|
-| `category_ids` | array | **Yes** | Array of integer IDs |
-| `category_ids.*` | int | **Yes** | `integer`, `exists:categories,id` |
+| `id` | int | **Yes** | `integer`, `exists:categories,id` |
 
 **Example Request:**
 ```json
 {
-    "category_ids": [1, 5, 12]
+    "id": 5
 }
 ```
 
 **Business Logic:**
-1. Validates `category_ids` array with `exists:categories,id` constraint
-2. Runs a single `UPDATE categories SET is_featured = NOT is_featured WHERE id IN (...)` query
+1. Validates single `id` with `exists:categories,id` constraint
+2. Finds the category, flips `is_featured` to `! is_featured`, saves
 3. Returns success message
 
 **Success Response (200):**
@@ -583,7 +582,6 @@ Route::get('featured-categories', 'Marvel\Http\Controllers\CategoryController@fe
 // Admin routes (auth + permissions)
 Route::put('categories/feature', [CategoryController::class, 'addOrRemoveCategoryFromFeature']);
 Route::apiResource('categories', CategoryController::class);
-Route::get('categories-parent', [CategoryController::class, 'fetchOnlyParent']);
 ```
 
 Source: `packages/marvel/src/Rest/Routes.php`
@@ -594,7 +592,7 @@ Source: `packages/marvel/src/Rest/Routes.php`
 
 | Permission Enum | String | Applied To |
 |----------------|--------|------------|
-| `VIEW_CATEGORIES` | `view-categories` | `index`, `show`, `fetchFeaturedCategories` |
+| `VIEW_CATEGORIES` | `view-categories` | `index`, `show` |
 | `CREATE_CATEGORY` | `create-category` | `store` |
 | `UPDATE_CATEGORY` | `update-category` | `update`, `addOrRemoveCategoryFromFeature` |
 | `DELETE_CATEGORY` | `delete-category` | `destroy` |

@@ -70,12 +70,14 @@ class UserController extends CoreController
     {
         $this->repository = $repository;
         $this->applicationIsValid = $this->repository->checkIfApplicationIsValid();
-        $this->middleware("permission:" . Permission::VIEW_USERS, ["only" => ["index", "show", "admins", "adminTrashedUsers"]]);
+        $this->middleware("permission:" . Permission::VIEW_USERS, ["only" => ["index", "show", "adminTrashedUsers"]]);
         $this->middleware("permission:" . Permission::CREATE_USER, ["only" => ["adminAddUsers"]]);
         $this->middleware("permission:" . Permission::DELETE_USER, ["only" => ["adminDeleteUsers", "adminDeleteUsersForever", "destroy"]]);
         $this->middleware("permission:" . Permission::EDIT_USER, ["only" => ["adminUpdateActivationUsers", "update"]]);
         $this->middleware("permission:" . Permission::RESTORE_USER, ["only" => ["adminRestoreUser"]]);
         $this->middleware("permission:" . Permission::ADD_POINTS, ["only" => ["addPoints"]]);
+        $this->middleware("permission:" . Permission::BAN_USER, ["only" => ["banUser"]]);
+        $this->middleware("permission:" . Permission::ACTIVATE_USER, ["only" => ["activeUser"]]);
     }
 
     /**
@@ -405,15 +407,26 @@ class UserController extends CoreController
     }
     public function adminTrashedUsers(Request $request)
     {
-        try {
-            $limit = $request->limit ? $request->limit : 15;
-            $trashedUsers = User::onlyTrashed()
-                ->with(['permissions'])
-                ->paginate($limit);
-            return $trashedUsers;
-        } catch (MarvelException $e) {
-            throw new MarvelException(NOT_FOUND);
-        }
+        $limit = $request->limit ? $request->limit : 15;
+        $trashedUsers = User::onlyTrashed()
+            ->with(['permissions'])
+            ->paginate($limit);
+        $data = UserResource::collection($trashedUsers)->response()->getData(true);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
+            "data" => $data['data'] ?? [],
+            "page" => $data['meta']['current_page'] ?? 0,
+            "current_page" => $data['meta']['current_page'] ?? 0,
+            "from" => $data['meta']['from'] ?? 0,
+            "to" => $data['meta']['to'] ?? 0,
+            "last_page" => $data['meta']['last_page'] ?? 0,
+            "path" => $data['meta']['path'] ?? "",
+            "per_page" => $data['meta']['per_page'] ?? 0,
+            "total" => $data['meta']['total'] ?? 0,
+            "next_page_url" => $data['links']['next'] ?? "",
+            "prev_page_url" => $data['links']['prev'] ?? "",
+            "last_page_url" => $data['links']['last'] ?? "",
+            "first_page_url" => $data['links']['first'] ?? "",
+        ]);
     }
     public function adminUpdateActivationUsers(Request $request)
     {

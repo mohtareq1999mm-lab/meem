@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Enums\UserType;
 use Illuminate\Database\Seeder;
 use Marvel\Database\Models\User;
 use Spatie\Activitylog\Models\Activity;
@@ -11,8 +10,8 @@ class ActivityLogSeeder extends Seeder
 {
     public function run(): void
     {
-        $admins = User::where('type', UserType::ADMIN->value)->get();
-        $target = User::where('type', UserType::USER->value)->first();
+        $admins = User::where('type', 'admin')->get();
+        $target = User::where('type', 'user')->first();
 
         if ($admins->isEmpty()) {
             $this->command->warn('No admin users found. Skipping activity log seeding.');

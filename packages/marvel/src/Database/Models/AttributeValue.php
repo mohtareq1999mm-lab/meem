@@ -29,9 +29,14 @@ class AttributeValue extends Model
     {
         return [
             'slug' => [
-                'source' => 'value'
+                'source' => 'slug_source'
             ]
         ];
+    }
+
+    public function getSlugSourceAttribute(): string
+    {
+        return $this->getTranslation('value', 'en', false) ?? $this->value;
     }
 
     /**

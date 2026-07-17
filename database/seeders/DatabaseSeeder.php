@@ -2,21 +2,12 @@
 
 namespace Database\Seeders;
 
+use Database\Seeders\ContactSeeder;
+use Database\Seeders\ProductVariantSeeder;
+use Database\Seeders\ReviewSeeder;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
-use Database\Seeders\MeemProductSeeder;
-use Marvel\Database\Models\Attribute;
-use Marvel\Database\Models\AttributeValue;
-use Marvel\Database\Models\Product;
+use Illuminate\Support\Facades\Hash;
 use Marvel\Database\Models\User;
-use Marvel\Database\Models\Category;
-use Marvel\Database\Models\Type;
-use Marvel\Database\Models\Order;
-use Marvel\Database\Models\OrderStatus;
-use Marvel\Database\Models\Coupon;
-use Spatie\Permission\Models\Permission;
-use Marvel\Enums\Permission as UserPermission;
-
 
 class DatabaseSeeder extends Seeder
 {
@@ -27,8 +18,81 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        // run your app seeder
-        $this->call(ProductSeeder::class);
-        $this->call(MeemProductSeeder::class);
+        $seedDemoData = filter_var(
+            env('SEED_DEMO_DATA', app()->environment('local')),
+            FILTER_VALIDATE_BOOLEAN
+        );
+
+        // Keep permission roles and default admin user in sync across environments.
+        $this->call([
+            PermissionSeeder::class,
+            SettingSeeder::class,
+        ]);
+
+        $user = User::firstOrCreate([
+            'email' => 'admin@demo.com',
+        ], [
+            'name' => 'Shop Owner',
+            'password' => Hash::make('password'),
+            'is_active' => true,
+            'phone_number' => '34567890',
+            'email_verified_at' => now(),
+        ]);
+        $userEdit = User::firstOrCreate([
+            'email' => 'editor@cms.com',
+        ], [
+            'name' => 'Shop Owner',
+            'password' => Hash::make('password'),
+            'is_active' => true,
+            'phone_number' => '123456790',
+            'email_verified_at' => now(),
+        ]);
+
+        $customer = User::firstOrCreate([
+            'email' => 'test@g.com',
+        ], [
+            'name' => 'Test Customer',
+            'password' => Hash::make('password'),
+            'is_active' => true,
+            'phone_number' => '12347890',
+            'email_verified_at' => now(),
+        ]);
+
+        $user->assignRole("super_admin");
+        $userEdit->assignRole("editor");
+        $customer->assignRole("customer");
+
+        // if ($seedDemoData) {
+        //     User::factory(10000)->create();
+        // }
+
+        $this->call([
+            CategorySeeder::class,
+            AttributeSeeder::class,
+            BannerSeeder::class,
+            SliderSeeder::class,
+            FaqSeeder::class,
+            FlashSaleSeeder::class,
+            BrandSeeder::class,
+            ContactSeeder::class,
+            ProductSeeder::class,
+            SliderProductSeeder::class,
+            BannerProductSeeder::class,
+            ReviewSeeder::class,
+            ProductVariantSeeder::class,
+            BrandProductSeeder::class,
+            CartSeeder::class,
+            CouponSeeder::class,
+            LocationSeeder::class,
+            PromotionSeeder::class,
+            WishlistSeeder::class,
+            SectionTypeSettingSeeder::class,
+            ContentPageSeeder::class,
+            SectionSeeder::class,
+            DashboardDataSeeder::class,
+            NotificationSeeder::class,
+            ActivityLogSeeder::class,
+            PickupLocationSeeder::class,
+        ]);
     }
 }

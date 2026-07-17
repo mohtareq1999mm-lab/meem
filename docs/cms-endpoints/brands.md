@@ -13,9 +13,9 @@ The Brands module manages product brands with translatable names/details, deskto
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | `id` | bigint | PK, AUTO_INCREMENT | Unique identifier |
-| `name` | json | NOT NULL, UNIQUE | Translatable name |
+| `name` | text | NOT NULL | Translatable name (JSON) |
 | `slug` | varchar(255) | NOT NULL | Auto-generated from English name |
-| `details` | json | NULLABLE | Translatable description |
+| `details` | text | NULLABLE | Translatable description (JSON) |
 | `status` | tinyint(1) | DEFAULT true | Active/inactive |
 | `created_at` | timestamp | NULLABLE | Creation time |
 | `updated_at` | timestamp | NULLABLE | Last update |
@@ -224,10 +224,10 @@ GET /brands?active=true                 # Only active brands
 5. Syncs product associations if provided
 6. Returns created brand with loaded products
 
-**Success Response (200):**
+**Success Response (201):**
 ```json
 {
-    "status": 200,
+    "status": 201,
     "message": "Brand created successfully",
     "success": true,
     "data": {
@@ -265,21 +265,23 @@ GET /brands?active=true                 # Only active brands
 
 ---
 
-### GET /brands/{id} — Show Brand
+### GET /brands/{param} — Show Brand
 
-**Purpose:** Fetch a single brand by ID with associated products.
+**Purpose:** Fetch a single brand by ID or slug with associated products.
 
 **Method:** `GET`
 
-**URL:** `/brands/{id}`
+**URL:** `/brands/{param}` — accepts numeric ID or string slug
 
 **Authentication:** Required
 
 **Permissions:** `view-brands`
 
 **Business Logic:**
-1. Finds brand by ID with `products` relation loaded
-2. Returns brand resource
+1. If `{param}` is numeric — looks up by `id`
+2. If `{param}` is a string — looks up by `slug`
+3. Eager loads `products` relation
+4. Returns brand resource
 
 **Success Response (200):**
 ```json
@@ -493,16 +495,28 @@ GET /brands?active=true                 # Only active brands
 
 ## Route Definitions
 
-```php
-// Public routes (no auth)
-Route::apiResource('brands', BrandController::class, ['only' => ['index', 'show']]);
+All routes are in `packages/marvel/src/Rest/Routes.php`, loaded via `RestAPIServiceProvider::loadRoutes()` with prefix `/api/v1` and `api` middleware group.
 
-// Admin routes (auth + permissions)
-Route::apiResource('brands', BrandController::class);
-Route::post('brands/reorder', [BrandController::class, 'reorder']);
-```
+### Duplicate Route Registration
 
-Source: `packages/marvel/src/Rest/Routes.php`
+`GET /brands` and `GET /brands/{brand}` are registered **twice**:
+1. Line 190 — `apiResource('brands', BrandController::class, ['only' => ['index', 'show']])` — **no route middleware**
+2. Line 644 — `Route::apiResource('brands', BrandController::class)` — inside `auth:sanctum` + `verified` group
+
+Laravel resolves the **first** registration (line 190). Authorization is enforced by the **controller middleware** `permission:view-brands` on both `index` and `show` (lines 23-24 of `BrandController.php`), which blocks unauthenticated (401) and unauthorized (403) requests. The duplicate registration produces identical behavior in both cases.
+
+**Classification:** Technical Debt — redundant registration, not a production bug.
+
+### Actual Route Table
+
+| Method | URI | Registered At | Route Middleware | Controller Middleware |
+|--------|-----|---------------|-----------------|----------------------|
+| GET | `/brands` | Lines 190, 644 | None (line 190 resolves first) | `permission:view-brands` |
+| GET | `/brands/{brand}` | Lines 190, 644 | None (line 190 resolves first) | `permission:view-brands` |
+| POST | `/brands` | Line 644 | `auth:sanctum`, `verified` | `permission:create-brand` |
+| PUT | `/brands/{brand}` | Line 644 | `auth:sanctum`, `verified` | `permission:update-brand` |
+| DELETE | `/brands/{brand}` | Line 644 | `auth:sanctum`, `verified` | `permission:delete-brand` |
+| PUT | `/brands/reorder` | Line 643 | `auth:sanctum`, `verified` | `permission:update-brand` |
 
 ---
 
@@ -541,12 +555,18 @@ Source: `packages/marvel/src/Rest/Routes.php`
 
 | Class | Type | File |
 |-------|------|------|
-| `BrandController` | Controller | `packages/marvel/src/Http/Controllers/BrandController.php` |
+| `BrandController` (Marvel) | Controller | `packages/marvel/src/Http/Controllers/BrandController.php` |
 | `BrandRepository` | Repository | `packages/marvel/src/Database/Repositories/BrandRepository.php` |
 | `Brand` | Model | `packages/marvel/src/Database/Models/Brand.php` |
-| `BrandResource` | Resource | `packages/marvel/src/Http/Resources/BrandResource.php` |
+| `BrandResource` (Marvel) | Resource | `packages/marvel/src/Http/Resources/BrandResource.php` |
+| `BrandResource` (App) | Resource | `app/Http/Resources/Brand/BrandResource.php` |
 | `BrandCreateRequest` | Form Request | `packages/marvel/src/Http/Requests/BrandCreateRequest.php` |
 | `BrandUpdateRequest` | Form Request | `packages/marvel/src/Http/Requests/BrandUpdateRequest.php` |
+| `BrandService` | Service | `app/Services/General/BrandService.php` |
+| `BrandObserver` | Observer | `app/Observers/BrandObserver.php` |
+| `BrandSeeder` | Seeder | `database/seeders/BrandSeeder.php` |
+| `BrandProductSeeder` | Seeder | `database/seeders/BrandProductSeeder.php` |
+| `HasChannelFilter` | Trait | `app/Traits/HasChannelFilter.php` |
 | `Permission` | Enum | `packages/marvel/src/Enums/Permission.php` |
 
 ---

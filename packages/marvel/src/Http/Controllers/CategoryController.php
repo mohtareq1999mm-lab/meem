@@ -97,7 +97,7 @@ class CategoryController extends CoreController
     public function __construct(CategoryRepository $repository)
     {
         $this->repository = $repository;
-        $this->middleware("permission:" . Permission::VIEW_CATEGORIES, ["only" => ["index", "show", "fetchFeaturedCategories"]]);
+        $this->middleware("permission:" . Permission::VIEW_CATEGORIES, ["only" => ["index", "show"]]);
         $this->middleware("permission:" . Permission::CREATE_CATEGORY, ["only" => ["store"]]);
         $this->middleware("permission:" . Permission::UPDATE_CATEGORY, ["only" => ["update"]]);
         $this->middleware("permission:" . Permission::DELETE_CATEGORY, ["only" => ["destroy"]]);

@@ -1,25 +1,97 @@
-# Admin Users Routes
+# API Routes Reference
 
 All routes are inside the `/api/v1/` prefix group.
 
+---
+
+## Brands
+
+All brands endpoints are in `packages/marvel/src/Rest/Routes.php`. Routes are loaded via `RestAPIServiceProvider::loadRoutes()` with prefix `/api/v1` and middleware `api`.
+
+### Route Registration Note
+
+`GET /brands` and `GET /brands/{brand}` are registered **twice**:
+1. **First** at line 190 — outside any auth middleware group, with no route middleware
+2. **Second** at line 644 — inside the `auth:sanctum` + `verified` group
+
+Laravel resolves the **first** registration (line 190). The `permission:view-brands` controller middleware (line 23-24 of `BrandController.php`) enforces authentication and authorization regardless of which route is matched. Behavior is identical in both cases. This is **Technical Debt** — a redundant registration, not a production bug.
+
+| Method | URI | Controller | Action | Route Middleware | Controller Middleware | Permission | Source Line |
+|--------|-----|------------|--------|-----------------|----------------------|------------|-------------|
+| GET | `/brands` | `BrandController` | `index` | None (resolves line 190; also at line 644 behind `auth:sanctum`, `verified`) | `permission:view-brands` | `view-brands` | Lines 190, 644 |
+| GET | `/brands/{brand}` | `BrandController` | `show` | None (resolves line 190; also at line 644 behind `auth:sanctum`, `verified`) | `permission:view-brands` | `view-brands` | Lines 190, 644 |
+| POST | `/brands` | `BrandController` | `store` | `auth:sanctum`, `verified` | `permission:create-brand` | `create-brand` | Line 644 |
+| PUT | `/brands/{brand}` | `BrandController` | `update` | `auth:sanctum`, `verified` | `permission:update-brand` | `update-brand` | Line 644 |
+| DELETE | `/brands/{brand}` | `BrandController` | `destroy` | `auth:sanctum`, `verified` | `permission:delete-brand` | `delete-brand` | Line 644 |
+| PUT | `/brands/reorder` | `BrandController` | `reorder` | `auth:sanctum`, `verified` | `permission:update-brand` | `update-brand` | Line 643 |
+
+---
+
+## Categories
+
+All routes require `auth:sanctum` and `verified` middleware for write operations.  
+`GET /categories` and `GET /categories/{category}` have controller-level `permission:view-categories` middleware.
+
+| Method | URI | Controller | Action | Route Middleware | Permission Middleware | Purpose |
+|--------|-----|------------|--------|-----------------|-----------------------|---------|
+| GET | `/categories` | `CategoryController` | `index` | `auth:sanctum`, `verified` | `view-categories` | List categories with filters and pagination |
+| POST | `/categories` | `CategoryController` | `store` | `auth:sanctum`, `verified` | `create-category` | Create a new category |
+| GET | `/categories/{category}` | `CategoryController` | `show` | `auth:sanctum`, `verified` | `view-categories` | Show a single category |
+| PUT | `/categories/{category}` | `CategoryController` | `update` | `auth:sanctum`, `verified` | `update-category` | Update a category |
+| DELETE | `/categories/{category}` | `CategoryController` | `destroy` | `auth:sanctum`, `verified` | `delete-category` | Soft-delete a category |
+| GET | `/featured-categories` | `CategoryController` | `fetchFeaturedCategories` | Public | None | List top featured categories |
+| PUT | `/categories/feature` | `CategoryController` | `addOrRemoveCategoryFromFeature` | `auth:sanctum`, `verified` | `update-category` | Toggle category featured flag |
+
+---
+
+## Attributes
+
+All attribute endpoints are in `packages/marvel/src/Rest/Routes.php`. Routes are loaded via `RestAPIServiceProvider::loadRoutes()` with prefix `/api/v1` and middleware `api`.
+
+### Duplicate Route Registration
+
+`GET /attributes`, `GET /attributes/{attribute}`, `GET /attribute-values`, and `GET /attribute-values/{attribute_value}` are registered **twice**:
+1. **First** at lines 224-229 — outside any auth middleware group, with no route middleware
+2. **Second** at lines 463-468 — inside the `auth:sanctum` + `verified` group
+
+Laravel resolves the **first** registration (lines 224-229). The `permission:view-attributes` controller middleware (AttributeController line 54, AttributeValueController line 22) enforces authentication and authorization regardless of which route is matched. This is **Technical Debt** — a redundant registration, not a production bug.
+
+| Method | URI | Controller | Action | Route Middleware | Controller Middleware | Permission | Source Line |
+|--------|-----|------------|--------|-----------------|----------------------|------------|-------------|
+| GET | `/attributes` | `AttributeController` | `index` | None (resolves line 224; also at line 463 behind `auth:sanctum`, `verified`) | `permission:view-attributes` | `view-attributes` | Lines 224, 463 |
+| GET | `/attributes/{attribute}` | `AttributeController` | `show` | None (resolves line 224; also at line 463 behind `auth:sanctum`, `verified`) | `permission:view-attributes` | `view-attributes` | Lines 224, 463 |
+| GET | `/attribute-values` | `AttributeValueController` | `index` | None (resolves line 227; also at line 466 behind `auth:sanctum`, `verified`) | `permission:view-attributes` | `view-attributes` | Lines 227, 466 |
+| GET | `/attribute-values/{attribute_value}` | `AttributeValueController` | `show` | None (resolves line 227; also at line 466 behind `auth:sanctum`, `verified`) | `permission:view-attributes` | `view-attributes` | Lines 227, 466 |
+| POST | `/attributes` | `AttributeController` | `store` | `auth:sanctum`, `verified` | `permission:create-attribute` | `create-attribute` | Line 463 |
+| PUT | `/attributes/{attribute}` | `AttributeController` | `update` | `auth:sanctum`, `verified` | `permission:update-attribute` | `update-attribute` | Line 463 |
+| DELETE | `/attributes/{attribute}` | `AttributeController` | `destroy` | `auth:sanctum`, `verified` | `permission:delete-attribute` | `delete-attribute` | Line 463 |
+| POST | `/attribute-values` | `AttributeValueController` | `store` | `auth:sanctum`, `verified` | `permission:create-attribute` | `create-attribute` | Line 466 |
+| PUT | `/attribute-values/{attribute_value}` | `AttributeValueController` | `update` | `auth:sanctum`, `verified` | `permission:update-attribute` | `update-attribute` | Line 466 |
+| DELETE | `/attribute-values/{attribute_value}` | `AttributeValueController` | `destroy` | `auth:sanctum`, `verified` | `permission:delete-attribute` | `delete-attribute` | Line 466 |
+| POST | `/import-attributes` | `AttributeController` | `importAttributes` | `auth:sanctum`, `throttle:uploads` | None (no permission middleware) | N/A | Line 140 |
+| GET | `/export-attributes/{shop_id}` | `AttributeController` | `exportAttributes` | `auth:sanctum` | None (no permission middleware) | N/A | Line 146 |
+
+---
+
+## Admin Users
+
+All routes require `auth:sanctum` and `email.verified` middleware. Per-method permission middleware is applied at the controller level.
+
+| Method | URI | Controller | Action | Permission Middleware | Purpose |
+|--------|-----|------------|--------|-----------------------|---------|
+| GET | `/users` | `UserController` | `index` | `view-users` | List all users with filters |
+| GET | `/users/{user}` | `UserController` | `show` | `view-users` | Show a single user |
+| DELETE | `/users/{user}` | `UserController` | `destroy` | `delete-user` | Delete a user (legacy resource route) |
+| POST | `/admin-users/add` | `UserController` | `adminAddUsers` | `create-user` | Create admin user with roles |
+| PUT | `/admin-users/update-activation` | `UserController` | `adminUpdateActivationUsers` | `edit-user` | Toggle user activation status |
+| DELETE | `/admin-users/delete/{id}` | `UserController` | `adminDeleteUsers` | `delete-user` | Delete a user (with guards) |
+| PUT | `/admin-users/restore/{id}` | `UserController` | `adminRestoreUser` | `restore-user` | Restore a soft-deleted user |
+| DELETE | `/admin-users/delete-forever/{id}` | `UserController` | `adminDeleteUsersForever` | `delete-user` | Force delete a soft-deleted user |
+| POST | `/users/block-user` | `UserController` | `banUser` | `ban-user` | Ban/deactivate a user |
+| POST | `/users/unblock-user` | `UserController` | `activeUser` | `activate-user` | Unban/activate a user |
+| POST | `/users/make-admin` | `UserController` | `makeOrRevokeAdmin` | `super_admin` (method-level) | Toggle SUPER_ADMIN permission on a user |
+| POST | `/add-points` | `UserController` | `addPoints` | `add-points` | Add wallet points to a customer |
+
 ## Architecture Note
 
-The Application layer (`app/`) identifies admins exclusively via `type = 'admin'`.  
-Route authorization uses Marvel's `permission:super_admin` middleware for backward compatibility.  
-This is a deliberate boundary — see `docs/cms-endpoints/admin-users.md` for details.
-
-## SUPER_ADMIN Middleware Group
-
-All routes require `auth:sanctum`, `email.verified`, and `permission:super_admin` middleware.
-
-| Method | URI | Controller | Action | Purpose |
-|--------|-----|------------|--------|---------|
-| GET | `/admin/list` | `UserController@admins` | List admin users | Returns paginated list of active admin users with `type = 'admin'` |
-| POST | `/admin-users/add` | `UserController@adminAddUsers` | Create admin user | Creates new user with `type = 'admin'` and assigns roles/permissions |
-| PUT | `/admin-users/update-activation` | `UserController@adminUpdateActivationUsers` | Toggle activation | Toggles `is_active` status; cannot deactivate active admin users unless self |
-| DELETE | `/admin-users/delete/{id}` | `UserController@adminDeleteUsers` | Delete user | Hard deletes a user; cannot delete admin users or self |
-| GET | `/users` | `UserController@index` | List all users | Returns paginated list of all users with filters |
-| POST | `/users/block-user` | `UserController@banUser` | Ban user | Deactivates user and their shops |
-| POST | `/users/unblock-user` | `UserController@activeUser` | Unban user | Reactivates a banned user |
-| POST | `/users/make-admin` | `UserController@makeOrRevokeAdmin` | Toggle admin | Toggles `SUPER_ADMIN` permission on a user |
-| DELETE | `/users/{id}` | `UserController@destroy` | Delete user (legacy) | Hard deletes a user without business logic guards |
+The Application layer (`app/`) identifies admins exclusively via `type = 'admin'`. Route authorization uses per-method Spatie permission middleware for backward compatibility. See `docs/cms-endpoints/admin-users.md` for details.

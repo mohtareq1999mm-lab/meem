@@ -83,7 +83,7 @@ class AttributeController extends CoreController
 
         $attributes = $this->repository->with('values');
 
-        if ($order && in_array($order, ['id', 'name', 'slug', 'shop_id', 'created_at', 'updated_at'])) {
+        if ($order && in_array($order, ['id', 'name', 'slug', 'created_at', 'updated_at'])) {
             $attributes = $attributes->orderBy($order, $sortedBy === 'desc' ? 'desc' : 'asc');
         }
 
@@ -158,7 +158,6 @@ class AttributeController extends CoreController
     {
 
         try {
-            //            $language = $request->language ?? DEFAULT_LANGUAGE;
             if (is_numeric($params)) {
                 $params = (int)$params;
                 $attribute = $this->repository->with('values')->where('id', $params)->firstOrFail();
@@ -300,12 +299,14 @@ class AttributeController extends CoreController
         $user = $request->user();
         $shop_id = $request->shop_id;
 
-        if (count($requestFile)) {
-            if (isset($requestFile['csv'])) {
-                $uploadedCsv = $requestFile['csv'];
-            } else {
-                $uploadedCsv = current($requestFile);
-            }
+        if (empty($requestFile)) {
+            throw new MarvelException(NOT_FOUND);
+        }
+
+        if (isset($requestFile['csv'])) {
+            $uploadedCsv = $requestFile['csv'];
+        } else {
+            $uploadedCsv = current($requestFile);
         }
 
         if (!$this->repository->hasPermission($user, $shop_id)) {
@@ -318,7 +319,7 @@ class AttributeController extends CoreController
 
             foreach ($attributes as $key => $attribute) {
                 if (!isset($attribute['name'])) {
-                    throw new MarvelException("MARVEL_ERROR.WRONG_CSV");
+                    throw new MarvelException('MESSAGE.WRONG_CSV');
                 }
                 unset($attribute['id']);
                 $attribute['shop_id'] = $shop_id;

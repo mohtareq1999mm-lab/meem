@@ -66,11 +66,6 @@ class BrandSeeder extends Seeder
                 ]);
             }
 
-            // set translatable slug after create/update to avoid sluggable receiving arrays
-            $brand->slug = [
-                'en' => Str::slug($enName),
-                'ar' => str_replace(' ', '-', trim($name['ar'])),
-            ];
             $brand->save();
 
             if ($brandImagesCount > 0 && !$brand->hasMedia('brands-desktop')) {

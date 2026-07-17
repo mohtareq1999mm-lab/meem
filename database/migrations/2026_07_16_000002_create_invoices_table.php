@@ -40,7 +40,7 @@ return new class extends Migration
 
             // Immutable Snapshot
             $table->json('data');
-            $table->string('snapshot_hash', 64)->nullable()->after('data');
+            $table->string('snapshot_hash', 64)->nullable();
 
             // PDF Document Tracking
             $table->timestamp('pdf_generated_at')->nullable();

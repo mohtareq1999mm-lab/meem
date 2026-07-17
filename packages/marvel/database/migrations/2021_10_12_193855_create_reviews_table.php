@@ -45,6 +45,7 @@ class CreateReviewsTable extends Migration
      */
     public function down()
     {
+        Schema::dropIfExists('reviews');
         Schema::dropIfExists('wishlists');
     }
 }

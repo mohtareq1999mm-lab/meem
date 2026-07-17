@@ -195,7 +195,7 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
      */
     public function refunds(): HasMany
     {
-        return $this->hasMany(Shop::class, 'customer_id');
+        return $this->hasMany(Refund::class, 'customer_id');
     }
 
     /**

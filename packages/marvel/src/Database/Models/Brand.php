@@ -4,6 +4,7 @@ namespace Marvel\Database\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\EloquentSortable\Sortable;
 use Spatie\EloquentSortable\SortableTrait;
 use Spatie\MediaLibrary\HasMedia;
@@ -14,7 +15,7 @@ use Illuminate\Support\Str;
 
 class Brand extends Model implements HasMedia, Sortable
 {
-    use HasTranslations, InteractsWithMedia, SortableTrait;
+    use HasTranslations, InteractsWithMedia, SortableTrait, SoftDeletes;
 
     protected $table = 'brands';
 

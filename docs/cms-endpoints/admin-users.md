@@ -2,113 +2,31 @@
 
 ## Overview
 
-Endpoints for managing admin users (SUPER_ADMIN role only). All endpoints require authentication via Sanctum and `email.verified` middleware.
+Endpoints for managing admin users. All endpoints require authentication via Sanctum and `email.verified` middleware. Authorization is enforced at the controller level using Spatie permission middleware on individual methods.
 
-The admin-user management feature implements 3 dedicated endpoints:
+The admin-user management feature implements the following dedicated endpoints:
 - `POST /admin-users/add` — Create a new user with role assignment
 - `PUT /admin-users/update-activation` — Toggle a user's `is_active` status
 - `DELETE /admin-users/delete/{id}` — Delete a user (with guards)
+- `PUT /admin-users/restore/{id}` — Restore a soft-deleted user
+- `DELETE /admin-users/delete-forever/{id}` — Force delete a soft-deleted user
+- `POST /users/block-user` — Ban/deactivate a user
+- `POST /users/unblock-user` — Unban/activate a user
+- `POST /users/make-admin` — Toggle admin (SUPER_ADMIN) permission on a user
+- `POST /add-points` — Add wallet points to a customer
+- `DELETE /users/{id}` — Delete a user (legacy, via resource controller)
 
-Two additional legacy endpoints exist for listing users:
-- `GET /admin/list` — List admin users (raw paginator return)
+Additional listing endpoints:
 - `GET /users` — List all users with filtering (raw paginator return)
+- `GET /users/{id}` — Show a single user
 
-**Admin Identification:** Admin users are identified by `type = 'admin'` in the `users` table (single source of truth). Route authorization uses Spatie permission middleware (`permission:super_admin`) for backward compatibility with the Marvel package.
+**Admin Identification:** Admin users are identified by `type = 'admin'` in the `users` table (single source of truth). Route authorization uses per-method Spatie permission middleware for backward compatibility with the Marvel package.
 
-**Soft delete is NOT implemented.** The `users` table has no `deleted_at` column. The `adminDeleteUsers` endpoint performs a hard delete, with guards against deleting admin users or yourself.
-
----
-
-## 1. List Admin Users
-
-**Endpoint**
-
-`GET /admin/list`
-
-**Purpose**
-
-Retrieve a paginated list of all users with `super_admin` permission. Only returns active users (`is_active = true`).
-
-**Authentication**
-
-| Field | Value |
-|---|---|
-| Required | Yes |
-| Guard | Sanctum |
-| Permission | `view-admins` |
-
-**Authorization**
-
-- Route group: `permission:super_admin` (Spatie middleware)
-- Constructor middleware: `permission:view-admins` on `admins` method
-- Super admin users bypass all permission checks via `Gate::before`
-
-**Query Parameters**
-
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| `limit` | integer | No | Items per page (default: 15) |
-
-**Business Rules**
-
-- Hard-filters `is_active = true` — inactive users are never returned
-- Filters by `super_admin` permission using Spatie's `whereHas('permissions', ...)`
-- Returns raw paginator (not wrapped in `apiResponse`)
-- Eager loads `profile`, `address`, `permissions` relationships
-
-**Success Response (200)**
-
-```json
-{
-    "current_page": 1,
-    "data": [
-        {
-            "id": 1,
-            "name": "Admin User",
-            "email": "admin@example.com",
-            "email_verified_at": "2024-01-01T00:00:00Z",
-            "is_active": true,
-            "shop_id": null,
-            "created_at": "2024-01-01T00:00:00Z",
-            "updated_at": "2024-01-01T00:00:00Z",
-            "profile": {
-                "id": 1,
-                "avatar": null,
-                "bio": null,
-                "contact": null,
-                "customer_id": 1
-            },
-            "address": [],
-            "permissions": [
-                {
-                    "id": 1,
-                    "name": "super_admin",
-                    "guard_name": "api"
-                }
-            ]
-        }
-    ],
-    "from": 1,
-    "last_page": 1,
-    "per_page": 15,
-    "to": 1,
-    "total": 1
-}
-```
-
-**Note:** This endpoint uses the legacy raw paginator format (NOT wrapped in `{status, message, success, data}`). It is the only admin-user endpoint that does NOT use the `ApiResponse` trait.
-
-**Error Responses**
-
-| Code | Description |
-|---|---|
-| 401 | Unauthenticated |
-| 403 | Forbidden — requires SUPER_ADMIN route group |
-| 500 | Something went wrong |
+**Soft delete IS implemented on the User model** (`Marvel\Database\Models\User` uses `SoftDeletes`, and the users migration adds a `deleted_at` column). The `adminDeleteUsers` endpoint performs a soft delete, with guards against deleting super admin users or yourself. The `adminRestoreUser` and `adminDeleteUsersForever` endpoints work with trashed users via `User::withTrashed()`.
 
 ---
 
-## 2. Add Admin User
+## 1. Add Admin User
 
 **Endpoint**
 
@@ -128,7 +46,6 @@ Create a new user and assign roles. Unlike the registration endpoint (which only
 
 **Authorization**
 
-- Route group: `permission:super_admin`
 - Constructor middleware: `permission:create-user` on `adminAddUsers`
 
 **Request Body**
@@ -206,7 +123,7 @@ Based on `AdminCreateUserRequest`:
 
 ---
 
-## 3. Update User Activation Status
+## 2. Update User Activation Status
 
 **Endpoint**
 
@@ -226,7 +143,6 @@ Toggle a user's `is_active` status. Cannot deactivate a `super_admin` user unles
 
 **Authorization**
 
-- Route group: `permission:super_admin`
 - Constructor middleware: `permission:edit-user` on `adminUpdateActivationUsers`
 
 **Request Body**
@@ -270,7 +186,7 @@ Toggle a user's `is_active` status. Cannot deactivate a `super_admin` user unles
 
 ---
 
-## 4. Delete User
+## 3. Delete User
 
 **Endpoint**
 
@@ -278,7 +194,7 @@ Toggle a user's `is_active` status. Cannot deactivate a `super_admin` user unles
 
 **Purpose**
 
-Hard delete a user from the database. Cannot delete users with the `super_admin` role or yourself. This is a permanent delete — there is no soft delete or restore functionality.
+Hard delete a user from the database. Cannot delete users with the `super_admin` role or yourself. This is a permanent delete — soft delete is NOT implemented on the User model.
 
 **Authentication**
 
@@ -290,7 +206,6 @@ Hard delete a user from the database. Cannot delete users with the `super_admin`
 
 **Authorization**
 
-- Route group: `permission:super_admin`
 - Constructor middleware: `permission:delete-user` on `adminDeleteUsers`
 
 **Path Parameters**
@@ -305,6 +220,7 @@ Hard delete a user from the database. Cannot delete users with the `super_admin`
 - Cannot delete yourself — returns 400
 - Performs a hard delete via `$user->delete()`
 - Soft delete is NOT implemented on the User model
+- Routes `PUT /admin-users/restore/{id}` and `DELETE /admin-users/delete-forever/{id}` exist but will fail at the model level until `SoftDeletes` is added to the User model
 
 **Success Response (200)**
 
@@ -328,7 +244,7 @@ Hard delete a user from the database. Cannot delete users with the `super_admin`
 
 ---
 
-## 5. List All Users
+## 4. List All Users
 
 **Endpoint**
 
@@ -348,8 +264,8 @@ Retrieve a paginated, filterable list of all users. Supports filtering by type, 
 
 **Authorization**
 
-- Route group: `permission:super_admin`
 - Constructor middleware: `permission:view-users` on `index`, `show`
+- Constructor middleware: `permission:view-users` on `adminTrashedUsers` (no route registered)
 
 **Query Parameters**
 
@@ -418,6 +334,175 @@ Retrieve a paginated, filterable list of all users. Supports filtering by type, 
 
 ---
 
+## 5. Ban User
+
+**Endpoint**
+
+`POST /users/block-user`
+
+**Purpose**
+
+Deactivate a user by setting `is_active = false`. Cannot ban yourself.
+
+**Authentication**
+
+| Field | Value |
+|---|---|
+| Required | Yes |
+| Guard | Sanctum |
+| Permission | `ban-user` |
+
+**Authorization**
+
+- Constructor middleware: `permission:ban-user` on `banUser`
+- Method-level check: `$user->hasPermissionTo(Permission::BAN_USER)`
+
+**Request Body**
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `id` | integer | Yes | ID of the user to ban |
+
+**Business Rules**
+
+- Cannot ban yourself (checked by `$user->id != $request->id`)
+- User must have `ban-user` permission (checked at method level)
+- Sets `is_active = false`
+
+**Success Response (200)**
+
+```json
+{
+    "status": 200,
+    "message": "User Deactivated Successfully",
+    "success": true
+}
+```
+
+**Error Responses**
+
+| Code | Description |
+|---|---|
+| 401 | Unauthenticated |
+| 403 | Forbidden — requires `ban-user` permission |
+| 404 | User not found |
+| 500 | Something went wrong |
+
+---
+
+## 6. Unban User
+
+**Endpoint**
+
+`POST /users/unblock-user`
+
+**Purpose**
+
+Reactivate a banned user by setting `is_active = true`. Cannot activate yourself.
+
+**Authentication**
+
+| Field | Value |
+|---|---|
+| Required | Yes |
+| Guard | Sanctum |
+| Permission | `activate-user` |
+
+**Authorization**
+
+- Constructor middleware: `permission:activate-user` on `activeUser`
+- Method-level check: `$user->hasPermissionTo(Permission::ACTIVATE_USER)`
+
+**Request Body**
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `id` | integer | Yes | ID of the user to unban |
+
+**Business Rules**
+
+- Cannot activate yourself (checked by `$user->id != $request->id`)
+- User must have `activate-user` permission (checked at method level)
+- Sets `is_active = true`
+
+**Success Response (200)**
+
+```json
+{
+    "status": 200,
+    "message": "User Activated Successfully",
+    "success": true
+}
+```
+
+**Error Responses**
+
+| Code | Description |
+|---|---|
+| 401 | Unauthenticated |
+| 403 | Forbidden — requires `activate-user` permission |
+| 404 | User not found |
+| 500 | Something went wrong |
+
+---
+
+## 7. Toggle Admin Status
+
+**Endpoint**
+
+`POST /users/make-admin`
+
+**Purpose**
+
+Grant or revoke `SUPER_ADMIN` permission from a user. If user is an admin, revokes it; if not, grants it.
+
+**Authentication**
+
+| Field | Value |
+|---|---|
+| Required | Yes |
+| Guard | Sanctum |
+| Permission | `super_admin` (via repository `hasPermission` check) |
+
+**Authorization**
+
+- No constructor middleware — uses method-level `$this->repository->hasPermission($user)` which checks for `SUPER_ADMIN` permission
+- Dispatches `UserRolesUpdated` event on change
+
+**Request Body**
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `user_id` | integer | Yes | ID of the user to toggle admin status |
+
+**Business Rules**
+
+- Only users with `SUPER_ADMIN` permission can toggle admin status
+- If user has `type = admin`, their type is changed to `user` and admin role is removed
+- If user does not have `type = admin`, their type is changed to `admin` and `super_admin` role is assigned
+- Dispatches `UserRolesUpdated` event with old and new roles
+
+**Success Response (200)**
+
+```json
+{
+    "status": 200,
+    "message": "User updated successfully",
+    "success": true
+}
+```
+
+**Error Responses**
+
+| Code | Description |
+|---|---|
+| 401 | Unauthenticated |
+| 403 | Forbidden — requires SUPER_ADMIN |
+| 404 | User not found |
+| 500 | Something went wrong |
+
+---
+
 ## Database Impact
 
 | Table | Relation | Type |
@@ -469,8 +554,8 @@ The following Marvel legacy permissions are NOT used for admin identification in
 
 Marvel package retains internal permission-based admin identification (`Permission::SUPER_ADMIN`) for:
 - Internal trait queries (`UsersTrait::getAdminUsers()`, `SmsTrait::adminList()`)
-- Route authorization middleware (`permission:super_admin`)
-- Internal controller identification (e.g., `admins()` endpoint)
+- Controller-level per-method permission middleware
+- Internal controller identification (e.g., `adminList()`, banned user checks)
 
 This boundary ensures:
 - Marvel operates independently without modification
@@ -479,15 +564,19 @@ This boundary ensures:
 
 ## Implementation Status
 
-| # | Endpoint | Status |
-|---|---|---|
-| 1 | `GET /admin/list` | ✅ Active |
-| 2 | `POST /admin-users/add` | ✅ Active |
-| 3 | `PUT /admin-users/update-activation` | ✅ Active |
-| 4 | `DELETE /admin-users/delete/{id}` | ✅ Active |
-| 5 | `DELETE /admin-users/delete-forever/{id}` | ❌ Not planned |
-| 6 | `PUT /admin-users/restore/{id}` | ❌ Not planned |
-| 7 | `GET /admin-users/trashed` | ❌ Not planned |
-| 8 | `GET /users` | ✅ Active |
+| # | Endpoint | Controller Method | Status |
+|---|---|---|---|
+| 1 | `POST /admin-users/add` | `adminAddUsers` | ✅ Active |
+| 2 | `PUT /admin-users/update-activation` | `adminUpdateActivationUsers` | ✅ Active |
+| 3 | `DELETE /admin-users/delete/{id}` | `adminDeleteUsers` | ✅ Active |
+| 4 | `PUT /admin-users/restore/{id}` | `adminRestoreUser` | ⚠️ Route exists — requires SoftDeletes on User model |
+| 5 | `DELETE /admin-users/delete-forever/{id}` | `adminDeleteUsersForever` | ⚠️ Route exists — requires SoftDeletes on User model |
+| 6 | `GET /users` | `index` | ✅ Active |
+| 7 | `GET /users/{id}` | `show` | ✅ Active |
+| 8 | `DELETE /users/{id}` | `destroy` | ✅ Active (legacy resource route) |
+| 9 | `POST /users/block-user` | `banUser` | ✅ Active |
+| 10 | `POST /users/unblock-user` | `activeUser` | ✅ Active |
+| 11 | `POST /users/make-admin` | `makeOrRevokeAdmin` | ✅ Active |
+| 12 | `POST /add-points` | `addPoints` | ✅ Active |
 
-Soft delete is NOT implemented and not planned. All admin-user management endpoints use hard-delete with business logic guards.
+Soft delete is NOT implemented on the User model. Routes 4 and 5 require the `SoftDeletes` trait on `Marvel\Database\Models\User` before they become functional.

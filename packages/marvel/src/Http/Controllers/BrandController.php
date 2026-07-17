@@ -76,18 +76,23 @@ class BrandController extends CoreController
         try {
             $brand = $this->repository->saveBrand($request);
             $brand->load('products');
-            return $this->apiResponse(BRAND_CREATED_SUCCESSFULLY, 200, true, BrandResource::make($brand));
-        } catch (MarvelException $th) {
+            return $this->apiResponse(BRAND_CREATED_SUCCESSFULLY, 201, true, BrandResource::make($brand));
+        } catch (\Exception $th) {
             throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE);
         }
     }
 
-    public function show(Request $request, $id)
+    public function show(Request $request, $params)
     {
         try {
-            $brand = $this->repository->with('products')->where('id', $id)->firstOrFail();
+            if (is_numeric($params)) {
+                $params = (int) $params;
+                $brand = $this->repository->with('products')->where('id', $params)->firstOrFail();
+            } else {
+                $brand = $this->repository->with('products')->where('slug', $params)->firstOrFail();
+            }
             return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, BrandResource::make($brand));
-        } catch (MarvelException $e) {
+        } catch (\Exception $e) {
             throw new MarvelException(NOT_FOUND);
         }
     }
@@ -99,7 +104,7 @@ class BrandController extends CoreController
             $brand = $this->brandUpdate($request);
             $brand->load('products');
             return $this->apiResponse(BRAND_UPDATED_SUCCESSFULLY, 200, true, BrandResource::make($brand));
-        } catch (MarvelException $e) {
+        } catch (\Exception $e) {
             throw new MarvelException(NOT_FOUND);
         }
     }
@@ -115,23 +120,19 @@ class BrandController extends CoreController
         try {
             $this->repository->findOrFail($id)->delete();
             return $this->apiResponse(BRAND_DELETED_SUCCESSFULLY, 200, true);
-        } catch (MarvelException $e) {
+        } catch (\Exception $e) {
             throw new MarvelException(NOT_FOUND);
         }
     }
 
     public function reorder(Request $request)
     {
-        try {
-            $request->validate([
-                'brands' => 'required|array',
-                'brands.*' => 'required|exists:brands,id',
-            ]);
-            $this->repository->reorder($request->brands);
+        $validated = $request->validate([
+            'brands' => 'required|array',
+            'brands.*' => 'required|exists:brands,id',
+        ]);
+        $this->repository->reorder($validated['brands']);
 
-            return $this->apiResponse(BRANDS_REORDERED_SUCCESSFULLY, 200, true);
-        } catch (\Exception $e) {
-            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
-        }
+        return $this->apiResponse(BRANDS_REORDERED_SUCCESSFULLY, 200, true);
     }
 }

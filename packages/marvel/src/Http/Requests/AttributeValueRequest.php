@@ -30,7 +30,7 @@ class AttributeValueRequest extends FormRequest
             'value'         => ['required', 'array'],
             'value.en'      => ['required', 'string', 'max:255'],
             'value.ar'      => ['required', 'string', 'max:255'],
-            'attribute_id'  => ['required', 'exists:Marvel\Database\Models\Attribute,id'],
+            'attribute_id'  => ['required', 'exists:attributes,id'],
         ];
     }
 

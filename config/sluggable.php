@@ -18,7 +18,7 @@ return [
      * Defaults to null, which uses the toString() method on your model.
      */
 
-    'source' => null,
+    'source' => 'name[en]',
 
     /**
      * The maximum length of a generated slug.  Defaults to "null", which means

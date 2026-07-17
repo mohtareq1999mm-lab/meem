@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Enums\UserType;
 use Illuminate\Database\Seeder;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Str;
@@ -12,7 +11,7 @@ class NotificationSeeder extends Seeder
 {
     public function run(): void
     {
-        $admins = User::where('type', UserType::ADMIN->value)->get();
+        $admins = User::where('type', 'admin')->get();
 
         if ($admins->isEmpty()) {
             $this->command->warn('No admin users found. Skipping notification seeding.');

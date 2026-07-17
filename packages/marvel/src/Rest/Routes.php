@@ -134,16 +134,18 @@ Route::get("products/calculate-rental-price", [ProductController::class, 'calcul
  * Protects against storage and processing abuse
  */
 Route::get('samples/product-import', [ProductImportController::class, 'downloadSample']);
-Route::middleware(['throttle:uploads'])->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:uploads'])->group(function () {
     Route::post('import-products', [ProductController::class, 'importProducts']);
     Route::post('import-variation-options', [ProductController::class, 'importVariationOptions']);
     Route::post('import-attributes', [AttributeController::class, 'importAttributes']);
 });
 
-Route::get('export-products/{shop_id}', [ProductController::class, 'exportProducts']);
-Route::get('export-variation-options/{shop_id}', [ProductController::class, 'exportVariableOptions']);
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('export-products/{shop_id}', [ProductController::class, 'exportProducts']);
+    Route::get('export-variation-options/{shop_id}', [ProductController::class, 'exportVariableOptions']);
+    Route::get('export-attributes/{shop_id}', [AttributeController::class, 'exportAttributes']);
+});
 Route::post('generate-description', [ProductController::class, 'generateDescription']);
-Route::get('export-attributes/{shop_id}', [AttributeController::class, 'exportAttributes']);
 Route::get('download_url/token/{token}', [DownloadController::class, 'downloadFile'])->name('download_url.token');
 
 Route::post('subscribe-to-newsletter', [UserController::class, 'subscribeToNewsletter'])->name('subscribeToNewsletter');
@@ -637,7 +639,6 @@ Route::group([
     ]);
     Route::put('categories/feature', [CategoryController::class, 'addOrRemoveCategoryFromFeature']);
     Route::apiResource('categories', CategoryController::class);
-    Route::get('categories-parent', [CategoryController::class, 'fetchOnlyParent']);
     Route::put('brands/reorder', [BrandController::class, 'reorder']);
     Route::apiResource('brands', BrandController::class);
 

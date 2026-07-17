@@ -106,12 +106,12 @@ Routes are registered in two groups within `packages/marvel/src/Rest/Routes.php`
 | PUT | `/attribute-values/{id}` | `update` |
 | DELETE | `/attribute-values/{id}` | `destroy` |
 
-### Import/Export (no permission middleware)
+### Import/Export (auth:sanctum, no permission middleware)
 
 | Method | Endpoint | Controller Method | Middleware |
 |--------|----------|-------------------|------------|
-| POST | `/import-attributes` | `importAttributes` | `throttle:uploads` |
-| GET | `/export-attributes/{id}` | `exportAttributes` | None |
+| POST | `/import-attributes` | `importAttributes` | `auth:sanctum`, `throttle:uploads` |
+| GET | `/export-attributes/{id}` | `exportAttributes` | `auth:sanctum` |
 
 ---
 

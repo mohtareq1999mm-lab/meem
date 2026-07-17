@@ -25,7 +25,7 @@ class ProductVariantSeeder extends Seeder
             ->where('stock_quantity', '>', 0)
             ->inRandomOrder()
             ->take(15)
-->with(['flash_sales' => fn($q) => $q->valid()])
+            ->with('flash_sales')
             ->get();
 
         if ($products->isEmpty()) {

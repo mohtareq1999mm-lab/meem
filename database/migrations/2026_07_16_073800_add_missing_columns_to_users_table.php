@@ -18,8 +18,8 @@ return new class extends Migration
             if (!Schema::hasColumn('users', 'phone_number')) {
                 $table->string('phone_number')->nullable()->unique()->after('is_active');
             }
-            if (!Schema::hasColumn('users', 'shop_id')) {
-                $table->foreignId('shop_id')->nullable()->constrained('shops')->nullOnDelete()->after('phone_number');
+            if (!Schema::hasColumn('users', 'deleted_at')) {
+                $table->softDeletes()->after('updated_at');
             }
         });
     }
@@ -27,7 +27,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn(['type', 'is_active', 'phone_number', 'shop_id']);
+            $table->dropColumn(['type', 'is_active', 'phone_number', 'deleted_at']);
         });
     }
 };

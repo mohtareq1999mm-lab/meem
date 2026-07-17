@@ -209,12 +209,6 @@ class PermissionSeeder extends Seeder
             'create-pickup-location',
             'update-pickup-location',
             'delete-pickup-location',
-
-            // 🧾 Invoices
-            'view-invoices',
-            'issue-correction-invoice',
-            'regenerate-invoice-pdf',
-            'export-invoices',
         ];
 
         $customerPermission = [

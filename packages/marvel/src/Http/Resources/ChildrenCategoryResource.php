@@ -16,7 +16,7 @@ class ChildrenCategoryResource extends Resource
     {
         return [
             'id'                   => $this->id,
-            'name'                 => request()->routeIs('categories.index') ? $this->getTranslation('name', app()->getLocale()) : $this->getRawOriginal('name'),
+            'name'                 => $this->getTranslation('name', app()->getLocale()),
             'slug'                 => $this->slug,
             'products_count'       => (int) ($this->products_count ?? $this->products()->count()),
             'image'                => [
