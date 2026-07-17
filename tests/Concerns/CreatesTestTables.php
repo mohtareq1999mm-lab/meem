@@ -138,10 +138,10 @@ trait CreatesTestTables
 
         Schema::create('sliders', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('slug')->unique();
-            $table->text('description')->nullable();
-            $table->boolean('status')->default(true);
+            $table->string('title')->nullable();
+            $table->string('slug');
+            $table->integer('order');
+            $table->boolean('status')->default(false);
             $table->timestamps();
             $table->softDeletes();
         });

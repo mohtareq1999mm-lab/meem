@@ -126,7 +126,7 @@ Route::get('top-authors', [AuthorController::class, 'topAuthor']);
 Route::get('top-manufacturers', [ManufacturerController::class, 'topManufacturer']);
 Route::get('popular-products', [ProductController::class, 'popularProducts']);
 Route::get('best-selling-products', [ProductController::class, 'bestSellingProducts']);
-Route::get('check-availability', [ProductController::class, 'checkAvailability']);
+
 Route::get("products/calculate-rental-price", [ProductController::class, 'calculateRentalPrice']);
 
 /**
@@ -145,7 +145,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('export-variation-options/{shop_id}', [ProductController::class, 'exportVariableOptions']);
     Route::get('export-attributes/{shop_id}', [AttributeController::class, 'exportAttributes']);
 });
-Route::post('generate-description', [ProductController::class, 'generateDescription']);
+
 Route::get('download_url/token/{token}', [DownloadController::class, 'downloadFile'])->name('download_url.token');
 
 Route::post('subscribe-to-newsletter', [UserController::class, 'subscribeToNewsletter'])->name('subscribeToNewsletter');
@@ -527,6 +527,7 @@ Route::group(
 
         Route::get('export-order-url/{shop_id?}', 'Marvel\Http\Controllers\OrderController@exportOrderUrl');
         Route::post('download-invoice-url', 'Marvel\Http\Controllers\OrderController@downloadInvoiceUrl');
+        Route::put('faqs/reorder', [FaqsController::class, 'reorder']);
         Route::apiResource('faqs', FaqsController::class, [
             'only' => ['store', 'update', 'destroy'],
         ]);
@@ -586,11 +587,11 @@ Route::group(
             'only' => ['store', 'update', 'destroy'],
         ]);
 
+        Route::put('flash-sale/reorder', [FlashSaleController::class, 'reorder']);
+
         Route::apiResource('flash-sale', FlashSaleController::class, [
             'only' => ['store', 'update', 'destroy'],
         ]);
-
-        Route::put('flash-sale/reorder', [FlashSaleController::class, 'reorder']);
 
         Route::get('product-flash-sale-info', [FlashSaleController::class, 'getFlashSaleInfoByProductID']);
 
@@ -713,7 +714,6 @@ Route::group([
         'only' => ['destroy'],
     ]);
 
-    Route::put('faqs/reorder', [FaqsController::class, 'reorder']);
     Route::apiResource('faqs', FaqsController::class);
     Route::get('new-shops', [ShopController::class, 'newOrInActiveShops']);
     Route::post('approve-terms-and-conditions', [TermsAndConditionsController::class, 'approveTerm']);
@@ -797,6 +797,7 @@ Route::group([
 Route::middleware(['auth:sanctum', "throttle:cart"])->group(function () {
     Route::get('cart', [CartController::class, 'index']);
     Route::post('cart', [CartController::class, 'store']);
+    Route::get('cart/{id}', [CartController::class, 'show'])->whereNumber('id');
     Route::post('cart/bulk-items', [CartController::class, 'pluckItemsToCart']);
     Route::put('cart/update-item', [CartController::class, 'update']);
     Route::delete('cart/delete-item/{itemId}', [CartController::class, 'deleteItemFromCart']);

@@ -19,7 +19,7 @@ class BannerController extends CoreController
         $this->repository = $repository;
         $this->middleware("permission:".Permission::VIEW_BANNERS)->only(["index","show"]);
         $this->middleware("permission:".Permission::CREATE_BANNERS)->only("store");
-        $this->middleware("permission:".Permission::UPDATE_BANNERS)->only("update");
+        $this->middleware("permission:".Permission::UPDATE_BANNERS)->only(["update", "changeStatus", "reorder"]);
         $this->middleware("permission:".Permission::DELETE_BANNERS)->only("destroy");
     }
 
@@ -81,7 +81,7 @@ class BannerController extends CoreController
             $banner->load('products');
             return $this->apiResponse(BANNER_UPDATED_SUCCESSFULLY,200, true, BannerResource::make($banner));
         }catch(\Exception $e){
-            return $this->apiResponse($e->getMessage(),500, false);
+            return $this->apiResponse(NOT_FOUND,404, false);
         }
     }
 
@@ -95,7 +95,7 @@ class BannerController extends CoreController
             $banner->delete();
             return $this->apiResponse(BANNER_DELETED_SUCCESSFULLY,200, true);
         }catch(\Exception $e){
-            return $this->apiResponse(SOMETHING_WENT_WRONG,500, false, null);
+            return $this->apiResponse(NOT_FOUND,404, false, null);
         }
     }
 
@@ -114,11 +114,11 @@ class BannerController extends CoreController
 
     public function reorder(Request $request)
     {
+        $request->validate([
+            'banners' => 'required|array',
+            'banners.*' => 'required|exists:banners,id',
+        ]);
         try {
-            $request->validate([
-                'banners' => 'required|array',
-                'banners.*' => 'required|exists:banners,id',
-            ]);
             $this->repository->reorder($request->banners);
 
             return $this->apiResponse(BANNERS_REORDERED_SUCCESSFULLY, 200, true);

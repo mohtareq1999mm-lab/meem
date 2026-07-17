@@ -97,7 +97,7 @@ class CartRepository extends BaseRepository
         $quantity = (int) ($item['quantity'] ?? 0);
         $variantId = $item['product_variant_id'] ?? null;
         $attributes = $item['attributes'] ?? [];
-        $shippingMethod = $item['shipping_method'] ?? ShippingMethod::SCHEDULED;
+        $shippingMethod = strtoupper($item['shipping_method'] ?? ShippingMethod::SCHEDULED);
 
         if (!$productId || $quantity < 1) {
             return false;

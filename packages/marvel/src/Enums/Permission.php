@@ -174,6 +174,24 @@ final class Permission extends Enum
     public const DELETE_CMS_PAGE = 'delete-cms-page';
     public const SAVE_PUCK_PAGE = 'save-puck-page';
 
+    // 🗂 Content Pages
+    public const VIEW_CONTENT_PAGES = 'view-content-pages';
+    public const CREATE_CONTENT_PAGES = 'create-content-pages';
+    public const UPDATE_CONTENT_PAGES = 'update-content-pages';
+    public const DELETE_CONTENT_PAGES = 'delete-content-pages';
+
+    // 📦 Sections
+    public const VIEW_SECTIONS = 'view-sections';
+    public const CREATE_SECTIONS = 'create-sections';
+    public const UPDATE_SECTIONS = 'update-sections';
+    public const DELETE_SECTIONS = 'delete-sections';
+
+    // 🏷 Section Types
+    public const VIEW_SECTION_TYPES = 'view-section-types';
+    public const CREATE_SECTION_TYPES = 'create-section-types';
+    public const UPDATE_SECTION_TYPES = 'update-section-types';
+    public const DELETE_SECTION_TYPES = 'delete-section-types';
+
     // 🔐 Super Admin
     public const VIEW_ADMINS = 'view-admins';
     public const VIEW_VENDORS = 'view-vendors';

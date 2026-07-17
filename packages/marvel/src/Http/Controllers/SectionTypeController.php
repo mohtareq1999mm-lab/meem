@@ -4,6 +4,7 @@ namespace Marvel\Http\Controllers;
 
 use App\Services\General\SectionTypeService;
 use Illuminate\Http\Request;
+use Marvel\Enums\Permission;
 use Marvel\Database\Models\SectionType;
 use Marvel\Http\Requests\StoreSectionTypeRequest;
 use Marvel\Http\Requests\UpdateSectionTypeRequest;
@@ -15,7 +16,12 @@ class SectionTypeController extends CoreController
 
     public function __construct(
         private SectionTypeService $sectionTypeService
-    ) {}
+    ) {
+        $this->middleware('permission:' . Permission::VIEW_SECTION_TYPES)->only(['index', 'show', 'settings', 'byType']);
+        $this->middleware('permission:' . Permission::CREATE_SECTION_TYPES)->only('store');
+        $this->middleware('permission:' . Permission::UPDATE_SECTION_TYPES)->only(['update', 'updateSettings']);
+        $this->middleware('permission:' . Permission::DELETE_SECTION_TYPES)->only('destroy');
+    }
 
     public function index()
     {
@@ -41,22 +47,14 @@ class SectionTypeController extends CoreController
 
     public function update(UpdateSectionTypeRequest $request, SectionType $sectionType)
     {
-        try {
-            $type = $this->sectionTypeService->updateType($sectionType->id, $request->validated());
-            return $this->apiResponse(TYPE_UPDATED_SUCCESSFULLY, 200, true, $type);
-        } catch (\Exception $e) {
-            return $this->apiResponse(NOT_FOUND, 404, false);
-        }
+        $type = $this->sectionTypeService->updateType($sectionType->id, $request->validated());
+        return $this->apiResponse(TYPE_UPDATED_SUCCESSFULLY, 200, true, $type);
     }
 
     public function destroy(SectionType $sectionType)
     {
-        try {
-            $this->sectionTypeService->deleteType($sectionType->id);
-            return $this->apiResponse(TYPE_DELETED_SUCCESSFULLY, 200, true);
-        } catch (\Exception $e) {
-            return $this->apiResponse(NOT_FOUND, 404, false);
-        }
+        $this->sectionTypeService->deleteType($sectionType->id);
+        return $this->apiResponse(TYPE_DELETED_SUCCESSFULLY, 200, true);
     }
 
     public function settings(string $type)
@@ -71,24 +69,24 @@ class SectionTypeController extends CoreController
 
     public function updateSettings(Request $request, string $type)
     {
-        try {
-            $request->validate([
-                'front' => 'nullable|array',
-                'back' => 'nullable|array',
-            ]);
+        $request->validate([
+            'front' => 'nullable|array',
+            'back' => 'nullable|array',
+        ]);
 
-            $sectionType = $this->sectionTypeService->getByType($type);
-            if (!$sectionType) {
-                return $this->apiResponse(NOT_FOUND, 404, false);
-            }
-
-            $this->sectionTypeService->upsertSettings($sectionType->id, $request->only(['front', 'back']));
-
-            $grouped = $this->sectionTypeService->getSettingsGrouped($type);
-            return $this->apiResponse(SETTINGS_UPDATED_SUCCESSFULLY, 200, true, $grouped);
-        } catch (\Exception $e) {
+        $sectionType = $this->sectionTypeService->getByType($type);
+        if (!$sectionType) {
             return $this->apiResponse(NOT_FOUND, 404, false);
         }
+
+        try {
+            $this->sectionTypeService->upsertSettings($sectionType->id, $request->only(['front', 'back']));
+        } catch (\Exception $e) {
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
+        }
+
+        $grouped = $this->sectionTypeService->getSettingsGrouped($type);
+        return $this->apiResponse(SETTINGS_UPDATED_SUCCESSFULLY, 200, true, $grouped);
     }
 
     public function byType(string $type)

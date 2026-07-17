@@ -204,12 +204,14 @@ class FlashSaleVendorRequestController extends CoreController
      */
     public function approveFlashSaleProductsRequest(Request $request)
     {
+        if (!$request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
+            throw new AuthorizationException(NOT_AUTHORIZED);
+        }
+
         try {
-            if (!$request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
-                throw new MarvelException(NOT_AUTHORIZED);
-            }
             $id = $request->id;
             $this->repository->approveFlashSaleVendorRequestFunc($id);
+            return response()->json(['message' => 'Flash sale request approved successfully'], 200);
         } catch (MarvelException $e) {
             throw new MarvelException(SOMETHING_WENT_WRONG, $e->getMessage());
         }
@@ -237,12 +239,14 @@ class FlashSaleVendorRequestController extends CoreController
      */
     public function disapproveFlashSaleProductsRequest(Request $request)
     {
+        if (!$request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
+            throw new AuthorizationException(NOT_AUTHORIZED);
+        }
+
         try {
-            if (!$request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
-                throw new MarvelException(NOT_AUTHORIZED);
-            }
             $id = $request->id;
             $this->repository->disapproveFlashSaleVendorRequestFunc($id);
+            return response()->json(['message' => 'Flash sale request disapproved successfully'], 200);
         } catch (MarvelException $e) {
             throw new MarvelException(SOMETHING_WENT_WRONG, $e->getMessage());
         }

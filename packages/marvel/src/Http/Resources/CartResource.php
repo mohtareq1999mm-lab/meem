@@ -5,6 +5,7 @@ namespace Marvel\Http\Resources;
 use App\Http\Resources\Coupons\CouponResource;
 use Illuminate\Http\Request;
 use Marvel\Database\Models\Coupon;
+use Marvel\Enums\ShippingMethod;
 
 class CartResource extends Resource
 {
@@ -13,8 +14,8 @@ class CartResource extends Resource
         $items = $this->whenLoaded('items');
 
         if ($items) {
-            $normalItems = $items->where('shipping_method', 'scheduled')->values();
-            $fastItems = $items->where('shipping_method', 'fast')->values();
+            $normalItems = $items->where('shipping_method', ShippingMethod::SCHEDULED)->values();
+            $fastItems = $items->where('shipping_method', ShippingMethod::FAST)->values();
         } else {
             $normalItems = collect();
             $fastItems = collect();

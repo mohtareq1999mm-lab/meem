@@ -19,12 +19,12 @@ class CartItemResource extends Resource
             'total_price' => $this->total_price,
             'attributes' => $this?->attributes,
             'shipping_method' => $this->shipping_method,
-            'product' => [
+            'product' => $this->product ? [
                 'id' => $this->product->id,
                 'name' => $this->product->name,
                 'slug' => $this->product->slug,
                 'thumbnail' => $this->product->getFirstMediaUrl('products'),
-            ],
+            ] : null,
         ];
     }
 }

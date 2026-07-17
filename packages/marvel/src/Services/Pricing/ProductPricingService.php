@@ -354,11 +354,11 @@ class ProductPricingService
         }
 
         if ($flashSale->type === FlashSaleType::FIXED_RATE) {
-            return max(0, $baseUnits - $discountUnits);
+            return $discountUnits;
         }
 
         if ($flashSale->type === FlashSaleType::FINAL_PRICE) {
-            return $discountUnits;
+            return max(0, $baseUnits - $discountUnits);
         }
 
         return null;
@@ -395,7 +395,7 @@ class ProductPricingService
      * @param  Product $product
      * @return bool
      */
-    private function isDiscountActive($product): bool
+    public function isDiscountActive($product): bool
     {
         if (!$product || empty($product->has_discount)) {
             return false;

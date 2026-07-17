@@ -2,7 +2,7 @@
 
 namespace App\Events;
 
-use App\Models\Contact;
+use Marvel\Database\Models\Contact;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;

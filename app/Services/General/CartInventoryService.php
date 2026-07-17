@@ -18,7 +18,7 @@ class CartInventoryService
 {
     private const CART_TTL_DAYS = 3;
 
-    public function reserveItem(Cart $cart, Product $product, ?ProductVariant $variant, int $quantity, string $mode = 'add', array $attributes = [], string $shippingMethod = 'SCHEDULED'): CartItem
+    public function reserveItem(Cart $cart, Product $product, ?ProductVariant $variant, int $quantity, string $mode = 'add', array $attributes = [], string $shippingMethod = ShippingMethod::SCHEDULED): CartItem
     {
         return DB::transaction(function () use ($cart, $product, $variant, $quantity, $mode, $attributes, $shippingMethod) {
             $cart = Cart::whereKey($cart->id)->lockForUpdate()->firstOrFail();

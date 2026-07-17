@@ -143,8 +143,6 @@ class FastShippingService
             $this->orderCreationService->finalizeOrder($order, $checkoutTotals);
             $this->cartInventoryService->finalizeItemsByShippingMethod($cart, ShippingMethod::FAST);
 
-            $cart->update(['total_price' => $order->total_price]);
-
             DB::commit();
 
             return $order->load(['orderItems.product', 'orderItems.productVariant']);

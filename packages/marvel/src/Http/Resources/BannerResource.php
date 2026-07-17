@@ -17,6 +17,7 @@ class BannerResource extends Resource
         return [
             'id'          => $this->id,
             'title'       => $this->title,
+            'slug'        => $this->slug,
             'description' => $this->description,
             'image'       => [
                 "desktop" => $this->when($this->getFirstMediaUrl('banners-desktop'), $this->getFirstMediaUrl('banners-desktop')),

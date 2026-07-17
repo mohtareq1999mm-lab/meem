@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Str;
@@ -29,6 +31,8 @@ class CartApiTest extends TestCase
     {
         parent::setUp();
         app()->setLocale('en');
+
+        RateLimiter::for('cart', fn () => Limit::none());
 
         $this->createAllTestTables();
 
@@ -322,6 +326,9 @@ class CartApiTest extends TestCase
     public function test_bulk_add_items()
     {
         $this->auth();
+
+        $this->product->update(['is_fast_shipping_available' => true]);
+
         $product2 = Product::create([
             'name' => 'Second Product',
             'slug' => 'second-product-' . Str::random(8),
@@ -330,6 +337,7 @@ class CartApiTest extends TestCase
             'status' => true,
             'in_stock' => true,
             'stock_quantity' => 30,
+            'is_fast_shipping_available' => true,
         ]);
 
         $response = $this->postJson(self::PREFIX . '/cart/bulk-items', [
@@ -356,5 +364,204 @@ class CartApiTest extends TestCase
         ]);
 
         $response->assertStatus(422);
+    }
+
+    // =========================================================================
+    // Shipping method normalization — both lowercase and uppercase accepted
+    // =========================================================================
+
+    public function test_shipping_method_lowercase_is_normalized_to_uppercase()
+    {
+        $this->auth();
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 1, 'shipping_method' => 'scheduled'],
+        ]);
+
+        $this->assertDatabaseHas('cart_items', [
+            'product_id' => $this->product->id,
+            'shipping_method' => 'SCHEDULED',
+        ]);
+    }
+
+    public function test_shipping_method_uppercase_is_stored_as_is()
+    {
+        $this->auth();
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 1, 'shipping_method' => 'SCHEDULED'],
+        ]);
+
+        $this->assertDatabaseHas('cart_items', [
+            'product_id' => $this->product->id,
+            'shipping_method' => 'SCHEDULED',
+        ]);
+    }
+
+    // =========================================================================
+    // Cart sections — normal_items and fast_items populated correctly
+    // =========================================================================
+
+    public function test_cart_sections_return_items_in_correct_section()
+    {
+        $this->auth();
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 2, 'shipping_method' => 'scheduled'],
+        ]);
+
+        $response = $this->getJson(self::PREFIX . '/cart');
+        $response->assertStatus(200);
+
+        $responseData = $response->json('data.data.0');
+        $this->assertNotNull($responseData);
+        $this->assertEquals(1, $responseData['normal_items_count']);
+        $this->assertEquals(0, $responseData['fast_items_count']);
+        $this->assertCount(1, $responseData['normal_items']);
+        $this->assertCount(0, $responseData['fast_items']);
+        $this->assertEquals($this->product->id, $responseData['normal_items'][0]['product_id']);
+    }
+
+    // =========================================================================
+    // Show route — GET /cart/{id}
+    // =========================================================================
+
+    public function test_cart_show_requires_auth()
+    {
+        $this->getJson(self::PREFIX . '/cart/1')->assertStatus(401);
+    }
+
+    public function test_cart_show_returns_cart()
+    {
+        $this->auth();
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 1, 'shipping_method' => 'scheduled'],
+        ]);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertNotNull($cart);
+
+        $response = $this->getJson(self::PREFIX . "/cart/{$cart->id}");
+        $response->assertStatus(200);
+        $response->assertJsonPath('success', true);
+        $response->assertJsonStructure([
+            'message', 'status',
+            'data' => ['id', 'user_id', 'normal_items', 'fast_items', 'total_price'],
+        ]);
+    }
+
+    public function test_cart_show_rejects_other_user_cart()
+    {
+        $this->auth();
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 1, 'shipping_method' => 'scheduled'],
+        ]);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertNotNull($cart);
+
+        $otherUser = User::create([
+            'name' => 'Other',
+            'email' => 'other@example.com',
+            'password' => bcrypt('password'),
+            'type' => 'user',
+            'is_active' => true,
+        ]);
+        Sanctum::actingAs($otherUser);
+
+        $response = $this->getJson(self::PREFIX . "/cart/{$cart->id}");
+        $response->assertStatus(403);
+    }
+
+    // =========================================================================
+    // Soft deleted product — cart response does not crash
+    // =========================================================================
+
+    public function test_cart_response_handles_soft_deleted_product()
+    {
+        $this->auth();
+        $storeResponse = $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 1, 'shipping_method' => 'scheduled'],
+        ]);
+        $storeResponse->assertStatus(201);
+
+        $this->product->delete();
+
+        $response = $this->getJson(self::PREFIX . '/cart');
+        $response->assertStatus(200);
+        $response->assertJsonPath('success', true);
+    }
+
+    // =========================================================================
+    // Destroy — cart not found returns 404
+    // =========================================================================
+
+    public function test_destroy_returns_404_when_no_cart()
+    {
+        $this->auth();
+        $response = $this->deleteJson(self::PREFIX . '/cart/delete-items');
+        $response->assertStatus(404);
+    }
+
+    // =========================================================================
+    // Delete item — item not found returns 400
+    // =========================================================================
+
+    public function test_delete_item_returns_400_for_nonexistent_item()
+    {
+        $this->auth();
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 1, 'shipping_method' => 'scheduled'],
+        ]);
+
+        $response = $this->deleteJson(self::PREFIX . '/cart/delete-item/99999');
+        $response->assertStatus(400);
+    }
+
+    // =========================================================================
+    // Bulk add — transaction rolls back on failure
+    // =========================================================================
+
+    public function test_bulk_add_rolls_back_on_failure()
+    {
+        $this->auth();
+
+        $productWithZeroStock = Product::create([
+            'name' => 'Zero Stock',
+            'slug' => 'zero-stock-' . Str::random(8),
+            'price' => 10.00,
+            'product_type' => ProductType::SIMPLE,
+            'status' => true,
+            'in_stock' => false,
+            'stock_quantity' => 0,
+        ]);
+
+        $response = $this->postJson(self::PREFIX . '/cart/bulk-items', [
+            'items' => [
+                ['product_id' => $this->product->id, 'quantity' => 2, 'shipping_method' => 'scheduled'],
+                ['product_id' => $productWithZeroStock->id, 'quantity' => 1, 'shipping_method' => 'scheduled'],
+            ],
+        ]);
+
+        $response->assertStatus(400);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertNull($cart);
+    }
+
+    // =========================================================================
+    // English translations — API messages are readable strings
+    // =========================================================================
+
+    public function test_english_cart_messages_are_readable()
+    {
+        $this->auth();
+        $response = $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 1, 'shipping_method' => 'scheduled'],
+        ]);
+
+        $response->assertStatus(201);
+        $message = $response->json('message');
+        $this->assertIsString($message);
+        $this->assertStringNotContainsString('MESSAGE.', $message);
+        $this->assertStringNotContainsString('ERROR.', $message);
+        $this->assertEquals('Cart created successfully', $message);
     }
 }

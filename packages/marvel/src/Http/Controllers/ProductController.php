@@ -31,7 +31,6 @@ use Marvel\Exceptions\MarvelNotFoundException;
 use \OpenAI;
 use Marvel\Enums\Permission;
 use Marvel\Http\Requests\BulkDeleteProductsRequest;
-use Marvel\Http\Resources\GetSingleProductResource;
 use Marvel\Http\Resources\product\ProductCollection;
 use Marvel\Http\Resources\ProductResource;
 
@@ -353,15 +352,17 @@ class ProductController extends CoreController
     {
         try {
             $product = $this->repository->findOrFail($request->id);
-            $this->forceDeleteProduct($product);
+            $product->delete();
             return $this->apiResponse(DELETE_PRODUCT_SUCCESSFULLY, 200, true);
-        } catch (MarvelException $e) {
-            throw new MarvelException($e->getMessage());
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            throw new MarvelException(NOT_FOUND);
+        } catch (\Exception $e) {
+            throw new MarvelException(SOMETHING_WENT_WRONG);
         }
     }
 
 
-        public function destroyAll(Request $request)
+    public function destroyAll(Request $request)
     {
         try {
             $count = Product::count();
@@ -375,8 +376,8 @@ class ProductController extends CoreController
             return $this->apiResponse(PRODUCTS_DELETED_SUCCESSFULLY, 200, true, [
                 'deleted_count' => $count,
             ]);
-        } catch (MarvelException $e) {
-            throw new MarvelException($e->getMessage());
+        } catch (\Exception $e) {
+            throw new MarvelException(SOMETHING_WENT_WRONG);
         }
     }
 
@@ -384,7 +385,7 @@ class ProductController extends CoreController
     /**
      * destroyBulk
      *
-     * Force delete specific products by IDs with their variants, relations, and media.
+     * Soft delete specific products by IDs.
      *
      * @param  BulkDeleteProductsRequest $request
      * @return JsonResponse

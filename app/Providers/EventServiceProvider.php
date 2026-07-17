@@ -2,12 +2,16 @@
 
 namespace App\Providers;
 
+use App\Events\OrderCancelled;
 use App\Events\UserRolesUpdated;
 use App\Listeners\LogUserRolesUpdated;
+use App\Listeners\RestoreProductInventory;
+use App\Listeners\SendOrderCancelledNotification;
 use App\Observers\BrandObserver;
 use App\Observers\CategoryObserver;
 use App\Observers\CouponObserver;
 use App\Observers\FlashSaleObserver;
+use App\Observers\MediaCleanupObserver;
 use App\Observers\PickupLocationObserver;
 use App\Observers\ProductObserver;
 use App\Observers\PromotionObserver;
@@ -16,6 +20,7 @@ use App\Observers\UserObserver;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Marvel\Database\Models\Banner;
 use Marvel\Database\Models\Brand;
 use Marvel\Database\Models\Category;
 use Marvel\Database\Models\Coupon;
@@ -23,7 +28,10 @@ use Marvel\Database\Models\FlashSale;
 use Marvel\Database\Models\PickupLocation;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\Promotion;
+use Marvel\Database\Models\Review;
 use Marvel\Database\Models\Role;
+use Marvel\Database\Models\Shop;
+use Marvel\Database\Models\Slider;
 use Marvel\Database\Models\User;
 
 class EventServiceProvider extends ServiceProvider
@@ -40,6 +48,10 @@ class EventServiceProvider extends ServiceProvider
         UserRolesUpdated::class => [
             LogUserRolesUpdated::class,
         ],
+        OrderCancelled::class => [
+            RestoreProductInventory::class,
+            SendOrderCancelledNotification::class,
+        ],
     ];
 
     /**
@@ -48,15 +60,19 @@ class EventServiceProvider extends ServiceProvider
      * @var array
      */
     protected $observers = [
-        Product::class => [ProductObserver::class],
-        Category::class => [CategoryObserver::class],
-        Brand::class => [BrandObserver::class],
-        Coupon::class => [CouponObserver::class],
-        FlashSale::class => [FlashSaleObserver::class],
-        Promotion::class => [PromotionObserver::class],
-        Role::class => [RoleObserver::class],
-        User::class => [UserObserver::class],
+        Product::class        => [ProductObserver::class, MediaCleanupObserver::class],
+        Category::class       => [CategoryObserver::class, MediaCleanupObserver::class],
+        Brand::class          => [BrandObserver::class, MediaCleanupObserver::class],
+        Coupon::class         => [CouponObserver::class],
+        FlashSale::class      => [FlashSaleObserver::class, MediaCleanupObserver::class],
+        Promotion::class      => [PromotionObserver::class],
+        Role::class           => [RoleObserver::class],
+        User::class           => [UserObserver::class, MediaCleanupObserver::class],
         PickupLocation::class => [PickupLocationObserver::class],
+        Banner::class         => [MediaCleanupObserver::class],
+        Review::class         => [MediaCleanupObserver::class],
+        Shop::class           => [MediaCleanupObserver::class],
+        Slider::class         => [MediaCleanupObserver::class],
     ];
 
     /**

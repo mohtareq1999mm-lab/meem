@@ -109,7 +109,6 @@ class CategoryRepository extends BaseRepository
                     throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
                 }
             }
-            $category->shops()->sync($request->shops_id ?? []);
             if ($request->has('products')) {
                 $category->products()->sync($request->products);
             }

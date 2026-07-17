@@ -70,9 +70,9 @@ class ProductTagTest extends TestCase
             Permission::DELETE_PRODUCT,
         ]);
 
-        $this->tagGaming = Tag::create(['name' => ['en' => 'Gaming']]);
-        $this->tagWireless = Tag::create(['name' => ['en' => 'Wireless']]);
-        $this->tagAccessory = Tag::create(['name' => ['en' => 'Accessory']]);
+        $this->tagGaming = Tag::create(['name' => 'Gaming']);
+        $this->tagWireless = Tag::create(['name' => 'Wireless']);
+        $this->tagAccessory = Tag::create(['name' => 'Accessory']);
     }
 
     private function authAdmin(): void

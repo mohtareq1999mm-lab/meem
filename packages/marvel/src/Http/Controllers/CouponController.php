@@ -50,6 +50,7 @@ class CouponController extends CoreController
         $this->middleware("permission:" . Permission::CREATE_COUPON, ["only" => ["store"]]);
         $this->middleware("permission:" . Permission::UPDATE_COUPON, ["only" => ["update"]]);
         $this->middleware("permission:" . Permission::DELETE_COUPON, ["only" => ["destroy"]]);
+        $this->middleware("permission:" . Permission::SUPER_ADMIN, ["only" => ["approveCoupon", "disApproveCoupon"]]);
     }
 
     /**

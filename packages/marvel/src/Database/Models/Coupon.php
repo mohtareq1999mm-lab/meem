@@ -98,6 +98,14 @@ class Coupon extends Model implements HasMedia
         return $this->hasMany(CouponUsage::class, 'coupon_id');
     }
 
+    /**
+     * @return HasMany
+     */
+    public function assignments(): HasMany
+    {
+        return $this->hasMany(CouponAssignment::class, 'coupon_id');
+    }
+
 
 
 

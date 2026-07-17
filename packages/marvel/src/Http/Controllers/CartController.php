@@ -4,6 +4,7 @@ namespace Marvel\Http\Controllers;
 
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Marvel\Database\Repositories\CartRepository;
 use App\Services\General\CartInventoryService;
 use Marvel\Database\Models\Cart;
@@ -117,7 +118,7 @@ class CartController extends CoreController
         $user = $request->user();
 
         if (!$cart) {
-            return $this->apiResponse(DELETE_CART_SUCCESSFULLY, 200, true);
+            return $this->apiResponse(CART_NOT_FOUND, 404, false);
         }
 
         if ($user && (int) $cart->user_id !== (int) $user->id) {
@@ -149,15 +150,31 @@ class CartController extends CoreController
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.product_variant_id' => 'nullable|exists:product_variants,id',
-            'items.*.shipping_method' => 'required|string|in:scheduled,fast',
+            'items.*.shipping_method' => 'required|string|in:scheduled,fast,SCHEDULED,FAST',
         ]);
-        
-        foreach ($request->items as $item) {
-            $tempRequest = clone $request;
-            $tempRequest->replace(['item' => $item]);
-            $this->repository->storeCart($tempRequest);
+
+        $userId = $request->user()->id;
+
+        DB::beginTransaction();
+        try {
+            foreach ($request->items as $item) {
+                $tempRequest = clone $request;
+                $tempRequest->replace(['item' => $item]);
+                $this->repository->storeCart($tempRequest);
+            }
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $this->apiResponse($e->getMessage(), 400, false);
         }
-        $cart = auth()->user()->cart;
-        return $this->apiResponse(CREATE_CART_SUCCESSFULLY, 201, true, CartResource::make($cart->load('items')));
+
+        $cart = Cart::query()->where('user_id', $userId)->first();
+        if (!$cart) {
+            return $this->apiResponse(CART_NOT_FOUND, 400, false);
+        }
+
+        return $this->apiResponse(CREATE_CART_SUCCESSFULLY, 201, true, CartResource::make(
+            $cart->load(['items.product', 'items.productVariant.attributeProducts.attributeValue.attribute'])
+        ));
     }
 }

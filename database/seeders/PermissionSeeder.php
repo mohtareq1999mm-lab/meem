@@ -200,6 +200,24 @@ class PermissionSeeder extends Seeder
             'delete-reviews',
             'restore-user',
 
+            //content-pages
+            'view-content-pages',
+            'create-content-pages',
+            'update-content-pages',
+            'delete-content-pages',
+
+            //sections
+            'view-sections',
+            'create-sections',
+            'update-sections',
+            'delete-sections',
+
+            //section-types
+            'view-section-types',
+            'create-section-types',
+            'update-section-types',
+            'delete-section-types',
+
             //fast-shipping
             'view-fast-shipping',
             'update-fast-shipping',
@@ -284,6 +302,18 @@ class PermissionSeeder extends Seeder
             'update-cms-page',
             'delete-cms-page',
             'save-puck-page',
+            'view-content-pages',
+            'create-content-pages',
+            'update-content-pages',
+            'delete-content-pages',
+            'view-sections',
+            'create-sections',
+            'update-sections',
+            'delete-sections',
+            'view-section-types',
+            'create-section-types',
+            'update-section-types',
+            'delete-section-types',
         ];
 
         $superAdminPermission = [

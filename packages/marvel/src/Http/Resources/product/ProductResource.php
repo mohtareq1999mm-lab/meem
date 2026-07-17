@@ -36,6 +36,7 @@ class ProductResource extends Resource
             'has_discount'           => $this->has_discount,
             'is_fast_shipping_available' => (bool) $this->is_fast_shipping_available,
             $this->mergeWhen($this->has_discount, fn() => ['discount_valid' => $this->isDiscountActive()]),
+            'tags'                   => $this->whenLoaded('tags', fn() => TagResource::collection($this->tags)),
             'brands'                 => $this->whenLoaded('brands', fn() => BrandResource::collection($this->brands)),
             'banners'                => $this->whenLoaded('banners', fn() => BannerResource::collection($this->banners)),
             'sliders'                => $this->whenLoaded('sliders', fn() => SliderResource::collection($this->sliders)),

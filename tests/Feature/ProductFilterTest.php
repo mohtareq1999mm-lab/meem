@@ -98,6 +98,7 @@ class ProductFilterTest extends TestCase
 
     public function test_attribute_filter_works_with_any_locale_value()
     {
+        app()->setLocale('en');
         $colorAttr = Attribute::create(['name' => ['en' => 'Color'], 'slug' => 'color']);
         $sizeAttr = Attribute::create(['name' => ['en' => 'Size'], 'slug' => 'lmk-s']);
 

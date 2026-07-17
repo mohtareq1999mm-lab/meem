@@ -33,7 +33,11 @@ class CouponResource extends Resource
             'limiter'       => $this->limiter,
             'used'          => $this->used,
             'status'        => (bool) $this->status,
-            'is_valid'      => CouponValidator::validate($this)['valid'],
+            'is_valid'      => CouponValidator::validate($this->resource)['valid'],
+            'is_assigned'   => $this->relationLoaded('assignments') ? $this->assignments->isNotEmpty() : $this->assignments()->exists(),
+            'assignments'   => $this->relationLoaded('assignments')
+                ? $this->assignments->toArray()
+                : $this->assignments()->get()->toArray(),
             'created_at'    => $this->created_at?->toIso8601String(),
         ];
     }

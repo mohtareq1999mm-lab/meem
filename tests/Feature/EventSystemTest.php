@@ -15,8 +15,11 @@ use App\Services\General\MyfatoraService;
 use App\Jobs\LogActivityJob;
 use App\Listeners\SendOrderCancelledNotification;
 use App\Listeners\SendOrderStatusChangedNotification;
+use Marvel\Listeners\SendOrderCancelledNotification as MarvelSendOrderCancelledNotification;
+use Marvel\Providers\EventServiceProvider as MarvelEventServiceProvider;
 use App\Listeners\SendPaymentFailedNotification;
 use App\Listeners\SendPaymentSucceededNotification;
+use App\Providers\EventServiceProvider;
 use App\Services\General\OrderService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Bus;
@@ -977,5 +980,81 @@ class EventSystemTest extends TestCase
             'event' => 'payment_failed',
             'log_name' => 'orders',
         ]);
+    }
+
+    // ========== Listener Registration in EventServiceProvider ==========
+
+    /** @test */
+    public function event_service_provider_registers_order_cancelled_listeners()
+    {
+        $reflection = new \ReflectionClass(EventServiceProvider::class);
+        $defaults = $reflection->getDefaultProperties();
+
+        $this->assertArrayHasKey(OrderCancelled::class, $defaults['listen']);
+        $this->assertContains(RestoreProductInventory::class, $defaults['listen'][OrderCancelled::class]);
+        $this->assertContains(SendOrderCancelledNotification::class, $defaults['listen'][OrderCancelled::class]);
+    }
+
+    /** @test */
+    public function order_cancelled_via_service_restores_stock()
+    {
+        $order = $this->createOrderWithItems();
+        Transaction::create([
+            'order_id' => $order->id,
+            'user_id' => $this->user->id,
+            'payment_method' => 'cod',
+            'status' => 'paid',
+            'amount' => 100.00,
+        ]);
+        $order->update(['status' => 'completed']);
+
+        $this->product->update([
+            'stock_quantity' => 7,
+            'sold_quantity' => 8,
+        ]);
+
+        $orderService = app(OrderService::class);
+        $orderService->changeOrderStatus(null, 'cancelled', $order->id);
+
+        $this->assertDatabaseHas('products', [
+            'id' => $this->product->id,
+            'stock_quantity' => 10,
+            'sold_quantity' => 5,
+        ]);
+    }
+
+    // ========== Marvel OrderCancelled Event Registration ==========
+
+    /** @test */
+    public function marvel_event_service_provider_registers_order_cancelled_listener()
+    {
+        $reflection = new \ReflectionClass(MarvelEventServiceProvider::class);
+        $defaults = $reflection->getDefaultProperties();
+
+        $this->assertArrayHasKey(\Marvel\Events\OrderCancelled::class, $defaults['listen']);
+        $this->assertContains(
+            MarvelSendOrderCancelledNotification::class,
+            $defaults['listen'][\Marvel\Events\OrderCancelled::class]
+        );
+    }
+
+    /** @test */
+    public function marvel_order_cancelled_listener_is_queued()
+    {
+        $reflection = new \ReflectionClass(MarvelSendOrderCancelledNotification::class);
+        $this->assertTrue($reflection->implementsInterface(\Illuminate\Contracts\Queue\ShouldQueue::class));
+    }
+
+    /** @test */
+    public function marvel_order_cancelled_event_dispatches_listener()
+    {
+        Event::fake([\Marvel\Events\OrderCancelled::class]);
+
+        $order = $this->createOrderWithItems();
+        event(new \Marvel\Events\OrderCancelled($order));
+
+        Event::assertDispatched(\Marvel\Events\OrderCancelled::class, function ($e) use ($order) {
+            return $e->order->id === $order->id;
+        });
     }
 }

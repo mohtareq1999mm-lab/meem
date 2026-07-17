@@ -5,6 +5,8 @@ namespace Marvel\Http\Requests;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\Rule;
+use Marvel\Enums\ShippingMethod;
 
 class CartCreateRequest extends FormRequest
 {
@@ -21,7 +23,7 @@ class CartCreateRequest extends FormRequest
             'item.quantity' => ['required', 'integer', 'min:1'],
             'item.product_variant_id' => ['sometimes', 'nullable', 'integer', 'exists:product_variants,id'],
             'item.attributes' => ['sometimes', 'array'],
-            'item.shipping_method' => ['required', 'string', 'in:scheduled,fast'],
+            'item.shipping_method' => ['required', 'string', Rule::in([ShippingMethod::SCHEDULED, ShippingMethod::FAST, 'scheduled', 'fast'])],
         ];
     }
 

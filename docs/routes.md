@@ -27,6 +27,54 @@ Laravel resolves the **first** registration (line 190). The `permission:view-bra
 
 ---
 
+## Banners
+
+All banners endpoints are in `packages/marvel/src/Rest/Routes.php`. Routes are loaded via `RestAPIServiceProvider::loadRoutes()` with prefix `/api/v1` and middleware `api`.
+
+### Duplicate Route Registration
+
+`GET /banners` and `GET /banners/{banner}` are registered **twice**:
+1. **First** at line 251 — outside any auth middleware group, with no route middleware
+2. **Second** at line 493 — inside the `auth:sanctum` + `verified` group
+
+Laravel resolves the **first** registration (line 251). The `permission:view-banners` controller middleware (BannerController line 20) enforces authentication and authorization regardless of which route is matched. This is **Technical Debt** — a redundant registration, not a production bug.
+
+| Method | URI | Controller | Action | Route Middleware | Controller Middleware | Permission | Source Line |
+|--------|-----|------------|--------|-----------------|----------------------|------------|-------------|
+| GET | `/banners` | `BannerController` | `index` | None (resolves line 251; also at line 493 behind `auth:sanctum`, `email.verified`) | `permission:view-banners` | `view-banners` | Lines 251, 493 |
+| GET | `/banners/{banner}` | `BannerController` | `show` | None (resolves line 251; also at line 493 behind `auth:sanctum`, `email.verified`) | `permission:view-banners` | `view-banners` | Lines 251, 493 |
+| POST | `/banners` | `BannerController` | `store` | `auth:sanctum`, `email.verified` | `permission:create-banners` | `create-banners` | Line 493 |
+| PUT | `/banners/{banner}` | `BannerController` | `update` | `auth:sanctum`, `email.verified` | `permission:update-banners` | `update-banners` | Line 493 |
+| DELETE | `/banners/{banner}` | `BannerController` | `destroy` | `auth:sanctum`, `email.verified` | `permission:delete-banners` | `delete-banners` | Line 493 |
+| POST | `/banner/change-status` | `BannerController` | `changeStatus` | `auth:sanctum`, `email.verified` | `permission:update-banners` | `update-banners` | Line 489 |
+| POST | `/banner/reorder` | `BannerController` | `reorder` | `auth:sanctum`, `email.verified` | `permission:update-banners` | `update-banners` | Line 490 |
+
+---
+
+## Sliders
+
+All sliders endpoints are in `packages/marvel/src/Rest/Routes.php`. Routes are loaded via `RestAPIServiceProvider::loadRoutes()` with prefix `/api/v1` and middleware `api`.
+
+### Duplicate Route Registration
+
+`GET /sliders` is registered **twice**:
+1. **First** at line 254 — outside any auth middleware group, with no route middleware
+2. **Second** at line 494 — inside the `auth:sanctum` + `verified` group
+
+Laravel resolves the **first** registration (line 254). The `permission:view-slider` controller middleware (SliderController line 22) enforces authentication and authorization regardless of which route is matched. This is **Technical Debt** — a redundant registration, not a production bug.
+
+| Method | URI | Controller | Action | Route Middleware | Controller Middleware | Permission | Source Line |
+|--------|-----|------------|--------|-----------------|----------------------|------------|-------------|
+| GET | `/sliders` | `SliderController` | `index` | None (resolves line 254; also at line 494 behind `auth:sanctum`, `email.verified`) | `permission:view-slider` | `view-slider` | Lines 254, 494 |
+| GET | `/sliders/{slider}` | `SliderController` | `show` | `auth:sanctum`, `email.verified` | `permission:view-slider` | `view-slider` | Line 494 |
+| POST | `/sliders` | `SliderController` | `store` | `auth:sanctum`, `email.verified` | `permission:create-slider` | `create-slider` | Line 494 |
+| PUT | `/sliders/{slider}` | `SliderController` | `update` | `auth:sanctum`, `email.verified` | `permission:update-slider` | `update-slider` | Line 494 |
+| DELETE | `/sliders/{slider}` | `SliderController` | `destroy` | `auth:sanctum`, `email.verified` | `permission:delete-slider` | `delete-slider` | Line 494 |
+| PATCH | `/sliders/change-status` | `SliderController` | `changeStatus` | `auth:sanctum`, `email.verified` | `permission:update-slider` | `update-slider` | Line 491 |
+| PUT | `/sliders/reorder` | `SliderController` | `reorder` | `auth:sanctum`, `email.verified` | `permission:update-slider` | `update-slider` | Line 492 |
+
+---
+
 ## Categories
 
 All routes require `auth:sanctum` and `verified` middleware for write operations.  
@@ -91,6 +139,56 @@ All routes require `auth:sanctum` and `email.verified` middleware. Per-method pe
 | POST | `/users/unblock-user` | `UserController` | `activeUser` | `activate-user` | Unban/activate a user |
 | POST | `/users/make-admin` | `UserController` | `makeOrRevokeAdmin` | `super_admin` (method-level) | Toggle SUPER_ADMIN permission on a user |
 | POST | `/add-points` | `UserController` | `addPoints` | `add-points` | Add wallet points to a customer |
+
+---
+
+## Content Pages
+
+All content-pages, sections, and section-types endpoints are in `packages/marvel/src/Rest/Routes.php`. Routes are loaded via `RestAPIServiceProvider::loadRoutes()` with prefix `/api/v1` and middleware `api`.
+
+### Route Registration Note
+
+All routes are inside a single `Route::group()` at line 320 with middleware:
+- `role:super_admin|editor`
+- `auth:sanctum`
+- `email.verified`
+
+Controller-level permission middleware is defined in each controller's constructor for granular per-action access.
+
+| Method | URI | Controller | Action | Route Middleware | Controller Permission | Source Line |
+|--------|-----|------------|--------|-----------------|----------------------|-------------|
+| GET | `/content-pages` | `ContentPageController` | `index` | `role:super_admin\|editor`, `auth:sanctum`, `email.verified` | `view-content-pages` | 331 |
+| POST | `/content-pages` | `ContentPageController` | `store` | `role:super_admin\|editor`, `auth:sanctum`, `email.verified` | `create-content-pages` | 331 |
+| GET | `/content-pages/{content_page}` | `ContentPageController` | `show` | `role:super_admin\|editor`, `auth:sanctum`, `email.verified` | `view-content-pages` | 331 |
+| PUT | `/content-pages/{content_page}` | `ContentPageController` | `update` | `role:super_admin\|editor`, `auth:sanctum`, `email.verified` | `update-content-pages` | 331 |
+| DELETE | `/content-pages/{content_page}` | `ContentPageController` | `destroy` | `role:super_admin\|editor`, `auth:sanctum`, `email.verified` | `delete-content-pages` | 331 |
+| POST | `/content-pages/{content_page}/attach-sections` | `ContentPageController` | `attachSections` | `role:super_admin\|editor`, `auth:sanctum`, `email.verified` | `update-content-pages` | 329 |
+| PATCH | `/content-pages/{content_page}/toggle-active` | `ContentPageController` | `toggleActive` | `role:super_admin\|editor`, `auth:sanctum`, `email.verified` | `update-content-pages` | 330 |
+
+## Sections
+
+| Method | URI | Controller | Action | Route Middleware | Controller Permission | Source Line |
+|--------|-----|------------|--------|-----------------|----------------------|-------------|
+| GET | `/sections` | `SectionController` | `index` | `role:super_admin\|editor`, `auth:sanctum`, `email.verified` | `view-sections` | 335 |
+| POST | `/sections` | `SectionController` | `store` | `role:super_admin\|editor`, `auth:sanctum`, `email.verified` | `create-sections` | 335 |
+| GET | `/sections/{section}` | `SectionController` | `show` | `role:super_admin\|editor`, `auth:sanctum`, `email.verified` | `view-sections` | 335 |
+| PUT | `/sections/{section}` | `SectionController` | `update` | `role:super_admin\|editor`, `auth:sanctum`, `email.verified` | `update-sections` | 335 |
+| DELETE | `/sections/{section}` | `SectionController` | `destroy` | `role:super_admin\|editor`, `auth:sanctum`, `email.verified` | `delete-sections` | 335 |
+| POST | `/sections/reorder` | `SectionController` | `reorder` | `role:super_admin\|editor`, `auth:sanctum`, `email.verified` | `update-sections` | 332 |
+| PATCH | `/sections/{section}/toggle-active` | `SectionController` | `toggleStatus` | `role:super_admin\|editor`, `auth:sanctum`, `email.verified` | `update-sections` | 334 |
+| GET | `/sections/types` | `SectionController` | `getTypeSection` | `role:super_admin\|editor`, `auth:sanctum`, `email.verified` | `view-sections` | 333 |
+
+## Section Types
+
+| Method | URI | Controller | Action | Route Middleware | Controller Permission | Source Line |
+|--------|-----|------------|--------|-----------------|----------------------|-------------|
+| GET | `/section-types` | `SectionTypeController` | `index` | `role:super_admin\|editor`, `auth:sanctum`, `email.verified` | `view-section-types` | 336 |
+| POST | `/section-types` | `SectionTypeController` | `store` | `role:super_admin\|editor`, `auth:sanctum`, `email.verified` | `create-section-types` | 336 |
+| GET | `/section-types/{section_type}` | `SectionTypeController` | `show` | `role:super_admin\|editor`, `auth:sanctum`, `email.verified` | `view-section-types` | 336 |
+| PUT | `/section-types/{section_type}` | `SectionTypeController` | `update` | `role:super_admin\|editor`, `auth:sanctum`, `email.verified` | `update-section-types` | 336 |
+| DELETE | `/section-types/{section_type}` | `SectionTypeController` | `destroy` | `role:super_admin\|editor`, `auth:sanctum`, `email.verified` | `delete-section-types` | 336 |
+| POST | `/section-types/{type}/settings` | `SectionTypeController` | `updateSettings` | `role:super_admin\|editor`, `auth:sanctum`, `email.verified` | `update-section-types` | 337 |
+| GET | `/section-types/{type}/settings` | `SectionTypeController` | `settings` | `role:super_admin\|editor`, `auth:sanctum`, `email.verified` | `view-section-types` | 338 |
 
 ## Architecture Note
 

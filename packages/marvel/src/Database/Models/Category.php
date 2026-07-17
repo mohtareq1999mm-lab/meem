@@ -77,10 +77,6 @@ class Category extends Model implements HasMedia
         });
     }
 
-    public function shops()
-    {
-        return $this->belongsToMany(Shop::class, 'category_shop');
-    }
     /**
      * @return BelongsToMany
      */

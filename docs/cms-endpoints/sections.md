@@ -12,7 +12,7 @@
 
 **Authentication:** Required
 
-**Permissions:** N/A
+**Permissions:** `view-sections`
 
 **Business Logic:**
 1. Calls `Section::ordered()->get()` (uses `spatie/eloquent-sortable`)
@@ -28,6 +28,7 @@
             "id": 1,
             "type": "hero",
             "title": "Hero Banner",
+            "is_active": true,
             "endpoint": "general/hero?slug=summer-sale",
             "order": 1,
             "setting": {
@@ -51,24 +52,23 @@
 
 **Authentication:** Required
 
-**Permissions:** N/A
+**Permissions:** `create-sections`
 
 **Request Body:**
 | Field | Type | Required | Validation |
 |-------|------|----------|------------|
-| `type` | string | **Yes** | `required`, `string`, `max:100`, exists in `section_types` table |
+| `type` | string | **Yes** | `required`, `string`, `max:100`, `exists:section_types,type` |
 | `title` | object | **Yes** | `required`, translatable array |
 | `title.*` | string | **Yes** | `string`, `max:50`, unique translation |
-| `with_product` | bool/int | **Yes** | `required`, `in:0,1` |
 | `is_active` | bool/int | No | `nullable`, `in:0,1` |
 | `title_visible` | bool/int | No | `nullable`, `in:0,1` |
 | `order` | int | No | `nullable`, `integer` |
 | `setting` | object | No | `nullable`, `array` |
 | `setting.front` | object | No | `nullable`, `array` |
-| `setting.back` | object | No | `nullable`, `array` |
+| `setting.back` | object | No | `nullable`, `array` — only `slug` allowed when `with_product` is truthy |
 
 **Business Logic:**
-1. If `with_product=1`, validates `setting.back` only contains `slug` key
+1. If `with_product` is present and truthy in the request, validates `setting.back` only contains `slug` key
 2. Order auto-assigned by `spatie/eloquent-sortable` if not provided
 
 **Success Response (200):**
@@ -81,6 +81,7 @@
         "id": 1,
         "type": "hero",
         "title": "Hero Banner",
+        "is_active": true,
         "endpoint": "general/hero?slug=summer-sale",
         "order": 1,
         "setting": {
@@ -103,7 +104,7 @@
 
 **Authentication:** Required
 
-**Permissions:** N/A
+**Permissions:** `view-sections`
 
 **Success Response (200):**
 ```json
@@ -115,6 +116,7 @@
         "id": 1,
         "type": "hero",
         "title": "Hero Banner",
+        "is_active": true,
         "endpoint": "general/hero?slug=summer-sale",
         "order": 1,
         "setting": {
@@ -137,24 +139,23 @@
 
 **Authentication:** Required
 
-**Permissions:** N/A
+**Permissions:** `update-sections`
 
 **Request Body:**
 | Field | Type | Required | Validation |
 |-------|------|----------|------------|
 | `title` | object | No | `sometimes`, translatable array |
-| `title.*` | string | No | `string`, `max:50` |
+| `title.*` | string | No | `sometimes`, `string`, `max:50` |
 | `order` | int | No | `sometimes`, `integer` |
 | `is_active` | bool/int | No | `sometimes`, `in:0,1` |
 | `title_visible` | bool/int | No | `sometimes`, `in:0,1` |
-| `with_product` | bool | No | `sometimes`, `boolean` |
 | `setting` | object | No | `nullable`, `array` |
 | `setting.front` | object | No | `nullable`, `array` |
-| `setting.back` | object | No | `nullable`, `array` |
+| `setting.back` | object | No | `nullable`, `array` — only `slug` allowed when `with_product` is truthy |
 
 **Business Logic:**
 1. Reads existing `with_product` from the section if not in request
-2. If `with_product` is true, validates `setting.back` only contains `slug`
+2. If `with_product` is truthy, validates `setting.back` only contains `slug`
 
 **Success Response (200):**
 ```json
@@ -166,6 +167,7 @@
         "id": 1,
         "type": "hero",
         "title": "Hero Banner (Updated)",
+        "is_active": true,
         "endpoint": "general/hero?slug=summer-sale",
         "order": 1,
         "setting": {
@@ -188,7 +190,7 @@
 
 **Authentication:** Required
 
-**Permissions:** N/A
+**Permissions:** `delete-sections`
 
 **Success Response (200):**
 ```json
@@ -211,7 +213,7 @@
 
 **Authentication:** Required
 
-**Permissions:** N/A
+**Permissions:** `update-sections`
 
 **Request Body:**
 | Field | Type | Required | Validation |
@@ -244,7 +246,7 @@
 
 **Authentication:** Required
 
-**Permissions:** N/A
+**Permissions:** `update-sections`
 
 **Business Logic:**
 1. Flips `is_active` from `true` to `false` or `false` to `true`
@@ -260,6 +262,7 @@
         "id": 1,
         "type": "hero",
         "title": "Hero Banner",
+        "is_active": true,
         "endpoint": "general/hero?slug=summer-sale",
         "order": 1,
         "setting": {
@@ -282,7 +285,7 @@
 
 **Authentication:** Required
 
-**Permissions:** N/A
+**Permissions:** `view-sections`
 
 **Business Logic:**
 1. Plucks unique `type` values from all sections

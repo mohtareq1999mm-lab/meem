@@ -272,7 +272,7 @@ class FlashSaleController extends CoreController
                 $flash_sale_info = $product->flash_sales;
             }
 
-            return $flash_sale_info;
+            return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $flash_sale_info);
         } catch (MarvelException $e) {
             throw new MarvelException(SOMETHING_WENT_WRONG, $e->getMessage());
         }

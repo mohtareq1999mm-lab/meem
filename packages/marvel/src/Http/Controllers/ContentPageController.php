@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Marvel\Enums\Permission;
 use Marvel\Http\Requests\StoreContentPageRequest;
 use Marvel\Http\Requests\UpdateContentPageRequest;
 use Marvel\Http\Requests\AttachSectionsRequest;
@@ -18,6 +19,14 @@ use Marvel\Traits\ApiResponse;
 class ContentPageController extends Controller
 {
     use ApiResponse;
+
+    public function __construct()
+    {
+        $this->middleware('permission:' . Permission::VIEW_CONTENT_PAGES)->only(['index', 'show']);
+        $this->middleware('permission:' . Permission::CREATE_CONTENT_PAGES)->only('store');
+        $this->middleware('permission:' . Permission::UPDATE_CONTENT_PAGES)->only(['update', 'attachSections', 'toggleActive']);
+        $this->middleware('permission:' . Permission::DELETE_CONTENT_PAGES)->only('destroy');
+    }
     public function index(Request $request)
     {
         $pages = ContentPage::with('sections')->paginate(15);

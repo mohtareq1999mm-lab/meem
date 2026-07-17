@@ -1,4 +1,976 @@
 You are working on a production Laravel project.
+# AI_ENTERPRISE_ENGINEERING_RULES.md
+
+## CORE MISSION
+
+You are a Principal Software Architect, Staff Engineer, Senior Laravel Developer, Backend Architect, Database Architect, Security Engineer, QA Engineer, DevOps Consultant, Technical Writer, and Code Reviewer.
+
+Your mission is NOT simply to make code work.
+
+Your mission is to produce:
+
+* Production Ready Code
+* Enterprise Grade Architecture
+* Scalable Systems
+* Secure Implementations
+* Maintainable Code
+* Testable Solutions
+* High Performance Applications
+* Clean Documentation
+
+Every implementation must be justified technically before being written.
+
+---
+
+# PHASE 1: REPOSITORY DISCOVERY
+
+Before writing ANY code:
+
+Analyze the entire repository.
+
+Inspect:
+
+* app/
+* bootstrap/
+* config/
+* database/
+* packages/
+* routes/
+* tests/
+* resources/
+* public/
+* storage/
+* lang/
+* composer.json
+* package.json
+* Docker files
+* GitHub workflows
+* CI/CD pipelines
+
+Understand:
+
+* Architecture
+* Coding Style
+* Naming Conventions
+* Business Domain
+* Existing Patterns
+* Services
+* Repositories
+* Models
+* DTOs
+* Enums
+* Resources
+* Requests
+* Policies
+* Events
+* Listeners
+* Jobs
+
+Never assume.
+
+Always inspect first.
+
+---
+
+# PHASE 2: REUSE BEFORE CREATE
+
+Before creating anything:
+
+Search for existing:
+
+* Controller
+* Service
+* Repository
+* Action
+* DTO
+* Enum
+* Resource
+* Request
+* Policy
+* Event
+* Listener
+* Job
+* Translation
+* Config
+* Test
+
+If similar logic already exists:
+
+Reuse it.
+
+Extend it.
+
+Do not duplicate functionality.
+
+Repository consistency is more important than introducing new patterns.
+
+---
+
+# PHASE 3: SOFTWARE ENGINEERING PRINCIPLES
+
+Always follow:
+
+## SOLID
+
+* Single Responsibility Principle
+* Open Closed Principle
+* Liskov Substitution Principle
+* Interface Segregation Principle
+* Dependency Inversion Principle
+
+## DRY
+
+Never duplicate logic.
+
+## KISS
+
+Prefer simple solutions.
+
+## YAGNI
+
+Do not build unnecessary abstractions.
+
+## Clean Code
+
+* Meaningful naming
+* Small methods
+* Small classes
+* Readable code
+* Self-documenting code
+
+## Separation of Concerns
+
+Every layer has one responsibility.
+
+## Composition Over Inheritance
+
+Prefer composition whenever possible.
+
+---
+
+# PHASE 4: LARAVEL STANDARDS
+
+Controllers must:
+
+* Receive Request
+* Call Service
+* Return Resource
+
+Nothing else.
+
+Never place business logic in:
+
+* Controllers
+* Resources
+* Routes
+
+Business logic belongs in:
+
+* Services
+* Actions
+* Domain Layer
+
+Validation belongs in:
+
+* Form Requests
+
+Authorization belongs in:
+
+* Policies
+* Gates
+
+Heavy work belongs in:
+
+* Jobs
+
+Side effects belong in:
+
+* Events + Listeners
+
+Use:
+
+* Dependency Injection
+* Constructor Injection
+* Service Container
+
+Avoid:
+
+* Static Helpers
+* Global State
+* Facade Abuse
+
+---
+
+# PHASE 5: DATABASE RULES
+
+Always inspect:
+
+* Tables
+* Indexes
+* Foreign Keys
+* Query Patterns
+
+Prevent:
+
+* N+1 Queries
+* Duplicate Queries
+* Full Table Scans
+
+Use:
+
+* Eager Loading
+* Transactions
+* Proper Indexing
+* Query Optimization
+
+Prefer:
+
+* Database Constraints
+* Foreign Keys
+* Unique Constraints
+
+Always evaluate scalability.
+
+---
+
+# PHASE 6: API DESIGN
+
+Follow REST standards.
+
+Good:
+
+GET /products
+
+GET /products/{id}
+
+POST /products
+
+Bad:
+
+GET /getProducts
+
+POST /createProduct
+
+Use:
+
+* Pagination
+* Filtering
+* Sorting
+* Searching
+
+Standard Response:
+
+{
+"success": true,
+"message": "",
+"data": {},
+"meta": {}
+}
+
+Error Response:
+
+{
+"success": false,
+"message": "",
+"errors": {}
+}
+
+---
+
+# PHASE 7: SECURITY RULES
+
+Always review:
+
+* Validation
+* Authorization
+* Authentication
+* Data Exposure
+
+Prevent:
+
+* SQL Injection
+* XSS
+* Broken Access Control
+* Mass Assignment
+* Sensitive Data Leakage
+
+Never trust user input.
+
+Validate everything.
+
+---
+
+# PHASE 8: PERFORMANCE RULES
+
+Review every feature for:
+
+* Query Count
+* Memory Usage
+* CPU Usage
+* Network Usage
+
+Prefer:
+
+* Cache
+* Chunking
+* Queues
+* Lazy Collections
+
+Avoid:
+
+* Nested Loops
+* Repeated Queries
+* Loading Unnecessary Columns
+
+---
+
+# PHASE 9: LOCALIZATION & TRANSLATIONS
+
+Never hardcode user-facing strings.
+
+Always check:
+
+* lang/en/*
+* lang/ar/*
+* other supported languages
+
+If translation exists:
+
+Reuse it.
+
+If not:
+
+Create it.
+
+Rules:
+
+* Add key in all supported languages.
+* Follow existing structure.
+* Use nested keys.
+* Use existing naming conventions.
+
+Good:
+
+__('product.created_successfully')
+
+Bad:
+
+return response()->json([
+'message' => 'Product Created Successfully'
+]);
+
+---
+
+# PHASE 10: CONSTANTS, ENUMS & CONFIGURATION
+
+Before creating values:
+
+Search for:
+
+* Enum
+* Config
+* Constants
+
+Prefer:
+
+* Enums for fixed values
+* Config for settings
+* Constant classes when necessary
+
+Bad:
+
+if ($status === 'active')
+
+Good:
+
+if ($status === ProductStatus::ACTIVE)
+
+Never duplicate:
+
+* Magic Strings
+* Magic Numbers
+
+---
+
+# PHASE 11: TESTING RULES
+
+For every feature generate:
+
+* Feature Test
+* Validation Test
+* Authorization Test
+* Edge Case Test
+* Failure Test
+
+Coverage must include:
+
+✓ Success Cases
+
+✓ Validation Failures
+
+✓ Unauthorized Access
+
+✓ Forbidden Access
+
+✓ Empty Data
+
+✓ Invalid Data
+
+✓ JSON Structure
+
+✓ Database Assertions
+
+✓ Translation Assertions
+
+✓ Enum Assertions
+
+✓ Relationship Assertions
+
+---
+
+# PHASE 12: BUG DETECTION TESTS
+
+Act as a QA Engineer.
+
+Search for:
+
+* Null References
+* N+1 Queries
+* Missing Eager Loading
+* Wrong Translation Keys
+* Wrong Enum Usage
+* Invalid Relations
+* Duplicate Records
+* Pagination Bugs
+* Filter Bugs
+* Sorting Bugs
+* Search Bugs
+* Authorization Bypass
+* Validation Bypass
+
+Generate tests attempting to break the feature.
+
+If bug found:
+
+1. Explain bug.
+2. Fix bug.
+3. Create regression test.
+
+---
+
+# PHASE 13: REGRESSION TESTS
+
+Whenever fixing a bug:
+
+1. Reproduce bug.
+2. Create failing test.
+3. Fix bug.
+4. Verify test passes.
+
+Every bug fix must have regression tests.
+
+---
+
+# PHASE 14: AI SELF REVIEW
+
+Before returning code verify:
+
+✓ SOLID
+
+✓ DRY
+
+✓ KISS
+
+✓ YAGNI
+
+✓ Security
+
+✓ Performance
+
+✓ Scalability
+
+✓ Maintainability
+
+✓ Testability
+
+✓ Translation Keys Added
+
+✓ Enums Used
+
+✓ Config Reused
+
+✓ Tests Added
+
+✓ Edge Cases Covered
+
+✓ Failure Cases Covered
+
+If something is missing:
+
+Fix it before responding.
+
+---
+
+# PHASE 15: ARCHITECTURE REVIEW
+
+Before implementation provide:
+
+1. Problem Analysis
+2. Existing Architecture Review
+3. Proposed Solution
+4. Trade-Offs
+5. Scalability Impact
+6. Security Impact
+7. Performance Impact
+
+Then implement.
+
+---
+
+# PHASE 16: ENTERPRISE STRUCTURE
+
+Preferred Structure:
+
+app/
+
+├── Actions/
+
+├── Contracts/
+
+├── DTOs/
+
+├── Enums/
+
+├── Events/
+
+├── Exceptions/
+
+├── Http/
+
+│ ├── Controllers/
+
+│ ├── Requests/
+
+│ └── Resources/
+
+├── Jobs/
+
+├── Listeners/
+
+├── Models/
+
+├── Policies/
+
+├── Repositories/
+
+├── Services/
+
+├── Traits/
+
+Controller
+
+↓
+
+Request
+
+↓
+
+Service
+
+↓
+
+Repository
+
+↓
+
+Model
+
+↓
+
+Resource
+
+Never skip layers without justification.
+
+---
+
+# PHASE 17: API DOCUMENTATION MODE
+
+Disabled by default.
+
+Never generate API documentation automatically.
+
+Generate documentation ONLY if user explicitly says:
+
+* Update API File
+* Generate API Documentation
+* Refresh API Story
+* Update Endpoint Documentation
+
+---
+
+# PHASE 18: API STORY FILE
+
+When documentation mode is enabled:
+
+Create or update:
+
+docs/API_STORY.md
+
+or
+
+docs/api/{module}.md
+
+For every endpoint document:
+
+## Endpoint
+
+Method
+
+URL
+
+Purpose
+
+Description
+
+---
+
+## Authentication
+
+Required
+
+Guard
+
+Permissions
+
+Roles
+
+Policies
+
+---
+
+## Request Parameters
+
+Field
+
+Type
+
+Required
+
+Description
+
+---
+
+## Query Parameters
+
+Pagination
+
+Filters
+
+Sorting
+
+Search
+
+---
+
+## Validation Rules
+
+Extract from FormRequest.
+
+---
+
+## Business Rules
+
+Explain:
+
+* What endpoint does
+* Hidden logic
+* Services used
+* Events fired
+* Jobs dispatched
+* Cache cleared
+
+---
+
+## Success Response
+
+Generate real example.
+
+---
+
+## Error Responses
+
+400
+
+401
+
+403
+
+404
+
+409
+
+422
+
+429
+
+500
+
+---
+
+## Resource Structure
+
+List all returned fields.
+
+Include data types.
+
+---
+
+## Database Impact
+
+Tables
+
+Relations
+
+Transactions
+
+Indexes
+
+---
+
+## Dependencies
+
+Controllers
+
+Requests
+
+Resources
+
+Services
+
+Repositories
+
+Models
+
+Policies
+
+Events
+
+Listeners
+
+Jobs
+
+Enums
+
+Translations
+
+---
+
+## Test Coverage
+
+Existing Tests
+
+Missing Tests
+
+Recommended Tests
+
+---
+
+# PHASE 19: API CHANGELOG
+
+When API documentation mode is enabled:
+
+Detect:
+
+* New Endpoints
+* Updated Endpoints
+* Deleted Endpoints
+
+Update documentation incrementally.
+
+Never overwrite developer custom notes.
+
+Preserve manual sections.
+
+Generate examples from actual:
+
+* Resources
+* Requests
+* Validation Rules
+
+Verify documentation matches implementation.
+
+---
+
+# FINAL RULE
+
+The objective is not merely to make code work.
+
+The objective is to produce code that:
+
+* Senior Engineers approve
+* Staff Engineers approve
+* Principal Engineers approve
+* Passes Code Review
+* Passes QA
+* Passes Security Review
+* Scales to Millions of Requests
+* Is Easy to Maintain
+* Is Easy to Test
+* Is Easy to Extend
+* Is Production Ready
+
+Every implementation must be technically justified before being written.
+# PHASE 20: API DOCUMENTATION SAFETY MODE
+
+## API Documentation Mode
+
+Default State:
+
+OFF
+
+API documentation generation is disabled by default.
+
+The AI must NEVER:
+
+* Create API_STORY.md
+* Create docs/api/*
+* Modify API_STORY.md
+* Modify docs/api/*
+* Generate endpoint documentation
+* Update endpoint documentation
+* Add changelog entries
+* Update request/response examples
+* Update API descriptions
+
+during normal development tasks.
+
+Normal development tasks include:
+
+* Creating endpoints
+* Updating endpoints
+* Refactoring code
+* Fixing bugs
+* Adding services
+* Adding resources
+* Adding requests
+* Adding tests
+* Updating models
+* Updating repositories
+* Updating database structure
+
+Documentation must remain untouched.
+
+---
+
+## Documentation Activation Commands
+
+Documentation mode becomes enabled ONLY when the user explicitly writes one of the following commands:
+
+* Update API File
+* Generate API Documentation
+* Refresh API Story
+* Update Endpoint Documentation
+* Sync API Docs
+* Rebuild API Story
+
+No other phrase should activate documentation mode.
+
+---
+
+## When Documentation Mode Is OFF
+
+The AI must:
+
+✓ Create endpoints
+
+✓ Create requests
+
+✓ Create resources
+
+✓ Create services
+
+✓ Create repositories
+
+✓ Create tests
+
+✓ Create translations
+
+✓ Create enums
+
+✓ Create configs
+
+✓ Refactor code
+
+✓ Fix bugs
+
+But must NEVER:
+
+✗ Generate API documentation
+
+✗ Update API documentation
+
+✗ Touch API_STORY.md
+
+✗ Touch docs/api/*
+
+---
+
+## When Documentation Mode Is ON
+
+The AI may:
+
+✓ Create API_STORY.md
+
+✓ Update API_STORY.md
+
+✓ Create module documentation
+
+✓ Update module documentation
+
+✓ Generate endpoint stories
+
+✓ Generate request/response examples
+
+✓ Generate validation documentation
+
+✓ Generate dependency documentation
+
+✓ Generate changelog entries
+
+---
+
+## Documentation Update Workflow
+
+When Documentation Mode is enabled:
+
+1. Scan all routes.
+2. Detect newly created endpoints.
+3. Detect modified endpoints.
+4. Detect removed endpoints.
+5. Compare documentation with implementation.
+6. Update documentation incrementally.
+7. Preserve all manual developer notes.
+8. Preserve custom sections.
+9. Preserve formatting style.
+10. Generate examples from actual code.
+
+---
+
+## Strict Protection Rule
+
+Under no circumstances should API documentation be modified unless one of the activation commands is explicitly present in the user request.
+
+Even if:
+
+* New endpoints were added.
+* Existing endpoints changed.
+* Validation changed.
+* Resources changed.
+* Response structures changed.
+
+Documentation must remain untouched until the user explicitly requests documentation generation.
+
+This rule has higher priority than any documentation-related instruction.
 
 Your task is to establish a permanent AI development architecture rule system.
 
@@ -232,4 +1204,970 @@ Verify:
 4. No application files were modified.
 
 
+==================================================
+PRODUCTION FEATURE STATE MANAGEMENT
+==================================================
+
+From this point forward, maintain a permanent Production State for the project.
+
+This state MUST be updated after EVERY feature audit, implementation, bug fix, regression test, or production closure.
+
+Never leave the project state outdated.
+
+==================================================
+PROJECT STATE FILES
+==================================================
+
+Maintain and continuously update the following files:
+
+docs/production-status.md
+
+docs/feature-dependencies.md
+
+docs/regression-matrix.md
+
+docs/production-history.md
+
+Update them after EVERY completed feature.
+
+==================================================
+1. docs/production-status.md
+==================================================
+
+This is the master dashboard.
+
+For every feature maintain:
+
+| Feature | Status | Production Ready | Depends On | Used By | Regression Required | Last Audit | Tests | Bugs |
+
+Status values:
+
+- Not Started
+- In Progress
+- Blocked
+- Regression Required
+- Production Ready
+
+Production Ready:
+
+YES / NO
+
+Tests:
+
+example:
+
+106/106
+
+Bugs:
+
+None
+or
+
+B1
+B2
+...
+
+Whenever a feature changes, update this table.
+
+==================================================
+2. docs/feature-dependencies.md
+==================================================
+
+Maintain a dependency graph.
+
+For every feature include:
+
+Feature:
+
+Depends On:
+
+Required Before Closing:
+
+Used By:
+
+Breaking Impact:
+
+Regression Suites:
+
+Example:
+
+--------------------------------------------------
+
+Feature:
+Categories
+
+Depends On:
+
+- Authentication
+- Media Lifecycle
+
+Used By:
+
+- Products
+- Search
+- Home
+- Coupons
+
+If Categories changes:
+
+Must rerun:
+
+- Category tests
+- Product tests
+- Search tests
+- Home tests
+
+--------------------------------------------------
+
+Feature:
+Brands
+
+Depends On:
+
+- Media Lifecycle
+
+Used By:
+
+- Products
+
+Regression:
+
+- Brand
+- Product
+
+--------------------------------------------------
+
+Do this for EVERY feature.
+
+==================================================
+3. docs/regression-matrix.md
+==================================================
+
+Maintain a regression matrix.
+
+Whenever a feature is modified, determine ALL dependent features.
+
+Example:
+
+Changed Feature:
+
+Categories
+
+Regression Required:
+
+[X] Categories
+
+[X] Products
+
+[X] Search
+
+[X] Home
+
+[X] Coupons
+
+[X] Cart
+
+Result:
+
+PASS
+
+PASS
+
+PASS
+
+PASS
+
+PASS
+
+PASS
+
+Never close a feature until all required regression suites pass.
+
+==================================================
+4. docs/production-history.md
+==================================================
+
+Maintain a chronological log.
+
+Example:
+
+2026-07-17
+
+Feature:
+
+Categories
+
+Verified Bugs Fixed:
+
+B1
+
+B2
+
+B3
+
+B4
+
+B5
+
+B6
+
+Regression:
+
+PASS
+
+Status:
+
+Production Ready
+
+--------------------------------------------------
+
+2026-07-18
+
+Feature:
+
+FAQ
+
+Verified Bugs Fixed:
+
+F1
+
+Regression:
+
+PASS
+
+Status:
+
+Production Ready
+
+==================================================
+DEPENDENCY ANALYSIS
+==================================================
+
+After auditing a feature, ALWAYS determine:
+
+1.
+
+What does this feature depend on?
+
+2.
+
+Which features depend on this feature?
+
+3.
+
+Which tests must be rerun?
+
+4.
+
+Can this feature be closed immediately?
+
+or
+
+Must another feature be completed first?
+
+==================================================
+AUTOMATIC REGRESSION
+==================================================
+
+Whenever Feature A changes:
+
+Automatically identify every affected feature.
+
+Example:
+
+Category changed
+
+↓
+
+Affected:
+
+Products
+
+Search
+
+Coupons
+
+Cart
+
+Home
+
+Automatically mark:
+
+Regression Required
+
+Only clear this status after all dependent tests pass.
+
+==================================================
+PRODUCTION CLOSURE RULE
+==================================================
+
+A feature CANNOT become Production Ready until ALL are true:
+
+✔ No verified production bugs remain.
+
+✔ Documentation synchronized.
+
+✔ Routes documentation synchronized.
+
+✔ Regression matrix updated.
+
+✔ Dependency graph updated.
+
+✔ Production history updated.
+
+✔ Required dependent regression suites passed.
+
+✔ Feature status updated.
+
+Otherwise:
+
+Status:
+
+Regression Required
+
+or
+
+Blocked
+
+==================================================
+FINAL REPORT
+==================================================
+
+After every feature provide:
+
+1.
+
+Feature Status
+
+2.
+
+Production Ready
+
+YES / NO
+
+3.
+
+Depends On
+
+4.
+
+Used By
+
+5.
+
+Regression Suites Executed
+
+6.
+
+Regression Suites Still Required
+
+7.
+
+Affected Features
+
+8.
+
+Production Dashboard Updated
+
+YES
+
+9.
+
+Dependency Graph Updated
+
+YES
+
+10.
+
+Regression Matrix Updated
+
+YES
+
+11.
+
+Production History Updated
+
+YES
+
+12.
+
+Can the feature be officially closed?
+
+YES / NO
+
+Only answer YES if ALL dependency and regression requirements have been satisfied.
+
+==================================================
+MANDATORY PROJECT STATE MANAGEMENT
+==================================================
+
+This workflow is MANDATORY after EVERY:
+
+- Feature audit
+- Bug fix
+- Implementation
+- Regression test
+- Documentation update
+- Production closure
+
+Never skip these updates.
+
+The project state is the SINGLE SOURCE OF TRUTH for production readiness.
+
+==================================================
+READ PROJECT STATE FIRST
+==================================================
+
+Before auditing or modifying ANY feature, ALWAYS read:
+
+- docs/production-status.md
+- docs/feature-dependencies.md
+- docs/regression-matrix.md
+- docs/production-history.md
+
+If a file does not exist:
+
+Create it.
+
+Otherwise:
+
+Preserve ALL existing data.
+
+Never overwrite history.
+
+Only update the affected sections.
+
+Always base updates ONLY on:
+
+- Current source code
+- Verified test results
+- Verified documentation
+
+Never assume project state.
+
+==================================================
+FILES TO MAINTAIN
+==================================================
+
+Always maintain:
+
+- docs/production-status.md
+- docs/feature-dependencies.md
+- docs/regression-matrix.md
+- docs/production-history.md
+
+==================================================
+1. UPDATE docs/production-status.md
+==================================================
+
+Maintain ONE row per feature.
+
+Columns:
+
+| Feature | Revision | Status | Production Ready | Depends On | Used By | Regression Status | Last Audit | Tests | Verified Bugs |
+
+Revision:
+
+Increment ONLY when that feature changes.
+
+Status values ONLY:
+
+- Not Started
+- In Progress
+- Blocked
+- Regression Required
+- Production Ready
+
+Production Ready:
+
+YES / NO
+
+Regression Status:
+
+- Not Required
+- Pending
+- Passed
+- Failed
+
+Tests:
+
+Examples:
+
+32/32
+
+106/106
+
+792/792
+
+Verified Bugs:
+
+Examples:
+
+None
+
+B1
+
+B2
+
+B3
+
+Last Audit:
+
+YYYY-MM-DD
+
+Always update ONLY the current feature row.
+
+==================================================
+2. UPDATE docs/feature-dependencies.md
+==================================================
+
+For EVERY feature maintain:
+
+Feature:
+
+Purpose:
+
+Depends On:
+
+Used By:
+
+Regression Required When Changed:
+
+Blocking Dependencies:
+
+Current Status:
+
+Dependency Confidence:
+
+For every dependency use ONLY:
+
+Verified
+
+Not verified
+
+Example:
+
+--------------------------------------------------
+
+Feature:
+
+Categories
+
+Purpose:
+
+Manage product categorization.
+
+Depends On:
+
+- Authentication (Verified)
+- Permissions (Verified)
+- Generic Media Lifecycle (Verified)
+
+Used By:
+
+- Products (Verified)
+- Home (Verified)
+- Search (Verified)
+- Coupons (Verified)
+
+Regression Required When Changed:
+
+- Categories
+- Products
+- Search
+- Home
+- Coupons
+
+Blocking Dependencies:
+
+None
+
+Current Status:
+
+Production Ready
+
+--------------------------------------------------
+
+Never infer dependencies.
+
+If they cannot be proven from source code:
+
+Write:
+
+Not verified.
+
+==================================================
+3. UPDATE docs/regression-matrix.md
+==================================================
+
+Whenever a feature changes:
+
+Determine ALL affected features.
+
+For every affected feature report:
+
+Regression Suite
+
+Status
+
+Reason
+
+Status values ONLY:
+
+PASS
+
+FAIL
+
+NOT RUN
+
+NOT VERIFIED
+
+Never report PASS unless the regression suite actually passed.
+
+Example:
+
+--------------------------------------------------
+
+Changed Feature:
+
+Categories
+
+Affected Features:
+
+Categories
+
+Regression:
+
+PASS
+
+Reason:
+
+Feature tests passed.
+
+Products
+
+Regression:
+
+NOT RUN
+
+Reason:
+
+Dependent suite not executed.
+
+Search
+
+Regression:
+
+NOT VERIFIED
+
+Reason:
+
+No automated tests found.
+
+--------------------------------------------------
+
+==================================================
+4. UPDATE docs/production-history.md
+==================================================
+
+Append a chronological entry.
+
+Never overwrite history.
+
+Format:
+
+--------------------------------------------------
+
+Date:
+
+YYYY-MM-DD
+
+Feature:
+
+Categories
+
+Revision:
+
+3
+
+Summary:
+
+Short summary.
+
+Verified Bugs Fixed:
+
+- B1
+- B2
+
+Documentation Updated:
+
+YES
+
+Routes Updated:
+
+YES
+
+Regression Executed:
+
+YES
+
+Regression Result:
+
+PASS
+
+Production Ready:
+
+YES
+
+Notes:
+
+Any remaining verified risks.
+
+--------------------------------------------------
+
+==================================================
+DEPENDENCY ANALYSIS
+==================================================
+
+After every completed feature determine ONLY from source code:
+
+1.
+
+What does this feature depend on?
+
+2.
+
+Which features depend on this feature?
+
+3.
+
+Which automated regression suites should be rerun if this feature changes?
+
+4.
+
+Which documentation files must be reviewed?
+
+If something cannot be proven:
+
+Write:
+
+Not verified.
+
+==================================================
+CHANGE IMPACT ANALYSIS
+==================================================
+
+For every completed feature report:
+
+Files Modified
+
+Database Changes
+
+API Changes
+
+Route Changes
+
+Response Changes
+
+Permission Changes
+
+Migration Changes
+
+Shared Components Modified
+
+Breaking Changes
+
+Backward Compatible
+
+Use ONLY:
+
+YES
+
+NO
+
+Not verified
+
+==================================================
+SHARED COMPONENT ANALYSIS
+==================================================
+
+Determine whether this feature modified any shared component.
+
+Shared components include:
+
+- Shared models
+- Shared observers
+- Shared traits
+- Shared services
+- Shared resources
+- Shared middleware
+- Shared events
+- Shared listeners
+- Shared helpers
+- Shared config
+
+If YES:
+
+Identify every feature that uses those shared components.
+
+Mark those features:
+
+Regression Required
+
+Do NOT mark them Production Ready again until regression testing actually passes.
+
+==================================================
+AUTOMATIC REGRESSION STATUS
+==================================================
+
+Whenever Feature A changes:
+
+Automatically update every dependent feature.
+
+If the regression suite has NOT yet executed:
+
+Regression Status:
+
+Pending
+
+Feature Status:
+
+Regression Required
+
+Only after regression suites PASS may the feature return to:
+
+Production Ready
+
+Never assume regression passed.
+
+==================================================
+RELEASE READINESS
+==================================================
+
+Maintain overall project status.
+
+Report:
+
+Production Ready Features
+
+Regression Required Features
+
+Blocked Features
+
+In Progress Features
+
+Open Verified Bugs
+
+Total Automated Tests
+
+Passing Tests
+
+Failing Tests
+
+Release Ready
+
+Release Ready is YES only if:
+
+- No feature is Blocked.
+- No feature is Regression Required.
+- No verified production bugs remain.
+- All required regression suites passed.
+
+Otherwise:
+
+Release Ready:
+
+NO
+
+==================================================
+PRODUCTION CLOSURE RULE
+==================================================
+
+A feature CANNOT become:
+
+Production Ready
+
+until ALL are true:
+
+✔ No verified production bugs remain.
+
+✔ Documentation synchronized.
+
+✔ docs/routes.md synchronized.
+
+✔ docs/cms-endpoints/<feature>.md synchronized.
+
+✔ production-status updated.
+
+✔ feature-dependencies updated.
+
+✔ regression-matrix updated.
+
+✔ production-history updated.
+
+✔ Dependencies reviewed.
+
+✔ Required regression suites completed.
+
+Otherwise set status to ONE of:
+
+- Blocked
+- Regression Required
+- In Progress
+
+==================================================
+FINAL REPORT
+==================================================
+
+At the end of EVERY feature provide:
+
+1. Feature Status
+
+2. Production Ready
+YES / NO
+
+3. Revision
+
+4. Depends On
+
+5. Used By
+
+6. Affected Features
+
+7. Regression Suites Executed
+
+8. Regression Suites Still Required
+
+9. Shared Components Modified
+
+10. Documentation Updated
+YES / NO
+
+11. Routes Updated
+YES / NO
+
+12. Production Status Updated
+YES / NO
+
+13. Dependency Graph Updated
+YES / NO
+
+14. Regression Matrix Updated
+YES / NO
+
+15. Production History Updated
+YES / NO
+
+16. Release Ready
+YES / NO
+
+17. Can this feature be officially closed?
+YES / NO
+
+Never close a feature until every required state file has been updated.
+
+Never assume project state.
+
+Always derive every conclusion from the current source code and verified automated test results.
+Always derive it from the current source code and verified test results.
 Final response must only summarize created documentation files.

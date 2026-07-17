@@ -12,6 +12,7 @@ use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvi
 use Marvel\Events\CommissionRateUpdateEvent;
 use Marvel\Events\DigitalProductUpdateEvent;
 use Marvel\Events\FlashSaleProcessed;
+use Marvel\Events\OrderCancelled;
 use Marvel\Events\Maintenance;
 use Marvel\Events\MessageSent;
 use Marvel\Events\OrderDelivered;
@@ -41,6 +42,7 @@ use Marvel\Listeners\OwnershipTransferStatusControlListener;
 use Marvel\Listeners\ProductReviewApprovedListener;
 use Marvel\Listeners\ProductReviewRejectedListener;
 use Marvel\Listeners\Refund\SendRefundUpdateNotification;
+use Marvel\Listeners\SendOrderCancelledNotification;
 use Marvel\Listeners\SendOrderDeliveredNotification;
 use Marvel\Listeners\SendOrderReceivedNotification;
 use Marvel\Listeners\SendRefundRequestedNotification;
@@ -70,6 +72,9 @@ class EventServiceProvider extends ServiceProvider
             MessageParticipantNotification::class,
             SendMessageNotification::class,
             StoredMessagedNotifyLogsListener::class
+        ],
+        OrderCancelled::class => [
+            SendOrderCancelledNotification::class
         ],
         OrderReceived::class => [
             SendOrderReceivedNotification::class

@@ -62,6 +62,7 @@ class ContactRepository extends BaseRepository
 
         // Logic to send email to the contact's email address with the provided data
         $replayContent = $this->create([
+            'name' => $contact->name,
             'email' => $contact->email,
             'subject' => $data->subject,
             'message' => $data->message,

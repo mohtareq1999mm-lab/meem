@@ -7,7 +7,7 @@ namespace Tests\Feature;
 use App\Events\OrderCreated;
 use App\Events\ContactMessageReceived;
 use App\Events\AdminLoggedIn;
-use App\Models\Contact;
+use Marvel\Database\Models\Contact;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;

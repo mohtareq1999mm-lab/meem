@@ -5,6 +5,7 @@ namespace Marvel\Http\Controllers;
 use App\Http\Resources\Pages\SectionResource as PagesSectionResource;
 use App\Services\General\SectionTypeService;
 use Illuminate\Http\Request;
+use Marvel\Enums\Permission;
 use Marvel\Http\Requests\StoreSectionRequest;
 use Marvel\Http\Requests\UpdateSectionRequest;
 use Marvel\Models\Section;
@@ -16,7 +17,12 @@ class SectionController extends CoreController
 
     public function __construct(
         private SectionTypeService $sectionTypeService
-    ) {}
+    ) {
+        $this->middleware('permission:' . Permission::VIEW_SECTIONS)->only(['index', 'show', 'getTypeSection']);
+        $this->middleware('permission:' . Permission::CREATE_SECTIONS)->only('store');
+        $this->middleware('permission:' . Permission::UPDATE_SECTIONS)->only(['update', 'reorder', 'toggleStatus']);
+        $this->middleware('permission:' . Permission::DELETE_SECTIONS)->only('destroy');
+    }
 
     public function index()
     {
@@ -28,6 +34,7 @@ class SectionController extends CoreController
     {
         try {
             $data = $request->validated();
+            $data['endpoint'] = $data['endpoint'] ?? 'general/' . $data['type'];
             $setting = $data['setting'] ?? null;
 
             $section = Section::create($data);
@@ -53,43 +60,28 @@ class SectionController extends CoreController
 
     public function update(UpdateSectionRequest $request, Section $section)
     {
-        try {
-            $data = $request->validated();
-            $setting = $data['setting'] ?? null;
+        $data = $request->validated();
+        $setting = $data['setting'] ?? null;
 
-            $section->update($data);
+        $section->update($data);
 
-            // if ($setting) {
-            //     $sectionType = $this->sectionTypeService->getByType($section->type);
-            //     if (!$sectionType) {
-            //         $sectionType = $this->sectionTypeService->createType(['type' => $section->type]);
-            //     }
-            //     $this->sectionTypeService->upsertSettings($sectionType->id, $setting);
-            // }
-
-            return $this->apiResponse(SECTION_UPDATED_SUCCESSFULLY, 200, true, PagesSectionResource::make($section));
-        } catch (\Exception $e) {
-            return $this->apiResponse(NOT_FOUND, 404, false);
-        }
+        return $this->apiResponse(SECTION_UPDATED_SUCCESSFULLY, 200, true, PagesSectionResource::make($section));
     }
 
     public function destroy(Section $section)
     {
-        try {
-            $section->delete();
-            return $this->apiResponse(SECTION_DELETED_SUCCESSFULLY, 200, true);
-        } catch (\Exception $e) {
-            return $this->apiResponse(NOT_FOUND, 404, false);
-        }
+        $section->delete();
+        return $this->apiResponse(SECTION_DELETED_SUCCESSFULLY, 200, true);
     }
 
     public function reorder(Request $request)
     {
+        $request->validate([
+            'sections'   => 'required|array',
+            'sections.*' => 'required|integer|distinct|exists:sections,id',
+        ]);
+
         try {
-            $request->validate([
-                'sections'   => 'required|array',
-                'sections.*' => 'required|integer|distinct|exists:sections,id',
-            ]);
             Section::setNewOrder($request->sections);
             return $this->apiResponse(SECTIONS_REORDERED_SUCCESSFULLY, 200, true);
         } catch (\Exception $e) {

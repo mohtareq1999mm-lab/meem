@@ -78,7 +78,10 @@ All endpoints return:
 ```json
 {
     "id": 1,
-    "title": "Summer Sale",
+    "title": {
+        "en": "Summer Sale",
+        "ar": "تخفيضات الصيف"
+    },
     "slug": "summer-sale",
     "status": true,
     "order": 1,
@@ -194,11 +197,11 @@ GET /sliders?order=status&sortedBy=desc      # Active first
 
 | Field | Type | Required | Validation |
 |-------|------|----------|------------|
-| `title` | object | **Yes** | Translatable object with `en` and `ar` keys |
-| `title.en` | string | **Yes** | `string`, unique translation |
-| `title.ar` | string | **Yes** | `string`, unique translation |
-| `image_desktop` | file | **Yes** | `image`, `mimes:jpeg,png,jpg,gif`, `max:2048` |
-| `image_mobile` | file | **Yes** | `image`, `mimes:jpeg,png,jpg,gif`, `max:2048` |
+| `title` | object | No | `array`. Translatable object with `en` and `ar` keys |
+| `title.en` | string | No | `string`, `sometimes`, unique translation (ignores self) |
+| `title.ar` | string | No | `string`, `sometimes`, unique translation (ignores self) |
+| `image_desktop` | file | No | `image`, `sometimes`, `mimes:jpeg,png,jpg,gif`, `max:2048` |
+| `image_mobile` | file | No | `image`, `sometimes`, `mimes:jpeg,png,jpg,gif`, `max:2048` |
 | `status` | int | No | `in:0,1` |
 | `products` | array | No | Array of product IDs |
 | `products.*` | int | No | `exists:products,id` |
@@ -230,7 +233,10 @@ GET /sliders?order=status&sortedBy=desc      # Active first
     "success": true,
     "data": {
         "id": 2,
-        "title": "New Promotion",
+        "title": {
+            "en": "New Promotion",
+            "ar": "تخفيضات الصيف"
+        },
         "slug": "new-promotion",
         "status": true,
         "order": 2,
@@ -288,7 +294,10 @@ GET /sliders?order=status&sortedBy=desc      # Active first
     "success": true,
     "data": {
         "id": 1,
-        "title": "Summer Sale",
+        "title": {
+            "en": "Summer Sale",
+            "ar": "تخفيضات الصيف"
+        },
         "slug": "summer-sale",
         "status": true,
         "order": 1,
@@ -373,7 +382,10 @@ GET /sliders?order=status&sortedBy=desc      # Active first
     "success": true,
     "data": {
         "id": 1,
-        "title": "Summer Sale",
+        "title": {
+            "en": "Summer Sale",
+            "ar": "تخفيضات الصيف"
+        },
         "slug": "summer-sale",
         "status": true,
         "order": 1,
@@ -441,13 +453,13 @@ GET /sliders?order=status&sortedBy=desc      # Active first
 
 ---
 
-### POST /slider/change-status — Toggle Slider Status
+### PATCH /sliders/change-status — Toggle Slider Status
 
 **Purpose:** Toggle a slider's active status.
 
-**Method:** `POST`
+**Method:** `PATCH`
 
-**URL:** `/slider/change-status`
+**URL:** `/sliders/change-status`
 
 **Authentication:** Required
 
@@ -479,7 +491,10 @@ GET /sliders?order=status&sortedBy=desc      # Active first
     "success": true,
     "data": {
         "id": 1,
-        "title": "Summer Sale",
+        "title": {
+            "en": "Summer Sale",
+            "ar": "تخفيضات الصيف"
+        },
         "slug": "summer-sale",
         "status": false,
         "order": 1,
@@ -511,11 +526,11 @@ GET /sliders?order=status&sortedBy=desc      # Active first
 
 ---
 
-### POST /sliders/reorder — Reorder Sliders
+### PUT /sliders/reorder — Reorder Sliders
 
 **Purpose:** Set a custom order for multiple sliders.
 
-**Method:** `POST`
+**Method:** `PUT`
 
 **URL:** `/sliders/reorder`
 
@@ -563,17 +578,25 @@ GET /sliders?order=status&sortedBy=desc      # Active first
 
 ## Route Definitions
 
-```php
-// Public routes (no auth)
-Route::apiResource('sliders', SliderController::class, ['only' => ['index']]);
+All routes are in `packages/marvel/src/Rest/Routes.php`, loaded via `RestAPIServiceProvider::loadRoutes()` with prefix `/api/v1` and `api` middleware group.
 
-// Admin routes (auth + permissions)
-Route::post('slider/change-status', [SliderController::class, 'changeStatus']);
-Route::post('sliders/reorder', [SliderController::class, 'reorder']);
-Route::apiResource('sliders', SliderController::class);
-```
+### Duplicate Route Registration
 
-Source: `packages/marvel/src/Rest/Routes.php`
+`GET /sliders` is registered **twice**:
+1. Line 254 — `apiResource('sliders', SliderController::class, ['only' => ['index']])` — **no route middleware**
+2. Line 494 — `Route::apiResource('sliders', SliderController::class)` — inside `auth:sanctum` + `verified` group
+
+Laravel resolves the **first** registration (line 254). The `permission:view-slider` controller middleware (SliderController line 22) enforces authentication and authorization regardless of which route is matched. Behavior is identical in both cases. This is **Technical Debt** — a redundant registration, not a production bug.
+
+| Method | URI | Controller | Action | Route Middleware | Controller Middleware | Permission | Source Line |
+|--------|-----|------------|--------|-----------------|----------------------|------------|-------------|
+| GET | `/sliders` | `SliderController` | `index` | None (resolves line 254; also at line 494 behind `auth:sanctum`, `email.verified`) | `permission:view-slider` | `view-slider` | Lines 254, 494 |
+| GET | `/sliders/{slider}` | `SliderController` | `show` | `auth:sanctum`, `email.verified` | `permission:view-slider` | `view-slider` | Line 494 |
+| POST | `/sliders` | `SliderController` | `store` | `auth:sanctum`, `email.verified` | `permission:create-slider` | `create-slider` | Line 494 |
+| PUT | `/sliders/{slider}` | `SliderController` | `update` | `auth:sanctum`, `email.verified` | `permission:update-slider` | `update-slider` | Line 494 |
+| DELETE | `/sliders/{slider}` | `SliderController` | `destroy` | `auth:sanctum`, `email.verified` | `permission:delete-slider` | `delete-slider` | Line 494 |
+| PATCH | `/sliders/change-status` | `SliderController` | `changeStatus` | `auth:sanctum`, `email.verified` | `permission:update-slider` | `update-slider` | Line 491 |
+| PUT | `/sliders/reorder` | `SliderController` | `reorder` | `auth:sanctum`, `email.verified` | `permission:update-slider` | `update-slider` | Line 492 |
 
 ---
 
@@ -629,4 +652,61 @@ Source: `packages/marvel/src/Rest/Routes.php`
 - The `slug` is auto-generated from the English translation of `title` on `saving` event
 - `products` sync replaces all existing pivot associations — send full desired list
 - Slider ordering uses Spatie `eloquent-sortable`; the `order` column is managed automatically
-- The `index` endpoint supports an additional public route (no auth) outside the admin group
+- The `title` field returns a translated string on `GET /sliders` (index) and the full translation object on all other routes
+
+---
+
+## Regression Fixes
+
+| Fix | Description | Status |
+|-----|-------------|--------|
+| Missing permission middleware on `changeStatus` and `reorder` | `UPDATE_SLIDER` permission middleware was not applied to these endpoints. Added `$this->middleware("permission:".Permission::UPDATE_SLIDER)->only(["update", "changeStatus", "reorder"])` in `SliderController` constructor. | **Fixed** |
+| Missing English translations for slider messages | `MESSAGE.SLIDER_CREATED_SUCCESSFULLY`, `MESSAGE.SLIDER_UPDATED_SUCCESSFULLY`, `MESSAGE.SLIDER_DELETED_SUCCESSFULLY`, `MESSAGE.SLIDER_STATUS_CHANGED`, `MESSAGE.SLIDERS_REORDERED_SUCCESSFULLY` were missing in `resources/lang/en/message.php`. Added all five translations. | **Fixed** |
+| `reorder` method caught `ValidationException` and returned 500 | Validation was inside a broad `try/catch(\Exception)` block causing 500 instead of 422. Moved `$request->validate()` outside the try-catch. | **Fixed** |
+| Test `assertJsonIsString` used unavailable method | `assertJsonIsString` does not exist in this Laravel version. Replaced with `assertIsString()`. | **Fixed** |
+| Test `test_create_slider_with_product_association` missing `title.ar` | The request validation requires both `title.en` and `title.ar`. Added `title.ar` to the test payload. | **Fixed** |
+
+---
+
+## Architecture Notes
+
+- The Marvel `SliderController` handles all CRUD + `changeStatus` + `reorder` operations for admin users
+- All admin routes are inside the `auth:sanctum` + `email.verified` group (Routes.php line 452); role-based access is NOT enforced at route level — controller-level permission middleware handles authorization
+- Permission middleware is enforced at the controller level via Spatie `permission` middleware
+- The `Get /sliders` route is registered twice (lines 254 and 494) — Laravel resolves the first; this is harmless technical debt
+- The Application-layer classes (`app/Http/Controllers/Api/General/SliderController`, `app/Services/General/SliderService`, `app/Http/Resources/Slider/SliderResource`) have no registered routes and are **unused** by the current API
+- Slider uses SoftDeletes — records are soft-deleted and excluded from queries automatically
+
+---
+
+## Testing Coverage
+
+The test suite (`tests/Feature/SliderApiTest.php`) covers the following categories:
+
+| Category | Covered |
+|----------|---------|
+| CRUD — List, Show, Create, Update, Delete | ✔ |
+| Validation — Missing title, missing images, invalid input | ✔ |
+| Authorization — User without permission gets 403 | ✔ |
+| Authentication — Unauthenticated user gets 401 | ✔ |
+| Pagination — `?per_page=` and page metadata | ✔ |
+| Filtering — `?active=true` filter | ✔ |
+| Status toggle — `changeStatus` active/inactive | ✔ |
+| Reorder — `reorder` with valid/invalid IDs | ✔ |
+| Response Structure — JSON shape assertions | ✔ |
+| Translation serialization — title object on show, string on index | ✔ |
+| Resource serialization — image, status, order fields | ✔ |
+| Database persistence — soft delete, cascading | ✔ |
+| Edge cases — 404 for nonexistent IDs, empty list | ✔ |
+| Soft delete — deleted sliders not listed, 404 on show | ✔ |
+| Product relations — create slider with product association | ✔ |
+
+---
+
+## Known Constraints
+
+- Route-level middleware is `auth:sanctum` + `email.verified`; controller-level permission middleware (`view-slider`, `create-slider`, `update-slider`, `delete-slider`) handles authorization
+- Slider images are replaced on update if a new file is provided; no partial image update is possible
+- Product sync on update replaces all existing pivot associations — partial sync is not supported
+- The `order` column is auto-managed by Spatie Sortable on create; manual order assignment on create is not supported
+- As of the current implementation, Slider records do not support soft-delete restoration via the API

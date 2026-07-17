@@ -12,7 +12,7 @@
 
 **Authentication:** Required
 
-**Permissions:** N/A
+**Permissions:** `view-content-pages`
 
 **Business Logic:**
 1. Loads all content pages with `sections` relation ordered by `order` column
@@ -32,12 +32,13 @@
             "is_active": true,
             "sections": [
                 {
-                    "id": 1,
-                    "type": "hero",
-                    "title": "Hero Banner",
-                    "endpoint": "general/hero?slug=summer-sale",
-                    "order": 1,
-                    "setting": { "front": {}, "back": { "slug": "summer-sale" } }
+        "id": 1,
+        "type": "hero",
+        "title": "Hero Banner",
+        "is_active": true,
+        "endpoint": "general/hero?slug=summer-sale",
+        "order": 1,
+        "setting": { "front": {}, "back": { "slug": "summer-sale" } }
                 }
             ]
         }
@@ -57,13 +58,13 @@
 
 **Authentication:** Required
 
-**Permissions:** N/A
+**Permissions:** `create-content-pages`
 
 **Request Body:**
 | Field | Type | Required | Validation |
 |-------|------|----------|------------|
 | `title` | object | No | `nullable`, translatable array |
-| `title.*` | string | No | `string`, `max:30`, unique translation |
+| `title.*` | string | No | `nullable`, `string`, `max:30`, unique translation |
 
 **Business Logic:**
 1. Generates `slug` from `title.en` using `Str::slug()`
@@ -98,7 +99,7 @@
 
 **Authentication:** Required
 
-**Permissions:** N/A
+**Permissions:** `view-content-pages`
 
 **Business Logic:**
 1. Route-model binding — `ContentPage` resolved by ID
@@ -119,8 +120,9 @@
             {
                 "id": 1,
                 "type": "hero",
-                "title": "Hero Banner",
-                "endpoint": "general/hero?slug=summer-sale",
+"title": "Hero Banner",
+                    "is_active": true,
+                    "endpoint": "general/hero?slug=summer-sale",
                 "order": 1,
                 "setting": { "front": {}, "back": { "slug": "summer-sale" } }
             }
@@ -141,13 +143,13 @@
 
 **Authentication:** Required
 
-**Permissions:** N/A
+**Permissions:** `update-content-pages`
 
 **Request Body:**
 | Field | Type | Required | Validation |
 |-------|------|----------|------------|
 | `title` | object | No | `sometimes`, translatable array |
-| `title.*` | string | No | `string`, `max:30`, unique translation (ignores self) |
+| `title.*` | string | No | `sometimes`, `string`, `max:30`, unique translation (ignores self) |
 | `is_active` | bool/int | No | `sometimes`, `in:0,1` |
 
 **Business Logic:**
@@ -183,7 +185,7 @@
 
 **Authentication:** Required
 
-**Permissions:** N/A
+**Permissions:** `delete-content-pages`
 
 **Success Response (200):**
 ```json
@@ -198,6 +200,116 @@
 | Status | Condition |
 |--------|-----------|
 | 401 | Unauthenticated |
+| 403 | Forbidden — missing `delete-content-pages` permission |
+| 404 | Content page not found |
+
+---
+
+### POST /content-pages/{content_page}/attach-sections — Attach Sections to Content Page
+
+**Purpose:** Attach existing sections to this content page by their IDs, or detach all sections by sending an empty array.
+
+**Method:** `POST`
+
+**URL:** `/content-pages/{content_page}/attach-sections`
+
+**Authentication:** Required
+
+**Permissions:** `update-content-pages`
+
+**Request Body:**
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| `sections` | array | **Yes** | `present`, `array` |
+| `sections.*` | int | No | `integer`, `exists:sections,id` |
+
+**Business Logic:**
+1. If empty array provided, detaches all sections by setting `content_page_id` to `null`
+2. Otherwise, attaches each section to the content page via `attachSectionsByIds()`
+3. Wrapped in `DB::transaction()`
+
+**Success Response (200) — Attached:**
+```json
+{
+    "status": 200,
+    "message": "Data updated successfully",
+    "success": true,
+    "data": {
+        "id": 1,
+        "title": { "en": "Home Page", "ar": "الصفحة الرئيسية" },
+        "slug": "home-page",
+        "is_active": true,
+        "sections": [
+            {
+                "id": 1,
+                "type": "hero",
+"title": "Hero Banner",
+                    "is_active": true,
+                    "endpoint": "general/hero?slug=summer-sale",
+                "order": 1,
+                "setting": { "front": {}, "back": { "slug": "summer-sale" } }
+            }
+        ]
+    }
+}
+```
+
+**Success Response (200) — Detached (empty array):**
+```json
+{
+    "status": 200,
+    "message": "Data deleted successfully",
+    "success": true
+}
+```
+
+**Error Responses:**
+| Status | Condition |
+|--------|-----------|
+| 401 | Unauthenticated |
+| 403 | Forbidden — missing `update-content-pages` permission |
+| 404 | Content page not found |
+| 422 | Validation failure |
+
+---
+
+### PATCH /content-pages/{content_page}/toggle-active — Toggle Content Page Active Status
+
+**Purpose:** Toggle the `is_active` boolean on a content page.
+
+**Method:** `PATCH`
+
+**URL:** `/content-pages/{content_page}/toggle-active`
+
+**Authentication:** Required
+
+**Permissions:** `update-content-pages`
+
+**Business Logic:**
+1. Flips `is_active` from `true` to `false` or `false` to `true`
+2. Saves and returns the updated content page with sections
+
+**Success Response (200):**
+```json
+{
+    "status": 200,
+    "message": "Data updated successfully",
+    "success": true,
+    "data": {
+        "id": 1,
+        "title": { "en": "Home Page", "ar": "الصفحة الرئيسية" },
+        "slug": "home-page",
+        "is_active": false,
+        "sections": []
+    }
+}
+```
+
+**Error Responses:**
+| Status | Condition |
+|--------|-----------|
+| 401 | Unauthenticated |
+| 403 | Forbidden — missing `update-content-pages` permission |
 | 404 | Content page not found |
 
 ---
@@ -212,7 +324,7 @@
 
 **Authentication:** Required
 
-**Permissions:** N/A
+**Permissions:** `view-sections`
 
 **Business Logic:**
 1. Calls `Section::ordered()->get()` (uses `spatie/eloquent-sortable`)
@@ -228,6 +340,7 @@
             "id": 1,
             "type": "hero",
             "title": "Hero Banner",
+            "is_active": true,
             "endpoint": "general/hero?slug=summer-sale",
             "order": 1,
             "setting": { "front": {}, "back": { "slug": "summer-sale" } }
@@ -248,24 +361,23 @@
 
 **Authentication:** Required
 
-**Permissions:** N/A
+**Permissions:** `create-sections`
 
 **Request Body:**
 | Field | Type | Required | Validation |
 |-------|------|----------|------------|
-| `type` | string | **Yes** | `required`, `string`, `max:100` |
+| `type` | string | **Yes** | `required`, `string`, `max:100`, `exists:section_types,type` |
 | `title` | object | **Yes** | `required`, translatable array |
 | `title.*` | string | **Yes** | `string`, `max:50`, unique translation |
-| `with_product` | bool/int | **Yes** | `required`, `in:0,1` |
 | `is_active` | bool/int | No | `nullable`, `in:0,1` |
 | `title_visible` | bool/int | No | `nullable`, `in:0,1` |
 | `order` | int | No | `nullable`, `integer` — auto-assigned by sortable trait |
 | `setting` | object | No | `nullable`, `array` |
 | `setting.front` | object | No | `nullable`, `array` |
-| `setting.back` | object | No | `nullable`, `array` — only `slug` allowed if `with_product=1` |
+| `setting.back` | object | No | `nullable`, `array` — only `slug` allowed when `with_product` is truthy |
 
 **Business Logic:**
-1. If `with_product=1`, validates that `setting.back` only contains `slug` key
+1. If `with_product` is present and truthy in the request, validates that `setting.back` only contains `slug` key
 2. Order auto-assigned by `spatie/eloquent-sortable`
 
 **Success Response (200):**
@@ -278,6 +390,7 @@
         "id": 1,
         "type": "hero",
         "title": "Hero Banner",
+        "is_active": true,
         "endpoint": "general/hero?slug=summer-sale",
         "order": 1,
         "setting": { "front": {}, "back": { "slug": "summer-sale" } }
@@ -297,7 +410,7 @@
 
 **Authentication:** Required
 
-**Permissions:** N/A
+**Permissions:** `view-sections`
 
 **Success Response (200):**
 ```json
@@ -309,6 +422,7 @@
         "id": 1,
         "type": "hero",
         "title": "Hero Banner",
+        "is_active": true,
         "endpoint": "general/hero?slug=summer-sale",
         "order": 1,
         "setting": { "front": {}, "back": { "slug": "summer-sale" } }
@@ -328,24 +442,23 @@
 
 **Authentication:** Required
 
-**Permissions:** N/A
+**Permissions:** `update-sections`
 
 **Request Body:**
 | Field | Type | Required | Validation |
 |-------|------|----------|------------|
 | `title` | object | No | `sometimes`, translatable array |
-| `title.*` | string | No | `string`, `max:50` |
+| `title.*` | string | No | `sometimes`, `string`, `max:50` |
 | `order` | int | No | `sometimes`, `integer` |
 | `is_active` | bool/int | No | `sometimes`, `in:0,1` |
 | `title_visible` | bool/int | No | `sometimes`, `in:0,1` |
-| `with_product` | bool | No | `sometimes`, `boolean` |
 | `setting` | object | No | `nullable`, `array` |
 | `setting.front` | object | No | `nullable`, `array` |
-| `setting.back` | object | No | `nullable`, `array` — only `slug` allowed if `with_product=1` |
+| `setting.back` | object | No | `nullable`, `array` — only `slug` allowed when `with_product` is truthy |
 
 **Business Logic:**
 1. Reads existing `with_product` from the section if not provided in request
-2. If `with_product` is true, validates `setting.back` only contains `slug`
+2. If `with_product` is truthy, validates `setting.back` only contains `slug`
 
 **Success Response (200):**
 ```json
@@ -356,7 +469,8 @@
     "data": {
         "id": 1,
         "type": "hero",
-        "title": "Hero Banner (Updated)",
+        "title": "Hero Banner",
+        "is_active": true,
         "endpoint": "general/hero?slug=summer-sale",
         "order": 1,
         "setting": { "front": {}, "back": { "slug": "summer-sale" } }
@@ -376,7 +490,7 @@
 
 **Authentication:** Required
 
-**Permissions:** N/A
+**Permissions:** `delete-sections`
 
 **Success Response (200):**
 ```json
@@ -399,7 +513,7 @@
 
 **Authentication:** Required
 
-**Permissions:** N/A
+**Permissions:** `update-sections`
 
 **Request Body:**
 | Field | Type | Required | Validation |
@@ -432,7 +546,7 @@
 
 **Authentication:** Required
 
-**Permissions:** N/A
+**Permissions:** `update-sections`
 
 **Success Response (200):**
 ```json
@@ -444,6 +558,7 @@
         "id": 1,
         "type": "hero",
         "title": "Hero Banner",
+        "is_active": true,
         "endpoint": "general/hero?slug=summer-sale",
         "order": 1,
         "setting": { "front": {}, "back": { "slug": "summer-sale" } }
@@ -463,7 +578,7 @@
 
 **Authentication:** Required
 
-**Permissions:** N/A
+**Permissions:** `view-sections`
 
 **Business Logic:**
 1. Plucks unique `type` values from all sections
@@ -490,7 +605,7 @@
 
 **Authentication:** Required
 
-**Permissions:** N/A
+**Permissions:** `view-section-types`
 
 **Business Logic:**
 1. Uses `SectionTypeService::getAll()` which plucks `type` column
@@ -517,7 +632,7 @@
 
 **Authentication:** Required
 
-**Permissions:** N/A
+**Permissions:** `create-section-types`
 
 **Request Body:**
 | Field | Type | Required | Validation |
@@ -546,7 +661,7 @@
 
 **Authentication:** Required
 
-**Permissions:** N/A
+**Permissions:** `view-section-types`
 
 **Business Logic:**
 1. Route-model binding resolves via `type` column (`getRouteKeyName()` returns `'type'`)
@@ -577,7 +692,7 @@
 
 **Authentication:** Required
 
-**Permissions:** N/A
+**Permissions:** `update-section-types`
 
 **Request Body:**
 | Field | Type | Required | Validation |
@@ -606,7 +721,7 @@
 
 **Authentication:** Required
 
-**Permissions:** N/A
+**Permissions:** `delete-section-types`
 
 **Success Response (200):**
 ```json
@@ -629,7 +744,7 @@
 
 **Authentication:** Required
 
-**Permissions:** N/A
+**Permissions:** `view-section-types`
 
 **Business Logic:**
 1. Looks up the `SectionType` by the `type` string
@@ -660,7 +775,7 @@
 
 **Authentication:** Required
 
-**Permissions:** N/A
+**Permissions:** `update-section-types`
 
 **Request Body:**
 | Field | Type | Required | Validation |

@@ -2,7 +2,7 @@
 
 namespace App\Notifications;
 
-use App\Models\Contact;
+use Marvel\Database\Models\Contact;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\BroadcastMessage;

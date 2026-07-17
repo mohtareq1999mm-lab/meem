@@ -105,7 +105,7 @@ class ProductRepository extends BaseRepository
             $this->syncRelation($product, $request, $data);
             DB::commit();
             Cache::forget('dashboard_product_analytics');
-            return $product->load('variations', 'categories', 'brands', 'banners', 'sliders', 'flash_sales');
+            return $product->load('variations', 'categories', 'tags', 'brands', 'banners', 'sliders', 'flash_sales');
         } catch (Exception $e) {
             DB::rollBack();
             throw new HttpException(500, $e->getMessage());
@@ -166,7 +166,7 @@ class ProductRepository extends BaseRepository
             $this->syncRelation($product, $request, $data);
             DB::commit();
 
-            return $product->load('variations', 'categories', 'brands', 'banners', 'sliders', 'flash_sales');
+            return $product->load('variations', 'categories', 'tags', 'brands', 'banners', 'sliders', 'flash_sales');
         } catch (Exception $e) {
             DB::rollBack();
             throw new HttpException(500, $e->getMessage());
@@ -197,6 +197,10 @@ class ProductRepository extends BaseRepository
 
         if ($request->has('sliders')) {
             $product->sliders()->sync($request->input('sliders'));
+        }
+
+        if ($request->has('tags')) {
+            $product->tags()->sync($request->input('tags'));
         }
 
         if (!empty($data['has_flash_sale']) && $data['has_flash_sale'] === true) {

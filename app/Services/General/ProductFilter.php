@@ -202,7 +202,7 @@ class ProductFilter
                 $attrValueIds = AttributeValue::whereHas('attribute', fn($q) => $q->where('slug', $lowerKey))
                     ->where(function ($q) use ($attrValues, $locale) {
                         foreach ($attrValues as $val) {
-                            $q->orWhere("value->{$locale}", $val)
+                            $q->orWhere('value', 'like', '%"' . $locale . '":"' . $val . '"%')
                               ->orWhere("slug", $val);
                         }
                     })

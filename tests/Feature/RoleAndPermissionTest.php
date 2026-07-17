@@ -147,6 +147,7 @@ class RoleAndPermissionTest extends TestCase
             PermissionEnum::UPDATE_ROLES,
             PermissionEnum::DELETE_ROLES,
             PermissionEnum::VIEW_ROLES,
+            PermissionEnum::VIEW_ROLE,
             PermissionEnum::ASSIGN_ROLE,
             PermissionEnum::REMOVE_ROLE,
         ];
@@ -376,6 +377,40 @@ class RoleAndPermissionTest extends TestCase
         Sanctum::actingAs($user);
 
         $response = $this->deleteJson(self::PREFIX . '/roles/99999');
+
+        $response->assertStatus(404);
+    }
+
+    public function test_super_admin_can_fetch_role_by_id(): void
+    {
+        $user = $this->createSuperAdminUser();
+        Sanctum::actingAs($user);
+
+        $role = Role::create([
+            'name' => 'visible_role',
+            'display_name' => json_encode(['en' => 'Visible Role', 'ar' => 'دور مرئي']),
+            'guard_name' => self::GUARD,
+        ]);
+        $perm = Permission::findOrCreate('visible-perm', self::GUARD);
+        $role->givePermissionTo($perm);
+
+        $response = $this->getJson(self::PREFIX . "/roles/{$role->id}");
+
+        $response->assertOk();
+        $response->assertJsonPath('success', true);
+        $response->assertJsonStructure([
+            'status', 'message', 'success',
+            'data' => ['id', 'display_name', 'permissions'],
+        ]);
+        $response->assertJsonPath('data.id', $role->id);
+    }
+
+    public function test_show_nonexistent_role_returns_404(): void
+    {
+        $user = $this->createSuperAdminUser();
+        Sanctum::actingAs($user);
+
+        $response = $this->getJson(self::PREFIX . '/roles/99999');
 
         $response->assertStatus(404);
     }

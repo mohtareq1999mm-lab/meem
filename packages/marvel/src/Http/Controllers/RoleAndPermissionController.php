@@ -85,6 +85,8 @@ class RoleAndPermissionController extends CoreController
             $role = Role::findOrFail($id);
             $role->load('permissions');
             return $this->apiResponse(ROLE_FETCHED_SUCCESSFULLY, 200, true, RoleResource::make($role));
+        } catch (ModelNotFoundException $e) {
+            throw new MarvelException(NOT_FOUND);
         } catch (ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {

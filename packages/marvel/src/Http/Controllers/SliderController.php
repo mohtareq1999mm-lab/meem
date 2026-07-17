@@ -10,9 +10,7 @@ use Marvel\Http\Resources\SliderResource;
 use Marvel\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
-use const Dom\NOT_FOUND_ERR;
-
-class SliderController   extends CoreController
+class SliderController extends CoreController
 {
     use ApiResponse;
     public $repository;
@@ -21,7 +19,7 @@ class SliderController   extends CoreController
         $this->repository = $repository;
         $this->middleware("permission:".Permission::VIEW_SLIDER)->only(["index","show"]);
         $this->middleware("permission:".Permission::CREATE_SLIDER)->only("store");
-        $this->middleware("permission:".Permission::UPDATE_SLIDER)->only("update");
+        $this->middleware("permission:".Permission::UPDATE_SLIDER)->only(["update", "changeStatus", "reorder"]);
         $this->middleware("permission:".Permission::DELETE_SLIDER)->only("destroy");
     }
 
@@ -118,11 +116,11 @@ class SliderController   extends CoreController
 
     public function reorder(Request $request)
     {
+        $request->validate([
+            'sliders' => 'required|array',
+            'sliders.*' => 'required|exists:sliders,id',
+        ]);
         try {
-            $request->validate([
-                'sliders' => 'required|array',
-                'sliders.*' => 'required|exists:sliders,id',
-            ]);
             $this->repository->reorder($request->sliders);
 
             return $this->apiResponse(SLIDERS_REORDERED_SUCCESSFULLY, 200, true);

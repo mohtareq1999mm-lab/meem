@@ -3,7 +3,6 @@
 namespace Marvel\Database\Models;
 
 use Carbon\Carbon;
-use Cviebrock\EloquentSluggable\Sluggable;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -54,7 +53,6 @@ class Product extends Model implements HasMedia
         'end_date',
         'price_after_discount',
         'price_after_flash_sale',
-        'discount_status',
     ];
     public array $translatable = ['name', 'description'];
     public $hideMeta = true;

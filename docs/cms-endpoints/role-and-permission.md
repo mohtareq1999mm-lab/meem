@@ -257,7 +257,7 @@ The Role & Permission module manages role-based access control (RBAC). It suppor
 | `id` | int | **Yes** | Role ID |
 
 **Business Logic:**
-1. Finds role by ID using `Role::findById($id, 'api')`
+1. Finds role by ID using `Role::findOrFail($id)`
 2. Loads `permissions` relation
 3. Returns role with permissions
 
@@ -265,7 +265,7 @@ The Role & Permission module manages role-based access control (RBAC). It suppor
 ```json
 {
     "status": 200,
-    "message": "Roles fetched successfully",
+    "message": "Role fetched successfully",
     "success": true,
     "data": {
         "id": 1,
@@ -911,7 +911,7 @@ The Role & Permission module manages role-based access control (RBAC). It suppor
 ```php
 // Super Admin routes (auth:sanctum, verified)
 Route::get('/roles', [RoleAndPermissionController::class, 'getAllRoles']);
-Route::get('/roles/{id}', [RoleAndPermissionController::class, 'getRoleById']);
+Route::get('/roles/{id}', [RoleAndPermissionController::class, 'showRole']);
 Route::post('/roles', [RoleAndPermissionController::class, 'addRole']);
 Route::put('/roles/{id}', [RoleAndPermissionController::class, 'updateRole']);
 Route::delete('/roles/{id}', [RoleAndPermissionController::class, 'destroyRole']);
@@ -933,18 +933,16 @@ Source: `packages/marvel/src/Rest/Routes.php` (lines 716-728)
 
 | Permission Enum | String | Applied To |
 |----------------|--------|------------|
-| `VIEW_ROLES` | `view-roles` | `getAllRoles`, `getRoleById` |
+| `VIEW_ROLE` | `view-role` | `showRole` |
 | `CREATE_ROLES` | `create-roles` | `addRole` |
 | `UPDATE_ROLES` | `update-roles` | `updateRole` |
 | `DELETE_ROLES` | `delete-roles` | `destroyRole` |
 | `ASSIGN_ROLE` | `assign-role` | `assignRole` |
 | `REMOVE_ROLE` | `remove-role` | `removeRoleFromUser` |
-| `VIEW_PERMISSIONS` | `view-permissions` | `getAllPermissions` |
-| `ASSIGN_PERMISSIONS` | `assign-permissions` | `assignPermissionToRole`, `givePermission`, `syncPermissions`, `removePermission` |
 
-All controller methods have explicit permission middleware using `$this->middleware('permission:...')` in the constructor. Methods without an entry above have no additional middleware beyond the route group's `role:super_admin` gate.
+Only the methods listed above have explicit permission middleware via `$this->middleware('permission:...')` in the constructor. All other methods rely solely on the route group's `role:super_admin` gate.
 
-Source: `packages/marvel/src/Http/Controllers/RoleAndPermissionController.php` (lines 25-38)
+Source: `packages/marvel/src/Http/Controllers/RoleAndPermissionController.php` (lines 25-34)
 
 ---
 
