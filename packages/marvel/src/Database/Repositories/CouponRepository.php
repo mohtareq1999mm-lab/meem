@@ -129,7 +129,10 @@ class CouponRepository extends BaseRepository
     public function addCouponToCart($code)
     {
         $user = auth()->user();
-        $cart = $user->cart->first();
+        if (!$user) {
+            throw new MarvelBadRequestException(NOT_AUTHORIZED);
+        }
+        $cart = $user->cart;
 
         $validation = CouponValidator::validateByCode($code, $user, $cart?->items);
         if (!$validation['valid']) {

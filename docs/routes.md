@@ -190,6 +190,28 @@ Controller-level permission middleware is defined in each controller's construct
 | POST | `/section-types/{type}/settings` | `SectionTypeController` | `updateSettings` | `role:super_admin\|editor`, `auth:sanctum`, `email.verified` | `update-section-types` | 337 |
 | GET | `/section-types/{type}/settings` | `SectionTypeController` | `settings` | `role:super_admin\|editor`, `auth:sanctum`, `email.verified` | `view-section-types` | 338 |
 
+## Cart
+
+All cart endpoints are in `packages/marvel/src/Rest/Routes.php`. Routes are loaded via `RestAPIServiceProvider::loadRoutes()` with prefix `/api/v1` and middleware `api`.
+
+All routes require `auth:sanctum` and `throttle:cart` (20 req/min per user) middleware.
+
+| Method | URI | Controller | Action | Source Line | Purpose |
+|--------|-----|------------|--------|-------------|---------|
+| GET | `/cart` | `CartController` | `index` | 798 | List user's cart with items, products, and variant details |
+| POST | `/cart` | `CartController` | `store` | 799 | Add a single item to cart (mode: add — quantity accumulates) |
+| GET | `/cart/{id}` | `CartController` | `show` | 800 | Show a specific cart with ownership check |
+| POST | `/cart/bulk-items` | `CartController` | `pluckItemsToCart` | 801 | Add multiple items in a single transaction |
+| PUT | `/cart/update-item` | `CartController` | `update` | 802 | Update item quantity (mode: set — absolute value) |
+| DELETE | `/cart/delete-item/{itemId}` | `CartController` | `deleteItemFromCart` | 803 | Remove a single item and release reserved inventory |
+| DELETE | `/cart/delete-items` | `CartController` | `destroy` | 804 | Clear entire cart and release all reserved inventory |
+
+## Coupon
+
+| Method | URI | Controller | Action | Route Middleware | Source Line | Purpose |
+|--------|-----|------------|--------|-----------------|-------------|---------|
+| POST | `/coupons/add-to-cart` | `CouponController` | `addCouponToCart` | `auth:sanctum` | 223 | Apply a coupon code to the active cart |
+
 ## Architecture Note
 
 The Application layer (`app/`) identifies admins exclusively via `type = 'admin'`. Route authorization uses per-method Spatie permission middleware for backward compatibility. See `docs/cms-endpoints/admin-users.md` for details.

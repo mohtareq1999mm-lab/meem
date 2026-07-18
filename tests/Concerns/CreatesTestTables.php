@@ -467,28 +467,45 @@ trait CreatesTestTables
 
         Schema::create('promotions', function (Blueprint $table) {
             $table->id();
-            $table->string('code')->unique();
             $table->string('name');
-            $table->string('slug')->unique();
-            $table->text('description')->nullable();
-            $table->string('type')->default('sale');
-            $table->string('type_amount')->default('percentage');
-            $table->string('discount_type');
+            $table->string('slug');
+            $table->string('code')->unique();
+            $table->string('type');
+            $table->string('type_amount');
+            $table->decimal('value', 10, 2);
             $table->decimal('discount', 10, 2)->nullable();
             $table->decimal('max_discount_amount', 10, 2)->nullable();
+            $table->integer('required_quantity_type')->nullable();
+            $table->decimal('minimum_order_amount', 10, 2)->default(0);
+            $table->string('apply_to')->default('specific_products');
+            $table->integer('limiter')->nullable();
+            $table->integer('usage')->default(0);
             $table->date('start_at')->nullable();
             $table->date('end_at')->nullable();
             $table->boolean('status')->default(true);
-            $table->integer('limiter')->nullable();
-            $table->integer('usage')->default(0);
             $table->timestamps();
+            $table->index(['status', 'start_at', 'end_at'], 'promotions_validity_index');
+            $table->index(['usage', 'limiter'], 'promotions_usage_limiter_index');
         });
 
-        Schema::create('promotion_products', function (Blueprint $table) {
+        Schema::create('promotion_product', function (Blueprint $table) {
             $table->id();
             $table->foreignId('promotion_id')->constrained('promotions')->cascadeOnDelete();
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
             $table->timestamps();
+            $table->unique(['promotion_id', 'product_id']);
+        });
+
+        Schema::create('promotion_gift_products', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('promotion_id')->constrained('promotions')->cascadeOnDelete();
+            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
+            $table->foreignId('product_variant_id')->constrained('product_variants')->cascadeOnDelete();
+            $table->unsignedInteger('quantity')->default(1);
+            $table->timestamps();
+            $table->unique(['promotion_id', 'product_id']);
+            $table->index('product_id');
+            $table->index('product_variant_id');
         });
 
         Schema::create('tags', function (Blueprint $table) {

@@ -220,7 +220,7 @@ Route::apiResource('promotions', PromotionController::class, [
     'only' => ['index', 'show'],
 ]);
 Route::post('coupons/verify', [CouponController::class, 'verify']);
-Route::post('coupons/add-to-cart', [CouponController::class, 'addCouponToCart']);
+Route::post('coupons/add-to-cart', [CouponController::class, 'addCouponToCart'])->middleware('auth:sanctum');
 Route::apiResource('attributes', AttributeController::class, [
     'only' => ['index', 'show'],
 ]);

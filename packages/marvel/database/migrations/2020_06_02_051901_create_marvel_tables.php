@@ -227,7 +227,7 @@ class CreateMarvelTables extends Migration
         Schema::create('carts', function (Blueprint $table) {
             $table->id();
             $table->string('coupon')->nullable();
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->decimal('total_price', 10, 2)->default(0);
             $table->enum('status', ['active', 'expired', 'checked_out'])->default('active');
             $table->timestamp('reserved_at')->nullable();
@@ -257,7 +257,7 @@ class CreateMarvelTables extends Migration
         Schema::create('cart_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('cart_id')->constrained('carts')->cascadeOnDelete();
-            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
+            $table->foreignId('product_id')->nullable()->constrained('products')->nullOnDelete();
             $table->integer('quantity');
             $table->foreignId('product_variant_id')->nullable()->constrained('product_variants')->nullOnDelete();
             $table->decimal('price', 10, 2);

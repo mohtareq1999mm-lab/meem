@@ -2167,7 +2167,334 @@ YES / NO
 Never close a feature until every required state file has been updated.
 
 Never assume project state.
+We are performing the FINAL PRODUCTION FEATURE CLOSURE AUDIT.
 
+This is NOT a code review.
+This is NOT a refactoring task.
+This is NOT a cleanup task.
+
+Your only job is to determine whether this feature is REALLY finished and production-ready.
+
+==================================================
+OBJECTIVE
+==================================================
+
+Read EVERY file that belongs to the feature.
+
+Do NOT trust previous reports.
+Do NOT trust previous audits.
+Do NOT trust documentation.
+
+Everything must be verified directly from the source code.
+
+==================================================
+AUDIT SCOPE
+==================================================
+
+Read ALL files related to this feature including:
+
+- routes/api.php
+- routes inside packages
+- Controllers
+- Form Requests
+- Services
+- Repositories
+- Models
+- Traits
+- Observers
+- Events
+- Listeners
+- Policies
+- Middleware
+- Resources
+- Collections
+- Enums
+- DTOs
+- Strategies
+- Strategy Resolver
+- Factories
+- Interfaces
+- Jobs
+- Commands
+- Notifications
+- Migrations
+- Seeders
+- Config
+- Helpers
+- Tests
+- Language files
+- Any feature-specific files
+
+Do NOT skip anything.
+
+==================================================
+IMPORTANT
+==================================================
+
+Do NOT stop after finding one issue.
+
+Continue reading until the ENTIRE feature has been inspected.
+
+==================================================
+ARCHITECTURE
+==================================================
+
+First reconstruct the entire architecture.
+
+Document:
+
+- Entry points
+- API routes
+- Controller flow
+- Service flow
+- Repository flow
+- Strategy flow
+- Factory flow
+- Observer flow
+- Event flow
+- Queue flow
+- Resource flow
+- Database flow
+
+Produce the REAL execution graph from source code.
+
+==================================================
+VERIFY CONSISTENCY
+==================================================
+
+Verify that ALL code paths follow the SAME architecture.
+
+Examples:
+
+Product example:
+
+GOOD
+
+GET /general/products?type=index
+        ↓
+Controller
+        ↓
+StrategyResolver
+        ↓
+Strategy
+        ↓
+ProductService
+        ↓
+ProductFilter
+        ↓
+ProductPricingService
+        ↓
+Resource
+
+BAD
+
+GET /general/best-products
+        ↓
+Controller
+        ↓
+Custom Service Method
+
+Every endpoint that bypasses the intended architecture must be reported.
+
+==================================================
+LOOK FOR
+==================================================
+
+Find ONLY REAL production issues.
+
+Examples:
+
+- dead endpoints
+- duplicated endpoints
+- duplicated business logic
+- bypassing services
+- bypassing strategies
+- bypassing repositories
+- inconsistent API behavior
+- inconsistent responses
+- inconsistent validation
+- missing transactions
+- missing authorization
+- missing eager loading
+- N+1
+- race conditions
+- inventory issues
+- pricing issues
+- promotion issues
+- soft delete inconsistencies
+- event/listener inconsistencies
+- observer inconsistencies
+- missing queue registration
+- missing route protection
+- broken execution paths
+- unreachable code
+- orphan classes
+- unused resources
+- legacy code still reachable
+- broken migrations
+- production-only bugs
+
+==================================================
+DO NOT REPORT
+==================================================
+
+Do NOT report
+
+- style
+- formatting
+- naming
+- preferences
+- "could be improved"
+- "better architecture"
+- optional refactors
+
+Only report issues that affect production behavior.
+
+==================================================
+FOR EVERY FINDING
+==================================================
+
+Provide:
+
+Severity
+
+BLOCKER
+HIGH
+MEDIUM
+LOW
+INFO
+
+Evidence
+
+Exact file
+
+Exact line
+
+Execution trace
+
+Why it happens
+
+How users reach it
+
+Production impact
+
+Confidence
+
+VERIFIED
+LIKELY
+UNCONFIRMED
+
+Only VERIFIED findings may be considered production bugs.
+
+==================================================
+ENDPOINT REVIEW
+==================================================
+
+Inspect EVERY API endpoint.
+
+Verify
+
+- middleware
+- permissions
+- validation
+- response resource
+- pagination
+- transactions
+- service usage
+- architecture consistency
+
+==================================================
+DATABASE REVIEW
+==================================================
+
+Verify
+
+- foreign keys
+- indexes
+- soft deletes
+- cascading
+- nullable relations
+- migration correctness
+- SQLite compatibility
+- MySQL compatibility
+
+==================================================
+TEST REVIEW
+==================================================
+
+Inspect ALL tests.
+
+Determine
+
+- which code paths are covered
+- which are never executed
+- false positives
+- SQLite-only failures
+- production failures
+- missing coverage
+
+Do NOT assume passing tests mean production readiness.
+
+==================================================
+FINAL DECISION
+==================================================
+
+At the end produce ONLY ONE of these verdicts.
+
+FEATURE COMPLETE ✅
+
+Requirements:
+
+- no VERIFIED production bugs
+- architecture consistent
+- endpoints consistent
+- tests consistent
+- database consistent
+- production-ready
+
+OR
+
+FEATURE NOT COMPLETE ❌
+
+Then list ONLY the VERIFIED production blockers.
+
+==================================================
+FINAL REPORT FORMAT
+==================================================
+
+1. Files inspected
+
+2. Architecture reconstructed
+
+3. Execution graph
+
+4. Verified production bugs
+
+5. Non-blocking observations
+
+6. Dead code
+
+7. Legacy code
+
+8. API consistency
+
+9. Database consistency
+
+10. Event consistency
+
+11. Test coverage
+
+12. Final production verdict
+
+The report must be completely evidence-based.
+
+Never guess.
+
+Never infer.
+
+Never invent bugs.
+
+Everything must come directly from the source code.
 Always derive every conclusion from the current source code and verified automated test results.
 Always derive it from the current source code and verified test results.
 Final response must only summarize created documentation files.

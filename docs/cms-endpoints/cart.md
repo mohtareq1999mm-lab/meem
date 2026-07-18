@@ -50,7 +50,7 @@ All endpoints require `auth:sanctum` middleware.
 | Guard | Sanctum |
 |-------|---------|
 | Permissions | Authenticated user only |
-| Rate Limit | `throttle:cart` |
+| Rate Limit | `throttle:cart` — 20 req/min per user (RouteServiceProvider::configureRateLimiting()) |
 
 ---
 
@@ -548,7 +548,7 @@ Remove all items from the authenticated user's cart and release all reserved inv
 | Repository | `CartRepository.php` |
 | Services | `App\Services\General\CartInventoryService.php` |
 | Models | `Cart.php`, `CartItem.php` |
-| Routes | `packages/marvel/src/Rest/Routes.php:742-748` |
+| Routes | `packages/marvel/src/Rest/Routes.php:797-805` |
 
 ---
 

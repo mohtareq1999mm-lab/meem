@@ -9,9 +9,10 @@ use Marvel\Database\Models\Promotion;
 class PromotionObserver
 {
     private const TRACKED_FIELDS = [
-        'title', 'name', 'slug', 'type', 'discount_type', 'discount_value',
-        'minimum_order', 'maximum_discount', 'start_date', 'end_date',
-        'status', 'priority',
+        'name', 'slug', 'type', 'type_amount', 'value', 'discount',
+        'max_discount_amount', 'minimum_order_amount', 'apply_to',
+        'required_quantity_type', 'limiter', 'usage', 'start_at', 'end_at',
+        'status',
     ];
 
     public function created(Promotion $promotion): void

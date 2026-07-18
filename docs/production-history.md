@@ -242,3 +242,44 @@ YES
 
 Notes:
 Pre-existing test failures (188 UserPasswordResetTest, etc.) are unrelated to this feature. Remaining technical debt: 5 accessors in Product.php (ratings, total_reviews, rating_count, my_review, in_wishlist) are legacy — only referenced by the now-removed GetSingleProductResource. These accessors cause no N+1 risk in production but could be cleaned up as a future task.
+
+---
+
+Date:
+2026-07-18
+
+Feature:
+Cart
+
+Revision:
+1
+
+Summary:
+Full production audit of the Cart feature. Fixed 4 verified production bugs: missing RateLimiter::for('cart') causing every cart endpoint to return HTTP 429 (CRITICAL), CouponRepository::addCouponToCart using $user->cart->first() fetching wrong cart (HIGH), coupons/add-to-cart route missing auth:sanctum middleware (HIGH), and missing English cart.inventory.* translation keys (MEDIUM). All 32 CartApiTest tests pass (75 assertions).
+
+Verified Bugs Fixed:
+- BUG A (CRITICAL): RateLimiter::for('cart') not registered — every cart API request after the first per user returns 429 Too Many Requests. Added 20 req/min per-user limiter in RouteServiceProvider::configureRateLimiting().
+- BUG B (HIGH): CouponRepository::addCouponToCart() accessed $user->cart->first() on a HasOne relationship — resulted in calling first() on a Cart model instead of a Collection. Fixed to $user->cart.
+- BUG C (HIGH): coupons/add-to-cart route had no auth middleware — unauthenticated users could attempt coupon operations. Added ->middleware('auth:sanctum').
+- BUG D (MEDIUM): English translations missing for all 6 cart.inventory.* keys in resources/lang/en/message.php — added quantity_minimum, gift_variant_not_available, gift_variant_no_stock, quantity_exceeds_stock, reserved_stock_insufficient, physical_stock_insufficient.
+
+Known Issues (not found):
+- No verified production blockers remain.
+
+Documentation Updated:
+YES (production-history.md, production-status.md, regression-matrix.md, feature-dependencies.md, routes.md, cms-endpoints/cart.md)
+
+Routes Updated:
+NO (no routes added/removed — middleware added to existing route)
+
+Regression Executed:
+YES
+
+Regression Result:
+PASS (CartApiTest 32/32, 75 assertions)
+
+Production Ready:
+YES
+
+Notes:
+All fixes are backward compatible — no schema changes, no migrations, no API contract changes. The throttle:cart middleware was already documented and referenced in routes but its RateLimiter::for() definition was missing from production code.

@@ -90,4 +90,12 @@ return [
     'ERROR.COULD_NOT_ADD_COUPON_TO_CART' => 'Could not add coupon to cart',
     'QUANTITY_MINIMUM' => 'Quantity must be at least 1.',
     'QUANTITY_EXCEEDS_STOCK' => 'Quantity exceeds available stock.',
+
+    // Cart inventory
+    'cart.inventory.quantity_minimum' => 'Quantity must be at least 1.',
+    'cart.inventory.gift_variant_not_available' => 'The selected gift variant is not available.',
+    'cart.inventory.gift_variant_no_stock' => 'No stock available for the gift variant.',
+    'cart.inventory.quantity_exceeds_stock' => 'Quantity exceeds available stock.',
+    'cart.inventory.reserved_stock_insufficient' => 'Reserved stock is insufficient.',
+    'cart.inventory.physical_stock_insufficient' => 'Physical stock is insufficient.',
 ];

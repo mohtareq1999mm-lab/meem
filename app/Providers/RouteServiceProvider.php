@@ -105,5 +105,11 @@ class RouteServiceProvider extends ServiceProvider
         RateLimiter::for('search', function (Request $request) {
             return Limit::perMinute(30)->by($request->ip());
         });
+
+        // Cart endpoints - add/update/delete cart items, bulk operations
+        // Protects against inventory locking abuse and cart manipulation
+        RateLimiter::for('cart', function (Request $request) {
+            return Limit::perMinute(20)->by(optional($request->user())->id ?: $request->ip());
+        });
     }
 }

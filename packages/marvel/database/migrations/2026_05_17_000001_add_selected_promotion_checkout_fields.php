@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -87,18 +88,30 @@ return new class extends Migration
     {
         Schema::table('order_products', function (Blueprint $table) {
             $table->dropIndex('order_products_order_gift_index');
-            $table->dropConstrainedForeignId('promotion_id');
+            if (DB::getDriverName() === 'sqlite') {
+                $table->dropColumn('promotion_id');
+            } else {
+                $table->dropConstrainedForeignId('promotion_id');
+            }
             $table->dropColumn('is_gift');
         });
 
         Schema::table('orders', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('promotion_id');
+            if (DB::getDriverName() === 'sqlite') {
+                $table->dropColumn('promotion_id');
+            } else {
+                $table->dropConstrainedForeignId('promotion_id');
+            }
             $table->dropColumn(['promotion_code', 'promotion_type', 'promotion_discount']);
         });
 
         Schema::table('cart_items', function (Blueprint $table) {
             $table->dropIndex('cart_items_cart_gift_index');
-            $table->dropConstrainedForeignId('promotion_id');
+            if (DB::getDriverName() === 'sqlite') {
+                $table->dropColumn('promotion_id');
+            } else {
+                $table->dropConstrainedForeignId('promotion_id');
+            }
             $table->dropColumn('is_gift');
         });
 

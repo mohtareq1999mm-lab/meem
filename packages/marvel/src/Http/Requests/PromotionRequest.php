@@ -84,7 +84,7 @@ class PromotionRequest extends FormRequest
             'apply_to' => ['required', Rule::in(['all_products', 'specific_products'])],
             'limiter' => 'sometimes|integer|min:1',
 
-            'start_at' => 'sometimes|date|before_or_equal:today',
+            'start_at' => 'sometimes|date',
             'end_at'   => 'sometimes|date|after_or_equal:start_at',
 
             'status'   => 'sometimes|in:0,1',

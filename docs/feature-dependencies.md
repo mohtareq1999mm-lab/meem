@@ -194,7 +194,11 @@ Dependencies partially verified from source code.
 None
 
 **Current Status:**
-Not Started
+Production Ready
+
+**Notes:**
+- RateLimiter::for('cart') registered at RouteServiceProvider.php configured at 20 req/min per user
+- English cart.inventory.* translation keys added
 
 ---
 

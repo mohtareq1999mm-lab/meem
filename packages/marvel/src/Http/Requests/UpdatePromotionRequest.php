@@ -83,7 +83,7 @@ class UpdatePromotionRequest extends FormRequest
             'apply_to' => ['nullable', Rule::in(['all_products', 'specific_products'])],
             'limiter'  => 'nullable|integer|min:1',
 
-            'start_at' => 'nullable|date|before_or_equal:today',
+            'start_at' => 'nullable|date',
             'end_at'   => 'nullable|date|after_or_equal:start_at',
 
             'status'   => 'sometimes|in:0,1',

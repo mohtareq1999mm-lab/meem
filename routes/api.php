@@ -71,8 +71,8 @@ Route::prefix('v1/general')->middleware('api')->group(function () {
     Route::get('fast-shipping/products', [FastShippingController::class, 'products']);
     Route::post('fast-shipping/checkout', [FastShippingController::class, 'checkout']);
     Route::get('fast-shipping/orders', [FastShippingController::class, 'orders']);
-    Route::get('checkout/promotions', [OrderController::class, 'eligiblePromotions']);
-    Route::post('checkout', [OrderController::class, 'checkout']);
+    Route::get('checkout/promotions', [OrderController::class, 'eligiblePromotions'])->middleware('auth:sanctum');
+    Route::post('checkout', [OrderController::class, 'checkout'])->middleware('auth:sanctum');
     Route::post('checkout/cod/{orderId}/mark-paid', [OrderController::class, 'markCodAsPaid']);
     Route::post('checkout/cashier/{orderId}/mark-paid', [OrderController::class, 'markCashierPaid']);
     Route::get('checkout/transaction-qr/{uuid}', [OrderController::class, 'getTransactionQr']);

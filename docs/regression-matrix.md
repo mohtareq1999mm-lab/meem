@@ -98,6 +98,29 @@ Products
 
 ---
 
+## Cart
+
+**Changed Feature:**
+Cart
+
+**Affected Features:**
+- Checkout — cart converts to order
+- Orders — order origin is cart checkout
+
+**Regression:**
+
+| Suite | Status | Reason |
+|-------|--------|--------|
+| CartApiTest | PASS | 32/32 tests pass on 2026-07-18 |
+
+**Changes Applied:**
+- `RouteServiceProvider.php`: Added `RateLimiter::for('cart')` — 20 req/min per user with IP fallback
+- `CouponRepository.php`: Changed `$user->cart->first()` to `$user->cart` for HasOne relationship
+- `Routes.php`: Added `->middleware('auth:sanctum')` to `coupons/add-to-cart`
+- `message.php`: Added 6 `cart.inventory.*` English translation keys
+
+---
+
 ## Full Suite Status
 
 | Suite | Status | Date | Notes |
