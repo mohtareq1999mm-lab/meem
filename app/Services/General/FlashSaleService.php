@@ -89,7 +89,7 @@ class FlashSaleService
                 'start_date', 'end_date',
             ])
             ->whereNull('deleted_at')
-            ->where('status', true)
+            ->activeStatus()
             ->where('has_flash_sale', true)
             ->whereExists(function ($query) use ($weekEnd) {
                 $query->select(DB::raw(1))
@@ -120,7 +120,7 @@ class FlashSaleService
                 'start_date', 'end_date',
             ])
             ->whereNull('deleted_at')
-            ->where('status', true)
+            ->activeStatus()
             ->where('has_flash_sale', true)
             ->whereExists(function ($query) {
                 $query->select(DB::raw(1))

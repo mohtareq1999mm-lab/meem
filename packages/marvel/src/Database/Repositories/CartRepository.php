@@ -99,6 +99,17 @@ class CartRepository extends BaseRepository
         $attributes = $item['attributes'] ?? [];
         $shippingMethod = strtoupper($item['shipping_method'] ?? ShippingMethod::SCHEDULED);
 
+        if ($mode === 'set' && !isset($item['shipping_method'])) {
+            $existingItem = $cart->items()
+                ->where('product_id', $productId)
+                ->when($variantId, fn($q) => $q->where('product_variant_id', $variantId), fn($q) => $q->whereNull('product_variant_id'))
+                ->where('is_gift', false)
+                ->first();
+            if ($existingItem) {
+                $shippingMethod = $existingItem->shipping_method;
+            }
+        }
+
         if (!$productId || $quantity < 1) {
             return false;
         }

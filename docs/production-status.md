@@ -3,13 +3,14 @@
 | Feature | Revision | Status | Production Ready | Depends On | Used By | Regression Status | Last Audit | Tests | Verified Bugs |
 |---------|----------|--------|-----------------|------------|---------|-------------------|------------|-------|---------------|
 | Role & Permission | 1 | Production Ready | YES | Authentication, Spatie Permission, Email Verified, Translation System | Admin Users, User Management, All Middleware-Guarded Endpoints | Passed | 2026-07-17 | 32/32 | None |
-| Categories | 0 | Not Started | NO | — | — | Not Required | — | — | — |
-| Brands | 0 | Not Started | NO | — | — | Not Required | — | — | — |
-| Products | 1 | Production Ready (Phase 1) | YES | Categories, Brands, Media Lifecycle, Pricing | Cart, Orders, Search, Home, Wishlist, Flash Sales, Promotions, Coupons | Pending (Cart, Orders, Search) | 2026-07-17 | 76/76 (0 errors, 0 failures) | None (4 fixed, 0 unverified) |
+| Categories | 1 | Production Ready | YES | Products | Products | Passed | 2026-07-18 | 94/94 | None (2 fixed) |
+| Brands | 1 | Production Ready | YES | Products | Categories (pivot), Products, Media Lifecycle | Passed | 2026-07-18 | 63/63 | None (1 fixed) |
+| Products | 1 | Production Ready (Phase 1) | YES | Categories, Brands, Media Lifecycle, Pricing, Attributes | Cart, Orders, Search, Home, Wishlist, Flash Sales, Promotions, Coupons | Pending (Cart, Orders, Search) | 2026-07-17 | 76/76 (0 errors, 0 failures) | None (4 fixed, 0 unverified) |
 | Cart | 1 | Production Ready | YES | Authentication (Sanctum), Products, Pricing | Checkout, Orders | Passed | 2026-07-18 | 32/32 (75 assertions) | None (4 fixed) |
 | Orders | 0 | Not Started | NO | — | — | Not Required | — | — | — |
 | Coupons | 0 | Not Started | NO | — | — | Not Required | — | — | — |
-| Flash Sales | 3 | Production Ready | YES | Products, Pricing, Permissions | Cart, Products, Orders | Passed | 2026-07-17 | 73/73 (0 errors, 0 failures) | None (5 fixed, 1 dead code removed) |
+| Flash Sales | 4 | Production Ready | YES | Products, Pricing, Permissions | Cart, Products, Orders | Passed | 2026-07-19 | 87 (38 flash sale + 49 pricing/order) | None (7 fixed, 1 dead code removed) |
+| Attributes + Values | 1 | Production Ready | YES | Products | Products (variants, filtering, pricing), Import/Export, Cart | Passed | 2026-07-19 | 48/48 attribute (0 new failures) + 32/32 new | None (4 fixed) |
 | Promotions | 0 | Not Started | NO | — | — | Not Required | — | — | — |
 | Payment System | 0 | Not Started | NO | — | — | Not Required | — | — | — |
 

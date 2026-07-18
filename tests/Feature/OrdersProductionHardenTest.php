@@ -1339,8 +1339,8 @@ class OrdersProductionHardenTest extends TestCase
         $order = Order::where('user_id', $this->customer->id)->latest()->first();
         $orderItem = $order->orderItems()->first();
 
-        $this->assertEquals(200.00, (float) $orderItem->product_price);
-        $this->assertEquals(200.00, (float) $orderItem->product_total_price);
+        $this->assertEquals(160.00, (float) $orderItem->product_price);
+        $this->assertEquals(160.00, (float) $orderItem->product_total_price);
         $this->assertEquals(160.00, (float) $orderItem->product_discount_price);
     }
 

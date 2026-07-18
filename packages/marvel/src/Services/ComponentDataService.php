@@ -54,7 +54,7 @@ class ComponentDataService
                         'products.shop_id',
                         'products.type_id',
                     ])
-                    ->where('status', 'publish')
+                    ->activeStatus()
                     ->limit($limit);
             }
         ])->first();
@@ -172,7 +172,7 @@ class ComponentDataService
                 'type_id',
             ])
             ->with(['shop:id,name,slug', 'type:id,name,slug'])
-            ->where('status', 'publish')
+            ->activeStatus()
             ->orderByDesc('orders_count')
             ->limit($limit);
 
@@ -208,7 +208,7 @@ class ComponentDataService
                 'type_id',
             ])
             ->with(['shop:id,name,slug', 'type:id,name,slug'])
-            ->where('status', 'publish')
+            ->activeStatus()
             ->orderByDesc('sold_quantity')
             ->limit($limit);
 

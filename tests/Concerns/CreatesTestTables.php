@@ -48,7 +48,7 @@ trait CreatesTestTables
             $table->text('description')->nullable();
             $table->string('sku')->nullable();
             $table->decimal('price', 10, 2)->default(0);
-            $table->string('status')->default('publish');
+            $table->string('status', 30)->default('publish');
             $table->boolean('in_stock')->default(true);
             $table->integer('stock_quantity')->default(10);
             $table->integer('reserved_quantity')->default(0);
@@ -115,6 +115,9 @@ trait CreatesTestTables
             $table->string('sku')->nullable();
             $table->decimal('price', 10, 2)->default(0);
             $table->integer('stock_quantity')->default(0);
+            $table->integer('reserved_quantity')->default(0);
+            $table->integer('sold_quantity')->default(0);
+            $table->boolean('in_stock')->default(true);
             $table->timestamps();
         });
 
@@ -548,6 +551,12 @@ trait CreatesTestTables
             $table->foreignId('tag_id')->constrained('tags')->cascadeOnDelete();
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
             $table->timestamps();
+        });
+
+        Schema::create('password_resets', function (Blueprint $table) {
+            $table->string('email')->index();
+            $table->string('token');
+            $table->timestamp('created_at')->nullable();
         });
     }
 }

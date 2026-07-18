@@ -29,6 +29,7 @@ use App\Events\OrderStatusChanged;
 use App\Services\Coupon\CouponCalculator;
 use App\Services\Coupon\CouponOrchestrator;
 use Marvel\Enums\DiscountType;
+use Marvel\Services\Pricing\ProductPricingService;
 
 class OrderService
 {
@@ -159,13 +160,20 @@ class OrderService
                 return null;
             }
 
+            $this->refreshCartItemPrices($cart);
+
             $freeShippingCoupon = false;
             if ($cart->coupon) {
-                $validation = CouponOrchestrator::validateByCode($cart->coupon, $request->user(), $cart->items);
-                if (!$validation['valid']) {
+                $lockedCoupon = Coupon::where('code', $cart->coupon)->lockForUpdate()->first();
+                if ($lockedCoupon) {
+                    $validation = CouponOrchestrator::validate($lockedCoupon, $request->user(), $cart->items);
+                    if (!$validation['valid']) {
+                        $cart->update(['coupon' => null]);
+                    } elseif ($lockedCoupon->discount_type === DiscountType::FREE_SHIPPING) {
+                        $freeShippingCoupon = true;
+                    }
+                } else {
                     $cart->update(['coupon' => null]);
-                } elseif ($validation['coupon'] && $validation['coupon']->discount_type === DiscountType::FREE_SHIPPING) {
-                    $freeShippingCoupon = true;
                 }
             }
 
@@ -356,6 +364,37 @@ class OrderService
             giftItems: [],
             couponDiscountType: $couponDiscountType,
         );
+    }
+
+    private function refreshCartItemPrices(Cart $cart): void
+    {
+        $pricingService = app(ProductPricingService::class);
+        $cart->load(['items.product', 'items.productVariant']);
+
+        foreach ($cart->items as $item) {
+            if ($item->is_gift) {
+                continue;
+            }
+
+            $product = $item->product;
+            if (!$product) {
+                continue;
+            }
+
+            $currentPrice = $item->productVariant
+                ? $pricingService->calculateVariantCurrentPrice($product, $item->productVariant)
+                : $pricingService->calculateProductCurrentPrice($product);
+
+            if ($currentPrice !== null && (float) $currentPrice !== (float) $item->price) {
+                $item->forceFill([
+                    'price' => $currentPrice,
+                    'total_price' => round($currentPrice * max(1, (int) ($item->quantity ?? 0)), 2),
+                ])->save();
+            }
+        }
+
+        $cart->refresh();
+        $cart->load(['items' => fn($q) => $q->where('shipping_method', ShippingMethod::SCHEDULED), 'items.product.flash_sales' => fn($q) => $q->valid(), 'items.productVariant']);
     }
 
     public function calculateCheckoutTotals(Cart $cart, ?int $selectedPromotionId, ?int $selectedGiftProductId = null, ?string $shippingMethod = null): CheckoutTotals

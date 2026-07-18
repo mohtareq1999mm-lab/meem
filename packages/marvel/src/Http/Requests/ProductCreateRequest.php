@@ -51,14 +51,7 @@ class ProductCreateRequest extends FormRequest
      */
     public function rules()
     {
-        $productStatus = [
-            // ProductStatus::UNDER_REVIEW,
-            // ProductStatus::APPROVED,
-            // ProductStatus::REJECTED,
-            // ProductStatus::PUBLISH,
-            // ProductStatus::UNPUBLISH,
-            // ProductStatus::DRAFT,
-        ];
+        $productStatus = ProductStatus::getValues();
 
         $productType = ProductType::getValues();
 
@@ -71,13 +64,14 @@ class ProductCreateRequest extends FormRequest
             'description.*'                => ['required', 'string', 'max:10000'],
             'price'                        => ['sometimes', 'numeric', 'min:0', 'required_if:product_type,' . ProductType::SIMPLE],
             'product_type'                 => ['required', Rule::in($productType)],
+            'type_id'                      => ['sometimes', 'integer', 'exists:types,id'],
             'categories'                   => ['required', 'array'],
             'categories.*'                 => ['integer', 'exists:categories,id'],
             'quantity'                     => ['sometimes', 'integer', 'min:1'],
             'images'                        => ['required', 'array'],
             'images.*'                      => ['required', 'file', 'mimes:jpeg,png,jpg', 'max:2048'],
             'pieces'                       => ['sometimes', 'integer', 'min:1'],
-            'status'                       => ['sometimes', 'in:1,0'],
+            'status'                       => ['sometimes', Rule::in($productStatus)],
             'height'                       => ['nullable', 'string'],
             'length'                       => ['nullable', 'string'],
             'width'                        => ['nullable', 'string'],

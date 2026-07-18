@@ -308,6 +308,7 @@ class UserController extends CoreController
             if ($user->hasRole('super_admin') || $user->id === auth()->id()) {
                 return $this->apiResponse(USER_ADMIN_CANNOT_BE_DELETED, 400, false);
             }
+            $user->tokens()->delete();
             $user->delete();
             return $this->apiResponse(USER_DELETED_SUCCESSFULLY, 200, true);
         } catch (MarvelException $e) {
@@ -373,6 +374,7 @@ class UserController extends CoreController
             if ($user->hasRole('super_admin') || $user->id === auth()->id()) {
                 return $this->apiResponse(USER_ADMIN_CANNOT_BE_DELETED, 400, false);
             }
+            $user->tokens()->delete();
             $user->delete();
             return $this->apiResponse(USER_DELETED_SUCCESSFULLY, 200, true);
         } catch (MarvelException $e) {
@@ -580,7 +582,7 @@ class UserController extends CoreController
             return $this->apiResponse(USER_NOT_FOUND, 404, false);
         }
 
-        if ($request->code === '123456' || $user->verifyOneTimePassword($request->code)) {
+        if ($user->verifyOneTimePassword($request->code)) {
             $data = [
                 "token" => $user->createToken('auth_token')->plainTextToken,
             ];
@@ -653,6 +655,11 @@ class UserController extends CoreController
                 'type' => 'user',
                 'is_active' => true,
             ]);
+            try {
+                $user->assignRole('customer');
+            } catch (\Spatie\Permission\Exceptions\RoleDoesNotExist $e) {
+                // Role not yet seeded; skip assignment
+            }
             if ($request->hasFile('avatar')) {
                 $user->addMedia($request->file('avatar'))->toMediaCollection('avatar');
             }
@@ -704,6 +711,7 @@ class UserController extends CoreController
             $user = $request->user();
             if ($user && $user->hasPermissionTo(Permission::BAN_USER) && $user->id != $request->id) {
                 $banUser = User::findOrFail($request->id);
+                $banUser->tokens()->delete();
                 $banUser->is_active = false;
                 $banUser->save();
                 return $this->apiResponse(USER_DEACTIVATED_SUCCESSFULLY, 200);
@@ -789,10 +797,6 @@ class UserController extends CoreController
 
     public function verifyForgetPasswordToken(Request $request)
     {
-        if ($request->otp === '123456') {
-            return true;
-        }
-
         $tokenData = DB::table('password_resets')
             ->where('email', $request->email)
             ->first();
@@ -826,17 +830,22 @@ class UserController extends CoreController
                 'email' => 'email|required',
                 'otp' => 'required|string'
             ]);
-            if (!$this->verifyForgetPasswordToken($request)) {
-                return $this->apiResponse(INVALID_TOKEN, 400, false);
-            }
 
-            $user = $this->repository->where('email', $request->email)->first();
-            $user->password = Hash::make($request->password);
-            $user->save();
+            return DB::transaction(function () use ($request) {
+                if (!$this->verifyForgetPasswordToken($request)) {
+                    return $this->apiResponse(INVALID_TOKEN, 400, false);
+                }
 
-            DB::table('password_resets')->where('email', $user->email)->delete();
+                $user = $this->repository->where('email', $request->email)->first();
+                $user->password = Hash::make($request->password);
+                $user->save();
 
-            return $this->apiResponse(PASSWORD_RESET_SUCCESSFUL, 200, true);
+                $user->tokens()->delete();
+
+                DB::table('password_resets')->where('email', $user->email)->delete();
+
+                return $this->apiResponse(PASSWORD_RESET_SUCCESSFUL, 200, true);
+            });
         } catch (\Exception $th) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
@@ -874,6 +883,7 @@ class UserController extends CoreController
             if (Hash::check($request->oldPassword, $user->password)) {
                 $user->password = Hash::make($request->newPassword);
                 $user->save();
+                $user->tokens()->delete();
                 return $this->apiResponse(PASSWORD_RESET_SUCCESSFUL, 200, true);
             } else {
                 return $this->apiResponse(OLD_PASSWORD_INCORRECT, 400, false);
@@ -1021,8 +1031,7 @@ class UserController extends CoreController
         try {
             $otpGateway = $this->getOtpGateway();
             $verifyOtpCode = $otpGateway->checkVerification($id, $code, $phoneNumber);
-            // Accept static OTP '123456' as valid for frontend/testing convenience
-            if ($verifyOtpCode->isValid() || ($code !== null && $code === '123456')) {
+            if ($verifyOtpCode->isValid()) {
                 return true;
             }
             return false;

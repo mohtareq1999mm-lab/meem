@@ -226,14 +226,13 @@ class ProductRepository extends BaseRepository
         $product,
         $variants,
         $flashSale
-    ) {
+    ): void {
         foreach ($variants as $variant) {
             $variant['product_id'] = $product->id;
             $variant['sale_price'] = app(ProductPricingService::class)->calculateVariantSalePrice($product, $variant, $flashSale);
             $productVariant = ProductVariant::create($variant);
             if (!$productVariant) {
-                DB::rollBack();
-                return false;
+                throw new HttpException(500, 'Failed to create product variant');
             }
 
             if (!empty($variant['attribute_values'])) {
@@ -243,8 +242,7 @@ class ProductRepository extends BaseRepository
                         'attribute_value_id' => $attributeValueId,
                     ]);
                     if (!$created) {
-                        DB::rollBack();
-                        return false;
+                        throw new HttpException(500, 'Failed to create attribute product association');
                     }
                 }
             }

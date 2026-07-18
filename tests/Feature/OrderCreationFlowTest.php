@@ -681,8 +681,8 @@ class OrderCreationFlowTest extends TestCase
 
         // Flash sale is active: product price = 100, 10% flash → 90
         $this->assertEquals(90.00, $orderItem->product_flash_sale_price);
-        // discount_price is an audit field — it records the raw discount math (not suppressed)
-        $this->assertEquals(80.00, $orderItem->product_discount_price);
+        // Flash sale overrides normal discount — discount price is null
+        $this->assertNull($orderItem->product_discount_price);
     }
 
     /** @test */

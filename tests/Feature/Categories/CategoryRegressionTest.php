@@ -140,6 +140,69 @@ class CategoryRegressionTest extends TestCase
         ));
     }
 
+    /** @test B6: Explicit slug is not overwritten by model saving hook */
+    public function test_b6_explicit_slug_is_preserved(): void
+    {
+        $category = Category::create([
+            'name' => ['en' => 'My Category'],
+            'slug' => 'custom-slug-123',
+        ]);
+
+        $this->assertEquals('custom-slug-123', $category->slug);
+    }
+
+    /** @test B7: Slug auto-generated from name when not explicitly provided */
+    public function test_b7_slug_auto_generated_when_not_provided(): void
+    {
+        $category = Category::create([
+            'name' => ['en' => 'Auto Generated Slug'],
+        ]);
+
+        $this->assertEquals('auto-generated-slug', $category->slug);
+    }
+
+    /** @test B8: slug does not change on update when name unchanged */
+    public function test_b8_slug_preserved_on_update_without_name_change(): void
+    {
+        $category = Category::create([
+            'name' => ['en' => 'Original'],
+            'slug' => 'original-slug',
+        ]);
+
+        $category->update(['details' => 'Updated details']);
+
+        $this->assertEquals('original-slug', $category->slug);
+    }
+
+    /** @test B9: slug updates when name changes but slug not provided */
+    public function test_b9_slug_updates_on_name_change_when_not_provided(): void
+    {
+        $category = Category::create([
+            'name' => ['en' => 'Old Name'],
+            'slug' => 'old-name',
+        ]);
+
+        $category->update(['name' => ['en' => 'New Name']]);
+
+        $this->assertEquals('new-name', $category->slug);
+    }
+
+    /** @test B10: slug preserved when both name and slug provided in update */
+    public function test_b10_slug_preserved_when_both_name_and_slug_provided(): void
+    {
+        $category = Category::create([
+            'name' => ['en' => 'Original'],
+            'slug' => 'original-slug',
+        ]);
+
+        $category->update([
+            'name' => ['en' => 'Updated Name'],
+            'slug' => 'explicit-slug',
+        ]);
+
+        $this->assertEquals('explicit-slug', $category->slug);
+    }
+
     private function createSuperAdminUser(): User
     {
         $permissions = [

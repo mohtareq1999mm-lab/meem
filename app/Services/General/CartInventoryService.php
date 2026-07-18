@@ -22,7 +22,7 @@ class CartInventoryService
     {
         return DB::transaction(function () use ($cart, $product, $variant, $quantity, $mode, $attributes, $shippingMethod) {
             $cart = Cart::whereKey($cart->id)->lockForUpdate()->firstOrFail();
-            $item = $this->findCartItemForLock($cart, $product->id, $variant?->id);
+            $item = $this->findCartItemForLock($cart, $product->id, $variant?->id, $shippingMethod);
             $desiredQuantity = $mode === 'set'
                 ? $quantity
                 : (($item?->quantity ?? 0) + $quantity);
@@ -99,9 +99,7 @@ class CartInventoryService
                     if (!$variant) {
                         throw new Exception(__(GIFT_VARIANT_NOT_AVAILABLE));
                     }
-                }
-
-                if ($item?->product_variant_id) {
+                } elseif ($item?->product_variant_id) {
                     $variant = ProductVariant::query()
                         ->whereKey($item->product_variant_id)
                         ->lockForUpdate()
@@ -341,6 +339,11 @@ class CartInventoryService
     {
         DB::transaction(function () use ($cart) {
             $cart = Cart::whereKey($cart->id)->lockForUpdate()->with('items')->firstOrFail();
+
+            if ($cart->expires_at && $cart->expires_at->isFuture()) {
+                return;
+            }
+
             foreach ($cart->items as $item) {
                 if ($item->reserved_quantity > 0) {
                     $stock = $this->lockInventoryRowByItem($item);
@@ -426,17 +429,22 @@ class CartInventoryService
         $stock->save();
     }
 
-    private function findCartItemForLock(Cart $cart, int $productId, ?int $variantId): ?CartItem
+    private function findCartItemForLock(Cart $cart, int $productId, ?int $variantId, ?string $shippingMethod = null): ?CartItem
     {
         $query = CartItem::query()
             ->where('cart_id', $cart->id)
             ->where('product_id', $productId)
+            ->where('is_gift', false)
             ->lockForUpdate();
 
         if ($variantId) {
             $query->where('product_variant_id', $variantId);
         } else {
             $query->whereNull('product_variant_id');
+        }
+
+        if ($shippingMethod !== null) {
+            $query->where('shipping_method', $shippingMethod);
         }
 
         return $query->first();

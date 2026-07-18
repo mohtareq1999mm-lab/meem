@@ -36,8 +36,16 @@ class Category extends Model implements HasMedia
             app(CategoryHierarchyService::class)->syncHierarchy($category);
         });
         static::saving(function ($category) {
-            $enName = $category->getTranslation('name', 'en', false);
-            $category->slug = $enName ? Str::slug($enName) : null;
+            if ($category->isDirty('name') && !$category->isDirty('slug')) {
+                $enName = $category->getTranslation('name', 'en', false);
+                $category->slug = $enName ? Str::slug($enName) : null;
+            }
+        });
+
+        static::saved(function (self $category) {
+            if ($category->wasChanged('parent_id')) {
+                app(CategoryHierarchyService::class)->updateDescendantLevels($category);
+            }
         });
 
         static::retrieved(function ($category) {

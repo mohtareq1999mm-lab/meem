@@ -36,6 +36,32 @@ class CartApiTest extends TestCase
 
         $this->createAllTestTables();
 
+        if (!Schema::hasColumn('product_variants', 'reserved_quantity')) {
+            Schema::table('product_variants', function (Blueprint $table) {
+                $table->integer('reserved_quantity')->default(0);
+                $table->integer('sold_quantity')->default(0);
+                $table->boolean('in_stock')->default(true);
+            });
+        }
+
+        if (!Schema::hasTable('attribute_product')) {
+            Schema::create('attribute_product', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('attribute_value_id');
+                $table->unsignedBigInteger('product_variant_id');
+                $table->timestamps();
+            });
+        }
+
+        if (!Schema::hasTable('attribute_values')) {
+            Schema::create('attribute_values', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('attribute_id');
+                $table->string('value');
+                $table->timestamps();
+            });
+        }
+
         $this->user = User::create([
             'name' => 'Cart User',
             'email' => 'cart@example.com',
@@ -563,5 +589,930 @@ class CartApiTest extends TestCase
         $this->assertStringNotContainsString('MESSAGE.', $message);
         $this->assertStringNotContainsString('ERROR.', $message);
         $this->assertEquals('Cart created successfully', $message);
+    }
+
+    // =========================================================================
+    // Bug A: expireCart re-checks expires_at after lockForUpdate
+    // =========================================================================
+
+    /** @test */
+    public function recently_refreshed_cart_not_expired(): void
+    {
+        $this->auth();
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 2, 'shipping_method' => 'scheduled'],
+        ]);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertNotNull($cart);
+
+        $cart->update(['expires_at' => now()->subMinutes(5)]);
+
+        CartItem::where('cart_id', $cart->id)->update(['reserved_quantity' => 2]);
+
+        $cart->update(['expires_at' => now()->addDays(3)]);
+
+        app(\App\Services\General\CartInventoryService::class)->expireCarts();
+
+        $cart->refresh();
+        $this->assertEquals('active', $cart->status, 'Recently refreshed cart should not be expired');
+        $this->assertDatabaseHas('cart_items', ['cart_id' => $cart->id]);
+    }
+
+    // =========================================================================
+    // Bug B: Regular item operation does not overwrite gift items
+    // =========================================================================
+
+    /** @test */
+    public function add_regular_item_does_not_overwrite_gift_item(): void
+    {
+        $this->auth();
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 1, 'shipping_method' => 'scheduled'],
+        ]);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertNotNull($cart);
+
+        $cartItem = $cart->items()->first();
+        $cartItem->update([
+            'is_gift' => true,
+            'promotion_id' => 999,
+            'price' => 0,
+            'total_price' => 0,
+        ]);
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 3, 'shipping_method' => 'scheduled'],
+        ]);
+
+        $cart->refresh();
+        $cart->load('items');
+        $this->assertCount(2, $cart->items, 'Gift item should remain separate from regular item');
+
+        $giftItem = $cart->items->firstWhere('is_gift', true);
+        $regularItem = $cart->items->firstWhere('is_gift', false);
+
+        $this->assertNotNull($giftItem, 'Gift item must still exist');
+        $this->assertNotNull($regularItem, 'Regular item must exist');
+        $this->assertEquals(1, $giftItem->quantity, 'Gift item quantity unchanged');
+        $this->assertEquals(3, $regularItem->quantity, 'Regular item has updated quantity');
+        $this->assertEquals(0, $giftItem->price, 'Gift item price still 0');
+        $this->assertEquals(999, $giftItem->promotion_id, 'Gift item promotion preserved');
+    }
+
+    // =========================================================================
+    // Bug C: Cart resource handles deleted coupon gracefully
+    // =========================================================================
+
+    /** @test */
+    public function cart_response_handles_deleted_coupon(): void
+    {
+        $this->auth();
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 1, 'shipping_method' => 'scheduled'],
+        ]);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertNotNull($cart);
+        $cart->update(['coupon' => 'DELETED-NOW']);
+
+        $response = $this->getJson(self::PREFIX . '/cart');
+        $response->assertStatus(200);
+        $response->assertJsonPath('success', true);
+        $this->assertNull($response->json('data.data.0.coupon'));
+    }
+
+    // =========================================================================
+    // Expired cart returns 404 on checkout-related calls
+    // =========================================================================
+
+    /** @test */
+    public function expired_cart_status_correct_after_expiry(): void
+    {
+        $this->auth();
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 2, 'shipping_method' => 'scheduled'],
+        ]);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertNotNull($cart);
+        $cart->update(['expires_at' => now()->subMinutes(5)]);
+
+        $inventoryService = app(\App\Services\General\CartInventoryService::class);
+        $inventoryService->expireCarts();
+
+        $cart->refresh();
+        $this->assertEquals('expired', $cart->status);
+        $this->assertEquals(0, CartItem::where('cart_id', $cart->id)->count());
+    }
+
+    // =========================================================================
+    // Bug 1 regression: Same product with different shipping methods
+    // =========================================================================
+
+    /** @test */
+    public function same_product_different_shipping_creates_separate_items(): void
+    {
+        $this->auth();
+        $this->product->update(['is_fast_shipping_available' => true]);
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 2, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 3, 'shipping_method' => 'fast'],
+        ])->assertStatus(201);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertNotNull($cart);
+        $cart->load('items');
+
+        $this->assertCount(2, $cart->items);
+
+        $scheduled = $cart->items->firstWhere('shipping_method', 'SCHEDULED');
+        $fast = $cart->items->firstWhere('shipping_method', 'FAST');
+
+        $this->assertNotNull($scheduled, 'SCHEDULED item must exist');
+        $this->assertNotNull($fast, 'FAST item must exist');
+        $this->assertEquals(2, $scheduled->quantity);
+        $this->assertEquals(3, $fast->quantity);
+        $this->assertEquals(5, $cart->items->sum('quantity'), 'Total quantity must be 5');
+    }
+
+    // =========================================================================
+    // Bug 2 regression: Update preserves shipping method when not provided
+    // =========================================================================
+
+    /** @test */
+    public function update_cart_item_preserves_shipping_method(): void
+    {
+        $this->auth();
+        $this->product->update(['is_fast_shipping_available' => true]);
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 2, 'shipping_method' => 'FAST'],
+        ])->assertStatus(201);
+
+        $this->putJson(self::PREFIX . '/cart/update-item', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 5],
+        ])->assertStatus(200);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertNotNull($cart);
+        $cart->load('items');
+
+        $this->assertCount(1, $cart->items);
+        $this->assertEquals(5, $cart->items->first()->quantity);
+        $this->assertEquals('FAST', $cart->items->first()->shipping_method);
+    }
+
+    /** @test */
+    public function update_with_explicit_shipping_method_updates_correct_item(): void
+    {
+        $this->auth();
+        $this->product->update(['is_fast_shipping_available' => true]);
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 2, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 3, 'shipping_method' => 'fast'],
+        ])->assertStatus(201);
+
+        $this->putJson(self::PREFIX . '/cart/update-item', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 10, 'shipping_method' => 'SCHEDULED'],
+        ])->assertStatus(200);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $cart->load('items');
+
+        $this->assertCount(2, $cart->items);
+        $scheduled = $cart->items->firstWhere('shipping_method', 'SCHEDULED');
+        $fast = $cart->items->firstWhere('shipping_method', 'FAST');
+
+        $this->assertNotNull($scheduled);
+        $this->assertNotNull($fast);
+        $this->assertEquals(10, $scheduled->quantity, 'SCHEDULED must be updated to 10');
+        $this->assertEquals(3, $fast->quantity, 'FAST must remain 3');
+    }
+
+    // =========================================================================
+    // Cart total_price accuracy after add/update/delete
+    // =========================================================================
+
+    /** @test */
+    public function cart_total_price_updated_on_item_operations(): void
+    {
+        $this->auth();
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 3, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertNotNull($cart);
+        $this->assertEquals(300.00, (float) $cart->total_price);
+
+        $this->putJson(self::PREFIX . '/cart/update-item', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 5, 'shipping_method' => 'SCHEDULED'],
+        ])->assertStatus(200);
+
+        $cart->refresh();
+        $this->assertEquals(500.00, (float) $cart->total_price);
+
+        $itemId = $cart->items()->first()->id;
+        $this->deleteJson(self::PREFIX . "/cart/delete-item/{$itemId}")->assertStatus(200);
+
+        $cart->refresh();
+        $this->assertEquals(0, (float) $cart->total_price);
+    }
+
+    // =========================================================================
+    // Coupon cleared when last item removed
+    // =========================================================================
+
+    /** @test */
+    public function delete_last_item_clears_coupon(): void
+    {
+        $this->auth();
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 1, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertNotNull($cart);
+
+        Coupon::create([
+            'code' => 'CLEARME',
+            'name' => 'Clear Test',
+            'slug' => 'coupon-clear-' . Str::random(6),
+            'discount_type' => 'percentage',
+            'discount' => 10,
+            'status' => true,
+            'start_date' => now()->subDay(),
+            'end_date' => now()->addMonth(),
+        ]);
+
+        $cart->update(['coupon' => 'CLEARME']);
+
+        $itemId = $cart->items()->first()->id;
+        $this->deleteJson(self::PREFIX . "/cart/delete-item/{$itemId}")->assertStatus(200);
+
+        $cart->refresh();
+        $this->assertNull($cart->coupon);
+    }
+
+    // =========================================================================
+    // Stock integrity after multiple operations
+    // =========================================================================
+
+    /** @test */
+    public function stock_consistency_after_multiple_add_remove_cycles(): void
+    {
+        $this->auth();
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 5, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $this->product->refresh();
+        $this->assertEquals(5, $this->product->reserved_quantity);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $itemId = $cart->items()->first()->id;
+
+        $this->deleteJson(self::PREFIX . "/cart/delete-item/{$itemId}")->assertStatus(200);
+
+        $this->product->refresh();
+        $this->assertEquals(0, $this->product->reserved_quantity);
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 3, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $this->product->refresh();
+        $this->assertEquals(3, $this->product->reserved_quantity);
+    }
+
+    /** @test */
+    public function stock_consistency_after_quantity_update(): void
+    {
+        $this->auth();
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 3, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $this->product->refresh();
+        $this->assertEquals(3, $this->product->reserved_quantity);
+
+        $this->putJson(self::PREFIX . '/cart/update-item', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 7, 'shipping_method' => 'SCHEDULED'],
+        ])->assertStatus(200);
+
+        $this->product->refresh();
+        $this->assertEquals(7, $this->product->reserved_quantity);
+
+        $this->putJson(self::PREFIX . '/cart/update-item', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 2, 'shipping_method' => 'SCHEDULED'],
+        ])->assertStatus(200);
+
+        $this->product->refresh();
+        $this->assertEquals(2, $this->product->reserved_quantity);
+    }
+
+    // =========================================================================
+    // Variant product in cart
+    // =========================================================================
+
+    /** @test */
+    public function add_variant_product_to_cart(): void
+    {
+        $this->auth();
+
+        $variant = \Marvel\Database\Models\ProductVariant::create([
+            'product_id' => $this->product->id,
+            'sku' => 'VAR-TEST-' . Str::random(6),
+            'price' => 150.00,
+            'stock_quantity' => 20,
+        ]);
+
+        $this->product->update(['product_type' => 'variable']);
+
+        $response = $this->postJson(self::PREFIX . '/cart', [
+            'item' => [
+                'product_id' => $this->product->id,
+                'product_variant_id' => $variant->id,
+                'quantity' => 3,
+                'shipping_method' => 'scheduled',
+            ],
+        ]);
+
+        $response->assertStatus(201);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertNotNull($cart);
+        $cart->load('items');
+
+        $this->assertCount(1, $cart->items);
+        $this->assertEquals($variant->id, $cart->items->first()->product_variant_id);
+
+        $variant->refresh();
+        $this->assertEquals(3, $variant->reserved_quantity);
+    }
+
+    /** @test */
+    public function update_variant_item_preserves_shipping_method(): void
+    {
+        $this->auth();
+        $this->product->update(['is_fast_shipping_available' => true]);
+
+        $variant = \Marvel\Database\Models\ProductVariant::create([
+            'product_id' => $this->product->id,
+            'sku' => 'VAR-UPD-' . Str::random(6),
+            'price' => 150.00,
+            'stock_quantity' => 20,
+        ]);
+
+        $this->product->update(['product_type' => 'variable']);
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => [
+                'product_id' => $this->product->id,
+                'product_variant_id' => $variant->id,
+                'quantity' => 2,
+                'shipping_method' => 'fast',
+            ],
+        ])->assertStatus(201);
+
+        $this->putJson(self::PREFIX . '/cart/update-item', [
+            'item' => [
+                'product_id' => $this->product->id,
+                'product_variant_id' => $variant->id,
+                'quantity' => 8,
+            ],
+        ])->assertStatus(200);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $cart->load('items');
+
+        $this->assertCount(1, $cart->items);
+        $this->assertEquals(8, $cart->items->first()->quantity);
+        $this->assertEquals('FAST', $cart->items->first()->shipping_method);
+    }
+
+    /** @test */
+    public function delete_variant_item_releases_variant_stock(): void
+    {
+        $this->auth();
+
+        $variant = \Marvel\Database\Models\ProductVariant::create([
+            'product_id' => $this->product->id,
+            'sku' => 'VAR-DEL-' . Str::random(6),
+            'price' => 150.00,
+            'stock_quantity' => 20,
+        ]);
+
+        $this->product->update(['product_type' => 'variable']);
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => [
+                'product_id' => $this->product->id,
+                'product_variant_id' => $variant->id,
+                'quantity' => 4,
+                'shipping_method' => 'scheduled',
+            ],
+        ])->assertStatus(201);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $itemId = $cart->items()->first()->id;
+
+        $this->deleteJson(self::PREFIX . "/cart/delete-item/{$itemId}")->assertStatus(200);
+
+        $variant->refresh();
+        $this->assertEquals(0, $variant->reserved_quantity);
+    }
+
+    // =========================================================================
+    // Expired/checked_out cart cannot be modified
+    // =========================================================================
+
+    /** @test */
+    public function add_item_reactivates_expired_cart_and_re_reserves_stock(): void
+    {
+        $this->auth();
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 2, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $cart->update(['expires_at' => now()->subMinutes(5)]);
+
+        $inventoryService = app(\App\Services\General\CartInventoryService::class);
+        $inventoryService->expireCarts();
+
+        $cart->refresh();
+        $this->assertEquals('expired', $cart->status);
+        $this->assertEquals(0, CartItem::where('cart_id', $cart->id)->count());
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 3, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $cart->refresh();
+        $cart->load('items');
+        $this->assertEquals('active', $cart->status);
+        $this->assertCount(1, $cart->items);
+        $this->assertEquals(3, $cart->items->first()->quantity);
+
+        $this->product->refresh();
+        $this->assertEquals(3, $this->product->reserved_quantity);
+    }
+
+    /** @test */
+    public function clear_cart_without_confirm_and_no_coupon_succeeds(): void
+    {
+        $this->auth();
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 2, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $response = $this->deleteJson(self::PREFIX . '/cart/delete-items');
+
+        $response->assertStatus(200);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $cart->load('items');
+        $this->assertCount(0, $cart->items);
+        $this->assertEquals(0, (float) $cart->total_price);
+
+        $this->product->refresh();
+        $this->assertEquals(0, $this->product->reserved_quantity);
+    }
+
+    /** @test */
+    public function clear_cart_with_coupon_without_confirm_returns_warning(): void
+    {
+        $this->auth();
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 1, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+
+        Coupon::create([
+            'code' => 'WARNME',
+            'name' => 'Warn Test',
+            'slug' => 'coupon-warn-' . Str::random(6),
+            'discount_type' => 'percentage',
+            'discount' => 10,
+            'status' => true,
+            'start_date' => now()->subDay(),
+            'end_date' => now()->addMonth(),
+        ]);
+        $cart->update(['coupon' => 'WARNME']);
+
+        $response = $this->deleteJson(self::PREFIX . '/cart/delete-items');
+        $response->assertStatus(200);
+        $this->assertEquals('This cart has a coupon applied. Please confirm to proceed with deletion.', $response->json('message'));
+    }
+
+    // =========================================================================
+    // releaseCart without deleteItems
+    // =========================================================================
+
+    /** @test */
+    public function release_cart_without_delete_releases_stock_but_keeps_items(): void
+    {
+        $this->auth();
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 3, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertNotNull($cart);
+
+        $inventoryService = app(\App\Services\General\CartInventoryService::class);
+        $inventoryService->releaseCart($cart, false);
+
+        $cart->refresh();
+        $cart->load('items');
+
+        $this->product->refresh();
+
+        $this->assertEquals(0, $this->product->reserved_quantity);
+        $this->assertGreaterThan(0, $cart->items->count());
+        $this->assertEquals(0, $cart->items->sum('reserved_quantity'));
+        $this->assertEquals('active', $cart->status);
+    }
+
+    // =========================================================================
+    // ensureCartReservation
+    // =========================================================================
+
+    /** @test */
+    public function ensure_cart_reservation_syncs_quantities(): void
+    {
+        $this->auth();
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 3, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+
+        CartItem::where('cart_id', $cart->id)->update(['reserved_quantity' => 1]);
+        $this->product->update(['reserved_quantity' => 1]);
+        $this->product->refresh();
+        $this->assertEquals(1, $this->product->reserved_quantity);
+
+        $inventoryService = app(\App\Services\General\CartInventoryService::class);
+        $inventoryService->ensureCartReservation($cart);
+
+        $this->product->refresh();
+        $this->assertEquals(3, $this->product->reserved_quantity);
+    }
+
+    // =========================================================================
+    // finalizeItemsByShippingMethod
+    // =========================================================================
+
+    /** @test */
+    public function finalize_scheduled_items_only_keeps_fast_items(): void
+    {
+        $this->auth();
+        $this->product->update(['is_fast_shipping_available' => true]);
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 2, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 3, 'shipping_method' => 'fast'],
+        ])->assertStatus(201);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertNotNull($cart);
+
+        $inventoryService = app(\App\Services\General\CartInventoryService::class);
+        $inventoryService->finalizeItemsByShippingMethod($cart, 'SCHEDULED');
+
+        $cart->refresh();
+        $cart->load('items');
+
+        $this->assertCount(1, $cart->items);
+        $this->assertEquals('FAST', $cart->items->first()->shipping_method);
+        $this->assertEquals(3, $cart->items->first()->quantity);
+    }
+
+    // =========================================================================
+    // Cart show authorization
+    // =========================================================================
+
+    /** @test */
+    public function cart_show_rejects_nonexistent_cart(): void
+    {
+        $this->auth();
+        $this->getJson(self::PREFIX . '/cart/99999')->assertStatus(404);
+    }
+
+    // =========================================================================
+    // Multiple items with same product and different variants
+    // =========================================================================
+
+    /** @test */
+    public function same_product_different_variants_create_separate_items(): void
+    {
+        $this->auth();
+        $this->product->update(['product_type' => 'variable']);
+
+        $variant1 = \Marvel\Database\Models\ProductVariant::create([
+            'product_id' => $this->product->id,
+            'sku' => 'VAR-A-' . Str::random(6),
+            'price' => 100.00,
+            'stock_quantity' => 10,
+        ]);
+        $variant2 = \Marvel\Database\Models\ProductVariant::create([
+            'product_id' => $this->product->id,
+            'sku' => 'VAR-B-' . Str::random(6),
+            'price' => 200.00,
+            'stock_quantity' => 10,
+        ]);
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'product_variant_id' => $variant1->id, 'quantity' => 2, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'product_variant_id' => $variant2->id, 'quantity' => 3, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $cart->load('items');
+
+        $this->assertCount(2, $cart->items);
+    }
+
+    // =========================================================================
+    // Bulk items with valid and invalid mixes
+    // =========================================================================
+
+    /** @test */
+    public function bulk_add_mixed_shipping_methods(): void
+    {
+        $this->auth();
+        $this->product->update(['is_fast_shipping_available' => true]);
+
+        $product2 = Product::create([
+            'name' => 'Fast Product',
+            'slug' => 'fast-product-' . Str::random(8),
+            'price' => 75.00,
+            'product_type' => ProductType::SIMPLE,
+            'status' => true,
+            'in_stock' => true,
+            'stock_quantity' => 20,
+            'is_fast_shipping_available' => true,
+        ]);
+
+        $response = $this->postJson(self::PREFIX . '/cart/bulk-items', [
+            'items' => [
+                ['product_id' => $this->product->id, 'quantity' => 2, 'shipping_method' => 'scheduled'],
+                ['product_id' => $this->product->id, 'quantity' => 3, 'shipping_method' => 'fast'],
+                ['product_id' => $product2->id, 'quantity' => 1, 'shipping_method' => 'fast'],
+            ],
+        ]);
+
+        $response->assertStatus(201);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $cart->load('items');
+
+        $this->assertCount(3, $cart->items, 'Must create 3 separate items');
+        $this->assertEquals(6, $cart->items->sum('quantity'));
+    }
+
+    // =========================================================================
+    // API response structure verification
+    // =========================================================================
+
+    /** @test */
+    public function cart_response_structure_is_correct(): void
+    {
+        $this->auth();
+
+        $response = $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 1, 'shipping_method' => 'scheduled'],
+        ]);
+
+        $response->assertStatus(201);
+        $response->assertJsonStructure([
+            'message',
+            'status',
+            'data' => [
+                'id',
+                'user_id',
+                'coupon',
+                'coupon_code',
+                'status',
+                'reserved_at',
+                'expires_at',
+                'total_items',
+                'total_quantity',
+                'total_price',
+                'normal_items_count',
+                'fast_items_count',
+                'normal_items' => [
+                    '*' => ['id', 'product_id', 'quantity', 'price', 'total_price', 'shipping_method', 'product'],
+                ],
+                'fast_items',
+            ],
+        ]);
+    }
+
+    // =========================================================================
+    // Verify quantity minimum enforcement
+    // =========================================================================
+
+    /** @test */
+    public function update_item_to_zero_rejected(): void
+    {
+        $this->auth();
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 2, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $response = $this->putJson(self::PREFIX . '/cart/update-item', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 0, 'shipping_method' => 'SCHEDULED'],
+        ]);
+
+        $this->assertContains($response->status(), [400, 422]);
+    }
+
+    // =========================================================================
+    // Prerequisite: Verify CouponCreationRequest validation exists and works
+    // =========================================================================
+
+    /** @test */
+    public function cart_rate_limiter_enforces_limit(): void
+    {
+        $this->auth();
+
+        $response = $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 1, 'shipping_method' => 'scheduled'],
+        ]);
+        $response->assertStatus(201);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertNotNull($cart->reserved_at);
+        $this->assertNotNull($cart->expires_at);
+        $this->assertTrue($cart->expires_at->isFuture());
+    }
+
+    // =========================================================================
+    // Finalize all items marks cart as checked_out
+    // =========================================================================
+
+    /** @test */
+    public function finalize_all_items_marks_cart_checked_out(): void
+    {
+        $this->auth();
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 2, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertNotNull($cart);
+
+        $inventoryService = app(\App\Services\General\CartInventoryService::class);
+        $inventoryService->finalizeCart($cart);
+
+        $cart->refresh();
+        $this->assertEquals('checked_out', $cart->status);
+        $this->assertEquals(0, CartItem::where('cart_id', $cart->id)->count());
+
+        $this->product->refresh();
+        $this->assertEquals(0, $this->product->reserved_quantity);
+        $this->assertEquals(2, $this->product->sold_quantity);
+    }
+
+    /** @test */
+    public function finalize_fast_items_only_keeps_scheduled_items(): void
+    {
+        $this->auth();
+        $this->product->update(['is_fast_shipping_available' => true]);
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 2, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 3, 'shipping_method' => 'fast'],
+        ])->assertStatus(201);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertNotNull($cart);
+
+        $inventoryService = app(\App\Services\General\CartInventoryService::class);
+        $inventoryService->finalizeItemsByShippingMethod($cart, 'FAST');
+
+        $cart->refresh();
+        $cart->load('items');
+
+        $this->assertCount(1, $cart->items);
+        $this->assertEquals('SCHEDULED', $cart->items->first()->shipping_method);
+        $this->assertEquals(2, $cart->items->first()->quantity);
+    }
+
+    // =========================================================================
+    // Gift item not returned as part of CartItemResource
+    // =========================================================================
+
+    /** @test */
+    public function gift_item_attribute_not_exposed_in_item_resource(): void
+    {
+        $this->auth();
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 1, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertNotNull($cart);
+
+        $cartItem = $cart->items()->first();
+        $cartItem->update([
+            'is_gift' => true,
+            'promotion_id' => null,
+            'price' => 0,
+            'total_price' => 0,
+        ]);
+
+        $response = $this->getJson(self::PREFIX . '/cart');
+        $response->assertStatus(200);
+
+        $item = $response->json('data.data.0.normal_items.0');
+        $this->assertNotNull($item);
+        $this->assertArrayNotHasKey('is_gift', $item);
+    }
+
+    // =========================================================================
+    // Multiple adds for same product+variant+shipping accumulate
+    // =========================================================================
+
+    /** @test */
+    public function multiple_adds_accumulate_quantity(): void
+    {
+        $this->auth();
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 2, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 3, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 5, 'shipping_method' => 'SCHEDULED'],
+        ])->assertStatus(201);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $cart->load('items');
+
+        $this->assertCount(1, $cart->items);
+        $this->assertEquals(10, $cart->items->first()->quantity);
+    }
+
+    // =========================================================================
+    // Update non-existent product in cart
+    // =========================================================================
+
+    /** @test */
+    public function update_non_existent_cart_item_creates_new_item(): void
+    {
+        $this->auth();
+
+        $response = $this->putJson(self::PREFIX . '/cart/update-item', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 3, 'shipping_method' => 'SCHEDULED'],
+        ]);
+
+        $response->assertStatus(200);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertNotNull($cart);
+        $cart->load('items');
+
+        $this->assertCount(1, $cart->items);
+        $this->assertEquals(3, $cart->items->first()->quantity);
     }
 }

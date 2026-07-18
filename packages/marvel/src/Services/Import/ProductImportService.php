@@ -301,7 +301,7 @@ class ProductImportService
                 $data['slug'] = $product->slug;
                 $product->fill($data)->saveQuietly();
             } else {
-                $data['slug'] = $this->generateSlug($row, $product->id ?? null);
+                $data['slug'] = $this->generateSlug($row, $product?->id);
                 $product = new Product($data);
                 $product->saveQuietly();
                 $this->createdProductIds[] = $product->id;

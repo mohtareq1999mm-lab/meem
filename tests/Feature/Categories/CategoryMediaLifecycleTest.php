@@ -89,7 +89,7 @@ class CategoryMediaLifecycleTest extends TestCase
     }
 
     /** @test */
-    public function soft_delete_category_removes_orphan_media(): void
+    public function soft_delete_preserves_media(): void
     {
         Storage::fake(self::DISK);
 
@@ -98,7 +98,7 @@ class CategoryMediaLifecycleTest extends TestCase
             'slug' => 'soft-delete-media',
         ]);
 
-        $file = UploadedFile::fake()->image('gone.jpg', 800, 600);
+        $file = UploadedFile::fake()->image('preserved.jpg', 800, 600);
         $media = $category
             ->addMedia($file)
             ->toMediaCollection('categories-desktop', self::DISK);
@@ -109,10 +109,9 @@ class CategoryMediaLifecycleTest extends TestCase
         $category->delete();
 
         $this->assertSoftDeleted($category);
+        $this->assertDatabaseHas('media', ['id' => $mediaId]);
 
-        $this->assertDatabaseMissing('media', ['id' => $mediaId]);
-
-        Storage::disk(self::DISK)->assertMissing($mediaPath);
+        Storage::disk(self::DISK)->assertExists($mediaPath);
     }
 
     /** @test */
@@ -142,7 +141,7 @@ class CategoryMediaLifecycleTest extends TestCase
     }
 
     /** @test */
-    public function multiple_media_files_all_removed_on_soft_delete(): void
+    public function multiple_media_files_preserved_on_soft_delete(): void
     {
         Storage::fake(self::DISK);
 
@@ -164,10 +163,10 @@ class CategoryMediaLifecycleTest extends TestCase
 
         $category->delete();
 
-        $this->assertCount(0, Media::query()->where('model_id', $category->id)->get());
+        $this->assertCount(3, Media::query()->where('model_id', $category->id)->get());
 
         foreach ($paths as $path) {
-            Storage::disk(self::DISK)->assertMissing($path);
+            Storage::disk(self::DISK)->assertExists($path);
         }
     }
 
@@ -242,6 +241,6 @@ class CategoryMediaLifecycleTest extends TestCase
 
         $category->restore();
         $this->assertDatabaseHas('categories', ['id' => $category->id]);
-        $this->assertNull($category->getFirstMedia('categories-desktop'));
+        $this->assertNotNull($category->getFirstMedia('categories-desktop'));
     }
 }

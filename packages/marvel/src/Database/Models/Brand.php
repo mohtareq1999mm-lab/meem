@@ -64,8 +64,10 @@ class Brand extends Model implements HasMedia, Sortable
     protected static function booted()
     {
         static::saving(function ($brand) {
-            $enName = $brand->getTranslation('name', 'en', false);
-            $brand->slug = $enName ? Str::slug($enName) : null;
+            if ($brand->isDirty('name') && !$brand->isDirty('slug')) {
+                $enName = $brand->getTranslation('name', 'en', false);
+                $brand->slug = $enName ? Str::slug($enName) : null;
+            }
         });
     }
 }

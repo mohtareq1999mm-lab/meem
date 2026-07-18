@@ -1006,6 +1006,90 @@ class PricingProductionHardenTest extends TestCase
         );
     }
 
+    // ===================== Flash Sale Date Boundaries =====================
+
+    /** @test */
+    public function flash_sale_starting_tomorrow_is_not_active_today()
+    {
+        if (!Schema::hasColumn('flash_sales', 'type')) {
+            Schema::table('flash_sales', function (Blueprint $table) {
+                $table->string('type', 50)->default('percentage')->after('description');
+                $table->decimal('discount', 10, 2)->default(0)->after('type');
+                $table->decimal('max_discount_amount', 10, 2)->nullable()->after('discount');
+                $table->integer('order')->default(0)->after('max_discount_amount');
+            });
+        }
+
+        $product = Product::create([
+            'name' => 'Flash Start Tomorrow',
+            'slug' => 'flash-tomorrow-' . Str::random(6),
+            'price' => 100.00,
+            'status' => true,
+            'in_stock' => true,
+            'stock_quantity' => 50,
+        ]);
+
+        $flashSale = new FlashSale();
+        $flashSale->forceFill([
+            'name' => 'Tomorrow Flash',
+            'slug' => 'tomorrow-flash-' . Str::random(4),
+            'type' => FlashSaleType::PERCENTAGE,
+            'discount' => 50,
+            'status' => true,
+            'start_date' => Carbon::tomorrow(),
+            'end_date' => Carbon::tomorrow()->addDays(3),
+        ]);
+        $flashSale->save();
+        $product->flash_sales()->attach($flashSale->id);
+
+        $pricing = app(ProductPricingService::class);
+        $result = $pricing->calculateProductPricing($product);
+
+        $this->assertNull($result['price_after_flash_sale'], 'Flash sale starting tomorrow should not be active today');
+        $this->assertEquals(100.00, $result['final_price']);
+    }
+
+    /** @test */
+    public function flash_sale_that_ended_yesterday_is_not_active_today()
+    {
+        if (!Schema::hasColumn('flash_sales', 'type')) {
+            Schema::table('flash_sales', function (Blueprint $table) {
+                $table->string('type', 50)->default('percentage')->after('description');
+                $table->decimal('discount', 10, 2)->default(0)->after('type');
+                $table->decimal('max_discount_amount', 10, 2)->nullable()->after('discount');
+                $table->integer('order')->default(0)->after('max_discount_amount');
+            });
+        }
+
+        $product = Product::create([
+            'name' => 'Flash Ended Yesterday',
+            'slug' => 'flash-ended-' . Str::random(6),
+            'price' => 100.00,
+            'status' => true,
+            'in_stock' => true,
+            'stock_quantity' => 50,
+        ]);
+
+        $flashSale = new FlashSale();
+        $flashSale->forceFill([
+            'name' => 'Expired Flash',
+            'slug' => 'expired-flash-' . Str::random(4),
+            'type' => FlashSaleType::PERCENTAGE,
+            'discount' => 50,
+            'status' => true,
+            'start_date' => Carbon::yesterday()->subDays(3),
+            'end_date' => Carbon::yesterday(),
+        ]);
+        $flashSale->save();
+        $product->flash_sales()->attach($flashSale->id);
+
+        $pricing = app(ProductPricingService::class);
+        $result = $pricing->calculateProductPricing($product);
+
+        $this->assertNull($result['price_after_flash_sale'], 'Flash sale that ended yesterday should not be active today');
+        $this->assertEquals(100.00, $result['final_price']);
+    }
+
     // ===================== Coupon + Promotion Stacking =====================
 
     /** @test */

@@ -21,9 +21,8 @@ class CartResource extends Resource
             $fastItems = collect();
         }
 
-        $couponObject = $this->coupon
-            ? CouponResource::make(Coupon::where('code', $this->coupon)->first())
-            : null;
+        $couponModel = $this->coupon ? Coupon::where('code', $this->coupon)->first() : null;
+        $couponObject = $couponModel ? CouponResource::make($couponModel) : null;
 
         return [
             'id' => $this->id,

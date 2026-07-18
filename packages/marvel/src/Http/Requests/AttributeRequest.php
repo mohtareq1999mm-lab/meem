@@ -35,19 +35,26 @@ class AttributeRequest extends FormRequest
             'values' => [
                 'sometimes',
                 'array',
-                'distinct',
             ],
             'values.*' => [
                 'sometimes',
                 'array',
-                'distinct',
             ],
-            'values.*.value.*' => [
-                'sometimes',
+            'values.*.value' => [
+                'required',
+                'array',
+            ],
+            'values.*.value.en' => [
+                'required',
                 'string',
                 'min:2',
                 'max:50',
-
+            ],
+            'values.*.value.ar' => [
+                'required',
+                'string',
+                'min:2',
+                'max:50',
             ],
         ];
     }

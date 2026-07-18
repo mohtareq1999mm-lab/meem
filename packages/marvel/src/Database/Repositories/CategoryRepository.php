@@ -27,7 +27,6 @@ class CategoryRepository extends BaseRepository
     protected $dataArray = [
         'name',
         'slug',
-        'parent',
         'details',
         'parent_id',
         'is_featured',

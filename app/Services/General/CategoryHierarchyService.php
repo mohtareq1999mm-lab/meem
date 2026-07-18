@@ -81,6 +81,17 @@ class CategoryHierarchyService
         return false;
     }
 
+    public function updateDescendantLevels(Category $category): void
+    {
+        $children = $category->children()->get();
+
+        foreach ($children as $child) {
+            $child->level = $category->level + 1;
+            $child->saveQuietly();
+            $this->updateDescendantLevels($child);
+        }
+    }
+
     public function loadRecursiveChildren(SupportCollection $categories, bool $activeOnly = false): SupportCollection
     {
         $currentLevel = $categories->values();

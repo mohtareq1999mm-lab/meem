@@ -552,4 +552,91 @@ class BrandApiTest extends TestCase
         $response->assertJsonPath('data.image.desktop', '');
         $response->assertJsonPath('data.image.mobile', '');
     }
+
+    // =========================================================================
+    // Regression Tests — Slug Behavior
+    // =========================================================================
+
+    public function test_explicit_slug_is_preserved_on_create(): void
+    {
+        Sanctum::actingAs($this->adminUser, ['*']);
+
+        $brand = Brand::create([
+            'name' => ['en' => 'My Brand'],
+            'slug' => 'explicit-slug-456',
+        ]);
+
+        $this->assertEquals('explicit-slug-456', $brand->slug);
+    }
+
+    public function test_slug_auto_generated_when_not_provided(): void
+    {
+        Sanctum::actingAs($this->adminUser, ['*']);
+
+        $brand = Brand::create([
+            'name' => ['en' => 'Auto Brand'],
+        ]);
+
+        $this->assertEquals('auto-brand', $brand->slug);
+    }
+
+    public function test_slug_stable_when_name_unchanged(): void
+    {
+        Sanctum::actingAs($this->adminUser, ['*']);
+
+        $brand = Brand::create([
+            'name' => ['en' => 'Stable'],
+            'slug' => 'stable-slug',
+        ]);
+
+        $brand->update(['details' => ['en' => 'Updated details only']]);
+
+        $this->assertEquals('stable-slug', $brand->slug);
+    }
+
+    public function test_slug_updates_when_name_changes_and_slug_not_provided(): void
+    {
+        Sanctum::actingAs($this->adminUser, ['*']);
+
+        $brand = Brand::create([
+            'name' => ['en' => 'Old Name'],
+            'slug' => 'old-name',
+        ]);
+
+        $brand->update(['name' => ['en' => 'New Name']]);
+
+        $this->assertEquals('new-name', $brand->slug);
+    }
+
+    public function test_slug_preserved_when_both_name_and_slug_provided(): void
+    {
+        Sanctum::actingAs($this->adminUser, ['*']);
+
+        $brand = Brand::create([
+            'name' => ['en' => 'Original'],
+        ]);
+
+        $brand->update([
+            'name' => ['en' => 'Updated Name'],
+            'slug' => 'custom-slug',
+        ]);
+
+        $this->assertEquals('custom-slug', $brand->slug);
+    }
+
+    public function test_status_update_does_not_change_slug(): void
+    {
+        Sanctum::actingAs($this->adminUser, ['*']);
+
+        $brand = Brand::create([
+            'name' => ['en' => 'Toggle Status'],
+            'slug' => 'toggle-status',
+        ]);
+
+        $brand->update(['status' => false]);
+        $this->assertEquals('toggle-status', $brand->slug);
+
+        $brand->update(['status' => true]);
+        $this->assertEquals('toggle-status', $brand->slug);
+    }
 }

@@ -6,6 +6,7 @@ namespace Marvel\Database\Repositories;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Marvel\Database\Models\Attribute;
 use Marvel\Database\Models\AttributeValue;
 use Marvel\Exceptions\MarvelException;
@@ -72,16 +73,28 @@ class AttributeRepository extends BaseRepository
 
             $request['slug'] = $this->makeSlug($request, 'slug', $attribute->id);
 
-
             $attribute->update($request->only($this->dataArray));
             if (isset($request['values']) && count($request['values'])) {
-                $attribute->values()->delete();
-                foreach ($request['values'] as  $value) {
-                    AttributeValue::create([
-                        'value' => $value['value'],
-                        'attribute_id' => $attribute->id,
-                    ]);
+                $existingValues = $attribute->values()->get()->keyBy('slug');
+                $incomingSlugs = [];
+
+                foreach ($request['values'] as $value) {
+                    $valueContent = $value['value'] ?? '';
+                    $slugSource = is_array($valueContent)
+                        ? ($valueContent['en'] ?? reset($valueContent))
+                        : $valueContent;
+                    $slug = Str::slug($slugSource);
+                    $incomingSlugs[] = $slug;
+
+                    if (!isset($existingValues[$slug])) {
+                        AttributeValue::create([
+                            'value' => $valueContent,
+                            'attribute_id' => $attribute->id,
+                        ]);
+                    }
                 }
+
+                $attribute->values()->whereNotIn('slug', $incomingSlugs)->delete();
             }
 
             $attributeUpdated =  $this->with(['values'])->findOrFail($attribute->id);

@@ -24,13 +24,22 @@ class RoleAndPermissionController extends CoreController
     use ApiResponse;
     public function __construct()
     {
+        $this->middleware('permission:' . PermissionEnum::VIEW_ROLES)->only(['getAllRoles']);
+        $this->middleware('permission:' . PermissionEnum::VIEW_ROLE)->only('showRole');
         $this->middleware('permission:' . PermissionEnum::CREATE_ROLES)->only('addRole');
         $this->middleware('permission:' . PermissionEnum::UPDATE_ROLES)->only('updateRole');
         $this->middleware('permission:' . PermissionEnum::DELETE_ROLES)->only('destroyRole');
-        $this->middleware('permission:' . PermissionEnum::VIEW_ROLE)->only('showRole');
 
         $this->middleware('permission:' . PermissionEnum::ASSIGN_ROLE)->only('assignRole');
         $this->middleware('permission:' . PermissionEnum::REMOVE_ROLE)->only('removeRoleFromUser');
+
+        $this->middleware('permission:' . PermissionEnum::SUPER_ADMIN)->only([
+            'getAllPermissions',
+            'assignPermissionToRole',
+            'givePermission',
+            'syncPermissions',
+            'removePermission',
+        ]);
     }
 
     // ================= ROLES =================

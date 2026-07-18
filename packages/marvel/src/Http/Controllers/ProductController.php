@@ -627,10 +627,10 @@ class ProductController extends CoreController
                         $categories = Cache::remember($categoryCacheKey, 30, fn() => Category::whereIn('id', $categoriesId)->get());
                         $tags = Cache::remember($tagCacheKey, 30, fn() => Tag::whereIn('id', $tagsId)->get());
                         if (!empty($categories)) {
-                            $newProduct->categories()->attach($categories);
+                            $newProduct->categories()->sync($categories);
                         }
                         if (!empty($tags)) {
-                            $newProduct->tags()->attach($tags);
+                            $newProduct->tags()->sync($tags);
                         }
                     }
                 } catch (Exception $e) {
@@ -854,7 +854,9 @@ class ProductController extends CoreController
                 throw new MarvelException(NOT_FOUND);
             }
         }
-        $products_query = $this->repository->withCount('orders')->with(['type', 'shop'])->orderBy('orders_count', 'desc')->where('language', $language);
+        $products_query = $this->repository->withCount(['orders' => function ($q) {
+            $q->where('order_status', 'order-completed');
+        }])->with(['type', 'shop'])->orderBy('orders_count', 'desc')->where('language', $language);
         if (isset($request->shop_id)) {
             $products_query = $products_query->where('shop_id', "=", $request->shop_id);
         }

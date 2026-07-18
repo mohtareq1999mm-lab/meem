@@ -26,7 +26,7 @@ class ManageProductInventory implements ShouldQueue
                     if (TRANSLATION_ENABLED) {
                         $this->updateVariationTranslationsInventory($variationOption, $variationOption->quantity);
                     } else {
-                        $variationOption->update([['quantity' => $variationOption->quantity]]);
+                        $variationOption->update(['quantity' => $variationOption->quantity]);
                     }
                 }
             }

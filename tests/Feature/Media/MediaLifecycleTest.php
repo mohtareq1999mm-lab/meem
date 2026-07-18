@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Media;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -158,7 +159,7 @@ class MediaLifecycleTest extends TestCase
     }
 
     /** @test */
-    public function media_cleanup_observer_deletes_together_with_soft_delete_dispatches(): void
+    public function media_cleanup_observer_preserves_media_on_soft_delete(): void
     {
         Storage::fake(self::DISK);
 
@@ -175,7 +176,7 @@ class MediaLifecycleTest extends TestCase
 
         $category->delete();
 
-        $this->assertDatabaseMissing('media', ['id' => $mediaId]);
+        $this->assertDatabaseHas('media', ['id' => $mediaId]);
     }
 
     /** @test */
@@ -200,7 +201,7 @@ class MediaLifecycleTest extends TestCase
     }
 
     /** @test */
-    public function observer_allows_multiple_consecutive_soft_deletes(): void
+    public function observer_preserves_media_across_consecutive_soft_deletes(): void
     {
         Storage::fake(self::DISK);
 
@@ -220,11 +221,11 @@ class MediaLifecycleTest extends TestCase
             ->toMediaCollection('categories-desktop', self::DISK);
         $category2->delete();
 
-        $this->assertDatabaseCount('media', 0);
+        $this->assertDatabaseCount('media', 2);
     }
 
     /** @test */
-    public function observer_allows_recreating_model_with_same_data_after_soft_delete(): void
+    public function observer_keeps_original_media_when_recreating_model_after_soft_delete(): void
     {
         Storage::fake(self::DISK);
 
@@ -245,7 +246,7 @@ class MediaLifecycleTest extends TestCase
             ->toMediaCollection('categories-desktop', self::DISK);
 
         $this->assertDatabaseHas('media', ['id' => $media2->id]);
-        $this->assertDatabaseCount('media', 1);
+        $this->assertDatabaseCount('media', 2);
     }
 
     /** @dataProvider mediaModelProvider */
@@ -297,8 +298,15 @@ class MediaLifecycleTest extends TestCase
         $model->delete();
 
         $this->assertSoftDeleted($model);
-        $this->assertDatabaseMissing('media', ['id' => $mediaId]);
-        Storage::disk(self::DISK)->assertMissing($mediaPath);
+
+        $usesSoftDeletes = in_array(SoftDeletes::class, class_uses_recursive($model));
+        if ($usesSoftDeletes) {
+            $this->assertDatabaseHas('media', ['id' => $mediaId]);
+            Storage::disk(self::DISK)->assertExists($mediaPath);
+        } else {
+            $this->assertDatabaseMissing('media', ['id' => $mediaId]);
+            Storage::disk(self::DISK)->assertMissing($mediaPath);
+        }
     }
 
     /** @dataProvider mediaModelProvider */
@@ -343,10 +351,17 @@ class MediaLifecycleTest extends TestCase
 
         $model->delete();
 
-        $this->assertCount(0, Media::query()->where('model_id', $model->id)->get());
-
-        foreach ($paths as $path) {
-            Storage::disk(self::DISK)->assertMissing($path);
+        $usesSoftDeletes = in_array(SoftDeletes::class, class_uses_recursive($model));
+        if ($usesSoftDeletes) {
+            $this->assertCount(3, Media::query()->where('model_id', $model->id)->get());
+            foreach ($paths as $path) {
+                Storage::disk(self::DISK)->assertExists($path);
+            }
+        } else {
+            $this->assertCount(0, Media::query()->where('model_id', $model->id)->get());
+            foreach ($paths as $path) {
+                Storage::disk(self::DISK)->assertMissing($path);
+            }
         }
     }
 

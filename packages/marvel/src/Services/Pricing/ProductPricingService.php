@@ -430,8 +430,18 @@ class ProductPricingService
             return false;
         }
 
-        if (array_key_exists('discount_status', $data) && $data['discount_status'] === false) {
-            return false;
+        if (array_key_exists('discount_status', $data)) {
+            $discountStatus = $data['discount_status'];
+            if ($discountStatus === null) {
+                // null means not explicitly set - proceed normally
+            } elseif (is_string($discountStatus)) {
+                $discountStatus = filter_var($discountStatus, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            } elseif (is_numeric($discountStatus)) {
+                $discountStatus = (bool) $discountStatus;
+            }
+            if ($discountStatus === false) {
+                return false;
+            }
         }
 
         $today = Carbon::now();

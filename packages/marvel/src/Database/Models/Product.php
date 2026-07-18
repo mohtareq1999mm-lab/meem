@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Marvel\Enums\DiscountType;
+use Marvel\Enums\ProductStatus;
 use Marvel\Traits\Excludable;
 use Marvel\Services\Pricing\ProductPricingService;
 use Spatie\MediaLibrary\HasMedia;
@@ -32,6 +33,7 @@ class Product extends Model implements HasMedia
         'description',
         'price',
         'product_type',
+        'type_id',
         'sku',
         'stock_quantity',
         'quantity',
@@ -497,13 +499,20 @@ class Product extends Model implements HasMedia
     }
 
 
+    public function scopeActiveStatus($query)
+    {
+        return $query->where(function ($q) {
+            $q->where('status', true)
+                ->orWhere('status', ProductStatus::PUBLISH);
+        });
+    }
+
     public function scopeActive($query)
     {
-        return $query->where('status', true)
-            ->where(function ($builder) {
-                $builder->where('in_stock', true)
-                    ->orWhereRaw('(COALESCE(stock_quantity, 0) - COALESCE(reserved_quantity, 0)) > 0');
-            });
+        return $query->activeStatus()->where(function ($builder) {
+            $builder->where('in_stock', true)
+                ->orWhereRaw('(COALESCE(stock_quantity, 0) - COALESCE(reserved_quantity, 0)) > 0');
+        });
     }
 
     public function scopeFastShippingAvailable($query)

@@ -5,7 +5,6 @@ namespace Marvel\Listeners;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Marvel\Database\Models\Product;
-use Marvel\Database\Models\Variation;
 use Marvel\Enums\ProductType;
 use Marvel\Services\Pricing\ProductPricingService;
 use Marvel\Events\FlashSaleProcessed;
@@ -52,40 +51,43 @@ class FlashSaleProductProcess implements ShouldQueue
             $flash_sale = $data['requested_flash_sale'];
 
             foreach ($data['attached_product_ids'] as $key => $product_id) {
-                $product = Product::where('id', '=', $product_id)->with(['variation_options'])->first();
+                $product = Product::where('id', '=', $product_id)->with(['variations'])->first();
 
                 if ($current_date === $start_date) {
                     switch ($flash_sale->type) {
                         case 'percentage':
                             if ($product->product_type === ProductType::VARIABLE) {
-                                foreach ($product->variation_options as $key => $variation) {
+                                foreach ($product->variations as $key => $variation) {
                                     $sale_price = $pricingService->calculateVariantCurrentPrice($product, $variation, $flash_sale);
                                     Variation::where('id', $variation->id)->update(['sale_price' => $sale_price]);
                                 }
                             }
 
-                            if ($product->product_type === ProductType::SIMPLE) {
-                                $product->sale_price = $pricingService->calculateProductPricing($product, $flash_sale)['final_price'];
+                            if ($product->product_type === ProductType::VARIABLE) {
+                                foreach ($product->variations as $key => $variation) {
+                                    $sale_price = $pricingService->calculateVariantCurrentPrice($product, $variation, $flash_sale);
+                                    $variation->sale_price = $sale_price;
+                                    $variation->save();
+                                }
                             }
 
                             break;
 
                         case 'fixed_rate':
                             if ($product->product_type === ProductType::VARIABLE) {
-                                foreach ($product->variation_options as $key => $variation) {
+                                foreach ($product->variations as $key => $variation) {
                                     $sale_price = $pricingService->calculateVariantCurrentPrice($product, $variation, $flash_sale);
-                                    Variation::where('id', $variation->id)->update(['sale_price' => $sale_price]);
+                                    $variation->sale_price = $sale_price;
+                                    $variation->save();
                                 }
-                            }
-
-                            if ($product->product_type === ProductType::SIMPLE) {
-                                $product->sale_price = $pricingService->calculateProductPricing($product, $flash_sale)['final_price'];
                             }
 
                             break;
                     }
                 }
 
+                $product->has_flash_sale = true;
+                $product->price_after_flash_sale = $pricingService->calculateFlashSalePrice($flash_sale, $product->price);
                 $product->in_flash_sale = true;
                 $product->save();
             }
@@ -102,18 +104,17 @@ class FlashSaleProductProcess implements ShouldQueue
     public function unsetProductFromFlashSale($product_ids)
     {
         foreach ($product_ids as $key => $product_id) {
-            $product = Product::where('id', '=', $product_id)->with(['variation_options'])->first();
+            $product = Product::where('id', '=', $product_id)->with(['variations'])->first();
 
             if ($product->product_type === ProductType::VARIABLE) {
-                foreach ($product->variation_options as $key => $variation) {
-                    Variation::where('id', $variation->id)->update(['sale_price' => null]);
+                foreach ($product->variations as $key => $variation) {
+                    $variation->sale_price = null;
+                    $variation->save();
                 }
             }
 
-            if ($product->product_type === ProductType::SIMPLE) {
-                $product->sale_price = null;
-            }
-
+            $product->has_flash_sale = false;
+            $product->price_after_flash_sale = null;
             $product->in_flash_sale = false;
             $product->save();
         }

@@ -216,7 +216,7 @@ class ProductService
         $query = Product::query()
             ->with($this->productRelations())
             ->withAvg(['reviews' => fn($q) => $q->approved()], 'rating')
-            ->where('status', true)
+            ->activeStatus()
             ->where(function ($query) {
                 $query->where(function ($q) {
                     $q->where('has_discount', true)
@@ -302,7 +302,7 @@ class ProductService
                 'start_date', 'end_date',
             ])
             ->whereNull('deleted_at')
-            ->where('status', true)
+            ->activeStatus()
             ->where('has_flash_sale', true)
             ->whereExists(function ($query) use ($weekEnd) {
                 $query->select(DB::raw(1))
@@ -343,7 +343,7 @@ class ProductService
                 'start_date', 'end_date',
             ])
             ->whereNull('deleted_at')
-            ->where('status', true)
+            ->activeStatus()
             ->where('has_flash_sale', true)
             ->whereExists(function ($query) {
                 $query->select(DB::raw(1))
@@ -383,7 +383,7 @@ class ProductService
             ->with(array_merge($this->productRelations(), ['reviews']))
             ->withAvg(['reviews' => fn($q) => $q->approved()], 'rating')
             ->whereNull('deleted_at')
-            ->where('status', true)
+            ->activeStatus()
             ->where('has_discount', true);
 
         $this->applyChannelHomeFilter($query);
@@ -443,7 +443,7 @@ class ProductService
             ->with(array_merge($this->productRelations(), ['reviews']))
             ->withAvg(['reviews' => fn($q) => $q->approved()], 'rating')
             ->whereNull('deleted_at')
-            ->where('status', true)
+            ->activeStatus()
             ->where('has_flash_sale', false)
             ->whereDate('created_at', '>=', now()->subDays(15));
 

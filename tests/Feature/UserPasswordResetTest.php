@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
+use Laravel\Sanctum\Sanctum;
 use Marvel\Database\Models\User;
 use Tests\Concerns\CreatesTestTables;
 use Tests\TestCase;
@@ -53,6 +54,16 @@ class UserPasswordResetTest extends TestCase
             'type' => 'user',
             'is_active' => true,
             'email_verified_at' => now(),
+        ]);
+    }
+
+    private function insertResetToken(): void
+    {
+        DB::table('password_resets')->where('email', $this->user->email)->delete();
+        DB::table('password_resets')->insert([
+            'email' => $this->user->email,
+            'token' => Hash::make('test-token-789'),
+            'created_at' => Carbon::now(),
         ]);
     }
 
@@ -104,17 +115,6 @@ class UserPasswordResetTest extends TestCase
     // ========================================================================
     // POST /api/verify-forget-password-token
     // ========================================================================
-
-    public function test_verify_forget_password_token_succeeds_with_static_otp(): void
-    {
-        $response = $this->postJson(self::PREFIX . '/verify-forget-password-token', [
-            'email' => $this->user->email,
-            'otp' => '123456',
-        ]);
-
-        $response->assertOk();
-        $this->assertTrue($response->getContent() === 'true' || $response->json() === true);
-    }
 
     public function test_verify_forget_password_token_succeeds_with_valid_token(): void
     {
@@ -199,22 +199,6 @@ class UserPasswordResetTest extends TestCase
         ]);
     }
 
-    public function test_reset_password_succeeds_with_static_otp(): void
-    {
-        $response = $this->postJson(self::PREFIX . '/reset-password', [
-            'email' => $this->user->email,
-            'otp' => '123456',
-            'password' => 'NewPassword789!',
-            'password_confirmation' => 'NewPassword789!',
-        ]);
-
-        $response->assertOk();
-        $response->assertJsonPath('success', true);
-
-        $this->user->refresh();
-        $this->assertTrue(Hash::check('NewPassword789!', $this->user->password));
-    }
-
     public function test_reset_password_fails_with_wrong_token(): void
     {
         $response = $this->postJson(self::PREFIX . '/reset-password', [
@@ -229,9 +213,10 @@ class UserPasswordResetTest extends TestCase
 
     public function test_reset_password_fails_with_mismatched_confirmation(): void
     {
+        $this->insertResetToken();
         $this->postJson(self::PREFIX . '/reset-password', [
             'email' => $this->user->email,
-            'otp' => '123456',
+            'otp' => 'test-token-789',
             'password' => 'NewPassword789!',
             'password_confirmation' => 'DifferentPassword!',
         ])->assertStatus(422);
@@ -239,9 +224,10 @@ class UserPasswordResetTest extends TestCase
 
     public function test_reset_password_fails_with_short_password(): void
     {
+        $this->insertResetToken();
         $this->postJson(self::PREFIX . '/reset-password', [
             'email' => $this->user->email,
-            'otp' => '123456',
+            'otp' => 'test-token-789',
             'password' => '1234567',
             'password_confirmation' => '1234567',
         ])->assertStatus(422);
@@ -250,7 +236,7 @@ class UserPasswordResetTest extends TestCase
     public function test_reset_password_fails_without_email(): void
     {
         $this->postJson(self::PREFIX . '/reset-password', [
-            'otp' => '123456',
+            'otp' => 'test-token-789',
             'password' => 'NewPassword789!',
             'password_confirmation' => 'NewPassword789!',
         ])->assertStatus(422);

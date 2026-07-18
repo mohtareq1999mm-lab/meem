@@ -143,8 +143,8 @@ class FlashSaleRepository extends BaseRepository
                 $this->setProductInFlashSale($products);
             }
 
-            DB::commit();
             $this->updateFlashSaleProductPrices($flash_sale);
+            DB::commit();
             return $flash_sale;
         } catch (Exception $e) {
             DB::rollBack();

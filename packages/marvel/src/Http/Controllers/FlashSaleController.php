@@ -162,15 +162,26 @@ class FlashSaleController extends CoreController
      *     @OA\Response(response=404, description="Flash sale not found")
      * )
      */
-    public function show(Request $request, $id)
+    public function show(Request $request, $params)
     {
         try {
+            if (is_numeric($params)) {
+                $params = (int) $params;
+                $flash_sale = $this->repository
+                    ->with('products')
+                    ->where('id', $params)
+                    ->first();
+            } else {
+                $flash_sale = $this->repository
+                    ->with('products')
+                    ->where('slug', $params)
+                    ->first();
+            }
 
-            //            $language = $request->language ?? DEFAULT_LANGUAGE;
-            $flash_sale = $this->repository
-                ->with('products')
-                ->where('id', '=', $id)
-                ->first();
+            if (!$flash_sale) {
+                throw new MarvelException(NOT_FOUND);
+            }
+
             return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, FlashSaleResource::make($flash_sale));
         } catch (MarvelException $e) {
             return $this->apiResponse(NOT_FOUND, 404, false);
@@ -237,17 +248,18 @@ class FlashSaleController extends CoreController
 
     public function destroy($id, Request $request)
     {
-        $request->merge(['id' => $id]);
-        if ($this->deleteFlashSale($request)) {
+        try {
+            $request->merge(['id' => $id]);
+            $this->deleteFlashSale($request);
             return $this->apiResponse(DELETE_FLASH_SALE_SUCCESSFULLY, 200, true);
+        } catch (MarvelException $e) {
+            return $this->apiResponse(NOT_FOUND, 404, false);
         }
-        return $this->apiResponse(NOT_FOUND, 200, true);
     }
 
     public function deleteFlashSale(Request $request)
     {
         try {
-            $user = $request->user();
             $flashSale = $this->repository->findOrFail($request->id);
             $flashSale->delete();
             return true;

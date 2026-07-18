@@ -314,6 +314,162 @@ class PromotionProductionHardenTest extends TestCase
         $this->assertTrue($giftItems->isEmpty(), 'Gift item should not be added when stock is 0');
     }
 
+    /** @test */
+    public function create_gift_promotion_with_simple_product(): void
+    {
+        $user = $this->makeUser();
+        Sanctum::actingAs($user);
+
+        $cartProduct = $this->makeSimpleProduct('Cart', 200, 10);
+        $cart = $this->makeCartWithItem($user, $cartProduct, 200);
+
+        $giftProduct = $this->makeSimpleProduct('Simple Gift', 50, 5);
+
+        $giftPromotion = Promotion::create([
+            'name' => 'Simple Gift',
+            'code' => 'SGFT-' . Str::upper(Str::random(6)),
+            'type' => PromotionType::QTY,
+            'type_amount' => PromotionMountType::GIFT,
+            'value' => 0,
+            'discount' => 0,
+            'minimum_order_amount' => 0,
+            'apply_to' => 'all_products',
+            'status' => true,
+        ]);
+        $giftPromotion->giftProducts()->attach($giftProduct->id, ['quantity' => 1]);
+
+        $this->assertDatabaseHas('promotion_gift_products', [
+            'promotion_id' => $giftPromotion->id,
+            'product_id' => $giftProduct->id,
+            'product_variant_id' => null,
+        ]);
+    }
+
+    /** @test */
+    public function checkout_with_simple_product_gift(): void
+    {
+        $user = $this->makeUser();
+        Sanctum::actingAs($user);
+
+        $cartProduct = $this->makeSimpleProduct('Cart', 200, 10);
+        $cart = $this->makeCartWithItem($user, $cartProduct, 200);
+
+        $giftProduct = $this->makeSimpleProduct('Simple Gift', 50, 5);
+
+        $giftPromotion = Promotion::create([
+            'name' => 'Simple Gift Checkout',
+            'code' => 'SGCHK-' . Str::upper(Str::random(6)),
+            'type' => PromotionType::QTY,
+            'type_amount' => PromotionMountType::GIFT,
+            'value' => 0,
+            'discount' => 0,
+            'minimum_order_amount' => 0,
+            'apply_to' => 'all_products',
+            'status' => true,
+        ]);
+        $giftPromotion->giftProducts()->attach($giftProduct->id, ['quantity' => 1]);
+
+        $service = app(PromotionService::class);
+        $totals = $service->applySelectedPromotion($cart->fresh(), $giftPromotion->id, $giftProduct->id);
+
+        $giftItem = CartItem::query()
+            ->where('cart_id', $cart->id)
+            ->where('is_gift', true)
+            ->first();
+
+        $this->assertNotNull($giftItem);
+        $this->assertEquals($giftProduct->id, $giftItem->product_id);
+        $this->assertNull($giftItem->product_variant_id);
+        $this->assertEquals(0, $giftItem->price);
+        $this->assertTrue($totals->hasPromotion());
+    }
+
+    /** @test */
+    public function existing_variant_gift_flow_still_works(): void
+    {
+        $user = $this->makeUser();
+        Sanctum::actingAs($user);
+
+        $cartProduct = $this->makeSimpleProduct('Cart', 200, 10);
+        $cart = $this->makeCartWithItem($user, $cartProduct, 200);
+
+        $giftData = $this->makeVariableProductWithVariant('Variant Gift', 50, 5);
+        $giftProduct = $giftData['product'];
+        $giftVariant = $giftData['variant'];
+
+        $giftPromotion = Promotion::create([
+            'name' => 'Variant Gift',
+            'code' => 'VGFT-' . Str::upper(Str::random(6)),
+            'type' => PromotionType::QTY,
+            'type_amount' => PromotionMountType::GIFT,
+            'value' => 0,
+            'discount' => 0,
+            'minimum_order_amount' => 0,
+            'apply_to' => 'all_products',
+            'status' => true,
+        ]);
+        $giftPromotion->giftProducts()->attach($giftProduct->id, [
+            'quantity' => 1,
+            'product_variant_id' => $giftVariant->id,
+        ]);
+
+        $service = app(PromotionService::class);
+        $totals = $service->applySelectedPromotion($cart->fresh(), $giftPromotion->id, $giftProduct->id);
+
+        $giftItem = CartItem::query()
+            ->where('cart_id', $cart->id)
+            ->where('is_gift', true)
+            ->first();
+
+        $this->assertNotNull($giftItem);
+        $this->assertEquals($giftProduct->id, $giftItem->product_id);
+        $this->assertEquals($giftVariant->id, $giftItem->product_variant_id);
+        $this->assertTrue($totals->hasPromotion());
+    }
+
+    /** @test */
+    public function simple_and_variant_gifts_can_exist_together(): void
+    {
+        $user = $this->makeUser();
+        Sanctum::actingAs($user);
+
+        $cartProduct = $this->makeSimpleProduct('Cart', 200, 10);
+        $cart = $this->makeCartWithItem($user, $cartProduct, 200);
+
+        $simpleGift = $this->makeSimpleProduct('Simple', 30, 5);
+        $variantData = $this->makeVariableProductWithVariant('Variant', 50, 5);
+        $variantGift = $variantData['product'];
+        $variantId = $variantData['variant']->id;
+
+        $promotion = Promotion::create([
+            'name' => 'Multi Gift',
+            'code' => 'MULTI-' . Str::upper(Str::random(6)),
+            'type' => PromotionType::QTY,
+            'type_amount' => PromotionMountType::GIFT,
+            'value' => 0,
+            'discount' => 0,
+            'minimum_order_amount' => 0,
+            'apply_to' => 'all_products',
+            'status' => true,
+        ]);
+        $promotion->giftProducts()->attach($simpleGift->id, ['quantity' => 1]);
+        $promotion->giftProducts()->attach($variantGift->id, [
+            'quantity' => 1,
+            'product_variant_id' => $variantId,
+        ]);
+
+        $rows = DB::table('promotion_gift_products')
+            ->where('promotion_id', $promotion->id)
+            ->get();
+
+        $this->assertCount(2, $rows);
+        $simpleRow = $rows->firstWhere('product_id', $simpleGift->id);
+        $variantRow = $rows->firstWhere('product_id', $variantGift->id);
+
+        $this->assertNull($simpleRow->product_variant_id);
+        $this->assertEquals($variantId, $variantRow->product_variant_id);
+    }
+
     // =========================================================================
     // ELIGIBILITY
     // =========================================================================
@@ -767,6 +923,58 @@ class PromotionProductionHardenTest extends TestCase
         $this->assertContains('minimum_order_amount', $columns);
     }
 
+    /** @test */
+    public function migration_allows_nullable_product_variant_id(): void
+    {
+        $columns = \Illuminate\Support\Facades\Schema::getColumnListing('promotion_gift_products');
+
+        $this->assertContains('product_variant_id', $columns);
+        $this->assertContains('promotion_id', $columns);
+        $this->assertContains('product_id', $columns);
+        $this->assertContains('quantity', $columns);
+    }
+
+    /** @test */
+    public function simple_gift_reserves_inventory(): void
+    {
+        $user = $this->makeUser();
+        Sanctum::actingAs($user);
+
+        $cartProduct = $this->makeSimpleProduct('Item', 100, 10);
+        $cart = $this->makeCartWithItem($user, $cartProduct, 100);
+
+        $giftProduct = $this->makeSimpleProduct('Simple Gift', 30, 5);
+
+        $promotion = Promotion::create([
+            'name' => 'Simple Gift',
+            'code' => 'RSRV-S-' . Str::upper(Str::random(6)),
+            'type' => PromotionType::QTY,
+            'type_amount' => PromotionMountType::GIFT,
+            'value' => 0,
+            'discount' => 0,
+            'minimum_order_amount' => 0,
+            'apply_to' => 'all_products',
+            'status' => true,
+        ]);
+        $promotion->giftProducts()->attach($giftProduct->id, ['quantity' => 1]);
+
+        $inventoryService = app(CartInventoryService::class);
+        $item = $inventoryService->reserveGiftItem(
+            $cart->fresh(),
+            $giftProduct,
+            $promotion,
+            1,
+            null,
+            ShippingMethod::SCHEDULED,
+        );
+
+        $this->assertNotNull($item);
+        $this->assertEquals($giftProduct->id, $item->product_id);
+        $this->assertNull($item->product_variant_id);
+        $this->assertTrue((bool) $item->is_gift);
+        $this->assertEquals(0, $item->price);
+    }
+
     // =========================================================================
     // SERVICE EDGE CASES
     // =========================================================================
@@ -1059,5 +1267,79 @@ class PromotionProductionHardenTest extends TestCase
         $service = app(PromotionService::class);
         $this->expectNotToPerformAssertions();
         $service->incrementUsage(null);
+    }
+
+    /** @test */
+    public function requested_variant_not_overwritten_by_existing_item(): void
+    {
+        $user = $this->makeUser();
+        Sanctum::actingAs($user);
+
+        $cartProduct = $this->makeSimpleProduct('Item X', 200, 10);
+        $cart = $this->makeCartWithItem($user, $cartProduct, 200);
+
+        $giftData = $this->makeVariableProductWithVariant('Gift Var', 50, 5);
+        $giftProduct = $giftData['product'];
+        $giftVariantA = $giftData['variant'];
+
+        $giftVariantB = ProductVariant::create([
+            'product_id' => $giftProduct->id,
+            'title' => 'Size B',
+            'stock_quantity' => 5,
+            'reserved_quantity' => 0,
+            'price' => 55,
+            'sku' => 'GFT-V-B-' . Str::random(6),
+        ]);
+
+        $promotion = Promotion::create([
+            'name' => 'Variant Overwrite Test',
+            'code' => 'VOW-' . Str::upper(Str::random(6)),
+            'type' => PromotionType::QTY,
+            'type_amount' => PromotionMountType::GIFT,
+            'value' => 0,
+            'discount' => 0,
+            'minimum_order_amount' => 0,
+            'apply_to' => 'all_products',
+            'status' => true,
+        ]);
+        $promotion->giftProducts()->attach($giftProduct->id, [
+            'quantity' => 1,
+            'product_variant_id' => $giftVariantA->id,
+        ]);
+
+        $service = app(PromotionService::class);
+
+        // First application: creates item with variant A
+        $firstTotals = $service->applySelectedPromotion($cart->fresh(), $promotion->id, $giftProduct->id);
+
+        $firstItem = CartItem::query()
+            ->where('cart_id', $cart->id)
+            ->where('is_gift', true)
+            ->first();
+
+        $this->assertNotNull($firstItem);
+        $this->assertEquals($giftVariantA->id, $firstItem->product_variant_id);
+
+        // Second application: same user switches to variant B
+        $promotion->giftProducts()->sync([
+            $giftProduct->id => [
+                'quantity' => 1,
+                'product_variant_id' => $giftVariantB->id,
+            ],
+        ]);
+
+        $secondTotals = $service->applySelectedPromotion($cart->fresh(), $promotion->id, $giftProduct->id);
+
+        $secondItem = CartItem::query()
+            ->where('cart_id', $cart->id)
+            ->where('is_gift', true)
+            ->first();
+
+        $this->assertNotNull($secondItem);
+        $this->assertEquals(
+            $giftVariantB->id,
+            $secondItem->product_variant_id,
+            'Selected variant B should not be overwritten by old item variant A'
+        );
     }
 }
