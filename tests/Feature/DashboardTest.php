@@ -688,7 +688,7 @@ class DashboardTest extends TestCase
         $user = $this->createSuperAdminUser();
         Sanctum::actingAs($user);
 
-        for ($i = 0; $i < 35; $i++) {
+        for ($i = 0; $i < 60; $i++) {
             $this->getJson(self::PREFIX . '/dashboard/overview');
         }
 
@@ -761,5 +761,100 @@ class DashboardTest extends TestCase
             $name = is_array($p['name']) ? ($p['name']['en'] ?? json_encode($p['name'])) : $p['name'];
             $this->assertLessThan(10, $qty, "Product '{$name}' has quantity {$qty}, expected < 10");
         }
+    }
+
+    // =========================================================================
+    // Translation Resolution
+    // =========================================================================
+
+    public function test_dashboard_returns_readable_english_messages(): void
+    {
+        $user = $this->createSuperAdminUser();
+        Sanctum::actingAs($user);
+
+        $this->makeProduct();
+        $this->makeOrder(['total_price' => 100, 'status' => 'completed']);
+
+        app()->setLocale('en');
+        $response = $this->getJson(self::PREFIX . '/dashboard/overview');
+
+        $response->assertOk();
+        $this->assertStringNotContainsString('message.DASHBOARD.', $response->json('message'));
+        $this->assertEquals('Dashboard overview fetched successfully.', $response->json('message'));
+    }
+
+    public function test_dashboard_returns_readable_arabic_reconciliation_message(): void
+    {
+        $user = $this->createSuperAdminUser();
+        Sanctum::actingAs($user);
+
+        app()->setLocale('ar');
+        $response = $this->getJson(self::PREFIX . '/dashboard/reconciliation');
+
+        $response->assertOk();
+        $this->assertStringNotContainsString('DASHBOARD.RECONCILIATION_FETCHED', $response->json('message'));
+        $this->assertEquals('تم جلب ملخص التسوية بنجاح', $response->json('message'));
+    }
+
+    // =========================================================================
+    // Product Analytics — Inventory Column Regression
+    // =========================================================================
+
+    public function test_product_analytics_out_of_stock_uses_stock_quantity(): void
+    {
+        $user = $this->createSuperAdminUser();
+        Sanctum::actingAs($user);
+
+        $this->makeProduct(['quantity' => 0, 'name' => ['en' => 'Out Of Stock Product']]);
+        $this->makeProduct(['quantity' => 10, 'name' => ['en' => 'In Stock Product']]);
+
+        $response = $this->getJson(self::PREFIX . '/dashboard/products');
+
+        $response->assertOk();
+        $outOfStock = $response->json('data.out_of_stock');
+        $outOfStockNames = array_map(fn ($p) => is_array($p['name']) ? ($p['name']['en'] ?? '') : $p['name'], $outOfStock);
+        $this->assertContains('Out Of Stock Product', $outOfStockNames);
+        $this->assertNotContains('In Stock Product', $outOfStockNames);
+    }
+
+    public function test_product_analytics_inventory_value_uses_stock_quantity(): void
+    {
+        $user = $this->createSuperAdminUser();
+        Sanctum::actingAs($user);
+
+        $this->makeProduct(['quantity' => 5, 'price' => 100]);
+        $this->makeProduct(['quantity' => 10, 'price' => 50]);
+
+        $response = $this->getJson(self::PREFIX . '/dashboard/products');
+
+        $response->assertOk();
+        $inventoryValue = $response->json('data.inventory_value');
+        $this->assertEquals(1000.00, $inventoryValue, '', 0.01);
+    }
+
+    // =========================================================================
+    // Route Security — api.php Dashboard Routes
+    // =========================================================================
+
+    private const GENERAL_PREFIX = '/api/v1/general';
+
+    public function test_public_general_dashboard_route_returns_401_when_unauthenticated(): void
+    {
+        $response = $this->getJson(self::GENERAL_PREFIX . '/dashboard/overview');
+
+        $response->assertUnauthorized();
+    }
+
+    public function test_public_general_dashboard_route_returns_200_when_authenticated(): void
+    {
+        $user = $this->createSuperAdminUser();
+        Sanctum::actingAs($user);
+
+        $this->makeOrder(['total_price' => 100, 'status' => 'completed']);
+
+        $response = $this->getJson(self::GENERAL_PREFIX . '/dashboard/overview');
+
+        $response->assertOk();
+        $response->assertJsonPath('success', true);
     }
 }

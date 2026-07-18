@@ -23,8 +23,8 @@ class PromotionRequest extends FormRequest
             "name" => "required|array",
             'name.*' => ['required_with:name', UniqueTranslationRule::for('promotions', 'name')],
 
-            "image_desktop" => "required|image|mimes:jpeg,png,jpg,webp",
-            "image_mobile" => "required|image|mimes:jpeg,png,jpg,webp",
+            "image-desktop" => "required|image|mimes:jpeg,png,jpg,webp",
+            "image-mobile" => "required|image|mimes:jpeg,png,jpg,webp",
             'type' => ['required', Rule::in(PromotionType::getValues())],
             'type_amount' => ['required', Rule::in(PromotionMountType::getValues())],
 

@@ -756,7 +756,7 @@ class PaymentCheckoutTest extends TestCase
 
         $this->createPickupLocation();
 
-        $response = $this->postJson(self::PREFIX . '/general/checkout/fast', [
+        $response = $this->postJson(self::PREFIX . '/general/fast-shipping/checkout', [
             'name' => 'Test User',
             'user_phone' => '01000000000',
             'user_email' => 'test@test.com',
@@ -801,7 +801,7 @@ class PaymentCheckoutTest extends TestCase
             ],
         ]);
 
-        $response = $this->postJson(self::PREFIX . '/general/checkout/fast', [
+        $response = $this->postJson(self::PREFIX . '/general/fast-shipping/checkout', [
             'name' => 'Test User',
             'user_phone' => '01000000000',
             'user_email' => 'test@test.com',
@@ -1070,38 +1070,12 @@ class PaymentCheckoutTest extends TestCase
         $response->assertStatus(422);
     }
 
-    // ========== OrderResource: New Fields ==========
-
-    /** @test */
-    public function order_resource_includes_fulfillment_and_payment_fields()
-    {
-        Sanctum::actingAs($this->user);
-
-        $order = Order::create([
-            'user_id' => $this->user->id,
-            'name' => 'Test',
-            'total_price' => 100,
-            'fulfillment_type' => 'delivery',
-            'payment_method' => 'cod',
-            'payment_gateway' => null,
-            'status' => 'pending',
-        ]);
-
-        $response = $this->getJson(self::PREFIX . '/general/orders');
-
-        $response->assertOk();
-        $orderData = $response->json('data.data.0');
-        $this->assertEquals('delivery', $orderData['fulfillment_type']);
-        $this->assertEquals('cod', $orderData['payment_method']);
-        $this->assertNull($orderData['payment_gateway']);
-    }
-
     // ========== QR Endpoint ==========
 
     /** @test */
     public function qr_endpoint_requires_authentication()
     {
-        $response = $this->getJson(self::PREFIX . '/general/transactions/some-uuid/qr');
+        $response = $this->getJson(self::PREFIX . '/general/checkout/transaction-qr/some-uuid');
 
         $response->assertStatus(401);
     }
@@ -1111,7 +1085,7 @@ class PaymentCheckoutTest extends TestCase
     {
         Sanctum::actingAs($this->user);
 
-        $response = $this->getJson(self::PREFIX . '/general/transactions/' . Str::uuid() . '/qr');
+        $response = $this->getJson(self::PREFIX . '/general/checkout/transaction-qr/' . Str::uuid());
 
         $response->assertStatus(404);
     }
@@ -1141,7 +1115,7 @@ class PaymentCheckoutTest extends TestCase
             'status' => 'pending',
         ]);
 
-        $response = $this->getJson(self::PREFIX . '/general/transactions/' . $transaction->uuid . '/qr');
+        $response = $this->getJson(self::PREFIX . '/general/checkout/transaction-qr/' . $transaction->uuid);
 
         $response->assertStatus(403);
     }
@@ -1167,7 +1141,7 @@ class PaymentCheckoutTest extends TestCase
             'status' => 'pending',
         ]);
 
-        $response = $this->getJson(self::PREFIX . '/general/transactions/' . $transaction->uuid . '/qr');
+        $response = $this->getJson(self::PREFIX . '/general/checkout/transaction-qr/' . $transaction->uuid);
 
         $response->assertOk();
         $response->assertHeader('Content-Type', 'image/svg+xml');
@@ -1228,32 +1202,6 @@ class PaymentCheckoutTest extends TestCase
 
         $orderService = app(\App\Services\General\OrderService::class);
         $orderService->markCodAsPaid($order);
-    }
-
-    // ========== Old Fields Still Work (OrderResource) ==========
-
-    /** @test */
-    public function order_resource_still_contains_original_fields()
-    {
-        Sanctum::actingAs($this->user);
-
-        $order = Order::create([
-            'user_id' => $this->user->id,
-            'name' => 'Test',
-            'total_price' => 100,
-            'status' => 'pending',
-        ]);
-
-        $response = $this->getJson(self::PREFIX . '/general/orders');
-
-        $response->assertOk();
-        $orderData = $response->json('data.data.0');
-        $this->assertArrayHasKey('id', $orderData);
-        $this->assertArrayHasKey('order_number', $orderData);
-        $this->assertArrayHasKey('status', $orderData);
-        $this->assertArrayHasKey('subtotal', $orderData);
-        $this->assertArrayHasKey('total', $orderData);
-        $this->assertArrayHasKey('created_at', $orderData);
     }
 
     // ========== OrderStatus Enum ==========

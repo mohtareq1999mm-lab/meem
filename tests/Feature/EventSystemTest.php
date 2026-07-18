@@ -856,17 +856,18 @@ class EventSystemTest extends TestCase
     }
 
     /** @test */
-    public function change_order_status_to_cancelled_from_completed_dispatches_order_cancelled()
+    public function change_order_status_to_cancelled_from_pending_dispatches_order_cancelled()
     {
         Event::fake([OrderCancelled::class, OrderStatusChanged::class]);
 
         $order = $this->createOrderWithPendingTransaction('cod');
-        $order->update(['status' => 'completed']);
+        $this->assertEquals('pending', $order->status);
 
         $orderService = app(OrderService::class);
         $orderService->changeOrderStatus(null, 'cancelled', $order->id);
 
         Event::assertDispatched(OrderCancelled::class, fn ($e) => $e->order->id === $order->id);
+        $this->assertEquals('cancelled', $order->fresh()->status);
     }
 
     /** @test */
@@ -1006,7 +1007,6 @@ class EventSystemTest extends TestCase
             'status' => 'paid',
             'amount' => 100.00,
         ]);
-        $order->update(['status' => 'completed']);
 
         $this->product->update([
             'stock_quantity' => 7,
@@ -1016,6 +1016,7 @@ class EventSystemTest extends TestCase
         $orderService = app(OrderService::class);
         $orderService->changeOrderStatus(null, 'cancelled', $order->id);
 
+        $this->assertEquals('cancelled', $order->fresh()->status);
         $this->assertDatabaseHas('products', [
             'id' => $this->product->id,
             'stock_quantity' => 10,

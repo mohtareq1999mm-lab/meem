@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Contexts\ChannelContext;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Marvel\Database\Models\Product;
 use Tests\Concerns\CreatesTestTables;
@@ -221,5 +222,57 @@ class ChannelContextTest extends TestCase
 
         $response->assertOk();
         $this->assertEquals('Normal Product', $response->json('data.name'));
+    }
+
+    /** @test */
+    public function cache_key_differs_by_channel()
+    {
+        config(['scout.driver' => 'null']);
+
+        $capturedKeys = [];
+
+        Cache::shouldReceive('remember')
+            ->andReturnUsing(function ($key) use (&$capturedKeys) {
+                $capturedKeys[] = $key;
+                return collect();
+            });
+
+        $this->getJson(self::PREFIX . '/general/home');
+        $this->getJson(self::PREFIX . '/general/home', [
+            'X-Channel' => 'fast-shipping',
+        ]);
+
+        $this->assertNotEmpty($capturedKeys, 'No cache keys were generated');
+
+        $homeKeys = array_filter($capturedKeys, fn($k) => str_starts_with($k, 'home:'));
+        $fastKeys = array_filter($capturedKeys, fn($k) => str_starts_with($k, 'fast-shipping:'));
+
+        $this->assertNotEmpty($homeKeys, 'No home-channel cache keys found');
+        $this->assertNotEmpty($fastKeys, 'No fast-shipping cache keys found');
+    }
+
+    /** @test */
+    public function home_service_cache_keys_use_channel_prefix()
+    {
+        config(['scout.driver' => 'null']);
+
+        $generatedKeys = [];
+
+        Cache::shouldReceive('remember')
+            ->andReturnUsing(function ($key) use (&$generatedKeys) {
+                $generatedKeys[] = $key;
+                return collect();
+            });
+
+        $this->getJson(self::PREFIX . '/general/home');
+
+        $this->assertNotEmpty($generatedKeys, 'No cache keys were generated');
+        foreach ($generatedKeys as $key) {
+            $this->assertStringStartsWith(
+                'home:',
+                $key,
+                "Cache key '{$key}' should start with 'home:'"
+            );
+        }
     }
 }

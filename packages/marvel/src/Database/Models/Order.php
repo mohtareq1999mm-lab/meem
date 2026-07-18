@@ -31,6 +31,7 @@ class Order extends Model
         'payment_method',
         'payment_gateway',
         'pickup_location_id',
+        'parent_id',
         'pickup_location_name',
         'pickup_location_address',
         'pickup_location_phone',
@@ -52,6 +53,10 @@ class Order extends Model
     protected $casts = [
         'address' => 'array',
         'expected_delivery_at' => 'datetime',
+        'price' => 'float',
+        'shipping_price' => 'float',
+        'total_price' => 'float',
+        'fast_shipping_fee' => 'float',
     ];
 
     protected $hidden = [
@@ -84,6 +89,11 @@ class Order extends Model
     public function pickupLocation(): BelongsTo
     {
         return $this->belongsTo(PickupLocation::class, 'pickup_location_id');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(Order::class, 'parent_id');
     }
 
     public function scopeForUser(Builder $query, int $userId): Builder

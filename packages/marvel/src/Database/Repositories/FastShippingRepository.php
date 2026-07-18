@@ -4,8 +4,9 @@ namespace Marvel\Database\Repositories;
 
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Governorate;
-use Marvel\Database\Models\Order;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\Settings;
 use Marvel\Enums\ShippingMethod;
@@ -75,19 +76,27 @@ class FastShippingRepository
 
     public function getSettings(): array
     {
-        $settings = Settings::query()->first();
+        return Cache::remember('fast_shipping_settings', 3600, function () {
+            $settings = Settings::query()->first();
 
-        return data_get($settings, 'options.' . self::SETTINGS_KEY, $this->defaults());
+            return data_get($settings, 'options.' . self::SETTINGS_KEY, $this->defaults());
+        });
     }
 
     public function updateSettings(array $data): Settings
     {
-        $settings = Settings::query()->first();
-        $options = $settings->options ?? [];
-        $options[self::SETTINGS_KEY] = array_merge($this->defaults(), $data);
-        $settings->update(['options' => $options]);
+        $settings = DB::transaction(function () use ($data) {
+            $settings = Settings::query()->lockForUpdate()->first();
+            $options = $settings->options ?? [];
+            $options[self::SETTINGS_KEY] = array_merge($this->defaults(), $data);
+            $settings->update(['options' => $options]);
 
-        return $settings->fresh();
+            return $settings->fresh();
+        });
+
+        Cache::forget('fast_shipping_settings');
+
+        return $settings;
     }
 
     public function getStatus(): array
@@ -127,23 +136,26 @@ class FastShippingRepository
         $errors = [];
 
         if (!$this->isGloballyEnabled()) {
-            $errors[] = 'Fast shipping is not available at this time.';
+            $errors[] = __('checkout.fast_shipping_unavailable');
         }
 
         if (!$this->isWithinWorkingHours()) {
-            $errors[] = 'Fast shipping is only available between ' . $this->getStartHour() . ' and ' . $this->getEndHour() . '.';
+            $errors[] = __('checkout.fast_shipping_hours_only', [
+                'start' => $this->getStartHour(),
+                'end' => $this->getEndHour(),
+            ]);
         }
 
         if (!$this->isGovernorateEnabled($governorate)) {
-            $errors[] = 'Fast shipping is not available in your governorate.';
+            $errors[] = __('checkout.fast_shipping_governorate_unavailable');
         }
 
         if (!$this->areProductsFastEligible($cartItems)) {
-            $errors[] = 'One or more items in your cart are not eligible for fast shipping.';
+            $errors[] = __('checkout.fast_shipping_items_ineligible');
         }
 
         if ($cartItems->isEmpty()) {
-            $errors[] = 'Your cart is empty.';
+            $errors[] = __('checkout.cart_empty');
         }
 
         return $errors;

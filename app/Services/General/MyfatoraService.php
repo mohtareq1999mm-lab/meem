@@ -28,11 +28,15 @@ class MyfatoraService
             return null;
         }
 
-        $response = Http::withHeaders($this->header)
+        $http = Http::withHeaders($this->header)
             ->acceptJson()
-            ->timeout(30)
-            ->withoutVerifying()
-            ->post($this->baseUrl . $url, $data);
+            ->timeout(30);
+
+        if (app()->environment('local')) {
+            $http->withoutVerifying();
+        }
+
+        $response = $http->post($this->baseUrl . $url, $data);
 
         if (!$response->successful()) {
             return null;

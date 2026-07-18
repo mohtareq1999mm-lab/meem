@@ -259,6 +259,7 @@ return [
     'DASHBOARD.COUPON_ANALYTICS_FETCHED' => 'تم جلب تحليلات القسائم بنجاح',
     'DASHBOARD.CART_ANALYTICS_FETCHED' => 'تم جلب تحليلات السلة بنجاح',
     'DASHBOARD.FINANCE_ANALYTICS_FETCHED' => 'تم جلب تحليلات المالية بنجاح',
+    'DASHBOARD.RECONCILIATION_FETCHED' => 'تم جلب ملخص التسوية بنجاح',
 
     'MESSAGE.PICKUP_LOCATION_CREATED_SUCCESSFULLY' => 'تم إنشاء موقع الاستلام بنجاح',
     'MESSAGE.PICKUP_LOCATION_UPDATED_SUCCESSFULLY' => 'تم تحديث موقع الاستلام بنجاح',

@@ -111,6 +111,12 @@ class OrderService
                 DB::rollBack();
                 throw new \InvalidArgumentException(__('checkout.cart_empty'));
             }
+            if ($cart->coupon) {
+                $validation = CouponOrchestrator::validateByCode($cart->coupon, $request->user(), $cart->items);
+                if (!$validation['valid']) {
+                    $cart->update(['coupon' => null]);
+                }
+            }
             $checkoutTotals = $this->calculateCheckoutTotals(
                 $cart,
                 (int) $request->input('selected_promotion_id') ?: null,
@@ -167,14 +173,14 @@ class OrderService
                 ->firstWhere(fn($item) => !is_null($item->promotion_id))
                 ?->promotion_id;
 
-            $selectedGiftVariantId = $cart->items
+            $selectedGiftProductId = $cart->items
                 ->firstWhere('is_gift', true)
-                ?->product_variant_id;
+                ?->product_id;
 
             $checkoutTotals = $this->calculateCheckoutTotals(
                 $cart,
                 $selectedPromotionId ? (int) $selectedPromotionId : null,
-                $selectedGiftVariantId ? (int) $selectedGiftVariantId : null,
+                $selectedGiftProductId ? (int) $selectedGiftProductId : null,
                 ShippingMethod::SCHEDULED,
             );
 
@@ -294,7 +300,7 @@ class OrderService
             ];
         }
 
-        $coupon = Coupon::where('code', $cart->coupon)->first();
+        $coupon = Coupon::valid()->where('code', $cart->coupon)->first();
         if (!$coupon) {
             return [
                 'finalPrice' => $totalPrice,
@@ -335,7 +341,7 @@ class OrderService
 
         $couponDiscountType = null;
         if ($cart->coupon) {
-            $coupon = Coupon::where('code', $cart->coupon)->first();
+        $coupon = Coupon::valid()->where('code', $cart->coupon)->first();
             if ($coupon) {
                 $couponDiscountType = $coupon->discount_type;
             }
@@ -398,6 +404,19 @@ class OrderService
         return $this->cartInventoryService->releaseCart($cart, true);
     }
 
+    private static array $allowedOrderTransitions = [
+        'pending' => ['pending', 'processing', 'completed', 'cancelled'],
+        'processing' => ['processing', 'completed', 'cancelled'],
+        'completed' => ['completed', 'delivered'],
+        'delivered' => ['delivered'],
+        'cancelled' => ['cancelled'],
+    ];
+
+    private function canTransitionOrderStatus(string $from, string $to): bool
+    {
+        return in_array($to, self::$allowedOrderTransitions[$from] ?? [], true);
+    }
+
     public function changeOrderStatus($invoiceId, $status, $orderId = null)
     {
         return DB::transaction(function () use ($invoiceId, $status, $orderId) {
@@ -423,6 +442,15 @@ class OrderService
             }
 
             $previousStatus = $order->status;
+
+            if (!$this->canTransitionOrderStatus($previousStatus, $status)) {
+                throw new \RuntimeException(
+                    __('checkout.invalid_order_status_transition', [
+                        'from' => $previousStatus,
+                        'to' => $status,
+                    ])
+                );
+            }
 
             if (!$order->update(['status' => $status])) {
                 return false;
@@ -472,7 +500,7 @@ class OrderService
                 ->first();
 
             if (!$transaction) {
-                throw new \RuntimeException('No pending COD transaction found.');
+                throw new \RuntimeException(__('checkout.no_pending_cod_transaction'));
             }
 
             $transaction->update([
@@ -499,7 +527,7 @@ class OrderService
                 ->first();
 
             if (!$transaction) {
-                throw new \RuntimeException('No pending Pay at Cashier transaction found.');
+                throw new \RuntimeException(__('checkout.no_pending_cashier_transaction'));
             }
 
             $transaction->update([
@@ -560,6 +588,13 @@ class OrderService
             }
 
             if ($assignment->used >= $assignment->max_uses) {
+                return;
+            }
+
+            if (CouponAssignmentUsage::where('coupon_assignment_id', $assignment->id)
+                ->where('order_id', $order->id)
+                ->lockForUpdate()
+                ->exists()) {
                 return;
             }
 

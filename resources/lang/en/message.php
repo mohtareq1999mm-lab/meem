@@ -72,6 +72,12 @@ return [
     'MESSAGE.PERMISSION_ASSIGNED_SUCCESSFULLY' => 'Permission assigned successfully',
     'ERROR.CANNOT_ASSIGN_ROLE_TO_USER' => 'Cannot assign role to this user',
 
+    // Pickup Locations
+    'MESSAGE.PICKUP_LOCATION_CREATED_SUCCESSFULLY' => 'Pickup location created successfully',
+    'MESSAGE.PICKUP_LOCATION_UPDATED_SUCCESSFULLY' => 'Pickup location updated successfully',
+    'MESSAGE.PICKUP_LOCATION_DELETED_SUCCESSFULLY' => 'Pickup location deleted successfully',
+    'ERROR.COD_NOT_AVAILABLE_FOR_PICKUP' => 'COD is not available for pickup. Use pay_at_cashier instead.',
+
     // General
     'MESSAGE.WRONG_CSV' => 'Invalid CSV format. Please check the file and try again.',
     'MESSAGE.NOT_AUTHORIZED' => 'You are not authorized to perform this action',
@@ -98,4 +104,24 @@ return [
     'cart.inventory.quantity_exceeds_stock' => 'Quantity exceeds available stock.',
     'cart.inventory.reserved_stock_insufficient' => 'Reserved stock is insufficient.',
     'cart.inventory.physical_stock_insufficient' => 'Physical stock is insufficient.',
+
+    // Dashboard
+    'DASHBOARD.OVERVIEW_FETCHED' => 'Dashboard overview fetched successfully.',
+    'DASHBOARD.REVENUE_FETCHED' => 'Revenue data fetched successfully.',
+    'DASHBOARD.ORDER_STATS_FETCHED' => 'Order statistics fetched successfully.',
+    'DASHBOARD.RECENT_ORDERS_FETCHED' => 'Recent orders fetched successfully.',
+    'DASHBOARD.TOP_PRODUCTS_FETCHED' => 'Top selling products fetched successfully.',
+    'DASHBOARD.CATEGORY_STATS_FETCHED' => 'Category statistics fetched successfully.',
+    'DASHBOARD.LOW_STOCK_FETCHED' => 'Low stock products fetched successfully.',
+    'DASHBOARD.SALES_ANALYTICS_FETCHED' => 'Sales analytics fetched successfully.',
+    'DASHBOARD.CUSTOMER_ANALYTICS_FETCHED' => 'Customer analytics fetched successfully.',
+    'DASHBOARD.PRODUCT_ANALYTICS_FETCHED' => 'Product analytics fetched successfully.',
+    'DASHBOARD.ORDER_ANALYTICS_FETCHED' => 'Order analytics fetched successfully.',
+    'DASHBOARD.CATEGORY_ANALYTICS_FETCHED' => 'Category analytics fetched successfully.',
+    'DASHBOARD.COUPON_ANALYTICS_FETCHED' => 'Coupon analytics fetched successfully.',
+    'DASHBOARD.CART_ANALYTICS_FETCHED' => 'Cart analytics fetched successfully.',
+    'DASHBOARD.RECONCILIATION_FETCHED' => 'Reconciliation summary fetched successfully.',
+    'DASHBOARD.FINANCE_ANALYTICS_FETCHED' => 'Finance analytics fetched successfully.',
+    'DASHBOARD.DATABASE_ERROR' => 'A database error occurred. Please check your request and try again.',
+    'ERROR.SOMETHING_WENT_WRONG' => 'Something went wrong.',
 ];

@@ -428,12 +428,40 @@ class OrderRepository extends BaseRepository
         $user = $request->user();
         if (isset($order->shop_id)) {
             if ($this->hasPermission($user, $order->shop_id)) {
-                return $this->changeOrderStatus($order, $request->order_status);
+                $result = $this->changeOrderStatus($order, $request->order_status);
+                $this->syncOrderStatusColumn($order, $request->order_status);
+                return $result;
             }
         } else if ($user->hasPermissionTo(Permission::SUPER_ADMIN)) {
-            return $this->changeOrderStatus($order, $request->order_status);
+            $result = $this->changeOrderStatus($order, $request->order_status);
+            $this->syncOrderStatusColumn($order, $request->order_status);
+            return $result;
         } else {
             throw new AuthorizationException(NOT_AUTHORIZED);
+        }
+    }
+
+    /**
+     * Sync the modern `status` column with the legacy `order_status` column.
+     * The Marvel trait writes to order_status (prefixed values like 'order-completed')
+     * but the app reads `status` (short values like 'completed').
+     */
+    private function syncOrderStatusColumn(Order $order, string $orderStatus): void
+    {
+        $statusMap = [
+            OrderStatus::PENDING           => 'pending',
+            OrderStatus::PROCESSING        => 'processing',
+            OrderStatus::COMPLETED         => 'completed',
+            OrderStatus::CANCELLED         => 'cancelled',
+            OrderStatus::REFUNDED          => 'refunded',
+            OrderStatus::FAILED            => 'failed',
+            OrderStatus::AT_LOCAL_FACILITY => 'at_local_facility',
+            OrderStatus::OUT_FOR_DELIVERY  => 'out_for_delivery',
+            OrderStatus::READY_FOR_PICKUP  => 'ready_for_pickup',
+        ];
+
+        if (isset($statusMap[$orderStatus])) {
+            Order::withoutGlobalScopes()->whereKey($order->id)->update(['status' => $statusMap[$orderStatus]]);
         }
     }
 

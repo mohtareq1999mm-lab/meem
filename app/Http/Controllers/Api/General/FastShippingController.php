@@ -66,7 +66,7 @@ class FastShippingController extends Controller
         $fulfillmentType = $request->input('fulfillment_type', 'delivery');
 
         if ($paymentMethod === 'cod' && $fulfillmentType === 'pickup') {
-            return $this->apiResponse('COD is not available for pickup. Use pay_at_cashier instead.', 422, false);
+            return $this->apiResponse(__('message.ERROR.COD_NOT_AVAILABLE_FOR_PICKUP'), 422, false);
         }
 
         if ($paymentMethod === 'online') {

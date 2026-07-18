@@ -99,6 +99,7 @@ class CouponService
         return [
             'total_price' => $totalPriceForCart,
             'coupon_discount' => round((float) $cart->total_price - (float) $totalPriceForCart, 2),
+            'free_shipping' => $couponTotal['freeShipping'] ?? false,
         ];
     }
 }

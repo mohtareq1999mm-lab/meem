@@ -250,6 +250,7 @@ trait CreatesTestTables
             $table->id();
             $table->string('name')->unique();
             $table->string('guard_name')->default('web');
+            $table->string('display_name')->nullable();
             $table->timestamps();
         });
 
@@ -287,6 +288,7 @@ trait CreatesTestTables
             $table->foreignId('country_id')->constrained('countries')->cascadeOnDelete();
             $table->string('name');
             $table->boolean('status')->default(true);
+            $table->boolean('is_fast_shipping_enabled')->default(true);
             $table->timestamps();
         });
 
@@ -294,8 +296,26 @@ trait CreatesTestTables
             $table->id();
             $table->foreignId('governorate_id')->constrained('governorates')->cascadeOnDelete();
             $table->decimal('price', 10, 2);
+            $table->unsignedInteger('estimated_days')->nullable();
+            $table->decimal('free_shipping_over', 10, 2)->nullable();
             $table->boolean('status')->default(true);
             $table->timestamps();
+            $table->unique('governorate_id');
+        });
+
+        Schema::create('pickup_locations', function (Blueprint $table) {
+            $table->id();
+            $table->string('store_name');
+            $table->text('address');
+            $table->string('phone');
+            $table->string('email')->nullable();
+            $table->string('latitude')->nullable();
+            $table->string('longitude')->nullable();
+            $table->json('working_hours')->nullable();
+            $table->boolean('status')->default(true);
+            $table->integer('display_order')->default(0);
+            $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::create('carts', function (Blueprint $table) {
@@ -452,6 +472,14 @@ trait CreatesTestTables
             $table->foreignId('attribute_id')->constrained('attributes')->cascadeOnDelete();
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
             $table->timestamps();
+        });
+
+        Schema::create('coupon_product', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('coupon_id')->constrained('coupons')->cascadeOnDelete();
+            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
+            $table->timestamps();
+            $table->unique(['coupon_id', 'product_id']);
         });
 
         Schema::create('coupon_usages', function (Blueprint $table) {

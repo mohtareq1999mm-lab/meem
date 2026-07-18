@@ -2,6 +2,7 @@
 
 namespace Marvel\Database\Models;
 
+use App\Models\Scopes\FastShippingScope;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -83,7 +84,7 @@ class Product extends Model implements HasMedia
         'stock_quantity' => 'integer',
         'reserved_quantity' => 'integer',
         'sold_quantity' => 'integer',
-
+        'price' => 'float',
     ];
 
     protected $appends = [
@@ -106,6 +107,11 @@ class Product extends Model implements HasMedia
                 $product->sku = 'PRD-' . str_pad($lastId, 3, '0', STR_PAD_LEFT);
             }
         });
+    }
+
+    protected static function booted(): void
+    {
+        static::addGlobalScope(new FastShippingScope);
     }
 
 

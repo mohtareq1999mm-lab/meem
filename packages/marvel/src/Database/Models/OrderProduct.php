@@ -30,6 +30,10 @@ class OrderProduct extends Model
         'attributes' => 'array',
         'is_gift' => 'boolean',
         'promotion_discount_amount' => 'float',
+        'product_price' => 'float',
+        'product_total_price' => 'float',
+        'product_discount_price' => 'float',
+        'product_flash_sale_price' => 'float',
     ];
 
 

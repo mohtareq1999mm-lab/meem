@@ -2,6 +2,8 @@
 
 namespace App\Services\General;
 
+use App\Contexts\ChannelContext;
+use App\Enums\Channel;
 use App\Traits\HasChannelFilter;
 use App\Http\Resources\Banner\BannerResource;
 use App\Http\Resources\Brand\BrandResource;
@@ -30,11 +32,19 @@ class HomeService
     public function __construct(
         private readonly CategoryHierarchyService $hierarchyService,
         private readonly ProductService $productService,
+        private readonly ChannelContext $channelContext,
     ) {}
+
+    private function cacheKey(string $key): string
+    {
+        return $this->channelContext->getChannel()->value . ':' . $key;
+    }
 
     public function getNavData(?int $level = null)
     {
-        $cacheKey = $level !== null ? "home-nav-bar:level:{$level}" : "home-nav-bar";
+        $cacheKey = $level !== null
+            ? $this->cacheKey("home-nav-bar:level:{$level}")
+            : $this->cacheKey('home-nav-bar');
 
         return Cache::remember($cacheKey, 120, function () {
             return CategoryNavbarResource::collection($this->getCategoryWithChildren());
@@ -44,55 +54,55 @@ class HomeService
     {
         $parentCategoryId = $parentCategoryId ?: 1;
 
-        $categoryTree = Cache::remember("home_data:parent:{$parentCategoryId}:category-tree", 120, function () use ($parentCategoryId) {
+        $categoryTree = Cache::remember($this->cacheKey("home_data:parent:{$parentCategoryId}:category-tree"), 120, function () use ($parentCategoryId) {
             return $this->getCategoryTree($parentCategoryId);
         });
 
-        $categoriesWithChildren = Cache::remember("home_data:parent:{$parentCategoryId}:categories-with-children", 120, function () {
+        $categoriesWithChildren = Cache::remember($this->cacheKey("home_data:parent:{$parentCategoryId}:categories-with-children"), 120, function () {
             return $this->getCategories();
         });
 
         $data = [
 
-            'sliders' => Cache::remember("home-active-sliders", 120, function () {
+            'sliders' => Cache::remember($this->cacheKey('home-active-sliders'), 120, function () {
                 return SliderResource::collection($this->getActiveSliders());
             }),
-            'dailyOffers' => Cache::remember("home-flash-sales", 120, function () {
+            'dailyOffers' => Cache::remember($this->cacheKey('home-flash-sales'), 120, function () {
                 return FlashSaleResource::collection($this->getFlashSalesForOneDay(9));
             }),
-            'bestCategories' => Cache::remember("home-best-categories", 120, function () use ($categoriesWithChildren) {
+            'bestCategories' => Cache::remember($this->cacheKey('home-best-categories'), 120, function () use ($categoriesWithChildren) {
                 return CategoryHomeResource::collection($categoriesWithChildren);
             }),
-            'discountProductsEndToday' => Cache::remember("home-discount-products-end-today", 120, function () {
+            'discountProductsEndToday' => Cache::remember($this->cacheKey('home-discount-products-end-today'), 120, function () {
                 return ProductMiniResource::collection($this->getDiscountEndingTodayOrLowStockProducts());
             }),
-            'banners' => Cache::remember("home-active-banners", 120, function () {
+            'banners' => Cache::remember($this->cacheKey('home-active-banners'), 120, function () {
                 return BannerResource::collection($this->getActiveBanners());
             }),
-            'brands' => Cache::remember("home-brands", 120, function () {
+            'brands' => Cache::remember($this->cacheKey('home-brands'), 120, function () {
                 return BrandResource::collection($this->getBrands());
             }),
 
-            'parent_categories' => Cache::remember("home-parent-categories", 120, function () use ($categoryTree) {
+            'parent_categories' => Cache::remember($this->cacheKey('home-parent-categories'), 120, function () use ($categoryTree) {
                 return CategoryHomeResource::collection($categoryTree);
             }),
 
-            'coupons' => Cache::remember('home-latest-coupons', 120, function () {
+            'coupons' => Cache::remember($this->cacheKey('home-latest-coupons'), 120, function () {
                 return CouponResource::collection($this->getLatestValidCoupons(5));
             }),
-            'flashSaleProducts' => Cache::remember("home-flash-sale-products", 120, function () {
+            'flashSaleProducts' => Cache::remember($this->cacheKey('home-flash-sale-products'), 120, function () {
                 return ProductMiniResource::collection($this->getFlashSaleProductsEndingThisWeek());
             }),
-            'parentCategories' => Cache::remember("home-weekly-parent-categories", 120, function () use ($categoryTree) {
+            'parentCategories' => Cache::remember($this->cacheKey('home-weekly-parent-categories'), 120, function () use ($categoryTree) {
                 return CategoryHomeResource::collection($categoryTree);
             }),
-            'weeklyProducts' => Cache::remember("home-weekly-products", 120, function () use ($categoryTree) {
+            'weeklyProducts' => Cache::remember($this->cacheKey('home-weekly-products'), 120, function () use ($categoryTree) {
                 return ProductMiniResource::collection($this->getWeeklyCategoryProducts($categoryTree));
             }),
-            'allDiscountProducts' => Cache::remember("home-all-discount-products", 120, function () {
+            'allDiscountProducts' => Cache::remember($this->cacheKey('home-all-discount-products'), 120, function () {
                 return ProductMiniResource::collection($this->getAllDiscountProducts());
             }),
-            'newArrivals' => Cache::remember("home-flash-sales-after-9", 120, function () {
+            'newArrivals' => Cache::remember($this->cacheKey('home-flash-sales-after-9'), 120, function () {
                 return ProductMiniResource::collection($this->getNewArrivals(10));
             }),
 
@@ -399,19 +409,33 @@ class HomeService
             ->get();
     }
 
-    public static function clearCache(): void
-    {
-        $keys = [
-            'home-flash-sales',
-            'home-discount-products-end-today',
-            'home-flash-sale-products',
-            'home-weekly-products',
-            'home-all-discount-products',
-            'home-flash-sales-after-9',
-        ];
+    private const CACHE_KEYS = [
+        'home-nav-bar',
+        'home-data',
+        'home-active-sliders',
+        'home-flash-sales',
+        'home-best-categories',
+        'home-discount-products-end-today',
+        'home-active-banners',
+        'home-brands',
+        'home-parent-categories',
+        'home-latest-coupons',
+        'home-flash-sale-products',
+        'home-weekly-parent-categories',
+        'home-weekly-products',
+        'home-all-discount-products',
+        'home-flash-sales-after-9',
+    ];
 
-        foreach ($keys as $key) {
-            Cache::forget($key);
+    public static function clearCache(?string $channel = null): void
+    {
+        $channels = $channel !== null ? [$channel] : Channel::values();
+
+        foreach ($channels as $ch) {
+            foreach (self::CACHE_KEYS as $key) {
+                $cacheKey = $ch . ':' . $key;
+                Cache::forget($cacheKey);
+            }
         }
     }
 

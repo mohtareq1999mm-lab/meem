@@ -84,13 +84,13 @@ class OrderCreationService
                 if ($variant && $variant->price !== null) {
                     $basePrice = (float) $variant->price;
                     $flashSalePrice = $pricingService->calculateFlashSalePrice($flashSale, $basePrice);
-                    $discountPrice = $product->has_discount && $pricingService->isDiscountActive($product)
+                    $discountPrice = $flashSalePrice === null && $product->has_discount && $pricingService->isDiscountActive($product)
                         ? $pricingService->calculateDiscountedPrice($basePrice, $product->discount_type ?? 'percentage', $product->discount_amount ?? 0)
                         : null;
                 } else {
                     $pricing = $pricingService->calculateProductPricing($product, $flashSale);
                     $flashSalePrice = $pricing['price_after_flash_sale'];
-                    $discountPrice = $product->has_discount && $pricingService->isDiscountActive($product)
+                    $discountPrice = $flashSalePrice === null && $product->has_discount && $pricingService->isDiscountActive($product)
                         ? $pricingService->calculateDiscountedPrice($product->price, $product->discount_type ?? 'percentage', $product->discount_amount ?? 0)
                         : null;
                 }
@@ -133,7 +133,7 @@ class OrderCreationService
             ];
         }
 
-        $location = PickupLocation::query()->find($pickupLocationId);
+        $location = PickupLocation::withTrashed()->find($pickupLocationId);
 
         if (!$location) {
             return [

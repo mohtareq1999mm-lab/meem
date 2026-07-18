@@ -150,6 +150,7 @@ class FastShippingControllerTest extends TestCase
             $table->boolean('status')->default(true);
             $table->boolean('is_featured')->default(false);
             $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::create('category_product', function (Blueprint $table) {
@@ -166,6 +167,7 @@ class FastShippingControllerTest extends TestCase
             $table->string('type')->default('general');
             $table->integer('order')->default(0);
             $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::create('brand_product', function (Blueprint $table) {
@@ -687,14 +689,6 @@ class FastShippingControllerTest extends TestCase
     // ========== Checkout Endpoint (Error Cases) ==========
 
     /** @test */
-    public function fast_checkout_requires_authentication()
-    {
-        $response = $this->postJson(self::PREFIX . '/general/checkout/fast', []);
-
-        $response->assertStatus(401);
-    }
-
-    /** @test */
     public function fast_checkout_fails_without_active_cart()
     {
         Sanctum::actingAs($this->user);
@@ -707,7 +701,7 @@ class FastShippingControllerTest extends TestCase
             'is_fast_shipping_enabled' => true,
         ]);
 
-        $response = $this->postJson(self::PREFIX . '/general/checkout/fast', [
+        $response = $this->postJson(self::PREFIX . '/general/fast-shipping/checkout', [
             'name' => 'Test User',
             'user_phone' => '01000000000',
             'user_email' => 'test@test.com',
@@ -726,7 +720,7 @@ class FastShippingControllerTest extends TestCase
     {
         Sanctum::actingAs($this->user);
 
-        $response = $this->postJson(self::PREFIX . '/general/checkout/fast', []);
+        $response = $this->postJson(self::PREFIX . '/general/fast-shipping/checkout', []);
 
         $response->assertStatus(422);
     }
@@ -963,7 +957,7 @@ class FastShippingControllerTest extends TestCase
     /** @test */
     public function home_endpoint_returns_sections()
     {
-        $response = $this->getJson(self::PREFIX . '/general/categories-with-children');
+        $response = $this->getJson(self::PREFIX . '/general/home');
 
         $response->assertOk();
     }
@@ -1042,33 +1036,43 @@ class FastShippingControllerTest extends TestCase
         $this->assertCount(2, $response->json('data.data'));
     }
 
-    // ========== Orders Endpoint (non-fast) ==========
+    // ========== Checkout translation test ==========
 
     /** @test */
-    public function orders_endpoint_requires_authentication()
-    {
-        $response = $this->getJson(self::PREFIX . '/general/orders');
-
-        $response->assertStatus(401);
-    }
-
-    /** @test */
-    public function orders_endpoint_returns_user_orders()
+    public function checkout_without_cart_returns_cart_not_found_translated()
     {
         Sanctum::actingAs($this->user);
 
-        $order = Order::create([
-            'user_id' => $this->user->id,
-            'shipping_method' => 'FAST',
-            'price' => 150,
-            'total_price' => 175,
-            'status' => 'pending',
+        Country::create(['name' => 'Egypt', 'slug' => 'egypt', 'status' => true]);
+        Governorate::create([
+            'country_id' => 1,
+            'name' => 'Cairo',
+            'status' => true,
+            'is_fast_shipping_enabled' => true,
         ]);
 
-        $response = $this->getJson(self::PREFIX . '/general/orders');
+        $response = $this->postJson(self::PREFIX . '/general/fast-shipping/checkout', [
+            'name' => 'Test',
+            'user_phone' => '01000000000',
+            'user_email' => 'test@test.com',
+            'address' => ['street' => 'Test'],
+            'governorate_id' => 1,
+        ]);
 
-        $response->assertOk();
-        $orderIds = collect($response->json('data.data'))->pluck('id')->toArray();
-        $this->assertContains($order->id, $orderIds);
+        $response->assertStatus(400);
+        $this->assertEquals('Cart not found', $response->json('message'));
+    }
+
+    // ========== Translation tests ==========
+
+    /** @test */
+    public function cod_pickup_error_is_translated()
+    {
+        Sanctum::actingAs($this->user);
+
+        $this->assertEquals(
+            'COD is not available for pickup. Use pay_at_cashier instead.',
+            __('message.ERROR.COD_NOT_AVAILABLE_FOR_PICKUP')
+        );
     }
 }

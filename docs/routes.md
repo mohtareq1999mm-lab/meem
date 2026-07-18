@@ -212,6 +212,72 @@ All routes require `auth:sanctum` and `throttle:cart` (20 req/min per user) midd
 |--------|-----|------------|--------|-----------------|-------------|---------|
 | POST | `/coupons/add-to-cart` | `CouponController` | `addCouponToCart` | `auth:sanctum` | 223 | Apply a coupon code to the active cart |
 
+## Admin Orders
+
+All admin order endpoints are in `packages/marvel/src/Rest/Routes.php` (lines 476, 486). Routes are loaded via `RestAPIServiceProvider::loadRoutes()` with prefix `/api/v1` and middleware `api`.
+
+Both routes are inside a route group (line 451) with middleware `auth:sanctum` and `email.verified`.  
+Controller-level permission middleware enforces `view-orders` and `view-order` respectively.
+
+| Method | URI | Controller | Action | Route Middleware | Controller Middleware | Permission | Purpose | Response Resource | Source Line |
+|--------|-----|------------|--------|-----------------|----------------------|------------|---------|-------------------|-------------|
+| GET | `/orders` | `Marvel\Http\Controllers\Order\OrderController` | `index` | `auth:sanctum`, `email.verified` | `permission:view-orders` | `view-orders` | List all orders with 12 filters and pagination (default 15, max 100) | `Marvel\Http\Resources\Order\OrderCollection` | 476 |
+| GET | `/orders/{id}` | `Marvel\Http\Controllers\Order\OrderController` | `show` | `auth:sanctum`, `email.verified` | `permission:view-order` | `view-order` | Get a single order with full details (items, variants, transactions, pickup location) | `Marvel\Http\Resources\Order\OrderResource` | 486 |
+
+See `docs/cms-endpoints/orders.md` for detailed documentation.
+
+---
+
+## Dashboard / Analytics
+
+All dashboard endpoints are in **both** `routes/api.php` (Application layer) and `packages/marvel/src/Rest/Routes.php`. The Marvel registrations are within the `auth:sanctum` + `email.verified` group (line 626) and carry the `throttle:analytics` middleware.
+
+The rate limiter for `analytics` is defined in `app/Providers/RouteServiceProvider.php` at **60 requests/minute** per authenticated user (or IP for guests).
+
+### Route Registration Note
+
+The dashboard routes are registered in **two** locations:
+1. **`routes/api.php`** (lines 82–97) — inside `auth:sanctum` group, middlewares: `api`, `auth:sanctum`
+2. **`packages/marvel/src/Rest/Routes.php`** (lines 778–795) — inside `auth:sanctum` + `verified` group, with `throttle:analytics` on the group
+
+The Marvel registration is the authoritative one — it carries the rate limiter and email verification. The `routes/api.php` drop-down is a convenience registration that does not include `throttle:analytics` or `verified`, meaning requests hitting it bypass the analytics rate limit and email verification. Endpoint names also differ slightly:
+
+| Metric | `api.php` (app) Name | `Routes.php` (Marvel) Name |
+|--------|----------------------|---------------------------|
+| Sales | `sales-analytics` | `sales` |
+| Customers | `customer-analytics` | `customers` |
+| Products | `product-analytics` | `products` |
+| Orders | `order-analytics` | `orders` |
+| Categories | `category-analytics` | `categories` |
+| Coupons | `coupon-analytics` | `coupons` |
+| Cart | `cart-analytics` | `cart` |
+| Finance | `finance-analytics` | `finance` |
+
+This is **Technical Debt** — the `api.php` registration should either be removed or aligned with the Marvel registration.
+
+### Endpoint Reference (Marvel — authoritative)
+
+| Method | URI | Controller | Action | Route Middleware | Source Line |
+|--------|-----|------------|--------|-----------------|-------------|
+| GET | `/dashboard/overview` | `DashboardController` | `overview` | `auth:sanctum`, `verified`, `throttle:analytics` | 779 |
+| GET | `/dashboard/revenue` | `DashboardController` | `revenue` | `auth:sanctum`, `verified`, `throttle:analytics` | 780 |
+| GET | `/dashboard/order-stats` | `DashboardController` | `orderStats` | `auth:sanctum`, `verified`, `throttle:analytics` | 781 |
+| GET | `/dashboard/recent-orders` | `DashboardController` | `recentOrders` | `auth:sanctum`, `verified`, `throttle:analytics` | 782 |
+| GET | `/dashboard/top-products` | `DashboardController` | `topProducts` | `auth:sanctum`, `verified`, `throttle:analytics` | 783 |
+| GET | `/dashboard/category-stats` | `DashboardController` | `categoryStats` | `auth:sanctum`, `verified`, `throttle:analytics` | 784 |
+| GET | `/dashboard/low-stock` | `DashboardController` | `lowStock` | `auth:sanctum`, `verified`, `throttle:analytics` | 785 |
+| GET | `/dashboard/sales` | `DashboardController` | `salesAnalytics` | `auth:sanctum`, `verified`, `throttle:analytics` | 786 |
+| GET | `/dashboard/customers` | `DashboardController` | `customerAnalytics` | `auth:sanctum`, `verified`, `throttle:analytics` | 787 |
+| GET | `/dashboard/products` | `DashboardController` | `productAnalytics` | `auth:sanctum`, `verified`, `throttle:analytics` | 788 |
+| GET | `/dashboard/orders` | `DashboardController` | `orderAnalytics` | `auth:sanctum`, `verified`, `throttle:analytics` | 789 |
+| GET | `/dashboard/categories` | `DashboardController` | `categoryAnalytics` | `auth:sanctum`, `verified`, `throttle:analytics` | 790 |
+| GET | `/dashboard/coupons` | `DashboardController` | `couponAnalytics` | `auth:sanctum`, `verified`, `throttle:analytics` | 791 |
+| GET | `/dashboard/cart` | `DashboardController` | `cartAnalytics` | `auth:sanctum`, `verified`, `throttle:analytics` | 792 |
+| GET | `/dashboard/finance` | `DashboardController` | `financeAnalytics` | `auth:sanctum`, `verified`, `throttle:analytics` | 793 |
+| GET | `/dashboard/reconciliation` | `DashboardController` | `reconciliation` | `auth:sanctum`, `verified`, `throttle:analytics` | 794 |
+
+---
+
 ## Architecture Note
 
 The Application layer (`app/`) identifies admins exclusively via `type = 'admin'`. Route authorization uses per-method Spatie permission middleware for backward compatibility. See `docs/cms-endpoints/admin-users.md` for details.

@@ -173,8 +173,14 @@ class OrderController extends Controller
             return $this->apiResponse(MISSING_PAYMENT_ID, 400, false);
         }
 
+        $transaction = Transaction::where('gateway_transaction_id', $paymentId)
+            ->orWhere('invoice_id', $paymentId)
+            ->first();
+
+        $gatewayName = $transaction?->payment_method ?? 'myfatoorah';
+
         try {
-            $gateway = $this->paymentGatewayFactory->make('myfatoorah');
+            $gateway = $this->paymentGatewayFactory->make($gatewayName);
         } catch (\App\Exceptions\UnsupportedGatewayException $e) {
             return $this->apiResponse(PAYMENT_GATEWAY_UNAVAILABLE, 500, false);
         }
@@ -183,9 +189,11 @@ class OrderController extends Controller
 
         $verifiedInvoiceId = $result->gatewayTransactionId;
 
-        $transaction = Transaction::where('gateway_transaction_id', $verifiedInvoiceId)
-            ->orWhere('invoice_id', $verifiedInvoiceId)
-            ->first();
+        if (!$transaction) {
+            $transaction = Transaction::where('gateway_transaction_id', $verifiedInvoiceId)
+                ->orWhere('invoice_id', $verifiedInvoiceId)
+                ->first();
+        }
 
         if ($transaction) {
             $transaction->update([
@@ -324,8 +332,14 @@ class OrderController extends Controller
             return $this->apiResponse(MISSING_PAYMENT_ID, 400, false);
         }
 
+        $transaction = Transaction::where('gateway_transaction_id', $paymentId)
+            ->orWhere('invoice_id', $paymentId)
+            ->first();
+
+        $gatewayName = $transaction?->payment_method ?? 'myfatoorah';
+
         try {
-            $gateway = $this->paymentGatewayFactory->make('myfatoorah');
+            $gateway = $this->paymentGatewayFactory->make($gatewayName);
         } catch (\App\Exceptions\UnsupportedGatewayException $e) {
             return $this->apiResponse(PAYMENT_GATEWAY_UNAVAILABLE, 500, false);
         }
@@ -336,9 +350,11 @@ class OrderController extends Controller
 
         $verifiedInvoiceId = $result->gatewayTransactionId;
 
-        $transaction = Transaction::where('gateway_transaction_id', $verifiedInvoiceId)
-            ->orWhere('invoice_id', $verifiedInvoiceId)
-            ->first();
+        if (!$transaction) {
+            $transaction = Transaction::where('gateway_transaction_id', $verifiedInvoiceId)
+                ->orWhere('invoice_id', $verifiedInvoiceId)
+                ->first();
+        }
 
         if ($transaction) {
             $transaction->update([

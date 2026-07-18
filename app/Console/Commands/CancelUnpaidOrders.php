@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Order;
 use Marvel\Database\Models\Cart;
 use Marvel\Database\Models\Transaction;
+use App\Events\OrderCancelled;
 use App\Events\PaymentFailed;
 use App\Services\General\CartInventoryService;
 
@@ -43,27 +44,33 @@ class CancelUnpaidOrders extends Command
                     ->update(['status' => 'failed']);
 
                 try {
+                    event(new OrderCancelled($order));
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+
+                try {
                     event(new PaymentFailed($order));
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+
+                // Release reserved inventory from the user's active cart
+                try {
+                    $cart = Cart::query()
+                        ->where('user_id', $order->user_id)
+                        ->where('status', 'active')
+                        ->first();
+
+                    if ($cart) {
+                        $this->cartInventoryService->releaseCart($cart, false);
+                    }
                 } catch (\Throwable $e) {
                     report($e);
                 }
 
                 $cancelledCount++;
             });
-
-            // Release reserved inventory from the user's active cart
-            try {
-                $cart = Cart::query()
-                    ->where('user_id', $order->user_id)
-                    ->where('status', 'active')
-                    ->first();
-
-                if ($cart) {
-                    $this->cartInventoryService->releaseCart($cart, false);
-                }
-            } catch (\Throwable $e) {
-                report($e);
-            }
         }
 
         $this->info("Cancelled {$cancelledCount} unpaid order(s).");

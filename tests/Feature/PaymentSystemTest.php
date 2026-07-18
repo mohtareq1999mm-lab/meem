@@ -682,7 +682,7 @@ class PaymentSystemTest extends TestCase
     /** @test */
     public function mark_cod_as_paid_endpoint_requires_auth()
     {
-        $response = $this->postJson(self::PREFIX . '/general/orders/1/mark-cod-paid');
+        $response = $this->postJson(self::PREFIX . '/general/checkout/cod/1/mark-paid');
         $response->assertStatus(401);
     }
 
@@ -693,7 +693,7 @@ class PaymentSystemTest extends TestCase
 
         $order = $this->createOrderWithPendingTransaction('cod');
 
-        $response = $this->postJson(self::PREFIX . "/general/orders/{$order->id}/mark-cod-paid");
+        $response = $this->postJson(self::PREFIX . "/general/checkout/cod/{$order->id}/mark-paid");
         $response->assertStatus(403);
     }
 
@@ -706,7 +706,7 @@ class PaymentSystemTest extends TestCase
 
         $order = $this->createOrderWithPendingTransaction('cod');
 
-        $response = $this->postJson(self::PREFIX . "/general/orders/{$order->id}/mark-cod-paid");
+        $response = $this->postJson(self::PREFIX . "/general/checkout/cod/{$order->id}/mark-paid");
         $response->assertOk();
         $response->assertJsonPath('success', true);
 
@@ -734,7 +734,7 @@ class PaymentSystemTest extends TestCase
             'status' => 'pending',
         ]);
 
-        $response = $this->postJson(self::PREFIX . "/general/orders/{$order->id}/mark-cod-paid");
+        $response = $this->postJson(self::PREFIX . "/general/checkout/cod/{$order->id}/mark-paid");
         $response->assertStatus(422);
     }
 
@@ -743,7 +743,7 @@ class PaymentSystemTest extends TestCase
     /** @test */
     public function mark_paid_endpoint_requires_auth()
     {
-        $response = $this->postJson(self::PREFIX . '/general/orders/1/mark-paid');
+        $response = $this->postJson(self::PREFIX . '/general/checkout/cashier/1/mark-paid');
         $response->assertStatus(401);
     }
 
@@ -754,7 +754,7 @@ class PaymentSystemTest extends TestCase
 
         $order = $this->createOrderWithPendingTransaction('pay_at_cashier');
 
-        $response = $this->postJson(self::PREFIX . "/general/orders/{$order->id}/mark-paid");
+        $response = $this->postJson(self::PREFIX . "/general/checkout/cashier/{$order->id}/mark-paid");
         $response->assertStatus(403);
     }
 
@@ -767,7 +767,7 @@ class PaymentSystemTest extends TestCase
 
         $order = $this->createOrderWithPendingTransaction('pay_at_cashier');
 
-        $response = $this->postJson(self::PREFIX . "/general/orders/{$order->id}/mark-paid");
+        $response = $this->postJson(self::PREFIX . "/general/checkout/cashier/{$order->id}/mark-paid");
         $response->assertOk();
         $response->assertJsonPath('success', true);
 
@@ -795,7 +795,7 @@ class PaymentSystemTest extends TestCase
             'status' => 'pending',
         ]);
 
-        $response = $this->postJson(self::PREFIX . "/general/orders/{$order->id}/mark-paid");
+        $response = $this->postJson(self::PREFIX . "/general/checkout/cashier/{$order->id}/mark-paid");
         $response->assertStatus(422);
     }
 
@@ -804,7 +804,7 @@ class PaymentSystemTest extends TestCase
     {
         $this->setupAdminPermissions();
 
-        $response = $this->postJson(self::PREFIX . '/general/orders/99999/mark-paid');
+        $response = $this->postJson(self::PREFIX . '/general/checkout/cashier/99999/mark-paid');
         $response->assertStatus(404);
     }
 
@@ -993,7 +993,7 @@ class PaymentSystemTest extends TestCase
         $this->createActiveCart();
         $this->createPickupLocation();
 
-        $response = $this->postJson(self::PREFIX . '/general/checkout/fast', [
+        $response = $this->postJson(self::PREFIX . '/general/fast-shipping/checkout', [
             'name' => 'Test User',
             'user_phone' => '01000000000',
             'user_email' => 'test@test.com',

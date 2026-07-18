@@ -111,5 +111,11 @@ class RouteServiceProvider extends ServiceProvider
         RateLimiter::for('cart', function (Request $request) {
             return Limit::perMinute(20)->by(optional($request->user())->id ?: $request->ip());
         });
+
+        // Dashboard/Analytics endpoints - platform-wide metrics
+        // Protects against automated scraping of business-sensitive data
+        RateLimiter::for('analytics', function (Request $request) {
+            return Limit::perMinute(60)->by(optional($request->user())->id ?: $request->ip());
+        });
     }
 }

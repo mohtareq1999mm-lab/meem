@@ -433,12 +433,12 @@ class DashboardService
                 $q->where('sold_quantity', 0)->orWhereNull('sold_quantity');
             })->take($limit)->get(['id', 'name', 'slug', 'price', 'sold_quantity']);
 
-            $outOfStock = Product::where('quantity', 0)
+            $outOfStock = Product::where('stock_quantity', 0)
                 ->take($limit)
                 ->get(['id', 'name', 'slug', 'price', 'quantity']);
 
-            $inventoryValue = (float) Product::selectRaw('SUM(price * quantity) as total')
-                ->where('quantity', '>', 0)
+            $inventoryValue = (float) Product::selectRaw('SUM(price * stock_quantity) as total')
+                ->where('stock_quantity', '>', 0)
                 ->value('total');
 
             return [

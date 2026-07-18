@@ -3,10 +3,18 @@
 namespace App\Providers;
 
 use App\Events\OrderCancelled;
+use App\Events\OrderCreated;
+use App\Events\OrderStatusChanged;
+use App\Events\PaymentFailed;
+use App\Events\PaymentSucceeded;
 use App\Events\UserRolesUpdated;
 use App\Listeners\LogUserRolesUpdated;
 use App\Listeners\RestoreProductInventory;
+use App\Listeners\SendNewOrderNotification;
 use App\Listeners\SendOrderCancelledNotification;
+use App\Listeners\SendOrderStatusChangedNotification;
+use App\Listeners\SendPaymentFailedNotification;
+use App\Listeners\SendPaymentSucceededNotification;
 use App\Observers\BrandObserver;
 use App\Observers\CategoryObserver;
 use App\Observers\CouponObserver;
@@ -51,6 +59,18 @@ class EventServiceProvider extends ServiceProvider
         OrderCancelled::class => [
             RestoreProductInventory::class,
             SendOrderCancelledNotification::class,
+        ],
+        OrderCreated::class => [
+            SendNewOrderNotification::class,
+        ],
+        OrderStatusChanged::class => [
+            SendOrderStatusChangedNotification::class,
+        ],
+        PaymentFailed::class => [
+            SendPaymentFailedNotification::class,
+        ],
+        PaymentSucceeded::class => [
+            SendPaymentSucceededNotification::class,
         ],
     ];
 

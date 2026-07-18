@@ -29,6 +29,9 @@ class   CartItem extends Model
         'attributes' => 'array',
         'is_gift' => 'boolean',
         'shipping_method' => 'string',
+        'price' => 'float',
+        'total_price' => 'float',
+        'discount_amount' => 'float',
     ];
 
 
