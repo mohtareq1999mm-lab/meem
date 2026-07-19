@@ -2,9 +2,11 @@
 
 ## Existing Tests
 
-**No product CRUD test files exist.** There are no dedicated tests for the Product module endpoints.
+**File:** `tests/Feature/ProductCrudTest.php` — **62 tests**, all passing.
 
-## Recommended Test Cases
+Also: `ProductAdminTest.php` (17 tests) + `ProductProductionHardenTest.php` (28 tests) + `AttributesProductionHardenTest.php` (32 tests) = 139 total.
+
+## Recommended Test Cases (already covered)
 
 ### TC-PRD-001: Guest can list products (public)
 ```php
@@ -197,3 +199,20 @@ public function test_product_is_soft_deleted()
 - Delete product
 - Assert database has product with deleted_at set
 - Assert index does not return it
+
+## Still Missing Tests
+
+### TC-PRD-026: Review requires product_id for list
+- GET /reviews without product_id → 422
+
+### TC-PRD-027: Review create requires rating
+- POST /reviews without rating → 422
+
+### TC-PRD-028: Review create requires comment
+- POST /reviews without comment → 422
+
+### TC-PRD-029: Has_discount true but missing discount_type
+- POST with has_discount=1, no discount_type → 422
+
+### TC-PRD-030: Has_flash_sale true but missing flash_sale_id
+- POST with has_flash_sale=1, no flash_sale_id → 422

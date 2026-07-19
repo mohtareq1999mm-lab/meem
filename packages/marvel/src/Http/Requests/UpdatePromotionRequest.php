@@ -21,7 +21,7 @@ class UpdatePromotionRequest extends FormRequest
     {
         return [
             "name" => "sometimes|array",
-            'name.*' => ['required_with:name', UniqueTranslationRule::for('promotions', 'name')],
+            'name.*' => ['required_with:name', UniqueTranslationRule::for('promotions', 'name')->ignore($this->route('promotion'))],
 
             "image-desktop" => "sometimes|image|mimes:jpeg,png,jpg,webp",
             "image-mobile"  => "sometimes|image|mimes:jpeg,png,jpg,webp",

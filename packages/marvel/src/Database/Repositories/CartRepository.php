@@ -16,6 +16,35 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class CartRepository extends BaseRepository
 {
+    public function revalidatePromotion(Cart $cart): void
+    {
+        $hasPromotionItems = $cart->items()
+            ->where(function ($q) {
+                $q->whereNotNull('promotion_id')->orWhere('discount_amount', '>', 0);
+            })
+            ->exists();
+
+        if (!$hasPromotionItems) {
+            return;
+        }
+
+        $affected = $cart->items()
+            ->where(function ($q) {
+                $q->whereNotNull('promotion_id')->orWhere('discount_amount', '>', 0);
+            })
+            ->update([
+                'promotion_id' => null,
+                'discount_amount' => 0,
+                'total_price' => DB::raw('price * quantity'),
+            ]);
+
+        if ($affected > 0) {
+            $cart->update([
+                'total_price' => $cart->items()->sum('total_price'),
+            ]);
+        }
+    }
+
     protected $fieldSearchable = [
         'user_id',
     ];

@@ -11,7 +11,7 @@
 - Server-side pagination (GET /products?limit=15&page=N)
 - Search bar (GET /products?search=term)
 - Sorting by name, price, created_at, sold_quantity
-- Filters: category, brand, status, type
+- Filters: category, banner, promotion, flash_sale, slider, status
 - Row actions: Edit, Delete, View
 
 ---
@@ -86,7 +86,7 @@
 **Story Points:** 3
 **Labels:** frontend, product
 
-**Description:** Search bar with debounced input, filter dropdowns (category, brand, status), clear filters button. URL query param sync for shareable filtered URLs.
+**Description:** Search bar with debounced input, filter dropdowns (category, banner, promotion, flash_sale, slider, status), clear filters button. URL query param sync for shareable filtered URLs.
 
 ---
 
@@ -97,3 +97,54 @@
 **Labels:** frontend, i18n
 
 **Description:** Handle translatable fields (name, description) returned as JSON `{ en, ar }`. Display correct locale based on current app language. Send both locales on create; allow single-locale updates.
+
+---
+
+## F-008: Product Bulk Delete & Destroy All
+
+**Priority:** Low
+**Story Points:** 2
+**Labels:** frontend, product
+
+**Description:** Add bulk actions to the product list table:
+- Checkbox selection per row
+- "Delete Selected" button → `POST /products/bulk-delete` with `{ ids: [...] }`
+- Confirmation dialog showing count of selected products
+- "Delete All" button (admin only) → `DELETE /products/all`
+- Success toast with count of deleted products
+- Table refreshes after deletion
+
+---
+
+## F-009: Product Import UI
+
+**Priority:** Medium
+**Story Points:** 5
+**Labels:** frontend, product, import
+
+**Description:** Product import from spreadsheet:
+- Upload page with drag-and-drop file upload (.xlsx, .csv)
+- Upload button → `POST /products/import` with file
+- Polling progress: `GET /products/import/{id}` every 3 seconds
+- Progress bar showing processed/success/failed rows and percentage
+- Cancel button → `POST /products/import/{id}/cancel`
+- Download errors button → `GET /products/import/{id}/download-errors`
+- States: uploading, importing, completed, failed, cancelled
+- Sample file download link
+- Error states: file too large, wrong format, server error
+
+---
+
+## F-010: Reviews Management
+
+**Priority:** Low
+**Story Points:** 3
+**Labels:** frontend, reviews
+
+**Description:** Review management on product detail page:
+- List reviews for a product → `GET /reviews?product_id=X`
+- Display: rating stars, comment, user name, date, approval status
+- Toggle approve/unapprove → `PATCH /reviews/{id}/toggle-approve`
+- Delete review → `DELETE /reviews/{id}` with confirmation
+- Loading/empty/error states for review section
+- Review count and average rating summary

@@ -60,6 +60,7 @@ class CartController extends CoreController
     {
         try {
             $cart = $this->repository->storeCart($request);
+            $this->repository->revalidatePromotion($cart);
             return $this->apiResponse(CREATE_CART_SUCCESSFULLY, 201, true, CartResource::make($cart));
         } catch (\Exception $e) {
             return $this->apiResponse($e->getMessage(), 400, false);
@@ -82,6 +83,7 @@ class CartController extends CoreController
     {
         try {
             $cart = $this->repository->updateCart($request);
+            $this->repository->revalidatePromotion($cart);
             return $this->apiResponse(UPDATE_CART_SUCCESSFULLY, 200, true, CartResource::make($cart));
         } catch (\Exception $e) {
             return $this->apiResponse($e->getMessage(), 400, false);
@@ -108,6 +110,7 @@ class CartController extends CoreController
             return $this->apiResponse(DELETE_CART_ITEM_FAILED, 400, false);
         }
 
+        $this->repository->revalidatePromotion($cart);
         $cart->update(['total_price' => $cart->items()->sum('total_price')]);
         return $this->apiResponse(DELETE_CART_ITEM_SUCCESSFULLY, 200, true);
     }

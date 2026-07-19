@@ -71,11 +71,11 @@ class PromotionEligibilityResolver
 
         // Convert outcome into PromotionResult for backward compatibility consumers
         if ($outcome instanceof \App\Services\General\PromotionEngine\Outcome\DiscountOutcome) {
-            return new PromotionResult($promotion, $outcome->amountCents / 100.0, $giftItems);
+            return new PromotionResult($promotion, $outcome->amountCents / 100.0, $giftItems, $evaluation->matchedSubtotalCents);
         }
 
         if ($outcome instanceof \App\Services\General\PromotionEngine\Outcome\GiftOutcome) {
-            return new PromotionResult($promotion, 0.0, $giftItems);
+            return new PromotionResult($promotion, 0.0, $giftItems, $evaluation->matchedSubtotalCents);
         }
 
         return null;

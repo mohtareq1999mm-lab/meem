@@ -211,14 +211,14 @@ Route::put('governorates/{id}/fast-shipping', [GovernorateController::class, 'to
 
 Route::apiResource('cities', CityController::class);
 
-Route::post('reviews/{id}/toggle-approve', [ReviewController::class, 'toggleApproveReview']);
+Route::patch('reviews/{id}/toggle-approve', [ReviewController::class, 'toggleApproveReview']);
 Route::apiResource('reviews', ReviewController::class);
 Route::post('products/bulk-delete', [ProductController::class, 'destroyBulk']);
 Route::delete('products/all', [ProductController::class, 'destroyAll']);
 
 Route::post('products/import', [ProductImportController::class, 'import'])->name('admin.products.import');
-Route::post('products/import/{id}/cancel', [ProductImportController::class, 'cancel'])->name('admin.products.import.cancel');
 Route::get('products/import/{id}', [ProductImportController::class, 'status'])->name('admin.products.import.status');
+Route::post('products/import/{id}/cancel', [ProductImportController::class, 'cancel'])->name('admin.products.import.cancel');
 Route::get('products/import/{id}/download-errors', [ProductImportController::class, 'downloadErrors'])->name('admin.products.import.download-errors');
 Route::apiResource('products', ProductController::class);
 

@@ -67,28 +67,34 @@
 
 ## B-005: Add /products test suite
 
+**Status:** ✅ **Done** — `tests/Feature/ProductCrudTest.php` (62 tests, all passing)
+
+Covers: Products CRUD + bulk-delete + destroy-all + import routes + reviews CRUD + toggle-approve
+
+## B-006: Add review & import route tests
+
 **Priority:** High
-**Story Points:** 8
+**Story Points:** 3
 **Labels:** testing, coverage
-**Files:** `tests/Feature/`
+**Files:** `tests/Feature/ProductCrudTest.php`
 
-**Description:** There are no dedicated product CRUD test files. Create comprehensive feature tests covering:
+**Description:** The following routes are covered in the existing 62-test file:
 
-- Guest authentication (401 for create/update/delete, 200 for index/show)
-- Permission enforcement (403 for missing permissions)
-- Create product (simple, variable, with variants, without values)
-- Show product (by ID, by slug)
-- Update product (name only, with variants)
-- Delete product (single, nonexistent)
-- Validation (missing required fields, invalid enums, wrong types)
-- Response structure (list, show)
-- Bulk delete, destroy all
-- Soft delete behavior (product still exists in DB with `deleted_at`)
+- `POST /products/bulk-delete` (auth, success, validation)
+- `DELETE /products/all` (auth, success)
+- `POST /products/import` (guest auth)
+- `GET /products/import/{id}` (auth, status, nonexistent)
+- `POST /products/import/{id}/cancel` (auth, cancel, nonexistent)
+- `GET /products/import/{id}/download-errors` (auth, nonexistent)
+- `GET /reviews` (auth, list, validation)
+- `POST /reviews` (guest auth)
+- `GET /reviews/{id}` (auth, show, nonexistent)
+- `PUT /reviews/{id}` (guest auth)
+- `DELETE /reviews/{id}` (auth, delete, nonexistent)
+- `PATCH /reviews/{id}/toggle-approve` (auth, success, nonexistent)
 
-**Acceptance Criteria:**
-- Minimum 25 test methods
-- All CRUD operations covered
-- Authentication and authorization covered
-- Validation failures covered
-- Edge cases covered (nonexistent IDs, empty data)
-- Translation key assertions
+**Remaining gaps:**
+- Review create validation (missing rating, comment)
+- Review update via API
+- Has_discount true but missing discount_type → 422
+- Has_flash_sale true but missing flash_sale_id → 422

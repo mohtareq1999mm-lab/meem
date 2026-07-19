@@ -26,6 +26,7 @@ use Marvel\Enums\DiscountType;
 use Marvel\Enums\ProductType;
 use Marvel\Enums\PromotionMountType;
 use Marvel\Enums\PromotionType;
+use Marvel\Enums\Role;
 use Marvel\Enums\ShippingMethod;
 use Tests\TestCase;
 
@@ -96,6 +97,7 @@ class PromotionProductionHardenTest extends TestCase
             'price' => $price,
             'total_price' => $price * $quantity,
             'attributes' => null,
+            'shipping_method' => ShippingMethod::SCHEDULED,
         ]);
 
         return $cart;

@@ -12,6 +12,7 @@ class PromotionResult
         public readonly Promotion $promotion,
         public readonly float $discount,
         public readonly array $giftItems = [],
+        public readonly int $matchedSubtotalCents = 0,
     ) {}
 
     public function toArray(): array

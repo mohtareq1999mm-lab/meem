@@ -1,4 +1,28 @@
-# Product Module — API Reference (CRUD Only)
+# Product Module — Full API Reference
+
+---
+
+## Routes Overview
+
+| Method | URI | Controller@function | Permission |
+|--------|-----|---------------------|------------|
+| `GET` | `/products` | `ProductController@index` | `view-products` |
+| `POST` | `/products` | `ProductController@store` | `create-product` |
+| `GET` | `/products/{id}` | `ProductController@show` | `view-products` |
+| `PUT` | `/products/{id}` | `ProductController@update` | `update-product` |
+| `DELETE` | `/products/{id}` | `ProductController@destroy` | `delete-product` |
+| `POST` | `/products/bulk-delete` | `ProductController@destroyBulk` | `delete-product` |
+| `DELETE` | `/products/all` | `ProductController@destroyAll` | `delete-product` |
+| `POST` | `/products/import` | `ProductImportController@import` | `create-product` or `super_admin` |
+| `POST` | `/products/import/{id}/cancel` | `ProductImportController@cancel` | `create-product` or `super_admin` |
+| `GET` | `/products/import/{id}` | `ProductImportController@status` | `create-product` or `super_admin` |
+| `GET` | `/products/import/{id}/download-errors` | `ProductImportController@downloadErrors` | `create-product` or `super_admin` |
+| `GET` | `/reviews` | `ReviewController@index` | public (requires `product_id` query) |
+| `POST` | `/reviews` | `ReviewController@store` | customer auth |
+| `GET` | `/reviews/{id}` | `ReviewController@show` | public |
+| `PUT` | `/reviews/{id}` | `ReviewController@update` | customer auth |
+| `DELETE` | `/reviews/{id}` | `ReviewController@destroy` | `delete-reviews` |
+| `PATCH` | `/reviews/{id}/toggle-approve` | `ReviewController@toggleApproveReview` | `approve-reviews` |
 
 ---
 
@@ -10,22 +34,24 @@ List paginated products with search, filter, sort.
 
 **Permissions:** none for public; `view-products` for authenticated scope
 
-### Query Parameters
+## Query Parameters (GET /products)
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `limit` | integer | No | Per page (default: 15) |
-| `search` | string | No | Search name, description, sku |
-| `orderBy` | string | No | `id`, `name`, `price`, `created_at`, `sold_quantity` |
-| `orderDir` | string | No | `asc`, `desc` (default: `desc`) |
-| `category` | string | No | Category slug |
-| `shop_id` | integer | No | Filter by shop |
-| `type_id` | integer | No | Filter by product type |
-| `brand` | string | No | Brand slug |
-| `min_price` | float | No | Minimum price |
-| `max_price` | float | No | Maximum price |
-| `tags` | string | No | Comma-separated tag slugs (AND logic) |
-
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `page` | int | 1 | Page number |
+| `limit` | int | 15 | Results per page |
+| `search` | string | — | Search in product name, description, SKU, and variant SKUs |
+| `sort` | string | `desc` | Legacy sort direction by `created_at` (`asc` or `desc`) |
+| `orderBy` | string | `created_at` | Column to sort by. Supported: `created_at`, `updated_at`, `name`, `price`, `sold_quantity`, `sku`, `id` |
+| `orderDir` | string | `desc` | Sort direction (`asc` or `desc`) |
+| `date_range` | string | — | Date range `YYYY-MM-DD//YYYY-MM-DD` for availability filtering |
+| `status` | int | — | Filter by product status (`0` or `1`) |
+| `category` | string | — | Filter by category slug (e.g. `?category=electronics`) |
+| `banner` | string | — | Filter by banner slug (e.g. `?banner=summer-sale`) |
+| `flash_sale` | string | — | Filter by flash sale slug (e.g. `?flash_sale=flash-01`) |
+| `promotion` | string | — | Filter by promotion slug (e.g. `?promotion=summer-deal`) |
+| `slider` | string | — | Filter by slider slug (e.g. `?slider=hero-banner`) |
+| `tags` | string | — | Filter by tag slug (e.g. `?tags=t-shirt,summer`) |
 ### Response 200
 
 ```json
@@ -271,3 +297,162 @@ Soft-delete a product.
   "message": "MESSAGE.NOT_FOUND"
 }
 ```
+
+---
+
+## POST /products/bulk-delete
+
+Delete multiple products by IDs (hard delete).
+
+**Auth:** Required (auth:sanctum)
+
+**Permission:** `delete-product`
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `ids` | array | **Yes** | Array of product IDs to delete |
+
+### Response 200
+
+```json
+{
+  "success": true,
+  "message": "MESSAGE.PRODUCTS_DELETED_SUCCESSFULLY"
+}
+```
+
+---
+
+## DELETE /products/all
+
+Delete all products (hard delete).
+
+**Auth:** Required (auth:sanctum)
+
+**Permission:** `delete-product`
+
+### Response 200
+
+```json
+{
+  "success": true,
+  "message": "MESSAGE.PRODUCTS_DELETED_SUCCESSFULLY"
+}
+```
+
+---
+
+## POST /products/import
+
+Start a product import job from a spreadsheet file.
+
+**Auth:** Required (auth:sanctum)
+
+**Permission:** `create-product` or `super_admin`
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `file` | file | **Yes** | Excel/CSV file (.xlsx, .csv) |
+
+### Response 202
+
+```json
+{
+  "success": true,
+  "message": "Import started successfully",
+  "data": {
+    "import_id": 1,
+    "status": "pending"
+  }
+}
+```
+
+---
+
+## GET /products/import/{id}
+
+Get the status of an import job.
+
+**Auth:** Required (auth:sanctum)
+
+**Permission:** `create-product` or `super_admin`
+
+### Response 200
+
+```json
+{
+  "status": 200,
+  "message": "Import status fetched",
+  "success": true,
+  "data": {
+    "id": 1,
+    "status": "processing",
+    "total_rows": 100,
+    "processed_rows": 45,
+    "success_rows": 40,
+    "failed_rows": 5,
+    "progress": 45.0,
+    "errors": null
+  }
+}
+```
+
+---
+
+## POST /products/import/{id}/cancel
+
+Cancel a pending/processing import job.
+
+**Auth:** Required (auth:sanctum)
+
+**Permission:** `create-product` or `super_admin`
+
+### Response 200
+
+```json
+{
+  "success": true,
+  "message": "Import cancelled successfully",
+  "data": {
+    "import_id": 1,
+    "status": "cancelled"
+  }
+}
+```
+
+### Response 409 (cannot cancel completed import)
+
+```json
+{
+  "success": false,
+  "message": "Import cannot be cancelled"
+}
+```
+
+---
+
+## GET /products/import/{id}/download-errors
+
+Download an Excel file with rows that failed during import.
+
+**Auth:** Required (auth:sanctum)
+
+**Permission:** `create-product` or `super_admin`
+
+### Response 200
+
+Binary file download (xlsx).
+
+### Response 404
+
+```json
+{
+  "success": false,
+  "message": "No errors found"
+}
+```
+

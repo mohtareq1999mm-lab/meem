@@ -3,6 +3,7 @@
 namespace Marvel\Http\Resources;
 
 use App\Http\Resources\Coupons\CouponResource;
+use App\Services\General\PromotionService;
 use Illuminate\Http\Request;
 use Marvel\Database\Models\Coupon;
 use Marvel\Enums\ShippingMethod;
@@ -24,6 +25,8 @@ class CartResource extends Resource
         $couponModel = $this->coupon ? Coupon::where('code', $this->coupon)->first() : null;
         $couponObject = $couponModel ? CouponResource::make($couponModel) : null;
 
+        $promotionService = app(PromotionService::class);
+
         return [
             'id' => $this->id,
             'user_id' => $this->user_id,
@@ -39,6 +42,9 @@ class CartResource extends Resource
             'fast_items_count' => $fastItems->count(),
             'normal_items' => CartItemResource::collection($normalItems),
             'fast_items' => CartItemResource::collection($fastItems),
+            'has_eligible_promotion' => $items && $items->isNotEmpty()
+                ? $promotionService->hasEligiblePromotion($this->resource)
+                : false,
         ];
     }
 }

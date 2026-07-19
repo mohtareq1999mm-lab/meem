@@ -5,6 +5,8 @@
 ### Endpoints
 - 5 CRUD endpoints: list, create, show, update, delete
 - Additional: bulk-delete, destroy-all, toggle-fast-shipping
+- 4 product import endpoints (import, status, cancel, download-errors)
+- 6 review endpoints (CRUD + toggle-approve)
 - Public read-only for index+show
 - Authenticated for store/update/destroy
 
@@ -16,12 +18,16 @@
 - ProductFilter for advanced query filtering
 - Soft deletes (deleted_at)
 
-### Identified Issues
-- **Missing DB transaction** in `ProductRepository::updateProduct()` (BUG-PRD-004)
-- **Public helper methods** (`ProductStore()`, `updateProduct()`, `destroyProduct()`) should be private (BUG-PRD-001, BUG-PRD-002, BUG-PRD-003)
-- **Missing English translation keys** for product CRUD messages (BUG-PRD-005)
-- **No test coverage** — zero product CRUD tests exist
-- Helper methods type-hint generic `Request` instead of specific FormRequests (BUG-PRD-006)
+### Bug Fixes
+- **BUG-ATT-001/002/003/004** — Attribute module: private helpers, DB transaction, unique validation fix, `sometimes` rules (all fixed)
+- **BUG-PRD-001/002/003** — Product helpers made private (fixed)
+- **BUG-PRD-005** — Missing English translation keys added (fixed)
+- **BUG-PRD-006** — FormRequest type-hints for `ProductStore()` and `updateProduct()` (fixed)
+- **BUG-PRD-004** — Confirmed: `updateProduct()` in repository already has DB transaction (false alarm)
+
+### Test Coverage
+- **File:** `tests/Feature/ProductCrudTest.php` — 62 tests covering all product, import, and review routes
+- Combined with existing `ProductAdminTest` (17) + `ProductProductionHardenTest` (28) + `AttributesProductionHardenTest` (32) = **139 total tests, all passing**
 
 ### Known Limitations
 - No restore endpoint for soft-deleted products

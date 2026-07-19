@@ -33,10 +33,10 @@ GET    /products/calculate-rental-price → calculateRentalPrice
 ```php
 public function index(Request $request): JsonResponse
 ```
-1. Parse `limit`, `search`, `orderBy`, `orderDir`, `category`, `shop_id`, `type_id` from request
+1. Parse `limit`, `search`, `orderBy`, `orderDir`, `category`, `date_range`, `status` from request
 2. Build query with `with('variations', 'categories', 'flash_sales')`
 3. Apply search on translatable `name`/`description`, `sku`, and variant SKU
-4. Apply `ProductFilter` service for category/brand/price/attribute/tag filters
+4. Apply `ProductFilter` service for category/banner/promotion/flash_sale/slider/date_range/status filters
 5. Paginate, wrap in `ProductCollection`, return JSON
 
 ### store()
@@ -69,6 +69,66 @@ public function destroy(Request $request, $id): JsonResponse
 ```
 1. Soft-delete the product
 2. Return `200` + `DELETE_PRODUCT_SUCCESSFULLY`
+
+### destroyBulk()
+```php
+public function destroyBulk(Request $request): JsonResponse
+```
+1. Validate `ids` array required
+2. Hard-delete all products matching IDs
+3. Return `200` + `PRODUCTS_DELETED_SUCCESSFULLY`
+
+### destroyAll()
+```php
+public function destroyAll(): JsonResponse
+```
+1. Hard-delete ALL products
+2. Return `200` + `PRODUCTS_DELETED_SUCCESSFULLY`
+
+## Review Controller
+
+**File:** `ReviewController.php`
+
+All review routes are auth:sanctum (except index+show which are public).
+
+### index($request)
+- Requires `product_id` query param → validates `exists:products,id`
+- Paginates reviews by product
+
+### store($request)
+- Validates via `ReviewCreateRequest`: `product_id`, `comment`, `rating`
+- Calls `repository->storeReview($request)`
+- Returns `REVIEW_CREATED_SUCCESSFULLY`
+
+### toggleApproveReview($id)
+- Requires `approve-reviews` permission
+- Calls `repository->toggleApprove($id)` (flips `approved` boolean)
+- Returns `REVIEW_UPDATED_SUCCESSFULLY`
+
+## Product Import Controller
+
+**File:** `ProductImportController.php`
+
+All routes require `auth:sanctum` + `create-product|super_admin`.
+
+### import($request)
+- Validates via `ProductImportRequest` (CSV/Excel file upload)
+- Stores file, creates `Import` record with status `pending`
+- Dispatches `ImportProductsJob`
+- Returns 202 with `import_id`
+
+### status($id)
+- Returns import progress: `status`, `total_rows`, `processed_rows`, `success_rows`, `failed_rows`, `progress`
+- Reads signal file for real-time progress
+
+### cancel($id)
+- Writes cancel signal file
+- Updates import status → `cancelled`
+- Returns 409 if import already completed/failed
+
+### downloadErrors($id)
+- If import has errors: generates XLSX download
+- If no errors: returns 404
 
 ## Repository
 

@@ -9,6 +9,18 @@
 | POST | `/products` | Create new product |
 | PUT | `/products/{id}` | Update product |
 | DELETE | `/products/{id}` | Delete product (soft) |
+| POST | `/products/bulk-delete` | Delete multiple products by IDs |
+| DELETE | `/products/all` | Delete ALL products |
+| POST | `/products/import` | Upload Excel/CSV to import products |
+| GET | `/products/import/{id}` | Check import progress |
+| POST | `/products/import/{id}/cancel` | Cancel pending import |
+| GET | `/products/import/{id}/download-errors` | Download failed rows |
+| GET | `/reviews` | List reviews for a product (`?product_id=`) |
+| POST | `/reviews` | Create a review |
+| GET | `/reviews/{id}` | Get review details |
+| PUT | `/reviews/{id}` | Update a review |
+| DELETE | `/reviews/{id}` | Delete a review |
+| PATCH | `/reviews/{id}/toggle-approve` | Approve/unapprove a review |
 
 ## Response Structure
 
@@ -95,6 +107,25 @@
 - **422:** Display field-level validation errors on the form
 - **500:** Show "Something went wrong" toast
 
+## Query Parameters (GET /products)
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `page` | int | 1 | Page number |
+| `limit` | int | 15 | Results per page |
+| `search` | string | — | Search in product name, description, SKU, and variant SKUs |
+| `sort` | string | `desc` | Legacy sort direction by `created_at` (`asc` or `desc`) |
+| `orderBy` | string | `created_at` | Column to sort by. Supported: `created_at`, `updated_at`, `name`, `price`, `sold_quantity`, `sku`, `id` |
+| `orderDir` | string | `desc` | Sort direction (`asc` or `desc`) |
+| `date_range` | string | — | Date range `YYYY-MM-DD//YYYY-MM-DD` for availability filtering |
+| `status` | int | — | Filter by product status (`0` or `1`) |
+| `category` | string | — | Filter by category slug (e.g. `?category=electronics`) |
+| `banner` | string | — | Filter by banner slug (e.g. `?banner=summer-sale`) |
+| `flash_sale` | string | — | Filter by flash sale slug (e.g. `?flash_sale=flash-01`) |
+| `promotion` | string | — | Filter by promotion slug (e.g. `?promotion=summer-deal`) |
+| `slider` | string | — | Filter by slider slug (e.g. `?slider=hero-banner`) |
+| `tags` | string | — | Filter by tag slug (e.g. `?tags=t-shirt,summer`) |
+
 ## Key Considerations
 
 ### 1. Translatable Fields
@@ -139,8 +170,9 @@
 
 ### 9. Filters
 - `category`: Filter by category slug
-- `brand`: Filter by brand slug
-- `min_price`/`max_price`: Price range (includes variant prices)
-- `tags`: Comma-separated tag slugs (AND logic — product must have ALL)
-- `shop_id`: Filter by shop
-- `type_id`: Filter by product type
+- `banner`: Filter by banner slug
+- `flash_sale`: Filter by flash sale slug
+- `promotion`: Filter by promotion slug
+- `slider`: Filter by slider slug
+- `status`: Filter by product status
+- `date_range`: Filter by date range `YYYY-MM-DD//YYYY-MM-DD`

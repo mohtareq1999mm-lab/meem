@@ -89,6 +89,7 @@ class PromotionFlowTest extends TestCase
             'price' => 100,
             'total_price' => 100,
             'attributes' => null,
+            'shipping_method' => ShippingMethod::SCHEDULED,
         ]);
 
         return $cart;

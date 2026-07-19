@@ -88,16 +88,11 @@ class PromotionService
                 throw new \InvalidArgumentException('Selected promotion is not eligible for this cart.');
             }
 
-            // Build PromotionEvaluation to pass to strategy (resolver already computed scoped outcome via resolver->resolve returning PromotionResult for backward compatibility)
-            // Determine outcome via strategy by re-evaluating (resolver returned PromotionResult for compatibility). Use resolver->eligible to fetch evaluation if needed.
-            $evaluation = $this->resolver->matchedEligibility($cart, $promotion, $subtotalCents);
-
-            // Use strategy to compute outcome (we already performed computeOutcome in resolver for compatibility; map to Outcome types)
-            // For backward compatibility we reuse PromotionResult structure: if it has giftItems, treat as GiftOutcome; else Discount
+            // PromotionResult from resolver already contains matchedSubtotalCents computed during resolve()
             $amountCents = (int) round((float) ($result->discount ?? 0) * 100);
 
             if ($amountCents > 0) {
-                $discountOutcome = new DiscountOutcome($amountCents, $evaluation->matchedSubtotalCents);
+                $discountOutcome = new DiscountOutcome($amountCents, $result->matchedSubtotalCents);
                 $discountDetails = $this->applicator->applyOutcome($cart, $promotion, $discountOutcome);
                 $itemIds = $cart->items->pluck('id');
                 $cart->refresh();
