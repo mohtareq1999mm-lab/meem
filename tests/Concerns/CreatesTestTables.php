@@ -69,6 +69,7 @@ trait CreatesTestTables
             $table->decimal('length', 8, 2)->nullable();
             $table->decimal('weight', 8, 2)->nullable();
             $table->unsignedInteger('pieces')->nullable();
+            $table->integer('in_flash_sale')->default(0);
             $table->timestamps();
             $table->softDeletes();
         });
@@ -80,6 +81,8 @@ trait CreatesTestTables
             $table->text('description')->nullable();
             $table->unsignedBigInteger('parent_id')->nullable();
             $table->boolean('status')->default(true);
+            $table->boolean('is_featured')->default(false);
+            $table->unsignedSmallInteger('level')->default(1);
             $table->timestamps();
             $table->softDeletes();
         });
@@ -88,6 +91,7 @@ trait CreatesTestTables
             $table->id();
             $table->foreignId('category_id')->constrained('categories')->cascadeOnDelete();
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
+            $table->unique(['category_id', 'product_id'], 'cat_prod_unique');
             $table->timestamps();
         });
 

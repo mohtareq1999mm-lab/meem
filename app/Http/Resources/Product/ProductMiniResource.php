@@ -4,8 +4,6 @@ namespace App\Http\Resources\Product;
 
 use App\Traits\HasProductFilters;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Marvel\Http\Resources\TagResource;
-use PhpParser\Node\Expr\Cast\Bool_;
 
 class ProductMiniResource extends JsonResource
 {
@@ -25,25 +23,16 @@ class ProductMiniResource extends JsonResource
             'price' => $this->roundMoney($this->price),
             'has_variants' => $this->product_type !== 'simple' ? true : false,
             'current_price' => $this->roundMoney($this->current_price),
-            'is_fast_shipping_available' => (bool) $this->is_fast_shipping_available,
-            'has_discount' => $this->has_discount,
-            'discount_type' => $this->discount_type,
-            'discount_amount' => $this->roundMoney($this->discount_amount),
-            'height' => $this->height,
-            'width' => $this->width,
-            'length' => $this->length,
-            'weight' => $this->weight,
             'quantity' => (int) $this->stock_quantity,
             'in_stock'               =>(bool) $this->in_stock,
-            'discount_valid' => (bool) $this->discount_active,
             'discount_active' => (bool) $this->discount_active,
             'flash_sale_active' => (bool) $this->flash_sale_active,
+            'is_fast_shipping_available' =>(bool)$this->is_fast_shipping_available,
             'ratings' => round((float) ($this->reviews_avg_rating ?? 0), 2),
             'image' => [
                 'thumbnail' => $this->getFirstMediaUrl('products'),
                 'original' => $this->getMediaImages('products'),
             ],
-            'tags' => TagResource::collection($this->whenLoaded('tags')),
         ];
     }
 

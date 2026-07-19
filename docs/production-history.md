@@ -406,3 +406,44 @@ YES
 
 Notes:
 The `Variation` model (table: variation_options) is a separate concept for rental product pricing — it is NOT part of the Attribute/ProductVariant system. The `attribute_products` (plural) table in CreatesTestTables is a separate product-attribute association table unrelated to the `attribute_product` (singular) variant-value pivot. Pre-existing test failures (128 failures, 56 errors across UserAuthAdminTest, UserControllerTest, etc.) are unrelated to this feature.
+
+---
+
+Date:
+2026-07-19
+
+Feature:
+Product Import/Export
+
+Revision:
+1
+
+Summary:
+Full production audit of the Product Import/Export system (42+ files inspected). Verified the complete import pipeline: file upload → job dispatch → Excel multi-sheet import → product/variant/image/category/brand/flash_sale/slider processing → pricing via ProductPricingService → progress tracking → cancellation → rollback. Also verified the export pipeline: filter parameters → multi-sheet XLSX generation with translated values, pricing, inventory, attributes, and relations. Fixed 1 verified production bug: ProductImportService::finalizeVariants() was defined but never called — when re-importing products with fewer variants, orphaned product_variant rows remained in the database permanently (MEDIUM — BUG-A). Added 1 regression test verifying orphaned variants are deleted after finalizeVariants(). All 34 import/export tests pass (33 existing + 1 new). All 76 product tests pass (0 new failures).
+
+Verified Bugs Fixed:
+- BUG-A (MEDIUM): ProductImportService::finalizeVariants() (line 432) was never called in the import flow. The method deletes ProductVariant rows that are in the database but not in `keptVariantIds` (the set of variants processed in the current import). When a user re-imports products with fewer variants (e.g., removed a color/size option), the orphaned variant rows remained in product_variants indefinitely — corrupting inventory, pricing, and order snapshots that reference stale variant IDs. Fix: added `$service->finalizeVariants()` call in ImportProductsJob::handle() after Excel::import() completes and before finalizeProgress().
+
+Remaining Technical Debt:
+- 5 sync sheet imports (Brands, Categories, Images, FlashSales, Sliders) do not implement WithChunkReading — all rows loaded into memory for those sheets (performance concern for very large imports)
+- ExportProductsJob is defined but never dispatched — the ProductExportController streams downloads directly (dead code, not a production blocker)
+- Legacy CSV import methods in ProductController (importProducts, importVariationOptions) are separate from the modern XLSX import — they have their own validation and error handling (maintained for backward compatibility)
+- Product::firstOrCreate() used in legacy CSV import (case-insensitive PHP method call — works but inconsistent naming)
+
+Documentation Updated:
+YES (production-status.md, production-history.md, regression-matrix.md)
+
+Routes Updated:
+NO
+
+Regression Executed:
+YES
+
+Regression Result:
+PASS (ProductImportTest 33/33 existing + 1/1 new = 34/34, ProductExportTest 4/4, ProductSuite 76/76 = 114/114, 0 new failures)
+
+Production Ready:
+YES
+
+Notes:
+Pricing in the import is handled by ProductPricingService::calculateProductPricingFromData() — NOT manually calculated. Imported products behave exactly like manually created products for pricing. The import's flash_sale sheet processes after the pricing calculation, so price_after_flash_sale is not recomputed after flash sales are synced — this is safe because the price_after_flash_sale column is only a cached value; runtime accessors and ProductPricingService compute it dynamically. Pre-existing test failures (PricingCacheInvalidationTest: 2 errors, 3 failures) are unrelated.

@@ -9,10 +9,6 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('categories', function (Blueprint $table) {
-            $table->unsignedSmallInteger('level')->default(1)->after('parent_id')->index();
-        });
-
         $categories = DB::table('categories')
             ->select('id', 'parent_id')
             ->get()

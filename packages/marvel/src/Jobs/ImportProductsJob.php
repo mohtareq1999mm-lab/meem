@@ -98,6 +98,8 @@ class ImportProductsJob implements ShouldQueue
 
             Excel::import($importObj, $filePath, null, $readerType);
 
+            $service->finalizeVariants();
+
             $service->writeExplicitProgress(99.0);
 
             $service->finalizeProgress();

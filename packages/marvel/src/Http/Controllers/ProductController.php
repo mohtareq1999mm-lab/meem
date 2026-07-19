@@ -440,6 +440,11 @@ class ProductController extends CoreController
      */
     public function exportProducts(Request $request, $shop_id)
     {
+        $user = $request->user();
+
+        if (!$this->repository->hasPermission($user, $shop_id)) {
+            throw new AuthorizationException(NOT_AUTHORIZED);
+        }
 
         $filename = 'products-for-shop-id-' . $shop_id . '.csv';
         $headers = [
@@ -524,6 +529,12 @@ class ProductController extends CoreController
      */
     public function exportVariableOptions(Request $request, $shop_id)
     {
+        $user = $request->user();
+
+        if (!$this->repository->hasPermission($user, $shop_id)) {
+            throw new AuthorizationException(NOT_AUTHORIZED);
+        }
+
         $filename = 'variable-options-' . Str::random(5) . '.csv';
         $headers = [
             'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',

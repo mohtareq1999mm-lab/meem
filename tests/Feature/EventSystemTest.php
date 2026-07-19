@@ -178,7 +178,9 @@ class EventSystemTest extends TestCase
             $table->string('promotion_type')->nullable();
             $table->decimal('promotion_discount', 10, 2)->nullable();
             $table->string('status')->default('pending');
+            $table->string('language', 10)->default('en');
             $table->timestamps();
+            $table->unsignedBigInteger('parent_id')->nullable();
             $table->softDeletes();
             $table->timestamp('inventory_restored_at')->nullable();
         });
@@ -997,6 +999,23 @@ class EventSystemTest extends TestCase
     }
 
     /** @test */
+    public function app_event_service_provider_listens_to_marvel_order_cancelled()
+    {
+        $reflection = new \ReflectionClass(EventServiceProvider::class);
+        $defaults = $reflection->getDefaultProperties();
+
+        $this->assertArrayHasKey(\Marvel\Events\OrderCancelled::class, $defaults['listen']);
+        $this->assertContains(
+            RestoreProductInventory::class,
+            $defaults['listen'][\Marvel\Events\OrderCancelled::class]
+        );
+        $this->assertCount(
+            1,
+            $defaults['listen'][\Marvel\Events\OrderCancelled::class]
+        );
+    }
+
+    /** @test */
     public function order_cancelled_via_service_restores_stock()
     {
         $order = $this->createOrderWithItems();
@@ -1057,5 +1076,58 @@ class EventSystemTest extends TestCase
         Event::assertDispatched(\Marvel\Events\OrderCancelled::class, function ($e) use ($order) {
             return $e->order->id === $order->id;
         });
+    }
+
+    /** @test */
+    public function restore_product_inventory_handles_marvel_event()
+    {
+        $order = $this->createOrderWithItems();
+        $event = new \Marvel\Events\OrderCancelled($order);
+
+        $listener = app(RestoreProductInventory::class);
+        $listener->handle($event);
+
+        $this->assertDatabaseHas('products', [
+            'id' => $this->product->id,
+            'stock_quantity' => 13,
+            'sold_quantity' => 2,
+        ]);
+
+        $this->assertNotNull($order->fresh()->inventory_restored_at);
+    }
+
+    /** @test */
+    public function restore_product_inventory_via_marvel_event_is_idempotent()
+    {
+        $order = $this->createOrderWithItems();
+        $event = new \Marvel\Events\OrderCancelled($order);
+
+        $listener = app(RestoreProductInventory::class);
+        $listener->handle($event);
+
+        $restoredAt = $order->fresh()->inventory_restored_at;
+
+        $this->product->update([
+            'stock_quantity' => 5,
+            'sold_quantity' => 10,
+        ]);
+
+        $listener->handle($event);
+
+        $this->assertDatabaseHas('products', [
+            'id' => $this->product->id,
+            'stock_quantity' => 5,
+            'sold_quantity' => 10,
+        ]);
+
+        $newRestoredAt = $order->fresh()->inventory_restored_at;
+        $this->assertEquals(
+            $restoredAt instanceof \Carbon\Carbon
+                ? $restoredAt->format('Y-m-d H:i:s')
+                : $restoredAt,
+            $newRestoredAt instanceof \Carbon\Carbon
+                ? $newRestoredAt->format('Y-m-d H:i:s')
+                : $newRestoredAt
+        );
     }
 }

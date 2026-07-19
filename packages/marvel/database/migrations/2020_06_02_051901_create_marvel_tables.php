@@ -132,8 +132,21 @@ class CreateMarvelTables extends Migration
             $table->integer('stock_quantity')->default(0);
             $table->integer('reserved_quantity')->default(0);
             $table->boolean('is_fast_shipping_available')->default(false);
+            $table->integer('in_flash_sale')->default(0);
             $table->softDeletes();
             $table->timestamps();
+
+            $table->index('price');
+            $table->index('sold_quantity');
+            $table->index('name');
+            $table->index('slug');
+            $table->index('sku');
+            $table->index('is_fast_shipping_available');
+            $table->index(['status', 'deleted_at', 'price'], 'idx_products_status_deleted_price');
+            $table->index('height', 'idx_products_height');
+            $table->index('width', 'idx_products_width');
+            $table->index('length', 'idx_products_length');
+            $table->index('weight', 'idx_products_weight');
         });
 
         Schema::create('product_variants', function (Blueprint $table) {
@@ -153,6 +166,14 @@ class CreateMarvelTables extends Migration
             $table->integer('reserved_quantity')->default(0);
             $table->integer('sold_quantity')->default(0);
             $table->timestamps();
+
+            $table->index('product_id');
+            $table->index('sku');
+            $table->index('price', 'idx_variants_price');
+            $table->index('height', 'idx_variants_height');
+            $table->index('width', 'idx_variants_width');
+            $table->index('length', 'idx_variants_length');
+            $table->index('weight', 'idx_variants_weight');
         });
 
         Schema::create('orders', function (Blueprint $table) {
@@ -174,8 +195,25 @@ class CreateMarvelTables extends Migration
             $table->enum('shipping_method', ['SCHEDULED', 'FAST'])->default('SCHEDULED');
             $table->dateTime('expected_delivery_at')->nullable();
             $table->decimal('fast_shipping_fee', 12, 2)->default(0);
+            $table->string('fulfillment_type', 20)->nullable();
+            $table->string('payment_method', 30)->nullable();
+            $table->string('payment_gateway', 50)->nullable();
+            $table->unsignedBigInteger('pickup_location_id')->nullable();
+            $table->unsignedBigInteger('governorate_id')->nullable();
+            $table->string('pickup_location_name')->nullable();
+            $table->text('pickup_location_address')->nullable();
+            $table->string('pickup_location_phone')->nullable();
+            $table->string('pickup_location_coordinates')->nullable();
+            $table->foreignId('promotion_id')->nullable()->constrained('promotions')->nullOnDelete();
+            $table->string('promotion_code')->nullable();
+            $table->string('promotion_type')->nullable();
+            $table->decimal('promotion_discount', 10, 3)->default(0);
             $table->softDeletes();
             $table->timestamps();
+
+            $table->index(['user_id', 'created_at'], 'orders_user_id_created_at_index');
+            $table->index('status', 'orders_status_index');
+            $table->index('shipping_method');
         });
 
         Schema::create('order_products', function (Blueprint $table) {
@@ -192,15 +230,32 @@ class CreateMarvelTables extends Migration
             $table->decimal('product_discount_price', 10, 3)->nullable();
             $table->decimal('product_flash_sale_price', 10, 3)->nullable();
             $table->decimal('promotion_discount_amount', 10, 2)->default(0);
+            $table->boolean('is_gift')->default(false);
+            $table->foreignId('promotion_id')->nullable()->constrained('promotions')->nullOnDelete();
             $table->timestamps();
+
+            $table->index('order_id', 'order_products_order_id_index');
+            $table->index(['order_id', 'is_gift'], 'order_products_order_gift_index');
         });
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
+            $table->uuid('uuid')->nullable()->unique();
             $table->integer('invoice_id');
             $table->bigInteger('user_id');
             $table->string('payment_method');
+            $table->string('status', 30)->default('pending');
+            $table->decimal('amount', 10, 2)->nullable();
+            $table->string('currency', 3)->default('EGP');
+            $table->string('gateway_transaction_id', 255)->nullable();
+            $table->json('gateway_response')->nullable();
+            $table->text('error_message')->nullable();
+            $table->string('qr_code_url', 500)->nullable();
+            $table->timestamp('paid_at')->nullable();
             $table->foreignId('order_id')->constrained()->cascadeOnDelete();
             $table->timestamps();
+
+            $table->index('status', 'txn_status_idx');
+            $table->index('uuid', 'txn_uuid_idx');
         });
 
         Schema::create('categories', function (Blueprint $table) {
@@ -212,8 +267,11 @@ class CreateMarvelTables extends Migration
             $table->foreign('parent_id')->references('id')->on('categories')->restrictOnDelete();
             $table->boolean('status')->default(true);
             $table->boolean('is_featured')->default(false);
+            $table->unsignedSmallInteger('level')->default(1)->index();
             $table->timestamps();
             $table->softDeletes();
+
+            $table->index('name');
         });
 
         Schema::create('category_product', function (Blueprint $table) {
@@ -222,6 +280,9 @@ class CreateMarvelTables extends Migration
             $table->unsignedBigInteger('category_id');
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
             $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');
+            $table->unique(['category_id', 'product_id'], 'cat_prod_unique');
+            $table->index(['product_id', 'category_id'], 'idx_cat_prod_product_category');
+            $table->index(['category_id', 'product_id'], 'idx_cat_prod_category_product');
         });
 
         Schema::create('carts', function (Blueprint $table) {
@@ -234,6 +295,9 @@ class CreateMarvelTables extends Migration
             $table->timestamp('expires_at')->nullable();
             $table->unique('user_id');
             $table->timestamps();
+
+            $table->index(['user_id', 'status']);
+            $table->index(['status', 'expires_at']);
         });
 
 
@@ -251,6 +315,8 @@ class CreateMarvelTables extends Migration
             $table->foreign('attribute_id')->references('id')->on('attributes')->onDelete('cascade');
             $table->string('value');
             $table->timestamps();
+
+            $table->unique(['attribute_id', 'slug'], 'attribute_values_attribute_id_slug_unique');
         });
 
 
@@ -266,7 +332,12 @@ class CreateMarvelTables extends Migration
             $table->integer('reserved_quantity')->default(0);
             $table->decimal('discount_amount', 10, 2)->default(0);
             $table->string('shipping_method', 20)->default('scheduled');
+            $table->boolean('is_gift')->default(false);
+            $table->foreignId('promotion_id')->nullable()->constrained('promotions')->nullOnDelete();
             $table->timestamps();
+
+            $table->index(['cart_id', 'product_id', 'product_variant_id']);
+            $table->index(['cart_id', 'is_gift'], 'cart_items_cart_gift_index');
         });
 
         Schema::create('attribute_product', function (Blueprint $table) {
@@ -276,6 +347,10 @@ class CreateMarvelTables extends Migration
             $table->unsignedBigInteger('product_variant_id');
             $table->foreign('product_variant_id')->references('id')->on('product_variants')->onDelete('cascade');
             $table->timestamps();
+
+            $table->unique(['attribute_value_id', 'product_variant_id'], 'attribute_product_value_variant_unique');
+            $table->index(['product_variant_id', 'attribute_value_id'], 'idx_attr_prod_variant_value');
+            $table->index(['attribute_value_id', 'product_variant_id'], 'idx_attr_prod_value_variant');
         });
 
 

@@ -25,7 +25,13 @@ class CreatePromotionsTable extends Migration
             $table->date('start_at')->nullable();
             $table->date('end_at')->nullable();
             $table->boolean('status')->default(true);
+            $table->decimal('discount', 10, 2)->nullable();
+            $table->decimal('minimum_order_amount', 10, 2)->default(0);
+            $table->string('apply_to')->default('specific_products');
             $table->timestamps();
+
+            $table->index(['status', 'start_at', 'end_at'], 'promotions_validity_index');
+            $table->index(['usage', 'limiter'], 'promotions_usage_limiter_index');
         });
     }
 

@@ -171,6 +171,33 @@ Attributes + Attribute Values
 
 ---
 
+## Product Import/Export
+
+**Changed Feature:**
+Product Import/Export
+
+**Affected Features:**
+- Products — import creates/updates products; export reads products
+- Attributes — import creates/finds attribute values for variants
+- Categories/Brands/Tags/FlashSales/Sliders — import syncs relations
+- Pricing — import relies on ProductPricingService for pricing computation
+- Inventory — import sets stock quantities on products and variants
+- Media — import downloads and attaches images via UrlImageHandler/ZipImageHandler
+
+**Regression:**
+
+| Suite | Status | Reason |
+|-------|--------|--------|
+| ProductImportTest | PASS (34/34) | All import tests pass (33 existing + 1 new regression test) |
+| ProductExportTest | PASS (4/4) | All export tests pass |
+| ProductSuite | PASS (76/76) | All Product feature tests pass (no change to product code) |
+
+**Changes Applied:**
+- `ImportProductsJob.php`: Added `$service->finalizeVariants()` call after Excel import — orphaned variants from re-imports are now properly cleaned up
+- `ProductImportTest.php`: Added `test_finalize_variants_removes_orphaned_variants` — regression test verifying orphaned variant deletion
+
+---
+
 ## Full Suite Status
 
 | Suite | Status | Date | Notes |

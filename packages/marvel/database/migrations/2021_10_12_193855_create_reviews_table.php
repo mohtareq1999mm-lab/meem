@@ -24,6 +24,9 @@ class CreateReviewsTable extends Migration
             $table->boolean('approved')->default(false);
             $table->softDeletes();
             $table->timestamps();
+
+            $table->index('rating');
+            $table->index(['rating', 'product_id']);
         });
 
         Schema::create('wishlists', function (Blueprint $table) {

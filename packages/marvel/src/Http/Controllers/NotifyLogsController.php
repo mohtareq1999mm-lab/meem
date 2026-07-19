@@ -12,6 +12,9 @@ use Marvel\Database\Repositories\NotifyLogsRepository;
 use Marvel\Database\Repositories\UserRepository;
 use Marvel\Enums\Permission;
 use Marvel\Exceptions\MarvelException;
+use Marvel\Http\Requests\NotifyLogsReadAllRequest;
+use Marvel\Http\Requests\NotifyLogsReadRequest;
+use Marvel\Http\Resources\NotifyLogsResource;
 
 class NotifyLogsController extends CoreController
 {
@@ -35,7 +38,9 @@ class NotifyLogsController extends CoreController
     {
         try {
             $limit = $request->limit ? $request->limit : 10;
-            return $this->fetchNotifyLogs($request)->paginate($limit)->withQueryString();
+            $notify_logs = $this->fetchNotifyLogs($request)->paginate($limit)->withQueryString();
+            $notify_logs->getCollection()->transform(fn ($item) => new NotifyLogsResource($item));
+            return $notify_logs;
         } catch (MarvelException $th) {
             throw new MarvelException(SOMETHING_WENT_WRONG, $th->getMessage());
         }
@@ -69,7 +74,7 @@ class NotifyLogsController extends CoreController
     {
         try {
             $request['id'] = $id;
-            return $this->fetchNotifyLog($request);
+            return new NotifyLogsResource($this->fetchNotifyLog($request));
         } catch (MarvelException $th) {
             throw new MarvelException(NOT_FOUND);
         }
@@ -85,7 +90,10 @@ class NotifyLogsController extends CoreController
     {
         try {
             $id = $request['id'];
-            return $this->repository->where('id', '=', $id)->firstOrFail();
+            return $this->repository->with(['sender_user'])
+                ->where('id', '=', $id)
+                ->where('receiver', '=', $request->user()->id)
+                ->firstOrFail();
         } catch (Exception $th) {
             throw new HttpException(404, NOT_FOUND);
         }
@@ -123,16 +131,19 @@ class NotifyLogsController extends CoreController
     /**
      * readNotifyLogs
      *
-     * @param  Request $request
+     * @param  NotifyLogsReadRequest $request
      * @return void
      */
-    public function readNotifyLogs(Request $request)
+    public function readNotifyLogs(NotifyLogsReadRequest $request)
     {
         try {
-            $notify_log = $this->repository->findOrFail($request->id);
+            $notify_log = $this->repository->with(['sender_user'])
+                ->where('id', '=', $request->id)
+                ->where('receiver', '=', $request->user()->id)
+                ->firstOrFail();
             $notify_log->is_read = true;
             $notify_log->save();
-            return $notify_log;
+            return new NotifyLogsResource($notify_log);
         } catch (MarvelException $th) {
             throw new MarvelException(NOT_AUTHORIZED, $th->getMessage());
         }
@@ -142,22 +153,28 @@ class NotifyLogsController extends CoreController
     /**
      * readAllNotifyLogs
      *
-     * @param  Request $request
+     * @param  NotifyLogsReadAllRequest $request
      * @return void
      */
-    public function readAllNotifyLogs(Request $request)
+    public function readAllNotifyLogs(NotifyLogsReadAllRequest $request)
     {
         try {
-            if (isset($request->set_all_read)) {
-                $notify_logs = $this->repository->where("notify_type", "=", $request->notify_type)->where('receiver', '=', $request->receiver)->get();
+            $user = $request->user();
+            $notify_logs_query = $this->repository->with(['sender_user'])
+                ->where('receiver', '=', $user->id);
 
-                foreach ($notify_logs as $key => $notify_log) {
-                    $notify_log->is_read = true;
-                    $notify_log->save();
-                }
-
-                return $notify_logs;
+            if ($request->filled('notify_type')) {
+                $notify_logs_query = $notify_logs_query->where('notify_type', '=', $request->notify_type);
             }
+
+            $notify_logs = $notify_logs_query->get();
+
+            foreach ($notify_logs as $notify_log) {
+                $notify_log->is_read = true;
+                $notify_log->save();
+            }
+
+            return $notify_logs->map(fn ($item) => new NotifyLogsResource($item));
         } catch (MarvelException $th) {
             throw new MarvelException(NOT_AUTHORIZED, $th->getMessage());
         }

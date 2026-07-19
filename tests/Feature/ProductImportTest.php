@@ -1155,4 +1155,53 @@ class ProductImportTest extends TestCase
 
         $this->assertTrue($this->signalFileExists($import->id, 'cancel'), 'Cancel signal file should be set');
     }
+
+    public function test_finalize_variants_removes_orphaned_variants(): void
+    {
+        $sku = 'FINALIZE-VAR-' . uniqid();
+
+        $product = Product::create([
+            'sku' => $sku,
+            'name' => ['en' => 'Finalize Variant Test'],
+            'slug' => 'finalize-variant-test-' . uniqid(),
+            'price' => 100,
+            'quantity' => 10,
+            'stock_quantity' => 10,
+            'product_type' => 'variable',
+            'status' => true,
+            'in_stock' => true,
+        ]);
+
+        $orphanVariant = \Marvel\Database\Models\ProductVariant::create([
+            'product_id' => $product->id,
+            'sku' => 'ORPHAN-VAR',
+            'price' => 80,
+            'stock_quantity' => 5,
+        ]);
+
+        $keptVariant = \Marvel\Database\Models\ProductVariant::create([
+            'product_id' => $product->id,
+            'sku' => 'KEPT-VAR',
+            'price' => 90,
+            'stock_quantity' => 5,
+        ]);
+
+        $service = new ProductImportService();
+
+        $service->processVariantRow([
+            'product_sku' => $sku,
+            'variant_sku' => 'KEPT-VAR',
+            'price' => 90,
+            'quantity' => 5,
+            'in_stock' => 1,
+        ], 2);
+
+        $this->assertDatabaseHas('product_variants', ['id' => $orphanVariant->id]);
+        $this->assertDatabaseHas('product_variants', ['id' => $keptVariant->id]);
+
+        $service->finalizeVariants();
+
+        $this->assertDatabaseMissing('product_variants', ['id' => $orphanVariant->id]);
+        $this->assertDatabaseHas('product_variants', ['id' => $keptVariant->id]);
+    }
 }

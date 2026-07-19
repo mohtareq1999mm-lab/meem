@@ -9,11 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->foreignId('governorate_id')
-                ->nullable()
-                ->after('id')
-                ->constrained('governorates')
-                ->nullOnDelete();
+            $table->foreign('governorate_id')->references('id')->on('governorates')->nullOnDelete();
         });
     }
 
@@ -21,7 +17,6 @@ return new class extends Migration
     {
         Schema::table('orders', function (Blueprint $table) {
             $table->dropForeign(['governorate_id']);
-            $table->dropColumn('governorate_id');
         });
     }
 };
