@@ -222,6 +222,9 @@ Route::post('products/import/{id}/cancel', [ProductImportController::class, 'can
 Route::get('products/import/{id}/download-errors', [ProductImportController::class, 'downloadErrors'])->name('admin.products.import.download-errors');
 Route::apiResource('products', ProductController::class);
 
+Route::put('flash-sale/reorder', [FlashSaleController::class, 'reorder']);
+Route::apiResource('flash-sale', FlashSaleController::class);
+Route::get('product-flash-sale-info', [FlashSaleController::class, 'getFlashSaleInfoByProductID']);
 
 Route::apiResource('faqs', FaqsController::class);
 
@@ -670,13 +673,8 @@ Route::group(
             'only' => ['store', 'update', 'destroy'],
         ]);
 
-        Route::put('flash-sale/reorder', [FlashSaleController::class, 'reorder']);
 
-        Route::apiResource('flash-sale', FlashSaleController::class, [
-            'only' => ['store', 'update', 'destroy'],
-        ]);
 
-        Route::get('product-flash-sale-info', [FlashSaleController::class, 'getFlashSaleInfoByProductID']);
 
         Route::apiResource('terms-and-conditions', TermsAndConditionsController::class, [
             'only' => ['store', 'update', 'destroy'],
