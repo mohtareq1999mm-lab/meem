@@ -32,5 +32,6 @@ class SettingResource extends Resource
             'fast_shipping_page_publish' => $this->fast_shipping_page_publish,
             'options' => $this->options,
         ];
+        
     }
 }
