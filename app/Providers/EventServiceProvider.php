@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Events\ContactMessageReceived;
 use App\Events\OrderCancelled;
 use App\Events\OrderCreated;
 use App\Events\OrderStatusChanged;
@@ -9,6 +10,7 @@ use App\Events\PaymentFailed;
 use App\Events\PaymentSucceeded;
 use App\Events\UserRolesUpdated;
 use App\Listeners\LogUserRolesUpdated;
+use App\Listeners\SendContactMessageNotification;
 use App\Listeners\RestoreProductInventory;
 use App\Listeners\SendNewOrderNotification;
 use App\Listeners\SendOrderCancelledNotification;
@@ -50,6 +52,9 @@ class EventServiceProvider extends ServiceProvider
      * @var array
      */
     protected $listen = [
+        ContactMessageReceived::class => [
+            SendContactMessageNotification::class,
+        ],
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],

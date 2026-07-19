@@ -122,6 +122,125 @@ Route::middleware(['throttle:otp'])->group(function () {
     Route::post('/otp-login', [UserController::class, 'otpLogin']);
 });
 
+
+
+Route::middleware(["throttle:sensitive"])->group(function () {
+    Route::post('contacts/{id}/reply', [ContactController::class, 'sendReply']);
+    Route::delete('contacts/delete-all', [ContactController::class, 'deleteAll']);
+    Route::delete('contacts/delete-all-read', [ContactController::class, 'deleteAllReadContacts']);
+    Route::apiResource('contacts', ContactController::class)->except(['update']);
+});
+
+Route::get('settings', [SettingsController::class, 'index']);
+
+Route::get('me', [UserController::class, 'me']);
+Route::get('users', [UserController::class, 'index']);
+Route::get('users/{id}', [UserController::class, 'show']);
+Route::put('users/{id}', [UserController::class, 'update']);
+Route::post('admin-users/add', [UserController::class, 'adminAddUsers']);
+Route::put('admin-users/update-activation', [UserController::class, 'adminUpdateActivationUsers']);
+Route::delete('admin-users/delete/{id}', [UserController::class, 'adminDeleteUsers']);
+Route::put('admin-users/restore/{id}', [UserController::class, 'adminRestoreUser']);
+Route::delete('admin-users/delete-forever/{id}', [UserController::class, 'adminDeleteUsersForever']);
+
+
+Route::get('/roles', [RoleAndPermissionController::class, 'getAllRoles']);
+Route::get('/roles/{id}', [RoleAndPermissionController::class, 'showRole']);
+Route::post('/roles', [RoleAndPermissionController::class, 'addRole']);
+Route::put('/roles/{id}', [RoleAndPermissionController::class, 'updateRole']);
+Route::delete('/roles/{id}', [RoleAndPermissionController::class, 'destroyRole']);
+Route::post('/users/{userId}/assign-role', [RoleAndPermissionController::class, 'assignRole']);
+Route::post('/users/{userId}/remove-role', [RoleAndPermissionController::class, 'removeRoleFromUser']);
+
+Route::get('/permissions', [RoleAndPermissionController::class, 'getAllPermissions']);
+Route::post('/roles/{roleId}/permissions', [RoleAndPermissionController::class, 'assignPermissionToRole']);
+Route::post('/users/{userId}/permissions', [RoleAndPermissionController::class, 'givePermission']);
+Route::put('/users/{userId}/permissions', [RoleAndPermissionController::class, 'syncPermissions']);
+Route::delete('/users/{userId}/permissions', [RoleAndPermissionController::class, 'removePermission']);
+
+
+Route::put('brands/reorder', [BrandController::class, 'reorder']);
+Route::apiResource('brands', BrandController::class);
+
+Route::put('categories/feature', [CategoryController::class, 'addOrRemoveCategoryFromFeature']);
+Route::apiResource('categories', CategoryController::class);
+
+Route::get('logs/activity', [ActivityLogController::class, 'index']);
+
+
+Route::middleware(['throttle:analytics'])->prefix('dashboard')->group(function () {
+    Route::get('overview', [DashboardController::class, 'overview']);
+    Route::get('revenue', [DashboardController::class, 'revenue']);
+    Route::get('order-stats', [DashboardController::class, 'orderStats']);
+    Route::get('recent-orders', [DashboardController::class, 'recentOrders']);
+    Route::get('top-products', [DashboardController::class, 'topProducts']);
+    Route::get('category-stats', [DashboardController::class, 'categoryStats']);
+    Route::get('low-stock', [DashboardController::class, 'lowStock']);
+    Route::get('sales', [DashboardController::class, 'salesAnalytics']);
+    Route::get('customers', [DashboardController::class, 'customerAnalytics']);
+    Route::get('products', [DashboardController::class, 'productAnalytics']);
+    Route::get('orders', [DashboardController::class, 'orderAnalytics']);
+    Route::get('categories', [DashboardController::class, 'categoryAnalytics']);
+    Route::get('coupons', [DashboardController::class, 'couponAnalytics']);
+    Route::get('cart', [DashboardController::class, 'cartAnalytics']);
+    Route::get('finance', [DashboardController::class, 'financeAnalytics']);
+    Route::get('reconciliation', [DashboardController::class, 'reconciliation']);
+});
+
+Route::apiResource('attributes', AttributeController::class);
+
+
+Route::get('orders/{id}', [OrderController::class, 'show'])->name('orders.show');
+
+
+Route::post('banner/change-status', [BannerController::class, 'changeStatus']);
+Route::post('banner/reorder', [BannerController::class, 'reorder']);
+Route::patch('sliders/change-status', [SliderController::class, 'changeStatus']);
+Route::put('sliders/reorder', [SliderController::class, 'reorder']);
+Route::apiResource('banners', BannerController::class);
+Route::apiResource('sliders', SliderController::class);
+
+Route::apiResource('countries', CountryController::class);
+Route::get('countries/{id}/governorates', [CountryController::class, 'governorates']);
+Route::post('countries/change-status', [CountryController::class, 'bulkStatus']);
+
+Route::apiResource('governorates', GovernorateController::class);
+Route::get('governorates/{id}/cities', [GovernorateController::class, 'cities']);
+Route::post('governorates/change-status', [GovernorateController::class, 'bulkStatus']);
+Route::put('governorates/{id}/fast-shipping', [GovernorateController::class, 'toggleFastShipping']);
+
+Route::apiResource('cities', CityController::class);
+
+Route::post('reviews/{id}/toggle-approve', [ReviewController::class, 'toggleApproveReview']);
+Route::apiResource('reviews', ReviewController::class);
+Route::post('products/bulk-delete', [ProductController::class, 'destroyBulk']);
+Route::delete('products/all', [ProductController::class, 'destroyAll']);
+
+Route::post('products/import', [ProductImportController::class, 'import'])->name('admin.products.import');
+Route::post('products/import/{id}/cancel', [ProductImportController::class, 'cancel'])->name('admin.products.import.cancel');
+Route::get('products/import/{id}', [ProductImportController::class, 'status'])->name('admin.products.import.status');
+Route::get('products/import/{id}/download-errors', [ProductImportController::class, 'downloadErrors'])->name('admin.products.import.download-errors');
+Route::apiResource('products', ProductController::class);
+
+
+Route::apiResource('faqs', FaqsController::class);
+
+Route::prefix('admin')->controller(NotificationController::class)->group(function () {
+    Route::get('notifications', 'index');
+    Route::get('notifications/unread', 'unread');
+    Route::patch('notifications/{id}/read', 'markAsRead');
+    Route::patch('notifications/read-all', 'markAllAsRead');
+    Route::delete('notifications/{id}', 'destroy');
+    Route::delete('notifications', 'destroyAll');
+});
+
+Route::apiResource('coupons', CouponController::class);
+Route::apiResource('promotions', PromotionController::class);
+
+Route::put('settings', [SettingsController::class, 'update']);
+Route::get('fast-shipping/settings', [FastShippingController::class, 'getSettings']);
+Route::put('fast-shipping/settings', [FastShippingController::class, 'updateSettings']);
+
 Route::get('top-authors', [AuthorController::class, 'topAuthor']);
 Route::get('top-manufacturers', [ManufacturerController::class, 'topManufacturer']);
 Route::get('popular-products', [ProductController::class, 'popularProducts']);
@@ -175,9 +294,6 @@ Route::get('near-by-shop/{lat}/{lng}', [ShopController::class, 'nearByShop']);
 Route::get('store-notices', [StoreNoticeController::class, 'index'])->name('store-notices.index');
 
 Route::get('products/export', [ProductExportController::class, 'export'])->name('admin.products.export');
-Route::apiResource('products', ProductController::class, [
-    'only' => ['index', 'show'],
-]);
 Route::apiResource('types', TypeController::class, [
     'only' => ['index', 'show'],
 ]);
@@ -190,10 +306,7 @@ Route::apiResource('categories', CategoryController::class, [
 Route::apiResource('brands', BrandController::class, [
     'only' => ['index', 'show'],
 ]);
-Route::delete('contacts/delete-all', [ContactController::class, 'deleteAll']);
-Route::delete('contacts/delete-all-read', [ContactController::class, 'deleteAllReadContacts']);
-Route::apiResource('contacts', ContactController::class)->except(['update']);
-Route::post('contacts/{id}/replay', [ContactController::class, 'sendReplay']);
+
 Route::apiResource('delivery-times', DeliveryTimeController::class, [
     'only' => ['index', 'show']
 ]);
@@ -213,12 +326,7 @@ Route::apiResource('resources', ResourceController::class, [
 
 Route::get('featured-categories', 'Marvel\Http\Controllers\CategoryController@fetchFeaturedCategories');
 
-Route::apiResource('coupons', CouponController::class, [
-    'only' => ['index', 'show'],
-]);
-Route::apiResource('promotions', PromotionController::class, [
-    'only' => ['index', 'show'],
-]);
+
 Route::post('coupons/verify', [CouponController::class, 'verify']);
 Route::post('coupons/add-to-cart', [CouponController::class, 'addCouponToCart'])->middleware('auth:sanctum');
 Route::apiResource('attributes', AttributeController::class, [
@@ -341,7 +449,6 @@ Route::group(
 
 Route::group(['middleware' => ['auth:sanctum', 'email.verified']], function () {
     Route::post('/update-email', [UserController::class, 'updateUserEmail']);
-    // Route::get('me', [UserController::class, 'me']);
     // Route::apiResource('orders', OrderController::class, [
     //     'only' => ['index'],
     // ]);
@@ -392,7 +499,6 @@ Route::group(['middleware' => ['auth:sanctum', 'email.verified']], function () {
         ]);
     });
 
-    Route::put('users/{id}', [UserController::class, 'update']);
     Route::post('/change-password', [UserController::class, 'changePassword']);
     Route::post('/update-contact', [UserController::class, 'updateContact']);
     Route::apiResource('address', AddressController::class);
@@ -451,17 +557,13 @@ Route::get('popular-products', 'Marvel\Http\Controllers\ProductController@popula
 Route::group(
     ['middleware' => ['auth:sanctum', 'email.verified']],
     function () {
-        Route::post('products/bulk-delete', [ProductController::class, 'destroyBulk']);
-        Route::delete('products/all', [ProductController::class, 'destroyAll']);
+
         Route::apiResource('products', ProductController::class, [
             'only' => ['store', 'show', 'update', 'destroy'],
         ]);
         Route::put('products/{id}/fast-shipping', [ProductController::class, 'toggleFastShipping']);
         Route::apiResource('resources', ResourceController::class, [
             'only' => ['store']
-        ]);
-        Route::apiResource('attributes', AttributeController::class, [
-            'only' => ['store', 'update', 'destroy'],
         ]);
         Route::apiResource('attribute-values', AttributeValueController::class, [
             'only' => ['store', 'update', 'destroy'],
@@ -483,26 +585,7 @@ Route::group(
          * Customer (own only).
          * Middleware: role:super_admin | auth:sanctum | email.verified
          */
-        Route::get('orders/{id}', [OrderController::class, 'show'])->name('orders.show');
 
-
-        Route::post('banner/change-status', [BannerController::class, 'changeStatus']);
-        Route::post('banner/reorder', [BannerController::class, 'reorder']);
-        Route::patch('sliders/change-status', [SliderController::class, 'changeStatus']);
-        Route::put('sliders/reorder', [SliderController::class, 'reorder']);
-        Route::apiResource('banners', BannerController::class);
-        Route::apiResource('sliders', SliderController::class);
-
-        Route::apiResource('countries', CountryController::class);
-        Route::get('countries/{id}/governorates', [CountryController::class, 'governorates']);
-        Route::post('countries/change-status', [CountryController::class, 'bulkStatus']);
-
-        Route::apiResource('governorates', GovernorateController::class);
-        Route::get('governorates/{id}/cities', [GovernorateController::class, 'cities']);
-        Route::post('governorates/change-status', [GovernorateController::class, 'bulkStatus']);
-        Route::put('governorates/{id}/fast-shipping', [GovernorateController::class, 'toggleFastShipping']);
-
-        Route::apiResource('cities', CityController::class);
 
         // Route::get('shop-notification/{id}', [ShopNotificationController::class, 'show']);
         // Route::put('shop-notification/{id}', [ShopNotificationController::class, 'update']);
@@ -638,10 +721,10 @@ Route::group([
     Route::apiResource('withdraws', WithdrawController::class, [
         'only' => ['update', 'destroy'],
     ]);
-    Route::put('categories/feature', [CategoryController::class, 'addOrRemoveCategoryFromFeature']);
-    Route::apiResource('categories', CategoryController::class);
-    Route::put('brands/reorder', [BrandController::class, 'reorder']);
-    Route::apiResource('brands', BrandController::class);
+    // MUST be before apiResource to avoid PUT /categories/{id} collision
+
+    // MUST be before apiResource to avoid PUT /brands/{id} collision
+
 
     Route::apiResource('delivery-times', DeliveryTimeController::class, [
         'only' => ['store', 'update', 'destroy']
@@ -665,10 +748,7 @@ Route::group([
     // Route::apiResource('order-status', OrderStatusController::class, [
     //     'only' => ['store', 'update', 'destroy'],
     // ]);
-    Route::post('reviews/{id}/toggle-approve', [ReviewController::class, 'toggleApproveReview']);
-    Route::apiResource('reviews', ReviewController::class, [
-        'only' => ['destroy']
-    ]);
+
     Route::apiResource('questions', QuestionController::class, [
         'only' => ['destroy'],
     ]);
@@ -680,11 +760,7 @@ Route::group([
     ]);
     Route::post('abusive_reports/accept', [AbusiveReportController::class, 'accept']);
     Route::post('abusive_reports/reject', [AbusiveReportController::class, 'reject']);
-    Route::apiResource('settings', SettingsController::class, [
-        'only' => ['update'],
-    ]);
-    Route::get('fast-shipping/settings', [FastShippingController::class, 'getSettings']);
-    Route::put('fast-shipping/settings', [FastShippingController::class, 'updateSettings']);
+
     Route::apiResource('users', UserController::class);
     Route::apiResource('authors', AuthorController::class, [
         'only' => ['update', 'destroy'],
@@ -714,26 +790,14 @@ Route::group([
         'only' => ['destroy'],
     ]);
 
-    Route::apiResource('faqs', FaqsController::class);
     Route::get('new-shops', [ShopController::class, 'newOrInActiveShops']);
     Route::post('approve-terms-and-conditions', [TermsAndConditionsController::class, 'approveTerm']);
     Route::post('disapprove-terms-and-conditions', [TermsAndConditionsController::class, 'disApproveTerm']);
-    Route::post('admin-users/add', [UserController::class, 'adminAddUsers']);
-    Route::put('admin-users/update-activation', [UserController::class, 'adminUpdateActivationUsers']);
-    Route::delete('admin-users/delete/{id}', [UserController::class, 'adminDeleteUsers']);
-    Route::put('admin-users/restore/{id}', [UserController::class, 'adminRestoreUser']);
-    Route::delete('admin-users/delete-forever/{id}', [UserController::class, 'adminDeleteUsersForever']);
+
     Route::get('logs/activity', [ActivityLogController::class, 'index']);
 
     // Notifications
-    Route::prefix('admin')->controller(NotificationController::class)->group(function () {
-        Route::get('notifications', 'index');
-        Route::get('notifications/unread', 'unread');
-        Route::patch('notifications/{id}/read', 'markAsRead');
-        Route::patch('notifications/read-all', 'markAllAsRead');
-        Route::delete('notifications/{id}', 'destroy');
-        Route::delete('notifications', 'destroyAll');
-    });
+
 
     Route::get('my-staffs', [UserController::class, 'myStaffs']);
     Route::get('all-staffs', [UserController::class, 'allStaffs']);
@@ -767,32 +831,11 @@ Route::group([
     Route::apiResource('ownership-transfer', OwnershipTransferController::class, [
         'only' => ['update', 'destroy'],
     ]);
-    Route::post('products/import', [ProductImportController::class, 'import'])->name('admin.products.import');
-    Route::post('products/import/{id}/cancel', [ProductImportController::class, 'cancel'])->name('admin.products.import.cancel');
-    Route::get('products/import/{id}', [ProductImportController::class, 'status'])->name('admin.products.import.status');
-    Route::get('products/import/{id}/download-errors', [ProductImportController::class, 'downloadErrors'])->name('admin.products.import.download-errors');
+
 
     /**
      * Dashboard API — platform-wide metrics
      */
-    Route::middleware(['throttle:analytics'])->prefix('dashboard')->group(function () {
-        Route::get('overview', [DashboardController::class, 'overview']);
-        Route::get('revenue', [DashboardController::class, 'revenue']);
-        Route::get('order-stats', [DashboardController::class, 'orderStats']);
-        Route::get('recent-orders', [DashboardController::class, 'recentOrders']);
-        Route::get('top-products', [DashboardController::class, 'topProducts']);
-        Route::get('category-stats', [DashboardController::class, 'categoryStats']);
-        Route::get('low-stock', [DashboardController::class, 'lowStock']);
-        Route::get('sales', [DashboardController::class, 'salesAnalytics']);
-        Route::get('customers', [DashboardController::class, 'customerAnalytics']);
-        Route::get('products', [DashboardController::class, 'productAnalytics']);
-        Route::get('orders', [DashboardController::class, 'orderAnalytics']);
-        Route::get('categories', [DashboardController::class, 'categoryAnalytics']);
-        Route::get('coupons', [DashboardController::class, 'couponAnalytics']);
-        Route::get('cart', [DashboardController::class, 'cartAnalytics']);
-        Route::get('finance', [DashboardController::class, 'financeAnalytics']);
-        Route::get('reconciliation', [DashboardController::class, 'reconciliation']);
-    });
 });
 Route::middleware(['auth:sanctum', "throttle:cart"])->group(function () {
     Route::get('cart', [CartController::class, 'index']);

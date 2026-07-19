@@ -3,6 +3,7 @@
 namespace Marvel\Database\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 use Spatie\Translatable\HasTranslations;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -42,5 +43,23 @@ class Settings extends Model implements HasMedia
     protected $casts = [
         'options'   => 'array',
     ];
+
+    // public static function getData(string $language = null): ?self
+    // {
+        // $language = app()->getLocale();
+        // $cacheKey = 'cached_settings_' . $language;
+
+        // if (Cache::has($cacheKey)) {
+        //     return Cache::get($cacheKey);
+        // }
+
+        // $settings = static::first();
+
+        // if ($settings) {
+        //     Cache::put($cacheKey, $settings, 86400);
+        // }
+
+    //     return $settings;
+    // }
 
 }

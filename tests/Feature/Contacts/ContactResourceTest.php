@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Contacts;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Laravel\Sanctum\Sanctum;
 use Marvel\Database\Models\Contact;
 use Marvel\Database\Models\User;
@@ -163,6 +164,8 @@ class ContactResourceTest extends TestCase
     /** @test */
     public function create_returns_500_due_to_event_type_mismatch(): void
     {
+        Notification::fake();
+
         $response = $this->postJson(self::PREFIX . '/contacts', [
             'name' => 'New User',
             'email' => 'new@example.com',

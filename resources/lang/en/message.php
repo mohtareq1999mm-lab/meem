@@ -78,6 +78,12 @@ return [
     'MESSAGE.PICKUP_LOCATION_DELETED_SUCCESSFULLY' => 'Pickup location deleted successfully',
     'ERROR.COD_NOT_AVAILABLE_FOR_PICKUP' => 'COD is not available for pickup. Use pay_at_cashier instead.',
 
+    // Products
+    'MESSAGE.CREATE_PRODUCT_SUCCESSFULLY' => 'Product created successfully',
+    'MESSAGE.UPDATE_PRODUCT_SUCCESSFULLY' => 'Product updated successfully',
+    'MESSAGE.DELETE_PRODUCT_SUCCESSFULLY' => 'Product deleted successfully',
+    'MESSAGE.PRODUCTS_DELETED_SUCCESSFULLY' => 'Products deleted successfully',
+
     // General
     'MESSAGE.WRONG_CSV' => 'Invalid CSV format. Please check the file and try again.',
     'MESSAGE.NOT_AUTHORIZED' => 'You are not authorized to perform this action',

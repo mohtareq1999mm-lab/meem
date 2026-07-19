@@ -2,20 +2,15 @@
 
 namespace Marvel\Http\Controllers;
 
-use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Marvel\Database\Models\Address;
 use Marvel\Database\Repositories\SettingsRepository;
 use Marvel\Enums\Permission;
-use Marvel\Events\Maintenance;
 use Marvel\Exceptions\MarvelException;
-use Illuminate\Support\Facades\Cache;
+use Marvel\Database\Models\Settings;
 use Marvel\Http\Requests\SettingsRequest;
 use Marvel\Http\Resources\SettingResource;
 use Marvel\Traits\ApiResponse;
-use Prettus\Validator\Exceptions\ValidatorException;
 
 class SettingsController extends CoreController
 {
@@ -29,44 +24,9 @@ class SettingsController extends CoreController
         $this->middleware("permission:" . Permission::UPDATE_SETTINGS, ["only" => ["store", "update"]]);
     }
 
-    /**
-     * Display a listing of the resource.
-     *
-     * @param Request $request
-     * @return Collection|Address[]
-     */
     public function index(Request $request)
     {
-        // $language = $request->language ?? DEFAULT_LANGUAGE;
-
-        // $data = Cache::rememberForever(
-        //     'cached_settings_' . $language,
-        //     function () use ($request) {
-        //         return $this->repository->getData($request->language);
-        //     }
-        // );
-
-        // // Safely handle maintenance data
-        // $maintenanceStart = $maintenanceUntil = null;
-
-        // if (!empty($data['options']['maintenance']) && is_array($data['options']['maintenance'])) {
-        //     $maintenanceStart = isset($data['options']['maintenance']['start'])
-        //         ? Carbon::parse($data['options']['maintenance']['start'])->format('F j, Y h:i A')
-        //         : null;
-
-        //     $maintenanceUntil = isset($data['options']['maintenance']['until'])
-        //         ? Carbon::parse($data['options']['maintenance']['until'])->format('F j, Y h:i A')
-        //         : null;
-        // }
-
-        // $formattedMaintenance = [
-        //     "start" => $maintenanceStart,
-        //     "until" => $maintenanceUntil,
-        // ];
-
-        // $data['maintenance'] = $formattedMaintenance;
-        $settings = $this->repository->getApplicationSettings();
-
+        $settings = Settings::first();
 
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, SettingResource::make($settings));
     }
@@ -100,31 +60,17 @@ class SettingsController extends CoreController
      */
     public function store(SettingsRequest $request)
     {
-        $language = $request->language ?? DEFAULT_LANGUAGE;
+        $settings = Settings::first();
 
-        $request->merge([
-            'options' => [
-                ...$request->options,
-                ...$this->repository->getApplicationSettings(),
-                'server_info' => server_environment_info(),
-            ]
-        ]);
-
-        $data = $this->repository->where('language', $language)->first();
-
-        if ($data) {
-            if (Cache::has('cached_settings_' . $language)) {
-                Cache::forget('cached_settings_' . $language);
-            }
-            $settings = tap($data)->update($request->only(['options']));
+        if ($settings) {
+            $settings->update($request->only([
+                'options',
+            ]));
         } else {
-            $settings = $this->repository->create([
-                'options' => $request['options'],
-                'language' => $language
+            $settings = Settings::create([
+                'options' => $request->options ?? [],
             ]);
         }
-
-        event(new Maintenance($language));
 
         return $settings;
     }
@@ -132,16 +78,17 @@ class SettingsController extends CoreController
     /**
      * Display the specified resource.
      *
-     * @param $id
      * @return JsonResponse
      */
-    public function show($id)
+    public function show()
     {
-        try {
-            return $this->repository->first();
-        } catch (\Exception $e) {
-            throw new MarvelException(NOT_FOUND);
+        $settings = Settings::first();
+
+        if (!$settings) {
+            return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, []);
         }
+
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, SettingResource::make($settings));
     }
 
     /**
@@ -152,15 +99,31 @@ class SettingsController extends CoreController
      * @return JsonResponse
      * @throws ValidatorException
      */
-    public function update(SettingsRequest $request, $id)
+    public function update(SettingsRequest $request)
     {
-        $settings = $this->repository->first();
+        $settings = Settings::first();
 
-        if (isset($settings->id)) {
-            $settings = $this->repository->updateSetting($request, $settings->id);
+        if (!$settings) {
+            $settings = new Settings();
         }
-        return $this->apiResponse(SETTINGS_UPDATED_SUCCESSFULLY, 200, true, SettingResource::make($settings));
 
+        $settings->fill($request->only([
+            'site_name', 'site_desc', 'meta_desc', 'site_copy_right',
+            'site_email', 'email_support', 'facebook', 'instagram',
+            'linkedin', 'promotion_video_url', 'youtube', 'phone',
+            'fast_shipping_page_publish', 'options',
+        ]));
+        $settings->save();
+
+        if ($request->hasFile('logo')) {
+            $settings->addMedia($request->file('logo'))->toMediaCollection('logo-setting');
+        }
+
+        if ($request->hasFile('favicon')) {
+            $settings->addMedia($request->file('favicon'))->toMediaCollection('favicon-setting');
+        }
+
+        return $this->apiResponse(SETTINGS_UPDATED_SUCCESSFULLY, 200, true, SettingResource::make($settings->fresh()));
     }
 
     /**

@@ -63,14 +63,17 @@ Route::prefix('v1/general')->middleware('api')->group(function () {
     Route::get('pages', [ContentPageController::class, 'index']);
     Route::get('pages/{slug}', [ContentPageController::class, 'show']);
     Route::get('settings', [SettingController::class, 'index']);
-    Route::get('search', [SearchController::class, 'index']);
     Route::get('faqs', [FAQController::class, 'index']);
+
+
     Route::get('pickup-locations', [PickupLocationController::class, 'index']);
     Route::get('pickup-locations/{id}', [PickupLocationController::class, 'show']);
     Route::get('fast-shipping/status', [FastShippingController::class, 'status']);
     Route::get('fast-shipping/products', [FastShippingController::class, 'products']);
     Route::post('fast-shipping/checkout', [FastShippingController::class, 'checkout'])->middleware('auth:sanctum');
     Route::get('fast-shipping/orders', [FastShippingController::class, 'orders'])->middleware('auth:sanctum');
+
+
     Route::get('checkout/promotions', [OrderController::class, 'eligiblePromotions'])->middleware('auth:sanctum');
     Route::post('checkout', [OrderController::class, 'checkout'])->middleware('auth:sanctum');
     Route::post('checkout/cod/{orderId}/mark-paid', [OrderController::class, 'markCodAsPaid'])->middleware(['auth:sanctum', 'permission:update-order-status']);

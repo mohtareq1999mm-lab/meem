@@ -124,4 +124,16 @@ class ContactValidationTest extends TestCase
 
         $response->assertStatus(422);
     }
+
+    /** @test */
+    public function create_returns_422_without_name(): void
+    {
+        $response = $this->postJson(self::PREFIX . '/contacts', [
+            'email' => 'test@example.com',
+            'subject' => 'Test',
+            'message' => 'A valid message body.',
+        ]);
+
+        $response->assertStatus(422);
+    }
 }

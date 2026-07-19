@@ -7,6 +7,7 @@ use Marvel\Database\Repositories\BrandRepository;
 use Marvel\Enums\Permission;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\BrandCreateRequest;
+use Marvel\Http\Requests\BrandsReorderRequest;
 use Marvel\Http\Requests\BrandUpdateRequest;
 use Marvel\Http\Resources\BrandResource;
 use Marvel\Traits\ApiResponse;
@@ -109,7 +110,7 @@ class BrandController extends CoreController
         }
     }
 
-    public function brandUpdate(BrandUpdateRequest $request)
+    private function brandUpdate(BrandUpdateRequest $request)
     {
         $brand = $this->repository->findOrFail($request->id);
         return $this->repository->updateBrand($request, $brand);
@@ -125,13 +126,9 @@ class BrandController extends CoreController
         }
     }
 
-    public function reorder(Request $request)
+    public function reorder(BrandsReorderRequest $request)
     {
-        $validated = $request->validate([
-            'brands' => 'required|array',
-            'brands.*' => 'required|exists:brands,id',
-        ]);
-        $this->repository->reorder($validated['brands']);
+        $this->repository->reorder($request->brands);
 
         return $this->apiResponse(BRANDS_REORDERED_SUCCESSFULLY, 200, true);
     }

@@ -19,6 +19,7 @@ class SettingController extends Controller
     public function index()
     {
         $setting = $this->settingService->getSetting();
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY,200,true,SettingResource::make($setting));
+
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, SettingResource::make($setting));
     }
 }

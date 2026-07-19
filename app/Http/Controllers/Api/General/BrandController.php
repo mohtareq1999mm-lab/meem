@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api\General;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Brand\BrandProductResource;
 use App\Http\Resources\Brand\BrandResource;
-use App\Http\Resources\Product\ProductMiniResource;
 use App\Services\General\BrandService;
 use Illuminate\Http\Request;
 use Marvel\Traits\ApiResponse;
@@ -41,6 +41,6 @@ class BrandController extends Controller
     {
         $brandWithProducts =  $this->brandService->getBrandsProductsByQtySet($request);
 
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ProductMiniResource::collection($brandWithProducts));
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, BrandProductResource::collection($brandWithProducts));
     }
 }

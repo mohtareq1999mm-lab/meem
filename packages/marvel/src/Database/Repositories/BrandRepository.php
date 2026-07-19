@@ -115,8 +115,11 @@ class BrandRepository extends BaseRepository
     public function reorder(array $brands)
     {
         try {
+            DB::beginTransaction();
             $this->setNewOrder($brands);
+            DB::commit();
         } catch (\Exception $e) {
+            DB::rollBack();
             throw new HttpException(500, $e->getMessage());
         }
     }

@@ -577,8 +577,636 @@ Offline Behaviour
 Example Requests
 
 Example Responses
+==================================================
+JIRA DOCUMENTATION (FRONTEND-ORIENTED)
+==================================================
 
+The generated jira.md must be written for Frontend developers only.
+
+Do NOT describe backend implementation details.
+
+Do NOT mention repositories, services, listeners, events, models, migrations, or internal architecture unless they directly affect frontend behavior.
+
+Each Jira task must focus on what the Frontend team needs to implement.
+
+For every endpoint include:
+
+- Feature Summary
+- User Story
+- Business Goal
+- API Endpoint
+- HTTP Method
+- Authentication
+- Permissions
+- Exact Request URL examples
+- Headers
+- Request Body
+- Query Parameters
+- Path Parameters
+- Success Response
+- Validation Errors
+- Authorization Errors
+- Loading State
+- Empty State
+- Error State
+- UI Behavior
+- Expected UX
+- Acceptance Criteria
+- QA Checklist
+- API Integration Notes
+
+==================================================
+USER STORY
+==================================================
+
+Write every task as a Frontend story.
+
+Example:
+
+As a customer,
+I want to view my contact messages
+so that I can review previous conversations.
+
+==================================================
+IMPLEMENTATION CHECKLIST
+==================================================
+
+Provide a checklist such as:
+
+- Call GET /api/v1/contacts?page=1
+- Display loading spinner
+- Display empty state if no records exist
+- Display validation messages
+- Handle HTTP 401
+- Handle HTTP 403
+- Handle HTTP 404
+- Handle HTTP 422
+- Handle HTTP 500
+- Refresh UI after successful action
+
+==================================================
+UI STATES
+==================================================
+
+Document all UI states.
+
+For every endpoint specify:
+
+- Initial Loading
+- Skeleton Loader (if applicable)
+- Success
+- Empty
+- Validation Error
+- Unauthorized
+- Forbidden
+- Network Error
+- Retry Behavior
+
+==================================================
+ACCEPTANCE CRITERIA
+==================================================
+
+Write acceptance criteria from the Frontend perspective.
+
+Example:
+
+✔ User can submit the form.
+
+✔ Validation errors appear under the correct fields.
+
+✔ Submit button is disabled while loading.
+
+✔ Success toast appears.
+
+✔ List refreshes automatically.
+
+✔ Pagination updates correctly.
+
+==================================================
+DO NOT INCLUDE
+==================================================
+
+Do NOT include:
+
+- Repository names
+- Service names
+- Listener names
+- Event names
+- Observer names
+- Internal backend flow
+- Database schema
+- SQL
+- Migrations
+- Model implementation
+
+That information belongs only in backend.md.
+
+The jira.md file must be readable by a Frontend developer without backend knowledge.
 Example Errors
+==================================================
+DOCUMENTATION REQUIREMENTS
+==================================================
+
+After the implementation is complete, generate the following documents:
+
+- backend.md
+- frontend.md
+- qa.md
+- jira.md
+- changelog.md
+
+==================================================
+BACKEND DOCUMENTATION
+==================================================
+
+For every endpoint include:
+
+- HTTP Method
+- Full URL
+- Authentication requirements
+- Permissions
+- Request validation
+- Request body
+- Query parameters
+- Response (Success)
+- Response (Validation Error)
+- Response (Authorization Error)
+- Database tables affected
+- Events dispatched
+- Notifications sent
+- Jobs dispatched
+- Business rules
+- Error cases
+
+Also include an execution flow diagram using Mermaid.
+
+Example:
+
+```mermaid
+flowchart TD
+    Client --> Route
+    Route --> Middleware
+    Middleware --> Controller
+    Controller --> FormRequest
+    FormRequest --> Service
+    Service --> Repository
+    Repository --> Database
+    Service --> Event
+    Event --> Listener
+    Listener --> Notification
+    Service --> Resource
+    Resource --> Response
+```
+
+Every endpoint must have its own flow diagram.
+
+==================================================
+FRONTEND DOCUMENTATION
+==================================================
+
+For every endpoint document:
+
+- Endpoint
+- HTTP Method
+- Authentication
+- Required Headers
+- Request Body
+- Query Parameters
+- Success Response
+- Error Responses
+- Loading states
+- Empty states
+- Permission requirements
+- Notes
+
+If the endpoint accepts URL query parameters, ALWAYS document the complete URL exactly as it should be called.
+
+Examples:
+
+GET /api/v1/contacts?page=1
+
+GET /api/v1/contacts?limit=20
+
+GET /api/v1/contacts?status=unread&page=2
+
+GET /api/v1/products?category=5&search=phone&sort=price_desc
+
+If multiple parameters can be combined, provide complete example URLs.
+
+Do NOT describe them only in a table.
+Show the exact URL that Frontend should call.
+
+If path parameters exist, document them as well.
+
+Example:
+
+GET /api/v1/contacts/{id}
+
+Example:
+
+GET /api/v1/contacts/15
+
+==================================================
+QA DOCUMENTATION
+==================================================
+
+For every endpoint include:
+
+- Positive test cases
+- Validation test cases
+- Authorization test cases
+- Edge cases
+- Regression cases
+
+==================================================
+JIRA DOCUMENTATION
+==================================================
+
+Generate:
+
+- Summary
+- Background
+- Scope
+- Technical Notes
+- Acceptance Criteria
+- Test Cases
+- Risks
+
+==================================================
+CHANGELOG
+==================================================
+
+Include:
+
+- Added
+- Changed
+- Fixed
+- Database Changes
+- API Changes
+- Breaking Changes (if any)
+
+==================================================
+IMPORTANT
+==================================================
+
+The frontend document must be sufficient for a frontend developer to implement the feature without reading backend code.
+
+The backend document must be sufficient for another backend developer to maintain the feature.
+
+The Mermaid flow must represent the actual execution flow from the source code only.
+
+Do not invent any flow or endpoint.
+==================================================
+DOCUMENTATION REQUIREMENTS
+==================================================
+
+After the implementation is complete, generate the following documents:
+
+- backend.md
+- frontend.md
+- qa.md
+- jira.md
+- changelog.md
+
+==================================================
+BACKEND DOCUMENTATION
+==================================================
+
+For every endpoint include:
+
+- HTTP Method
+- Full URL
+- Authentication requirements
+- Permissions
+- Request validation
+- Request body
+- Query parameters
+- Response (Success)
+- Response (Validation Error)
+- Response (Authorization Error)
+- Database tables affected
+- Events dispatched
+- Notifications sent
+- Jobs dispatched
+- Business rules
+- Error cases
+
+Also include an execution flow diagram using Mermaid.
+
+Example:
+
+```mermaid
+flowchart TD
+    Client --> Route
+    Route --> Middleware
+    Middleware --> Controller
+    Controller --> FormRequest
+    FormRequest --> Service
+    Service --> Repository
+    Repository --> Database
+    Service --> Event
+    Event --> Listener
+    Listener --> Notification
+    Service --> Resource
+    Resource --> Response
+```
+
+Every endpoint must have its own flow diagram.
+
+==================================================
+FRONTEND DOCUMENTATION
+==================================================
+
+For every endpoint document:
+
+- Endpoint
+- HTTP Method
+- Authentication
+- Required Headers
+- Request Body
+- Query Parameters
+- Success Response
+- Error Responses
+- Loading states
+- Empty states
+- Permission requirements
+- Notes
+
+If the endpoint accepts URL query parameters, ALWAYS document the complete URL exactly as it should be called.
+
+Examples:
+
+GET /api/v1/contacts?page=1
+
+GET /api/v1/contacts?limit=20
+
+GET /api/v1/contacts?status=unread&page=2
+
+GET /api/v1/products?category=5&search=phone&sort=price_desc
+
+If multiple parameters can be combined, provide complete example URLs.
+
+Do NOT describe them only in a table.
+Show the exact URL that Frontend should call.
+
+If path parameters exist, document them as well.
+
+Example:
+
+GET /api/v1/contacts/{id}
+
+Example:
+
+GET /api/v1/contacts/15
+
+==================================================
+QA DOCUMENTATION
+==================================================
+
+For every endpoint include:
+
+- Positive test cases
+- Validation test cases
+- Authorization test cases
+- Edge cases
+- Regression cases
+
+==================================================
+JIRA DOCUMENTATION
+==================================================
+
+Generate:
+
+- Summary
+- Background
+- Scope
+- Technical Notes
+- Acceptance Criteria
+- Test Cases
+- Risks
+
+==================================================
+CHANGELOG
+==================================================
+
+Include:
+
+- Added
+- Changed
+- Fixed
+- Database Changes
+- API Changes
+- Breaking Changes (if any)
+
+==================================================
+IMPORTANT
+==================================================
+
+The frontend document must be sufficient for a frontend developer to implement the feature without reading backend code.
+
+The backend document must be sufficient for another backend developer to maintain the feature.
+
+The Mermaid flow must represent the actual execution flow from the source code only.
+
+Do not invent any flow or endpoint.
+==================================================
+ENDPOINT FLOW DIAGRAM
+==================================================
+
+For EVERY endpoint, generate an execution flow diagram based ONLY on the actual source code.
+
+Do NOT guess.
+
+Do NOT simplify.
+
+Do NOT invent layers.
+
+Trace the exact execution path.
+
+Include every layer that is actually executed.
+
+Possible nodes include:
+
+Client
+
+↓
+
+Route
+
+↓
+
+Middleware
+
+↓
+
+Policy / Permission
+
+↓
+
+Controller
+
+↓
+
+FormRequest
+
+↓
+
+DTO
+
+↓
+
+Service
+
+↓
+
+Repository
+
+↓
+
+Database
+
+↓
+
+Transaction
+
+↓
+
+Observer
+
+↓
+
+Event
+
+↓
+
+Listener
+
+↓
+
+Job
+
+↓
+
+Notification
+
+↓
+
+Mail
+
+↓
+
+Broadcast
+
+↓
+
+Resource
+
+↓
+
+JSON Response
+
+Represent the flow using Mermaid.
+
+Example:
+
+```mermaid
+flowchart TD
+
+A[Client]
+
+--> B[Route]
+
+--> C[auth:sanctum]
+
+--> D[email.verified]
+
+--> E[permission:view_contacts]
+
+--> F[ContactController@index]
+
+--> G[ContactListRequest]
+
+--> H[ContactRepository]
+
+--> I[(contacts)]
+
+--> J[ContactResource]
+
+--> K[JSON Response]
+```
+
+If an endpoint dispatches events, continue the flow.
+
+Example:
+
+```mermaid
+flowchart TD
+
+A[CheckoutController@store]
+
+--> B[CheckoutService]
+
+--> C[OrderRepository]
+
+--> D[(orders)]
+
+--> E[OrderCreated Event]
+
+E --> F[SendOrderNotification]
+
+E --> G[StoreNotifyLogs]
+
+F --> H[Database Notification]
+
+G --> I[(notify_logs)]
+
+H --> J[Response]
+```
+
+If jobs are dispatched:
+
+```mermaid
+flowchart TD
+
+Event
+
+--> Listener
+
+--> Job
+
+--> Notification
+
+--> Mail
+
+--> User
+```
+
+==================================================
+RULES
+==================================================
+
+Generate ONE Mermaid flow diagram for EVERY endpoint.
+
+The diagram must reflect the REAL execution path found in the source code.
+
+Do NOT merge multiple endpoints into one diagram.
+
+If different execution paths exist (success vs failure), draw separate branches.
+
+Include:
+
+- Validation failures
+- Authorization failures
+- Transactions
+- Rollbacks
+- Events
+- Listeners
+- Notifications
+- Jobs
+- Resources
+- Response generation
+
+The diagram must be detailed enough that another backend developer can understand the complete lifecycle of the endpoint without reading the source code.
 
 ==================================================
 backend.md MUST CONTAIN

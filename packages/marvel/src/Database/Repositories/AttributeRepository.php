@@ -70,6 +70,7 @@ class AttributeRepository extends BaseRepository
     public function updateAttribute($request, $attribute)
     {
         try {
+            DB::beginTransaction();
 
             $request['slug'] = $this->makeSlug($request, 'slug', $attribute->id);
 
@@ -97,9 +98,12 @@ class AttributeRepository extends BaseRepository
                 $attribute->values()->whereNotIn('slug', $incomingSlugs)->delete();
             }
 
+            DB::commit();
+
             $attributeUpdated =  $this->with(['values'])->findOrFail($attribute->id);
             return $attributeUpdated;
         } catch (\Throwable $th) {
+            DB::rollBack();
             throw new HttpException(400, COULD_NOT_UPDATE_THE_RESOURCE);
         }
     }

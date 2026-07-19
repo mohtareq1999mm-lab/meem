@@ -27,3 +27,10 @@ docker-compose.yml
 .kiro/steering/byterover-rules.md
 .qoder/rules/byterover-rules.md
 .augment/rules/byterover-rules.md
+.ai/
+.agents/
+.AGENTS/
+.docs/
+.DOCS/
+.agents/
+.api-docs/

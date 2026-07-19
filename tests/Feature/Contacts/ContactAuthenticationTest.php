@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Contacts;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Laravel\Sanctum\Sanctum;
 use Marvel\Database\Models\Contact;
 use Marvel\Database\Models\User;
@@ -142,6 +143,8 @@ class ContactAuthenticationTest extends TestCase
     /** @test */
     public function unauthenticated_user_can_create_contact(): void
     {
+        Notification::fake();
+
         $response = $this->postJson(self::PREFIX . '/contacts', [
             'name' => 'John Doe',
             'email' => 'john@example.com',

@@ -144,4 +144,28 @@ class ContactSoftDeleteTest extends TestCase
         $this->assertSoftDeleted($read);
         $this->assertNotSoftDeleted($unread);
     }
+
+    /** @test */
+    public function delete_all_keeps_records_in_database(): void
+    {
+        $a = Contact::create(['name' => 'A', 'email' => 'a@test.com', 'subject' => 'S', 'message' => 'M']);
+        $b = Contact::create(['name' => 'B', 'email' => 'b@test.com', 'subject' => 'S', 'message' => 'M']);
+
+        $this->deleteJson(self::PREFIX . '/contacts/delete-all');
+
+        $this->assertDatabaseHas('contacts', ['id' => $a->id]);
+        $this->assertDatabaseHas('contacts', ['id' => $b->id]);
+    }
+
+    /** @test */
+    public function delete_all_read_keeps_unread_records_in_database(): void
+    {
+        $read = Contact::create(['name' => 'Read', 'email' => 'read@test.com', 'subject' => 'S', 'message' => 'M', 'is_read' => true]);
+        $unread = Contact::create(['name' => 'Unread', 'email' => 'unread@test.com', 'subject' => 'S', 'message' => 'M', 'is_read' => false]);
+
+        $this->deleteJson(self::PREFIX . '/contacts/delete-all-read');
+
+        $this->assertDatabaseHas('contacts', ['id' => $read->id]);
+        $this->assertDatabaseHas('contacts', ['id' => $unread->id]);
+    }
 }

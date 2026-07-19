@@ -76,10 +76,10 @@ class ContactRepository extends BaseRepository
 
     public function deleteAllContacts()
     {
-        return Contact::query()->delete();
+        return Contact::query()->update(['deleted_at' => now()]);
     }
     public function deleteAllReadContacts()
     {
-        return Contact::query()->where('is_read', true)->delete();
+        return Contact::query()->where('is_read', true)->update(['deleted_at' => now()]);
     }
 }

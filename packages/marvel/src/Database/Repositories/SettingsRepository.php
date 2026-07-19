@@ -26,31 +26,13 @@ class SettingsRepository extends BaseRepository
         return $this->getAppSettingsData();
     }
 
-    private function getAppSettingsData()
-    {
-        // $config = new MarvelVerification();
-        // $apiData = $config->jsonSerialize();
-        // try {
-        //     $licenseKey = $config->getPrivateKey();
-        //     $last_checking_time = $config->getLastCheckingTime() ?? Carbon::now();
-        //     $lastCheckingTimeDifferenceFromNow = Carbon::parse($last_checking_time)->diffInMinutes(Carbon::now());
-        //     if ($lastCheckingTimeDifferenceFromNow > 20) {
-        //         $apiData = $config->verify($licenseKey)->jsonSerialize();
-        //     }
-        // } catch (Exception $e) {
-        // }
-        // return [
-        //     'last_checking_time' => Carbon::now(),
-        //     'trust' => $apiData['trust'] ?? false,
-        // ];
-
-        return $this->first();
-    }
+    
 
     public function updateSetting($data, $id)
     {
         try {
             DB::beginTransaction();
+            $this->skipCache()->resetModel();
             $setting = $this->first();
             $setting->update($data->except('logo', 'favicon'));
             if (isset($data['logo'])) {
@@ -60,19 +42,18 @@ class SettingsRepository extends BaseRepository
             }
             if (isset($data['favicon'])) {
                 if (!$this->updateSingleImage($data, 'favicon', $setting, 'favicon-setting', 'settings')) {
-                    throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
+                    throw new HttpException(422, 'Favicon upload failed, please check the file format or size.');
                 }
             }
-            // if(isset($data['promotion_video_url'])){
-            //     $setting->addMedia($data['promotion_video_url'])->toMediaCollection('promotion-video-setting');
-            // }
             DB::commit();
             return $setting;
 
+        } catch (HttpException $e) {
+            DB::rollBack();
+            throw $e;
         } catch (Exception $e) {
             DB::rollBack();
-            throw new HttpException(500, 'Logo upload failed, please check the file format or size.');
-
+            throw new HttpException(500, 'Settings update failed, please try again.');
         }
     }
 

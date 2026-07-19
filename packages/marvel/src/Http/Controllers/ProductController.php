@@ -185,7 +185,7 @@ class ProductController extends CoreController
      * @param  mixed $request
      * @return object
      */
-    public function fetchProducts(Request $request)
+    private function fetchProducts(Request $request)
     {
         $products_query = $this->repository;
 
@@ -246,7 +246,7 @@ class ProductController extends CoreController
      * @param Request $request
      * @return mixed
      */
-    public function ProductStore(Request $request)
+    private function ProductStore(ProductCreateRequest $request)
     {
         try {
             return $this->repository->storeProduct($request);
@@ -282,7 +282,7 @@ class ProductController extends CoreController
      * @param $slug
      * @return JsonResponse
      */
-    public function fetchSingleProduct(Request $request, $id)
+    private function fetchSingleProduct(Request $request, $id)
     {
         try {
             $limit = $request->limit ?? 10;
@@ -306,7 +306,7 @@ class ProductController extends CoreController
     public function update(ProductUpdateRequest $request, $id)
     {
         try {
-            $request->id = $id;
+            $request->merge(['id' => $id]);
             $product =  $this->updateProduct($request);
             return $this->apiResponse(UPDATE_PRODUCT_SUCCESSFULLY, 200, true, ProductResource::make($product));
         } catch (MarvelException $e) {
@@ -321,7 +321,7 @@ class ProductController extends CoreController
      * @param  Request $request
      * @return array
      */
-    public function updateProduct(Request $request)
+    private function updateProduct(ProductUpdateRequest $request)
     {
         try {
             $id = $request->id;
@@ -342,13 +342,13 @@ class ProductController extends CoreController
      */
     public function destroy(Request $request, $id)
     {
-        $request->id = $id;
+        $request->merge(['id' => $id]);
         return $this->destroyProduct($request);
     }
 
 
 
-    public function destroyProduct(Request $request)
+    private function destroyProduct(Request $request)
     {
         try {
             $product = $this->repository->findOrFail($request->id);
@@ -974,7 +974,7 @@ class ProductController extends CoreController
      * @param  Request $request
      * @return object
      */
-    public function fetchWishlists(Request $request)
+    private function fetchWishlists(Request $request)
     {
         $user = $request->user();
         $wishlist = Wishlist::where('user_id', $user->id)->pluck('product_id');
@@ -1017,7 +1017,7 @@ class ProductController extends CoreController
      * @param  Request $request
      * @return mixed
      */
-    public function fetchDraftedProducts(Request $request)
+    private function fetchDraftedProducts(Request $request)
     {
         $user = $request->user() ?? null;;
         $language = $request->language ? $request->language : DEFAULT_LANGUAGE;
@@ -1084,7 +1084,7 @@ class ProductController extends CoreController
      * @param  Request $request
      * @return mixed
      */
-    public function fetchProductStock(Request $request)
+    private function fetchProductStock(Request $request)
     {
         $user = $request->user();
         $language = $request->language ? $request->language : DEFAULT_LANGUAGE;

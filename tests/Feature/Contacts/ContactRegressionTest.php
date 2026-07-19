@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Contacts;
 
+use App\Events\ContactMessageReceived;
+use App\Notifications\NewContactMessageNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Laravel\Sanctum\Sanctum;
 use Marvel\Database\Models\Contact;
 use Marvel\Database\Models\User;
@@ -94,6 +97,8 @@ class ContactRegressionTest extends TestCase
     /** @test */
     public function b3_store_creates_contact_successfully(): void
     {
+        Notification::fake();
+
         $response = $this->postJson(self::PREFIX . '/contacts', [
             'name' => 'Public',
             'email' => 'public@example.com',
@@ -107,6 +112,8 @@ class ContactRegressionTest extends TestCase
     /** @test */
     public function b4_contact_us_route_works(): void
     {
+        Notification::fake();
+
         $response = $this->postJson(self::PREFIX . '/contact-us', [
             'name' => 'ContactUs',
             'email' => 'contactus@example.com',
@@ -181,5 +188,25 @@ class ContactRegressionTest extends TestCase
 
         $response->assertOk();
         $this->assertCount(0, $response->json('data.data'));
+    }
+
+    /** @test */
+    public function b10_contact_message_received_triggers_admin_notification(): void
+    {
+        Notification::fake();
+
+        $contact = Contact::create([
+            'name' => 'Test',
+            'email' => 'test@test.com',
+            'subject' => 'Subject',
+            'message' => 'Test message body.',
+        ]);
+
+        ContactMessageReceived::dispatch($contact);
+
+        Notification::assertSentTo(
+            $this->user,
+            NewContactMessageNotification::class,
+        );
     }
 }

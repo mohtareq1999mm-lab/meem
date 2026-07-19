@@ -10,7 +10,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Marvel\Enums\Permission;
 use Marvel\Exceptions\MarvelException;
-use Marvel\Http\Requests\AttributeRequest;
+use Marvel\Http\Requests\AttributeCreateRequest;
+use Marvel\Http\Requests\AttributeUpdateRequest;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Marvel\Database\Repositories\AttributeRepository;
@@ -129,7 +130,7 @@ class AttributeController extends CoreController
      *     @OA\Response(response=403, description="Forbidden")
      * )
      */
-    public function store(AttributeRequest $request)
+    public function store(AttributeCreateRequest $request)
     {
         try {
             // if ($this->repository->hasPermission($request->user(), $request->shop_id)) {
@@ -194,10 +195,10 @@ class AttributeController extends CoreController
      *     @OA\Response(response=403, description="Forbidden")
      * )
      */
-    public function update(AttributeRequest $request, $id)
+    public function update(AttributeUpdateRequest $request, $id)
     {
         try {
-            $request->id = $id;
+            $request->merge(['id' => $id]);
             $attributeUpdates =  $this->updateAttribute($request);
             return $this->apiResponse(ATTRIBUTE_UPDATED_SUCCESSFULLY, 200, true, AttributeResource::make($attributeUpdates));
         } catch (MarvelException $e) {
@@ -205,7 +206,7 @@ class AttributeController extends CoreController
         }
     }
 
-    public function updateAttribute(AttributeRequest $request)
+    private function updateAttribute(AttributeUpdateRequest $request)
     {
 
         // if ($this->repository->hasPermission($request->user(), $request->shop_id)) {
@@ -232,22 +233,14 @@ class AttributeController extends CoreController
      *     @OA\Response(response=403, description="Forbidden")
      * )
      */
-    public function destroy(Request $request, $id)
+    public function destroy($id)
     {
         try {
-            $request->id = $id;
-            return $this->deleteAttribute($request);
-        } catch (MarvelException $e) {
-            throw new MarvelException(COULD_NOT_DELETE_THE_RESOURCE);
+            $this->repository->findOrFail($id)->delete();
+            return $this->apiResponse(ATTRIBUTE_DELETED_SUCCESSFULLY, 200, true);
+        } catch (\Exception $e) {
+            throw new MarvelException(NOT_FOUND);
         }
-    }
-
-    public function deleteAttribute(Request $request)
-    {
-
-        $attribute = $this->repository->findOrFail($request->id);
-        $attribute->delete();
-        return $this->apiResponse(ATTRIBUTE_DELETED_SUCCESSFULLY, 200, true);
     }
 
     public function exportAttributes(Request $request, $shop_id)

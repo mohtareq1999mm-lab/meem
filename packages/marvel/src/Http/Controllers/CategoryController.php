@@ -12,6 +12,7 @@ use Marvel\Database\Repositories\CategoryRepository;
 use Marvel\Enums\Permission;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\CategoryCreateRequest;
+use Marvel\Http\Requests\CategoryFeatureToggleRequest;
 use Marvel\Http\Requests\CategoryUpdateRequest;
 use Marvel\Http\Resources\CategoryResource;
 use Marvel\Traits\ApiResponse;
@@ -366,7 +367,7 @@ class CategoryController extends CoreController
     }
 
 
-    public function categoryUpdate(CategoryUpdateRequest $request): Category
+    private function categoryUpdate(CategoryUpdateRequest $request): Category
     {
         $category = $this->repository->findOrFail($request->id);
         $category = $this->repository->updateCategory($request, $category);
@@ -449,12 +450,8 @@ class CategoryController extends CoreController
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, CategoryResource::collection($categories));
     }
 
-    public function addOrRemoveCategoryFromFeature(Request $request)
+    public function addOrRemoveCategoryFromFeature(CategoryFeatureToggleRequest $request)
     {
-        $request->validate([
-           "id"=>'required|integer|exists:categories,id',
-        ]);
-
         $category = Category::find($request->id);
         $category->is_featured = !$category->is_featured;
         $category->save();
