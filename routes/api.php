@@ -5,7 +5,6 @@ use App\Http\Controllers\Api\General\BrandController;
 use App\Http\Controllers\Api\General\CategoryController;
 use App\Http\Controllers\Api\General\ContentPageController;
 use App\Http\Controllers\Api\General\CouponController;
-use App\Http\Controllers\Api\General\DashboardController;
 use App\Http\Controllers\Api\General\FAQController;
 use App\Http\Controllers\Api\General\FastShippingController;
 use App\Http\Controllers\Api\General\FlashSaleController;
@@ -18,7 +17,6 @@ use App\Http\Controllers\Api\General\SearchController;
 use App\Http\Controllers\Api\General\SettingController;
 use App\Http\Controllers\Api\General\SliderController;
 use App\Http\Controllers\Api\General\TagController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -34,8 +32,44 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::prefix('v1/general')->middleware('api')->group(function () {
-    Route::get('home', [HomeController::class, 'index']);
+    //======================== nav data ========================/
     Route::get('nav-data', [HomeController::class, 'navData']);
+
+    //======================== category ========================/
+    Route::get('categories', [CategoryController::class, 'index']);
+    Route::get('categories/{slug}', [CategoryController::class, 'getCategoryBySlug']);
+
+    //======================== brand ========================/
+    Route::get('brands', [BrandController::class, 'index']);
+    Route::get('brands/{slug}', [BrandController::class, 'getBrandBySlug']);
+    Route::get('brands-products', [BrandController::class, 'getBrandsProductsByQtySet']);
+
+    //======================== banner ========================/
+    Route::get('banners', [BannerController::class, 'index']);
+    Route::get('banners/{slug}', [BannerController::class, 'getBannerBySlug']);
+
+    //======================== slider ========================/
+    Route::get('sliders', [SliderController::class, 'index']);
+    Route::get('sliders/{slug}', [SliderController::class, 'getSliderBySlug']);
+
+
+    //======================== tags ========================/
+    Route::get('tags', [TagController::class, 'index']);
+
+    //======================== promotions ========================/
+    Route::get('promotions', [PromotionController::class, 'index']);
+    Route::get('promotions/{slug}', [PromotionController::class, 'getPromotionBySlug']);
+
+    //======================== coupons ========================/
+    Route::get('coupons', [CouponController::class, 'index']);
+    Route::post('coupons/apply', [CouponController::class, 'applyCoupon'])->middleware('auth:sanctum');
+
+    //======================== pages ========================/
+     Route::controller(ContentPageController::class)->group(function () {
+        Route::get('content-pages', 'index')->name('general-content-page-index');
+        Route::get('content-pages/{slug}', 'show')->name('general-content-page-show');
+    });
+
     Route::get('checkout/promotions', [OrderController::class, 'eligiblePromotions'])->middleware('auth:sanctum');
     Route::post('checkout', [OrderController::class, 'checkout'])->middleware('auth:sanctum');
     Route::post('checkout/cod/{orderId}/mark-paid', [OrderController::class, 'markCodAsPaid'])->middleware(['auth:sanctum', 'permission:update-order-status']);
@@ -43,28 +77,16 @@ Route::prefix('v1/general')->middleware('api')->group(function () {
     Route::get('checkout/transaction-qr/{uuid}', [OrderController::class, 'getTransactionQr'])->middleware('auth:sanctum');
     Route::any('checkout/callback', [OrderController::class, 'checkoutCallback'])->name('api.checkout.callback');
     Route::any('checkout/error-callback', [OrderController::class, 'checkoutErrorCallback'])->name('api.checkout.errorCallback');
-    Route::get('categories', [CategoryController::class, 'index']);
-    Route::get('categories/{slug}', [CategoryController::class, 'getCategoryBySlug']);
-    Route::get('brands', [BrandController::class, 'index']);
-    Route::get('brands/{slug}', [BrandController::class, 'getBrandBySlug']);
-    Route::get('brands-products', [BrandController::class, 'getBrandsProductsByQtySet']);
-    Route::get('banners', [BannerController::class, 'index']);
-    Route::get('banners/{slug}', [BannerController::class, 'getBannerBySlug']);
-    Route::get('sliders', [SliderController::class, 'index']);
-    Route::get('sliders/{slug}', [SliderController::class, 'getSliderBySlug']);
-    Route::get('tags', [TagController::class, 'index']);
-    Route::get('tags/{slug}', [TagController::class, 'show']);
+
     Route::get('products', [ProductController::class, 'index']);
     Route::get('products/{slug}', [ProductController::class, 'getProductBySlug']);
-    Route::get('promotions', [PromotionController::class, 'index']);
-    Route::get('promotions/{slug}', [PromotionController::class, 'getPromotionBySlug']);
+
     Route::get('flash-sales', [FlashSaleController::class, 'index']);
     Route::get('flash-sales/{slug}', [FlashSaleController::class, 'getFlashSaleBySlug']);
     Route::get('flash-sale-products', [FlashSaleController::class, 'getFlashSalesAndHereProductsByQtySet']);
     Route::get('flash-sale-products-ending-this-week', [FlashSaleController::class, 'getFlashSaleProductsEndingThisWeek']);
     Route::get('flash-sale-products-ending-today', [FlashSaleController::class, 'getFlashSaleProductsEndingToday']);
-    Route::get('coupons', [CouponController::class, 'index']);
-    Route::post('coupons/apply', [CouponController::class, 'applyCoupon'])->middleware('auth:sanctum');
+
     Route::get('pages', [ContentPageController::class, 'index']);
     Route::get('pages/{slug}', [ContentPageController::class, 'show']);
     Route::get('settings', [SettingController::class, 'index']);
@@ -88,5 +110,4 @@ Route::prefix('v1/general')->middleware('api')->group(function () {
     Route::get('checkout/transaction-qr/{uuid}', [OrderController::class, 'getTransactionQr'])->middleware('auth:sanctum');
     Route::any('checkout/callback', [OrderController::class, 'checkoutCallback'])->name('api.checkout.callback');
     Route::any('checkout/error-callback', [OrderController::class, 'checkoutErrorCallback'])->name('api.checkout.errorCallback');
-   
 });

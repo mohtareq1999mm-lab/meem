@@ -18,6 +18,7 @@ class BrandProductResource extends JsonResource
             'image' => [
                 'thumbnail' => $this->getFirstMediaUrl('products'),
             ],
+            
         ];
     }
 
