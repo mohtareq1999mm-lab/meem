@@ -46,7 +46,10 @@ class FlashSaleService
     {
         $FlashSale = FlashSale::search('slug', $slug, app()->getLocale())->first();
         if ($FlashSale) {
-            $FlashSale->load(['products' => fn($q) => $this->applyChannelHomeFilter($q)->with(['media'])->withAvg(['reviews' => fn($q) => $q->approved()], 'rating')]);
+            $FlashSale->load(['products' => function ($q) {
+                $this->applyChannelHomeFilter($q);
+                $q->with(['media'])->withAvg(['reviews' => fn($q) => $q->approved()], 'rating');
+            }]);
             $this->productService->enrichCollectionWithPricing($FlashSale->products);
         }
         return $FlashSale;

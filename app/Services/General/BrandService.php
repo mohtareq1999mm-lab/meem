@@ -39,7 +39,10 @@ class BrandService
     {
         $brand = Brand::active()->search('slug', $slug, app()->getLocale())->first();
         if ($brand) {
-            $brand->load(['products' => fn($q) => $this->applyChannelHomeFilter($q)->with(['media'])->withAvg(['reviews' => fn($q) => $q->approved()], 'rating')]);
+            $brand->load(['products' => function ($q) {
+                $this->applyChannelHomeFilter($q);
+                $q->withAvg(['reviews' => fn($q) => $q->approved()], 'rating');
+            }]);
             app(ProductService::class)->enrichCollectionWithPricing($brand->products);
         }
         return $brand;
