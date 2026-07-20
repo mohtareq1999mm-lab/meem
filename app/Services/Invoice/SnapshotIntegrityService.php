@@ -6,7 +6,7 @@ class SnapshotIntegrityService
 {
     public function computeHash(array $data): string
     {
-        $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_SORT_KEYS);
+        $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | 8);
         return hash('sha256', $json);
     }
 

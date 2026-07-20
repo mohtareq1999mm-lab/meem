@@ -494,7 +494,7 @@ class FastShippingHardenTest extends TestCase
             'address' => ['street' => 'Test St', 'city' => 'Cairo'],
             'notes' => 'Fast order online',
             'governorate_id' => 1,
-            'payment_method' => 'online',
+            'payment_method' => 'cod',
         ]);
 
         $response->assertStatus(200);

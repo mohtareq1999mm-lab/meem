@@ -12,6 +12,7 @@ use Marvel\Enums\Permission as PermissionEnum;
 use Marvel\Enums\Role as RoleEnum;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class FaqReorderTest extends TestCase
@@ -26,6 +27,7 @@ class FaqReorderTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        app(PermissionRegistrar::class)->clearPermissionsCollection();
         app()->setLocale('en');
 
         $this->user = $this->createSuperAdmin();

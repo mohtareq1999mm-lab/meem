@@ -19,6 +19,20 @@ class CmsPageTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        if (!\Illuminate\Support\Facades\Schema::hasTable('cms_pages')) {
+            \Illuminate\Support\Facades\Schema::create('cms_pages', function (\Illuminate\Database\Schema\Blueprint $table) {
+                $table->id();
+                $table->string('slug')->unique();
+                $table->string('title');
+                $table->json('content')->nullable();
+                $table->timestamps();
+            });
+        }
+    }
+
     private function seedEditorPermission(): void
     {
         $guard = 'api';

@@ -1044,15 +1044,14 @@ class AssignedCouponSystemTest extends TestCase
             'price' => 90.00,
             'coupon' => $coupon->code,
             'coupon_discount' => 10,
-            'status' => 'completed',
+            'status' => 'pending',
         ]);
 
         Transaction::create([
             'order_id' => $order->id,
             'user_id' => $this->user->id,
             'payment_method' => 'cod',
-            'status' => 'paid',
-            'paid_at' => now(),
+            'status' => 'pending',
             'amount' => 100,
             'invoice_id' => 'INV-CANCEL-1',
         ]);

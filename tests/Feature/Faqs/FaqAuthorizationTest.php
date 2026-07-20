@@ -12,6 +12,7 @@ use Marvel\Enums\Permission as PermissionEnum;
 use Marvel\Enums\Role as RoleEnum;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class FaqAuthorizationTest extends TestCase
@@ -26,6 +27,7 @@ class FaqAuthorizationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        app(PermissionRegistrar::class)->clearPermissionsCollection();
         app()->setLocale('en');
 
         $this->superAdmin = $this->createSuperAdmin();
@@ -169,10 +171,22 @@ class FaqAuthorizationTest extends TestCase
         ]);
         Sanctum::actingAs($user);
 
-        $this->postJson(self::PREFIX . '/faqs', [
+        $this->assertTrue($user->can('create-faq'), 'User should be able to create-faq');
+        $this->assertTrue($user->hasPermissionTo('create-faq'), 'User should have create-faq permission');
+
+        $response = $this->postJson(self::PREFIX . '/faqs', [
             'faq_title' => ['en' => 'Brand New FAQ'],
             'faq_description' => ['en' => 'Brand new description'],
-        ])->assertStatus(201);
+        ]);
+
+        if ($response->getStatusCode() !== 201) {
+            dump('Status: ' . $response->getStatusCode());
+            dump('Body: ' . $response->getContent());
+            dump('Route name: ' . optional(request()->route())->getName());
+            dump('Route action: ' . json_encode(optional(request()->route())->getAction()['controller'] ?? 'none'));
+        }
+
+        $response->assertStatus(201);
     }
 
     /** @test */

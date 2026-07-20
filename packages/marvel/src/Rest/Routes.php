@@ -161,6 +161,8 @@ Route::delete('/users/{userId}/permissions', [RoleAndPermissionController::class
 
 Route::put('brands/reorder', [BrandController::class, 'reorder']);
 Route::apiResource('brands', BrandController::class);
+Route::patch('sliders/change-status', [SliderController::class, 'changeStatus']);
+Route::put('sliders/reorder', [SliderController::class, 'reorder']);
 Route::apiResource('sliders', SliderController::class);
 
 Route::get('fast-shipping/settings', [FastShippingController::class, 'getSettings']);
@@ -199,8 +201,6 @@ Route::get('orders/{id}', [OrderController::class, 'show'])->name('orders.show')
 
 Route::post('banner/change-status', [BannerController::class, 'changeStatus']);
 Route::post('banner/reorder', [BannerController::class, 'reorder']);
-Route::patch('sliders/change-status', [SliderController::class, 'changeStatus']);
-Route::put('sliders/reorder', [SliderController::class, 'reorder']);
 Route::apiResource('banners', BannerController::class);
 
 Route::apiResource('countries', CountryController::class);
@@ -229,9 +229,10 @@ Route::put('flash-sale/reorder', [FlashSaleController::class, 'reorder']);
 Route::apiResource('flash-sale', FlashSaleController::class);
 Route::get('product-flash-sale-info', [FlashSaleController::class, 'getFlashSaleInfoByProductID']);
 
+Route::put('faqs/reorder', [FaqsController::class, 'reorder']);
 Route::apiResource('faqs', FaqsController::class);
 
-Route::prefix('admin')->controller(NotificationController::class)->group(function () {
+Route::group(['prefix' => 'admin', 'controller' => NotificationController::class], function () {
     Route::get('notifications', 'index');
     Route::get('notifications/unread', 'unread');
     Route::patch('notifications/{id}/read', 'markAsRead');
@@ -613,7 +614,6 @@ Route::group(
 
         Route::get('export-order-url/{shop_id?}', 'Marvel\Http\Controllers\OrderController@exportOrderUrl');
         Route::post('download-invoice-url', 'Marvel\Http\Controllers\OrderController@downloadInvoiceUrl');
-        Route::put('faqs/reorder', [FaqsController::class, 'reorder']);
         Route::apiResource('faqs', FaqsController::class, [
             'only' => ['store', 'update', 'destroy'],
         ]);

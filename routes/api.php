@@ -54,6 +54,8 @@ Route::prefix('v1/general')->middleware('api')->group(function () {
     Route::get('sliders/{slug}', [SliderController::class, 'getSliderBySlug']);
     Route::get('tags', [TagController::class, 'index']);
     Route::get('tags/{slug}', [TagController::class, 'show']);
+    Route::get('products', [ProductController::class, 'index']);
+    Route::get('products/{slug}', [ProductController::class, 'getProductBySlug']);
     Route::get('promotions', [PromotionController::class, 'index']);
     Route::get('promotions/{slug}', [PromotionController::class, 'getPromotionBySlug']);
     Route::get('flash-sales', [FlashSaleController::class, 'index']);
@@ -69,6 +71,7 @@ Route::prefix('v1/general')->middleware('api')->group(function () {
     Route::get('faqs', [FAQController::class, 'index']);
 
 
+    Route::get('search', [SearchController::class, 'index']);
     Route::get('pickup-locations', [PickupLocationController::class, 'index']);
     Route::get('pickup-locations/{id}', [PickupLocationController::class, 'show']);
     Route::get('fast-shipping/status', [FastShippingController::class, 'status']);
