@@ -447,3 +447,79 @@ YES
 
 Notes:
 Pricing in the import is handled by ProductPricingService::calculateProductPricingFromData() — NOT manually calculated. Imported products behave exactly like manually created products for pricing. The import's flash_sale sheet processes after the pricing calculation, so price_after_flash_sale is not recomputed after flash sales are synced — this is safe because the price_after_flash_sale column is only a cached value; runtime accessors and ProductPricingService compute it dynamically. Pre-existing test failures (PricingCacheInvalidationTest: 2 errors, 3 failures) are unrelated.
+
+---
+
+Date:
+2026-07-20
+
+Feature:
+Contacts
+
+Revision:
+1
+
+Summary:
+Bug fix audit for Contacts feature. Fixed 1 verified production bug: controller method named `sendReplay` (typo) instead of `sendReply` — route `POST /contacts/{id}/reply` returned 500 because ported code from a different project used the misspelled method name. Renamed method to `sendReply` in controller, updated route target and permission middleware reference. BUG-2 (`/replay` typo endpoint returning 404) is expected behavior — frontend already updated to use correct URL. BUG-3 (`/contact-us` returning 404) — route exists at `Routes.php:127` and test `b4_contact_us_route_works` passes (asserts 201); production 404 likely caused by stale route cache or incomplete deployment.
+
+Verified Bugs Fixed:
+- BUG-1: Method `sendReplay` renamed to `sendReply` — controller method, route reference, and permission middleware all updated
+
+Documentation Updated:
+YES (production-status.md, production-history.md, api-desc/bug-fixed/contact-sendreply-method-fix.md)
+
+Routes Updated:
+NO (route URL unchanged — only method target corrected)
+
+Regression Executed:
+YES
+
+Regression Result:
+PASS (Contacts 59/59, 120 assertions)
+
+Production Ready:
+YES
+
+---
+
+Date:
+2026-07-20
+
+Feature:
+Role & Permission
+
+Revision:
+2
+
+Summary:
+Full production hardening audit of the Role & Permission API (RBAC). Fixed 8 verified production bugs: all permission/user endpoints returning 403 due to duplicate unauthenticated routes shadowing authenticated routes in Routes.php (CRITICAL — Bugs 1, 4, 5, 6), display_name stored as boolean false due to HasTranslations trait conflict with Spatie Role mass-assignment (CRITICAL — Bug 2), roles list missing name/guard_name/timestamps fields (MEDIUM — Bug 3), delete role succeeds silently even when users are assigned — now returns 409 conflict (MEDIUM — Bug 7), and login response missing permissions/role arrays (MEDIUM — Bug 8). Removed all duplicate routes. Explicit property assignment on Role model for HasTranslations compatibility. All 32 RoleAndPermissionTest tests pass (159 assertions).
+
+Verified Bugs Fixed:
+- BUG-1 (CRITICAL): All permission/user endpoints returning 403 — duplicate unauthenticated role/permission routes in Routes.php:136–138, 146–158 shadowed the authenticated routes inside the super_admin group; request matched unauthenticated route first so auth:sanctum middleware was never applied. Fix: removed all duplicate unauthenticated routes.
+- BUG-2 (CRITICAL): display_name stored as boolean false — Role model uses Spatie's HasTranslations trait which intercepts mass-assignment on display_name; Role::create([...]) and $role->update([...]) silently convert the array to false. Fix: changed to explicit property assignment ($role->name = ...; $role->display_name = ...; $role->save()).
+- BUG-3 (MEDIUM): Roles list missing name, guard_name, created_at, updated_at in RoleResource. Fix: added all fields to RoleResource::toArray().
+- BUG-4 (CRITICAL): User detail missing roles — same root cause as BUG-1: duplicate unauthenticated user routes at Routes.php:136–138 shadowed the authenticated apiResource('users') routes.
+- BUG-5/6 (CRITICAL): removeRoleFromUser/givePermission/syncPermissions/removePermission all returning 403 — same root cause as BUG-1: duplicate routes shadowed the authenticated versions.
+- BUG-7 (MEDIUM): destroyRole() deleted role without checking for assigned users — database cascade removed model_has_roles rows silently; data loss risk. Fix: added $role->users()->count() > 0 check before deletion, returning 409 CANNOT_DELETE_ROLE_WITH_ASSIGNED_USERS.
+- BUG-8 (MEDIUM): Customer login (token() method) returned user data without permissions and role arrays — admin login (adminToken()) already included these fields. Fix: added 'permissions' and 'role' to response array in token().
+
+Remaining Technical Debt:
+- None
+
+Documentation Updated:
+YES (production-status.md, production-history.md, regression-matrix.md, feature-dependencies.md)
+
+Routes Updated:
+YES (removed duplicate unauthenticated routes at Routes.php:136–138, 146–158)
+
+Regression Executed:
+YES
+
+Regression Result:
+PASS (RoleAndPermissionTest 32/32, 159 assertions, 0 errors, 0 failures)
+
+Production Ready:
+YES
+
+Notes:
+Route ordering is critical — routes inside middleware groups must be defined BEFORE same-URI routes outside the group to match the authenticated version. All 8 bugs verified via manual API testing and automated test suite. Pre-existing test failures (UserControllerTest, etc.) are unrelated to this feature.

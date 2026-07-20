@@ -23,7 +23,7 @@ class ContactController extends CoreController
     {
         $this->repository = $repository;
         $this->middleware('permission:' . Permission::VIEW_CONTACTS, ['only' => ['index']]);
-        $this->middleware('permission:' . Permission::UPDATE_CONTACT, ['only' => ['show', 'sendReplay']]);
+        $this->middleware('permission:' . Permission::UPDATE_CONTACT, ['only' => ['show', 'sendReply']]);
         $this->middleware('permission:' . Permission::DELETE_CONTACT, ['only' => ['destroy', 'deleteAll']]);
         $this->middleware('permission:' . Permission::DELETE_READ_CONTACTS, ['only' => ['deleteAllReadContacts']]);
     }
@@ -71,7 +71,7 @@ class ContactController extends CoreController
         }
     }
 
-    public function sendReplay(ContactCreateReplayRequest $request, $id)
+    public function sendReply(ContactCreateReplayRequest $request, $id)
     {
         try {
             $contact = $this->repository->ReplayContact($request, $id);

@@ -18,9 +18,17 @@ Role & Permission
 
 | Suite | Status | Reason |
 |-------|--------|--------|
-| RoleAndPermissionTest | PASS | 32/32 tests passed on 2026-07-17 |
+| RoleAndPermissionTest | PASS | 32/32 tests passed on 2026-07-20 (159 assertions) |
 | Admin Users | NOT RUN | Feature not audited yet |
 | User Management | NOT RUN | Feature not audited yet |
+
+**Changes Applied (Revision 2):**
+- `Routes.php`: Removed duplicate unauthenticated role/permission routes (lines 136–138, 146–158) — fixes Bugs 1, 4, 5, 6 (403 on all permission endpoints, user detail missing roles, remove-role/user-permission 403)
+- `RoleAndPermissionController.php`: Changed `addRole()`/`updateRole()` from mass-assignment to explicit property assignment to avoid HasTranslations trait conflict — fixes Bug 2 (display_name stored as false)
+- `RoleResource.php`: Added `name`, `guard_name`, `created_at`, `updated_at` fields — fixes Bug 3 (roles list missing fields)
+- `destroyRole()`: Added `$role->users()->count() > 0` check returning 409 conflict — fixes Bug 7 (delete role with assigned users succeeds silently)
+- `UserController.php`: Added `permissions` + `role` to `token()` login response — fixes Bug 8 (login missing permissions/role)
+- `RoleAndPermissionTest.php`: Updated pagination assertion for flattened response structure; updated cascade delete test to assert 409 conflict
 
 ---
 
@@ -198,11 +206,39 @@ Product Import/Export
 
 ---
 
+## Contacts
+
+**Changed Feature:**
+Contacts
+
+**Affected Features:**
+- Notifications — `ContactMessageReceived` event triggers admin notification
+- Contact Forms — public store endpoint
+
+**Regression:**
+
+| Suite | Status | Reason |
+|-------|--------|--------|
+| ContactAuthenticationTest | PASS | All contact auth tests pass |
+| ContactAuthorizationTest | PASS | All contact permission tests pass |
+| ContactCrudTest | PASS | All CRUD tests pass |
+| ContactReplyTest | PASS | Reply tests use `/reply` URL with `sendReply` method |
+| ContactRegressionTest | PASS | b4_contact_us_route_works test passes |
+| ContactResourceTest | PASS | JSON structure verified |
+| ContactSoftDeleteTest | PASS | Soft delete behavior verified |
+| ContactValidationTest | PASS | Validation rules verified |
+
+**Changes Applied (Revision 1):**
+- `ContactController.php`: Renamed `sendReplay()` → `sendReply()`; updated permission middleware reference
+- `Routes.php`: Updated route target from `sendReplay` to `sendReply`
+
+---
+
 ## Full Suite Status
 
 | Suite | Status | Date | Notes |
 |-------|--------|------|-------|
-| RoleAndPermissionTest | PASS (32/32) | 2026-07-17 | Verified production bugs fixed |
+| RoleAndPermissionTest | PASS (32/32) | 2026-07-20 | Rev 2: 8 production bugs fixed — routes, display_name, missing fields, delete cascade, login |
 | FlashSaleReorderTest | PASS (3/3) | 2026-07-17 | Regression test for route ordering bug |
 | FlashSaleApproveRequestTest | PASS (4/4) | 2026-07-17 | Regression test for auth/response bugs |
 | ProductPricingServiceTest | PASS (34/34) | 2026-07-17 | Full pricing pipeline, including 12 flash sale pricing tests |

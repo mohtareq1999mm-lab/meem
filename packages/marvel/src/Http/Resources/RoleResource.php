@@ -16,7 +16,11 @@ class RoleResource extends JsonResource
     {
         return [
             "id" => $this->id,
-            "display_name" => request()->routeIs('roles.index') ? $this->getTranslation('display_name', app()->getLocale()) : $this->getRawOriginal('display_name'),
+            "name" => $this->name,
+            "display_name" => $this->getTranslation('display_name', app()->getLocale()),
+            "guard_name" => $this->guard_name,
+            "created_at" => $this->created_at,
+            "updated_at" => $this->updated_at,
             "permissions" => PermissionResource::collection($this->whenLoaded('permissions')),
         ];
     }
