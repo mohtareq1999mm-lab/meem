@@ -116,29 +116,29 @@ class UserController extends CoreController
     public function index(Request $request)
     {
         try {
-            $filterUsers = $request->query('users', 'false');
-            $filterAdmins = $request->query('admins', 'false');
-            $filterTrash = $request->query('trash', 'false');
-            $active = $request->query('active', 'false');
-            $inActive = $request->query('in_active', 'false');
+            $filterUsers = $request->boolean('users');
+            $filterAdmins = $request->boolean('admins');
+            $filterTrash = $request->boolean('trash');
+            $active = $request->boolean('active');
+            $inActive = $request->boolean('in_active');
             $limit = $request->limit ? $request->limit : 15;
             $query = $this->repository->with(['permissions']);
 
-            if ($filterTrash === 'true') {
+            if ($filterTrash) {
                 $query = $query->onlyTrashed();
             }
 
-            if ($filterUsers === 'true') {
+            if ($filterUsers) {
                 $query = $query->where('type', 'user');
-            } elseif ($filterAdmins === 'true') {
+            } elseif ($filterAdmins) {
                 $query = $query->where('type', 'admin');
             }
 
-            if ($active === 'true') {
+            if ($active) {
                 $query = $query->where('is_active', true);
             }
 
-            if ($inActive === 'true') {
+            if ($inActive) {
                 $query = $query->where('is_active', false);
             }
 

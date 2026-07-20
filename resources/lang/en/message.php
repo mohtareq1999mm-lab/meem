@@ -90,6 +90,13 @@ return [
     'MESSAGE.DELETE_PRODUCT_SUCCESSFULLY' => 'Product deleted successfully',
     'MESSAGE.PRODUCTS_DELETED_SUCCESSFULLY' => 'Products deleted successfully',
 
+    // Contacts
+    'MESSAGE.CONTACT_CREATED_SUCCESSFULLY' => 'Contact created successfully',
+    'MESSAGE.REPLAY_SENT_SUCCESSFULLY' => 'Reply sent successfully',
+    'MESSAGE.CONTACT_DELETED_SUCCESSFULLY' => 'Contact deleted successfully',
+    'MESSAGE.ALL_CONTACTS_DELETED_SUCCESSFULLY' => 'All contacts deleted successfully',
+    'MESSAGE.ALL_READ_CONTACTS_DELETED_SUCCESSFULLY' => 'All read contacts deleted successfully',
+
     // General
     'MESSAGE.WRONG_CSV' => 'Invalid CSV format. Please check the file and try again.',
     'MESSAGE.NOT_AUTHORIZED' => 'You are not authorized to perform this action',

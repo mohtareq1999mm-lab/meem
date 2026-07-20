@@ -78,7 +78,7 @@ class ContactReplyTest extends TestCase
             'message' => 'Original message body.',
         ]);
 
-        $response = $this->postJson(self::PREFIX . "/contacts/{$contact->id}/replay", [
+        $response = $this->postJson(self::PREFIX . "/contacts/{$contact->id}/reply", [
             'subject' => 'RE: Original Subject',
             'message' => 'Thank you for your inquiry.',
         ]);
@@ -97,7 +97,7 @@ class ContactReplyTest extends TestCase
             'message' => 'I have a question.',
         ]);
 
-        $this->postJson(self::PREFIX . "/contacts/{$contact->id}/replay", [
+        $this->postJson(self::PREFIX . "/contacts/{$contact->id}/reply", [
             'subject' => 'RE: Question',
             'message' => 'Here is your answer.',
         ]);
@@ -116,7 +116,7 @@ class ContactReplyTest extends TestCase
             'message' => 'Message content.',
         ]);
 
-        $response = $this->postJson(self::PREFIX . "/contacts/{$contact->id}/replay", [
+        $response = $this->postJson(self::PREFIX . "/contacts/{$contact->id}/reply", [
             'subject' => 'RE: Topic',
             'message' => 'Reply content.',
         ]);
@@ -129,7 +129,7 @@ class ContactReplyTest extends TestCase
     /** @test */
     public function reply_returns_404_for_nonexistent_contact(): void
     {
-        $response = $this->postJson(self::PREFIX . '/contacts/99999/replay', [
+        $response = $this->postJson(self::PREFIX . '/contacts/99999/reply', [
             'subject' => 'RE: Missing',
             'message' => 'Reply to missing contact.',
         ]);
@@ -147,7 +147,7 @@ class ContactReplyTest extends TestCase
             'message' => 'Original message.',
         ]);
 
-        $this->postJson(self::PREFIX . "/contacts/{$contact->id}/replay", [
+        $this->postJson(self::PREFIX . "/contacts/{$contact->id}/reply", [
             'subject' => 'RE: Original',
             'message' => 'Reply.',
         ]);

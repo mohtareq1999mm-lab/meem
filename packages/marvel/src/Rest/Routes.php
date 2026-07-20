@@ -123,7 +123,8 @@ Route::middleware(['throttle:otp'])->group(function () {
 
 
 Route::middleware(["throttle:sensitive"])->group(function () {
-    Route::post('contacts/{id}/reply', [ContactController::class, 'sendReply']);
+    Route::post('contacts/{id}/reply', [ContactController::class, 'sendReplay']);
+    Route::post('contact-us', [ContactController::class, 'store']);
     Route::delete('contacts/delete-all', [ContactController::class, 'deleteAll']);
     Route::delete('contacts/delete-all-read', [ContactController::class, 'deleteAllReadContacts']);
     Route::apiResource('contacts', ContactController::class)->except(['update']);

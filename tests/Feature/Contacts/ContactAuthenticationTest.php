@@ -132,7 +132,7 @@ class ContactAuthenticationTest extends TestCase
             'message' => 'Test message body',
         ]);
 
-        $response = $this->postJson(self::PREFIX . "/contacts/{$contact->id}/replay", [
+        $response = $this->postJson(self::PREFIX . "/contacts/{$contact->id}/reply", [
             'subject' => 'Re: Test',
             'message' => 'Reply body',
         ]);

@@ -124,7 +124,7 @@ class ContactAuthorizationTest extends TestCase
         Sanctum::actingAs($user);
         $contact = $this->createContact();
 
-        $this->postJson(self::PREFIX . "/contacts/{$contact->id}/replay", [
+        $this->postJson(self::PREFIX . "/contacts/{$contact->id}/reply", [
             'subject' => 'Re: Test',
             'message' => 'This is a reply.',
         ])->assertOk();
@@ -137,7 +137,7 @@ class ContactAuthorizationTest extends TestCase
         Sanctum::actingAs($user);
         $contact = $this->createContact();
 
-        $this->postJson(self::PREFIX . "/contacts/{$contact->id}/replay", [
+        $this->postJson(self::PREFIX . "/contacts/{$contact->id}/reply", [
             'subject' => 'Re: Test',
             'message' => 'This is a reply.',
         ])->assertStatus(403);
