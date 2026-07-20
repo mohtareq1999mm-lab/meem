@@ -559,16 +559,19 @@ class UserController extends CoreController
         if (!$user) {
             return $this->apiResponse(USER_NOT_FOUND, 404, false);
         }
-        $data = ['otp' => '123456'];
+        $data = [];
         if ($request->email) {
-            $user->sendOneTimePassword();
+            $oneTimePassword = $user->createOneTimePassword();
+            $notificationClass = config('one-time-passwords.notification');
+            $user->notify(new $notificationClass($oneTimePassword));
+            $data['otp_id'] = $oneTimePassword->id;
         } else {
             $otpResponse = $this->sendOtpCode($request);
             if (is_array($otpResponse)) {
                 $data['otp_id'] = $otpResponse['otp_id'] ?? null;
             }
         }
-        return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true, $data);
+        return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true);
     }
     public function verifyLoginOtp(Request $request)
     {
