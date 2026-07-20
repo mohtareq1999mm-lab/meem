@@ -1,72 +1,87 @@
-# Slider Module
+# Slider Feature - API Investigation
 
-## Overview
+## Feature Name
 
-The Slider module manages promotional slider/banner images on the e-commerce platform. It provides two API surfaces:
+Slider Management
 
-- **Admin API** (`/api/v1/sliders`) — Full CRUD + reorder + status toggle, protected by permissions
-- **Public API** (`/api/v1/general/sliders`) — Read-only listing of active sliders, no authentication required
+## Description
 
-Sliders support translatable titles (en/ar), desktop + mobile image uploads, product associations, soft deletes, and drag-and-drop reordering via the Spatie Sortable trait. Products can be filtered by slider slug.
+CRUD for promotional sliders with translatable titles, desktop/mobile image support via Spatie MediaLibrary, product association, status toggle, and drag-and-drop reordering via Spatie EloquentSortable. 7 admin endpoints + 2 public endpoints.
+
+## Architecture
+
+```
+[Admin Client]                    [Public (no auth)]
+    |                                  |
+    |--- GET    /sliders               |--- GET /general/sliders
+    |--- POST   /sliders               |--- GET /general/sliders/{slug}
+    |--- GET    /sliders/{id}
+    |--- PUT    /sliders/{id}
+    |--- DELETE /sliders/{id}
+    |--- PATCH  /sliders/change-status
+    |--- PUT    /sliders/reorder
+    |
+    v
+[SliderController (admin)]         [GeneralSliderController (public)]
+    |--- DI of SliderRepository
+    |--- Permission middleware (Spatie)
+    |
+    v
+[SliderRepository]
+    |--- extends BaseRepository (Prettus)
+    |--- trait MediaManager (image upload)
+    |--- DB::transaction on create/update
+    |
+    v
+[Slider Model]
+    |--- Spatie Translatable (title)
+    |--- Spatie MediaLibrary (sliders-desktop, sliders-mobile)
+    |--- Spatie EloquentSortable (order column)
+    |--- SoftDeletes
+    |--- BelongsToMany products
+    |
+    v
+[SliderResource]
+    |--- title (translated), slug, status, order
+    |--- image.desktop, image.mobile (media URLs)
+    |--- products (when loaded)
+```
+
+## Key Endpoints
+
+| Method | URI | Controller Method | Permission |
+|--------|-----|-------------------|------------|
+| GET | `/sliders` | `index` | VIEW_SLIDER |
+| POST | `/sliders` | `store` | CREATE_SLIDER |
+| GET | `/sliders/{id}` | `show` | VIEW_SLIDER |
+| PUT | `/sliders/{id}` | `update` | UPDATE_SLIDER |
+| DELETE | `/sliders/{id}` | `destroy` | DELETE_SLIDER |
+| PATCH | `/sliders/change-status` | `changeStatus` | UPDATE_SLIDER |
+| PUT | `/sliders/reorder` | `reorder` | UPDATE_SLIDER |
 
 ## Key Files
 
-| Layer | File |
+| Layer | Path |
 |-------|------|
-| Admin Controller | `packages/marvel/src/Http/Controllers/SliderController.php` |
-| Public Controller | `app/Http/Controllers/Api/General/SliderController.php` |
-| Repository | `packages/marvel/src/Database/Repositories/SliderRepository.php` |
+| Controller (Admin) | `packages/marvel/src/Http/Controllers/SliderController.php` |
+| Controller (Public) | `app/Http/Controllers/Api/General/SliderController.php` |
 | Model | `packages/marvel/src/Database/Models/Slider.php` |
-| Admin Resource | `packages/marvel/src/Http/Resources/SliderResource.php` |
-| Public Resource | `app/Http/Resources/Slider/SliderResource.php` |
-| Create Request | `packages/marvel/src/Http/Requests/SliderCreateRequest.php` |
-| Update Request | `packages/marvel/src/Http/Requests/SliderUpdateRequest.php` |
-| Slider Service | `app/Services/General/SliderService.php` |
-| Admin Routes | `packages/marvel/src/Rest/Routes.php` |
-| Public Routes | `routes/api.php` |
-| Permissions | `packages/marvel/src/Enums/Permission.php` |
-| Pivot Migration | `database/migrations/2026_06_17_000003_create_slider_product_table.php` |
-| Seeder | `database/seeders/SliderSeeder.php` |
-| Seeder | `database/seeders/SliderProductSeeder.php` |
+| Repository | `packages/marvel/src/Database/Repositories/SliderRepository.php` |
+| Resource (Admin) | `packages/marvel/src/Http/Resources/SliderResource.php` |
+| Resource (Public) | `app/Http/Resources/Slider/SliderResource.php` |
+| Request (Create) | `packages/marvel/src/Http/Requests/SliderCreateRequest.php` |
+| Request (Update) | `packages/marvel/src/Http/Requests/SliderUpdateRequest.php` |
+| Service | `app/Services/General/SliderService.php` |
 | Observer | `app/Observers/MediaCleanupObserver.php` |
-| Tests | `tests/Feature/SliderApiTest.php` |
-| Import | `packages/marvel/src/Imports/Sheets/SlidersSheetImport.php` |
-| Export | `packages/marvel/src/Exports/Sheets/SlidersSheetExport.php` |
+| Seeder | `database/seeders/SliderSeeder.php` |
+| Test | `tests/Feature/SliderApiTest.php` |
 
-## Dependencies
+## Tech Stack
 
-- **Spatie Translatable** (`HasTranslations`) — bilingual title (en/ar)
-- **Spatie Media Library** (`InteractsWithMedia`) — desktop + mobile image management
-- **Spatie Eloquent Sortable** (`SortableTrait`) — drag-and-drop reordering via `order` column
-- **SoftDeletes** — soft delete support
-- **CodeZero UniqueTranslation** — unique validation per locale
-
-## Permissions
-
-| Permission | Required For |
-|------------|-------------|
-| `view-slider` | GET /sliders, GET /sliders/{id} |
-| `create-slider` | POST /sliders |
-| `update-slider` | PUT /sliders/{id}, PUT /sliders/reorder, PATCH /sliders/change-status |
-| `delete-slider` | DELETE /sliders/{id} |
-
-## Routes
-
-### Admin
-
-| Method | Endpoint | Purpose |
-|--------|----------|---------|
-| GET | `/api/v1/sliders` | List sliders (paginated, filterable) |
-| POST | `/api/v1/sliders` | Create slider (with images + product associations) |
-| GET | `/api/v1/sliders/{id}` | Show slider by ID |
-| PUT | `/api/v1/sliders/{id}` | Update slider |
-| DELETE | `/api/v1/sliders/{id}` | Soft delete slider |
-| PATCH | `/api/v1/sliders/change-status` | Toggle slider status |
-| PUT | `/api/v1/sliders/reorder` | Reorder sliders (sorted ID array) |
-
-### Public
-
-| Method | Endpoint | Purpose |
-|--------|----------|---------|
-| GET | `/api/v1/general/sliders` | List active sliders (optional slug query param) |
-| GET | `/api/v1/general/sliders/{slug}` | Get slider by slug with enriched products |
+- **Laravel** with Eloquent ORM
+- **Spatie Translatable** — title (JSON column)
+- **Spatie MediaLibrary** — desktop + mobile image upload
+- **Spatie EloquentSortable** — drag-and-drop reorder
+- **Prettus BaseRepository** pattern
+- **SoftDeletes**
+- **BelongsToMany** products via `slider_product` pivot

@@ -1,86 +1,41 @@
-# Database — Slider Module
+# Database - Slider Feature
 
 ## Table: `sliders`
 
-| Column | Type | Default | Constraints | Notes |
-|--------|------|---------|-------------|-------|
-| id | bigint unsigned | AUTO_INCREMENT | PK | |
-| title | string | NULL | | Translatable JSON |
-| slug | string | | NOT NULL | Auto-generated from English title |
-| order | integer | | NOT NULL | Sort order (Spatie Sortable) |
-| status | tinyint(1) | false | | 0 = inactive, 1 = active |
-| deleted_at | timestamp | NULL | | Soft deletes |
-| created_at | timestamp | NULL | | |
-| updated_at | timestamp | NULL | | |
+Migration is only in test helper (`tests/Concerns/CreatesTestTables.php`), **not** in `database/migrations/`.
 
-**Note:** The `sliders` table migration is missing from the production migrations directory. The schema is defined in `tests/Concerns/CreatesTestTables.php` for test purposes only.
+| Column | Type | Constraints |
+|--------|------|------------|
+| `id` | bigint | PK |
+| `title` | json | translatable |
+| `slug` | string | auto-generated from EN title |
+| `status` | boolean | default true |
+| `order` | integer | Sortable column |
+| `created_at` | timestamp | |
+| `updated_at` | timestamp | |
+| `deleted_at` | timestamp | nullable (SoftDeletes) |
 
-### Translatable Columns
-- `title` — stored as JSON: `{"en": "Summer Sale", "ar": "تخفيضات الصيف"}`
+## Pivot Table: `slider_product`
 
-### Soft Deletes
-The model uses `Illuminate\Database\Eloquent\SoftDeletes`. Records are soft-deleted by setting `deleted_at`.
-
-### Sortable
-The Spatie Sortable trait manages the `order` column with `sort_when_creating: true`.
-
----
-
-## Table: `slider_product` (Pivot)
-
-| Column | Type | Default | Constraints | Notes |
-|--------|------|---------|-------------|-------|
-| id | bigint unsigned | AUTO_INCREMENT | PK | |
-| slider_id | bigint unsigned | | FK → sliders.id ON DELETE CASCADE | |
-| product_id | bigint unsigned | | FK → products.id ON DELETE CASCADE | |
-| created_at | timestamp | NULL | | |
-| updated_at | timestamp | NULL | | |
-
-### Indexes
-- Primary: `id`
-- Unique: `(slider_id, product_id)` — prevents duplicate associations
-
-### Foreign Keys
-- `slider_id` → `sliders.id` ON DELETE CASCADE
-- `product_id` → `products.id` ON DELETE CASCADE
-
----
-
-## Fillable Mass Assignment
-
-```php
-protected $fillable = [
-    'title', 'slug', 'order', 'status'
-];
-```
-
----
+| Column | Type | Constraints |
+|--------|------|------------|
+| `id` | bigint | PK |
+| `slider_id` | bigint | FK → sliders.id, CASCADE |
+| `product_id` | bigint | FK → products.id, CASCADE |
+| | UNIQUE | (slider_id, product_id) |
 
 ## Media Collections
 
-| Collection | Upload Method | Purpose |
-|------------|---------------|---------|
-| `slider-image-desktop` | `createSlider` | Desktop slider image |
-| `slider-image-mobile` | `createSlider` | Mobile slider image |
-| `sliders-desktop` | `updateSlider` | Desktop slider image (update) |
-| `sliders-mobile` | `updateSlider` | Mobile slider image (update) |
+| Collection | Purpose | Fallback |
+|------------|---------|----------|
+| `sliders-desktop` | Desktop slider image | `slider-image-desktop` |
+| `sliders-mobile` | Mobile slider image | `slider-image-mobile` |
 
-**Note:** Create and update use different collection names (`slider-image-*` vs `sliders-*`).
+## Key Queries
 
----
-
-## Migration Files
-
-| File | Table | Notes |
-|------|-------|-------|
-| `database/migrations/2026_06_17_000003_create_slider_product_table.php` | `slider_product` | Pivot table |
-| **(missing)** | `sliders` | No migration file exists in the project |
-
----
-
-## Related Tables
-
-| Table | Relation | Column |
-|-------|----------|--------|
-| `products` | BelongsToMany (via slider_product) | `slider_product.product_id` → `products.id` |
-| `media` | MorphMany | model_type=`Marvel\Database\Models\Slider` |
+| Use Case | Pattern |
+|----------|---------|
+| List (admin) | `SELECT * FROM sliders ORDER BY order ASC` |
+| List (public) | `SELECT * FROM sliders WHERE status = 1 ORDER BY order ASC` |
+| Active filter | `WHERE status = 1` |
+| Sortable by column | `ORDER BY {column} {dir}` |

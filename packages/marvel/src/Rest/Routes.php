@@ -95,11 +95,11 @@ Route::middleware(['throttle:auth'])->group(function () {
     Route::post('/admin-login', [UserController::class, 'adminToken']);
     Route::post('/social-login-token', [UserController::class, 'socialLogin']);
 });
-Route::get('me', [UserController::class, 'me'])->middleware('auth:sanctum');
 
 
 // Logout is not rate limited - users should always be able to log out
 Route::post('/logout', [UserController::class, 'logout'])->middleware('auth:sanctum');
+Route::get('me', [UserController::class, 'me'])->middleware('auth:sanctum');
 
 /**
  * Password Reset Routes - Rate Limited (5/min per IP)
@@ -109,7 +109,6 @@ Route::middleware(['throttle:sensitive'])->group(function () {
     Route::post('/forget-password', [UserController::class, 'forgetPassword']);
     Route::post('/verify-forget-password-token', [UserController::class, 'verifyForgetPasswordToken']);
     Route::post('/reset-password', [UserController::class, 'resetPassword']);
-    Route::post('/contact-us', [ContactController::class, 'store']);
 });
 
 /**
@@ -118,7 +117,6 @@ Route::middleware(['throttle:sensitive'])->group(function () {
  */
 Route::middleware(['throttle:otp'])->group(function () {
     Route::post('/send-otp-code', [UserController::class, 'sendUserOtp']);
-    // Route::post('/verify-otp-code', [UserController::class, 'verifyOtpCode']);
     Route::post('/otp-login', [UserController::class, 'otpLogin']);
 });
 
@@ -183,6 +181,9 @@ Route::middleware(['auth:sanctum', "throttle:cart"])->group(function () {
     Route::delete('cart/delete-items', [CartController::class, 'destroy']);
 });
 
+ Route::apiResource('pickup-locations', PickupLocationController::class);
+
+
 Route::middleware(['throttle:analytics'])->prefix('dashboard')->group(function () {
     Route::get('overview', [DashboardController::class, 'overview']);
     Route::get('revenue', [DashboardController::class, 'revenue']);
@@ -205,10 +206,11 @@ Route::middleware(['throttle:analytics'])->prefix('dashboard')->group(function (
 Route::apiResource('attributes', AttributeController::class);
 
 
+Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
 Route::get('orders/{id}', [OrderController::class, 'show'])->name('orders.show');
 
 
-Route::post('banner/change-status', [BannerController::class, 'changeStatus']);
+Route::put('banner/change-status', [BannerController::class, 'changeStatus']);
 Route::post('banner/reorder', [BannerController::class, 'reorder']);
 Route::apiResource('banners', BannerController::class);
 
@@ -218,7 +220,7 @@ Route::post('countries/change-status', [CountryController::class, 'bulkStatus'])
 
 Route::apiResource('governorates', GovernorateController::class);
 Route::get('governorates/{id}/cities', [GovernorateController::class, 'cities']);
-Route::post('governorates/change-status', [GovernorateController::class, 'bulkStatus']);
+Route::put('governorates/change-status', [GovernorateController::class, 'bulkStatus']);
 Route::put('governorates/{id}/fast-shipping', [GovernorateController::class, 'toggleFastShipping']);
 
 Route::apiResource('cities', CityController::class);
@@ -252,6 +254,7 @@ Route::group(['prefix' => 'admin', 'controller' => NotificationController::class
 
 Route::apiResource('coupons', CouponController::class);
 Route::apiResource('promotions', PromotionController::class);
+Route::apiResource('banners', BannerController::class);
 
 Route::put('settings', [SettingsController::class, 'update']);
 Route::get('fast-shipping/settings', [FastShippingController::class, 'getSettings']);
@@ -370,9 +373,6 @@ Route::apiResource('authors', AuthorController::class, [
     'only' => ['index', 'show'],
 ]);
 Route::apiResource('manufacturers', ManufacturerController::class, [
-    'only' => ['index', 'show'],
-]);
-Route::apiResource('banners', BannerController::class, [
     'only' => ['index', 'show'],
 ]);
 Route::post('orders/checkout/verify', [CheckoutController::class, 'verify']);
@@ -773,7 +773,6 @@ Route::group([
     Route::apiResource('taxes', TaxController::class);
     Route::apiResource('shippings', ShippingController::class);
     Route::apiResource('shipping-prices', ShippingPriceController::class);
-    Route::apiResource('pickup-locations', PickupLocationController::class);
     Route::post('approve-shop', [ShopController::class, 'approveShop']);
     Route::post('disapprove-shop', [ShopController::class, 'disApproveShop']);
     Route::post('approve-withdraw', [WithdrawController::class, 'approveWithdraw']);

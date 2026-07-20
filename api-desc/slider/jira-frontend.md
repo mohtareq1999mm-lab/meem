@@ -1,109 +1,62 @@
-# Slider Module — Frontend Jira Tasks
+# Jira - Slider Feature (Frontend)
 
-## Task 1: Admin Slider Listing Table
+## Epic: Slider Management UI
 
-**Description:** Create admin table showing all sliders with columns: ID, Title, Slug, Status, Order, Image Preview, Actions.
-
-**Requirements:**
-- Server-side pagination
-- Active/Inactive filter
-- Drag-and-drop reorder handles
-- Image thumbnail preview
-- Loading skeleton state
-- Empty state when no sliders found
+### Story Points Estimate: 8
 
 ---
 
-## Task 2: Admin Slider Create/Edit Form
+## User Stories
 
-**Description:** Create form for creating and editing sliders.
+### FE-US-001: Slider List with Drag-and-Drop Reorder
+**As** an admin
+**I want** a sortable slider list with drag-and-drop
+**So that** I can manage display order
 
-**Fields:**
-- `title` — multilingual (en, ar) text inputs
-- `image_desktop` — file upload with preview (accepts jpeg/png/jpg/gif, max 2MB)
-- `image_mobile` — file upload with preview (accepts jpeg/png/jpg/gif, max 2MB)
-- `status` — toggle switch
-- `products` — multi-select product search (optional)
+**Acceptance Criteria:**
+- Data table with image thumbnail, title, status, order
+- Drag-and-drop reorder with auto-save
+- Status toggle switch per row
 
----
+### FE-US-002: Slider Create/Edit Form
+**As** an admin
+**I want** a form with image upload and product assignment
+**So that** I can create promotional sliders
 
-## Task 3: Drag-and-Drop Reorder
+**Acceptance Criteria:**
+- Desktop + mobile image upload with preview
+- Translatable title (EN/AR tabs)
+- Product multi-select
+- Image size/format validation (2MB, jpeg/png/jpg/gif)
 
-**Description:** Add drag-and-drop reordering to the slider admin list.
+### FE-US-003: Homepage Slider Display
+**As** a customer
+**I want** to see sliders on the home page
+**So that** I can view promotions
 
-**Flow:**
-1. User drags slider items to desired order
-2. On drop, collect IDs in new sequence
-3. Send PUT `/api/v1/sliders/reorder` with `{ sliders: [3, 1, 2] }`
-4. Show loading state during request
-5. Refresh list on success
-
----
-
-## Task 4: Homepage Banner Carousel
-
-**Description:** Display active sliders as a responsive banner carousel on the homepage.
-
-**Data source:** `GET /api/v1/general/sliders`
-
-**Features:**
-- Responsive images (desktop/mobile via `<picture>` element)
-- Auto-play with configurable interval
-- Manual navigation (dots, arrows)
-- Pause on hover
-- Slide/fade transition animation
-- Loading skeleton while fetching
+**Acceptance Criteria:**
+- Responsive carousel from public API
+- Desktop and mobile images
+- Clickable to product pages
 
 ---
 
-## Task 5: Slider Detail Page with Products
+## Frontend Tasks
 
-**Description:** Create a slider detail page showing associated products.
+| ID | Description | h | Component |
+|----|-------------|---|-----------|
+| FE-T-001 | Create SlidersList with reorder | 6 | `SlidersList.vue` |
+| FE-T-002 | Create SliderFormModal | 6 | `SliderFormModal.vue` |
+| FE-T-003 | Create HomeSliderCarousel | 4 | `HomeSliderCarousel.vue` |
+| FE-T-004 | Create API services | 1 | `services/sliderApi.js` |
 
-**Data source:** `GET /api/v1/general/sliders/{slug}`
+## API Routes
 
-- Display slider image as hero banner
-- Show associated products in a grid
-- Product pricing and add-to-cart
-
----
-
-## Task 6: Status Toggle UI
-
-**Description:** Add quick-status toggle in admin table without opening edit form.
-
-- Toggle switch in table row
-- Confirmation before toggle
-- PATCH `/api/v1/sliders/change-status`
-- Optimistic UI update with rollback on error
-
----
-
-## Task 7: Delete Confirmation Dialog
-
-**Description:** Add confirmation dialog before deleting a slider.
-
-- Modal: "Are you sure you want to delete this slider?"
-- Shows slider title and image preview
-- Confirm/Cancel buttons
-- Loading state on delete
-
----
-
-## Task 8: Loading, Empty, Error States
-
-**Description:** Implement consistent states across slider components.
-
-- **Loading:** Skeleton loaders for carousel, table rows, and form fields
-- **Empty:** "No sliders available" empty state with illustration
-- **Error:** Inline error messages for API failures with retry
-
----
-
-## Task 9: Multilingual Translatable Fields
-
-**Description:** Ensure slider title fields support bilingual input.
-
-- Tab/segment toggle for language (en/ar)
-- Send as JSON object `{"en": "...", "ar": "..."}`
-- Display translated title based on current locale
+| Method | Endpoint | Permission |
+|--------|----------|-----------|
+| GET/POST | `/api/v1/sliders` | view-slider / create-slider |
+| GET/PUT/DELETE | `/api/v1/sliders/{id}` | view/update/delete-slider |
+| PATCH | `/api/v1/sliders/change-status` | update-slider |
+| PUT | `/api/v1/sliders/reorder` | update-slider |
+| GET | `/api/v1/general/sliders` | None |
+| GET | `/api/v1/general/sliders/{slug}` | None |

@@ -88,22 +88,5 @@ Route::prefix('v1/general')->middleware('api')->group(function () {
     Route::get('checkout/transaction-qr/{uuid}', [OrderController::class, 'getTransactionQr'])->middleware('auth:sanctum');
     Route::any('checkout/callback', [OrderController::class, 'checkoutCallback'])->name('api.checkout.callback');
     Route::any('checkout/error-callback', [OrderController::class, 'checkoutErrorCallback'])->name('api.checkout.errorCallback');
-    Route::middleware('auth:sanctum')->group(function () {
-        Route::get('dashboard/overview', [DashboardController::class, 'overview']);
-        Route::get('dashboard/revenue', [DashboardController::class, 'revenue']);
-        Route::get('dashboard/order-stats', [DashboardController::class, 'orderStats']);
-        Route::get('dashboard/recent-orders', [DashboardController::class, 'recentOrders']);
-        Route::get('dashboard/top-products', [DashboardController::class, 'topProducts']);
-        Route::get('dashboard/category-stats', [DashboardController::class, 'categoryStats']);
-        Route::get('dashboard/low-stock', [DashboardController::class, 'lowStock']);
-        Route::get('dashboard/sales-analytics', [DashboardController::class, 'salesAnalytics']);
-        Route::get('dashboard/customer-analytics', [DashboardController::class, 'customerAnalytics']);
-        Route::get('dashboard/product-analytics', [DashboardController::class, 'productAnalytics']);
-        Route::get('dashboard/order-analytics', [DashboardController::class, 'orderAnalytics']);
-        Route::get('dashboard/category-analytics', [DashboardController::class, 'categoryAnalytics']);
-        Route::get('dashboard/coupon-analytics', [DashboardController::class, 'couponAnalytics']);
-        Route::get('dashboard/cart-analytics', [DashboardController::class, 'cartAnalytics']);
-        Route::get('dashboard/reconciliation', [DashboardController::class, 'reconciliation']);
-        Route::get('dashboard/finance-analytics', [DashboardController::class, 'financeAnalytics']);
-    });
+   
 });
