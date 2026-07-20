@@ -678,13 +678,6 @@ Route::group(
         // Route::post('notify-log-seen', [NotifyLogsController::class, 'readNotifyLogs']);
         // Route::post('notify-log-read-all', [NotifyLogsController::class, 'readAllNotifyLogs']);
 
-        Route::apiResource('faqs', FaqsController::class, [
-            'only' => ['store', 'update', 'destroy'],
-        ]);
-
-
-
-
         Route::apiResource('terms-and-conditions', TermsAndConditionsController::class, [
             'only' => ['store', 'update', 'destroy'],
         ]);

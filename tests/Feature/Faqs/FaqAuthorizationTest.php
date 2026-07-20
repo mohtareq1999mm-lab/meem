@@ -71,20 +71,6 @@ class FaqAuthorizationTest extends TestCase
 
     private function createUserWithPermissions(array $permissionNames): User
     {
-        foreach ($permissionNames as $perm) {
-            Permission::findOrCreate($perm, self::GUARD);
-        }
-
-        $role = Role::create([
-            'name' => 'custom_' . uniqid(),
-            'guard_name' => self::GUARD,
-            'display_name' => json_encode(['en' => 'Custom Role']),
-        ]);
-
-        foreach ($permissionNames as $perm) {
-            $role->givePermissionTo($perm);
-        }
-
         $user = User::create([
             'name' => 'Custom User',
             'email' => uniqid() . '@example.com',
@@ -93,7 +79,10 @@ class FaqAuthorizationTest extends TestCase
             'is_active' => true,
         ]);
 
-        $user->assignRole($role);
+        foreach ($permissionNames as $perm) {
+            $permission = Permission::findOrCreate($perm, self::GUARD);
+            $user->givePermissionTo($permission);
+        }
 
         return $user;
     }
@@ -171,21 +160,18 @@ class FaqAuthorizationTest extends TestCase
         ]);
         Sanctum::actingAs($user);
 
-        $this->assertTrue($user->can('create-faq'), 'User should be able to create-faq');
-        $this->assertTrue($user->hasPermissionTo('create-faq'), 'User should have create-faq permission');
+        $route = \Illuminate\Support\Facades\Route::getRoutes()->getByName('faqs.store');
+        $this->assertNotNull($route, 'faqs.store route must exist');
+        $this->assertStringContainsString('FaqsController', $route->getAction()['controller'] ?? '');
+        $this->assertContains('permission:create-faq', $route->gatherMiddleware(), 'Route must have permission:create-faq middleware');
 
         $response = $this->postJson(self::PREFIX . '/faqs', [
             'faq_title' => ['en' => 'Brand New FAQ'],
             'faq_description' => ['en' => 'Brand new description'],
         ]);
-
-        if ($response->getStatusCode() !== 201) {
-            dump('Status: ' . $response->getStatusCode());
-            dump('Body: ' . $response->getContent());
-            dump('Route name: ' . optional(request()->route())->getName());
-            dump('Route action: ' . json_encode(optional(request()->route())->getAction()['controller'] ?? 'none'));
+        if ($response->getStatusCode() === 403) {
+            $response->dump();
         }
-
         $response->assertStatus(201);
     }
 
@@ -199,9 +185,17 @@ class FaqAuthorizationTest extends TestCase
         Sanctum::actingAs($user);
         $faq = $this->createFaq();
 
-        $this->putJson(self::PREFIX . "/faqs/{$faq->id}", [
+        $route = \Illuminate\Support\Facades\Route::getRoutes()->getByName('faqs.update');
+        $this->assertNotNull($route, 'faqs.update route must exist');
+        $this->assertContains('permission:update-faq', $route->gatherMiddleware(), 'Route must have permission:update-faq middleware');
+
+        $response = $this->putJson(self::PREFIX . "/faqs/{$faq->id}", [
             'faq_title' => ['en' => 'Updated Title'],
-        ])->assertOk();
+        ]);
+        if ($response->getStatusCode() === 403) {
+            $response->dump();
+        }
+        $response->assertOk();
     }
 
     /** @test */
@@ -231,7 +225,15 @@ class FaqAuthorizationTest extends TestCase
         Sanctum::actingAs($user);
         $faq = $this->createFaq();
 
-        $this->deleteJson(self::PREFIX . "/faqs/{$faq->id}")->assertOk();
+        $route = \Illuminate\Support\Facades\Route::getRoutes()->getByName('faqs.destroy');
+        $this->assertNotNull($route, 'faqs.destroy route must exist');
+        $this->assertContains('permission:delete-faq', $route->gatherMiddleware(), 'Route must have permission:delete-faq middleware');
+
+        $response = $this->deleteJson(self::PREFIX . "/faqs/{$faq->id}");
+        if ($response->getStatusCode() === 403) {
+            $response->dump();
+        }
+        $response->assertOk();
     }
 
     /** @test */
