@@ -161,6 +161,10 @@ Route::delete('/users/{userId}/permissions', [RoleAndPermissionController::class
 
 Route::put('brands/reorder', [BrandController::class, 'reorder']);
 Route::apiResource('brands', BrandController::class);
+Route::apiResource('sliders', SliderController::class);
+
+Route::get('fast-shipping/settings', [FastShippingController::class, 'getSettings']);
+Route::put('fast-shipping/settings', [FastShippingController::class, 'updateSettings']);   
 
 Route::put('categories/feature', [CategoryController::class, 'addOrRemoveCategoryFromFeature']);
 Route::apiResource('categories', CategoryController::class);
@@ -198,7 +202,6 @@ Route::post('banner/reorder', [BannerController::class, 'reorder']);
 Route::patch('sliders/change-status', [SliderController::class, 'changeStatus']);
 Route::put('sliders/reorder', [SliderController::class, 'reorder']);
 Route::apiResource('banners', BannerController::class);
-Route::apiResource('sliders', SliderController::class);
 
 Route::apiResource('countries', CountryController::class);
 Route::get('countries/{id}/governorates', [CountryController::class, 'governorates']);
@@ -361,9 +364,6 @@ Route::apiResource('manufacturers', ManufacturerController::class, [
 ]);
 Route::apiResource('banners', BannerController::class, [
     'only' => ['index', 'show'],
-]);
-Route::apiResource('sliders', SliderController::class, [
-    'only' => ['index'],
 ]);
 Route::post('orders/checkout/verify', [CheckoutController::class, 'verify']);
 

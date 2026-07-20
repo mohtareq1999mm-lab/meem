@@ -342,7 +342,7 @@ class CouponSystemTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonPath('success', true);
-        $response->assertJsonPath('message', \COUPON_DELETE_CART_WARNING);
+        $response->assertJsonPath('message', __('message.MESSAGE.COUPON_DELETE_CART_WARNING'));
     }
 
     /** @test */

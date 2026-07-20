@@ -31,6 +31,12 @@ return [
     'MESSAGE.BANNER_STATUS_CHANGED' => 'Banner status changed successfully',
     'MESSAGE.BANNERS_REORDERED_SUCCESSFULLY' => 'Banners reordered successfully',
 
+    // FAQs
+    'MESSAGE.FAQ_CREATED_SUCCESSFULLY' => 'FAQ created successfully',
+    'MESSAGE.FAQ_UPDATED_SUCCESSFULLY' => 'FAQ updated successfully',
+    'MESSAGE.FAQ_DELETED_SUCCESSFULLY' => 'FAQ deleted successfully',
+    'MESSAGE.FAQS_REORDERED_SUCCESSFULLY' => 'FAQs reordered successfully',
+
     // Content Pages & Sections
     'MESSAGE.SECTION_CREATED_SUCCESSFULLY' => 'Section created successfully',
     'MESSAGE.SECTION_UPDATED_SUCCESSFULLY' => 'Section updated successfully',
