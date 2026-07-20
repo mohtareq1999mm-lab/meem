@@ -37,6 +37,7 @@ class DatabaseSeeder extends Seeder
             'is_active' => true,
             'phone_number' => '34567890',
             'email_verified_at' => now(),
+            'type' => 'admin',
         ]);
         $userEdit = User::firstOrCreate([
             'email' => 'editor@cms.com',
