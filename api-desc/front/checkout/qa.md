@@ -1,0 +1,61 @@
+# Checkout Module — QA Test Cases
+
+## Test Files
+
+`tests/Feature/CheckoutApiTest.php`, `CheckoutRegressionTest.php`, `CouponSystemTest.php`, `AssignedCouponSystemTest.php`, `CouponsProductionHardenTest.php`, `FastShippingHardenTest.php`
+
+---
+
+## Functionality Tests
+
+| # | Test | Description | Expected |
+|---|------|-------------|----------|
+| F1 | Eligible promotions with cart | GET /checkout/promotions | 200, promotions |
+| F2 | Eligible promotions no cart | No cart | 400 |
+| F3 | Checkout COD | POST /checkout {cod} | 200, order_id |
+| F4 | Checkout online | POST /checkout {online} | 200, url |
+| F5 | Checkout cashier | POST {pay_at_cashier, pickup} | 200, qr_code |
+| F6 | Checkout COD+pickup | COD + pickup | 422 |
+| F7 | Checkout without cart | No items | 400 |
+| F8 | Checkout with promotion | selected_promotion_id | 200 |
+| F9 | Checkout with coupon | Coupon on cart | 200 |
+| F10 | Expired coupon cleared | Expired coupon | 200, coupon removed |
+| F11 | Mark COD paid | POST /cod/{id}/mark-paid | 200 |
+| F12 | Mark cashier paid | POST /cashier/{id}/mark-paid | 200 |
+| F13 | Get QR | GET /transaction-qr/{uuid} | 200, SVG |
+| F14 | Get QR unauthorized | Other user's UUID | 403 |
+| F15 | Callback success | ANY /callback | Redirect /success |
+| F16 | Callback mismatch | Amount mismatch | Redirect /failed |
+| F17 | Error callback | ANY /error-callback | Redirect /failed |
+
+---
+
+## Validation Tests
+
+| # | Test | Description | Expected |
+|---|------|-------------|----------|
+| V1 | Missing name | 422 |
+| V2 | Missing phone | 422 |
+| V3 | Missing email | 422 |
+| V4 | Missing address | 422 |
+| V5 | Delivery without governorate | 422 |
+| V6 | Pickup without location_id | 422 |
+| V7 | Invalid governorate | 422 |
+| V8 | Unauthenticated | 401 |
+
+---
+
+## Regression Tests
+
+| # | Test | Expected |
+|---|--------|
+| R1 | Price recalculated at checkout | New price used |
+| R2 | Flash sale active → discounted | Discounted price |
+| R3 | Flash sale ended → regular | Regular price |
+| R4 | Promo price refreshed | Current promo |
+| R5 | Coupon locked during validation | Atomic update |
+| R6 | Inventory finalized | Stock decremented |
+| R7 | Price snapshot immutable | Order price unchanged |
+| R8 | Coupon usage recorded | used incremented |
+| R9 | No duplicate coupon usage | firstOrCreate |
+| R10 | Free shipping coupon | shipping=0 |

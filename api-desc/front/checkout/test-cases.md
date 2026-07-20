@@ -1,0 +1,57 @@
+# Test Coverage — Checkout Module
+
+## Existing Tests
+
+**Files:** `CheckoutApiTest.php`, `CheckoutRegressionTest.php`, `CouponSystemTest.php`, `AssignedCouponSystemTest.php`, `CouponsProductionHardenTest.php`, `FastShippingHardenTest.php`
+
+| # | Test | File |
+|---|------|------|
+| 1 | test_checkout_requires_auth | CheckoutApiTest |
+| 2 | test_checkout_requires_cart | CheckoutApiTest |
+| 3 | test_checkout_cod_creates_order | CheckoutApiTest |
+| 4 | test_checkout_finalizes_inventory | CheckoutApiTest |
+| 5 | test_checkout_cod_with_pickup_rejected | CheckoutApiTest |
+| 6 | test_eligible_promotions_with_cart | CheckoutApiTest |
+| 7 | test_checkout_validates_governorate | CheckoutApiTest |
+| 8 | test_checkout_stores_coupon_usage | CheckoutApiTest |
+| 9 | checkout_uses_current_product_price | CheckoutRegressionTest |
+| 10 | checkout_recalculates_price_when_flash_sale_starts | CheckoutRegressionTest |
+| 11 | checkout_uses_product_price_when_flash_sale_ends | CheckoutRegressionTest |
+| 12 | checkout_refreshes_promotion_price | CheckoutRegressionTest |
+| 13 | checkout_rejects_expired_coupon | CheckoutRegressionTest |
+| 14 | checkout_stores_price_snapshot_immutable | CheckoutRegressionTest |
+| 15 | checkout_coupon_locked_during_validation | CheckoutRegressionTest |
+| 16 | checkout_records_coupon_usage | CouponSystemTest |
+| 17 | checkout_with_free_shipping_coupon | CouponSystemTest |
+| 18 | checkout_with_percentage_coupon | CouponsProductionHardenTest |
+| 19 | checkout_with_fixed_coupon | CouponsProductionHardenTest |
+| 20 | checkout_clears_expired_coupon | CouponsProductionHardenTest |
+| 21 | checkout_with_assigned_coupon | AssignedCouponSystemTest |
+
+## Recommended Additional Tests
+
+### Payment Method Tests
+| # | Test | Description |
+|---|------|-------------|
+| 1 | test_checkout_online_payment | Creates transaction, returns URL |
+| 2 | test_checkout_pay_at_cashier | Returns QR code |
+| 3 | test_mark_cod_as_paid_no_permission | 403 |
+| 4 | test_get_transaction_qr_unauthorized | 403 |
+
+### Callback Tests
+| # | Test | Description |
+|---|------|-------------|
+| 1 | test_callback_missing_payment_id | 400 |
+| 2 | test_callback_successful_payment | Redirect /success |
+| 3 | test_callback_amount_mismatch | Redirect /failed + cancelled |
+| 4 | test_callback_currency_mismatch | Redirect /failed |
+| 5 | test_callback_mobile_response | JSON response |
+
+### Regression Tests
+| # | Test | Description |
+|---|------|-------------|
+| 1 | test_order_pickup_snapshot | Pickup data frozen |
+| 2 | test_order_promotion_snapshot | Promotion frozen |
+| 3 | test_order_coupon_snapshot | Coupon frozen |
+| 4 | test_inventory_double_sell | Parallel checkout same product |
+| 5 | test_coupon_usage_race_condition | Parallel checkouts |

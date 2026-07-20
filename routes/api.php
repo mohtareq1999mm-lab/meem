@@ -36,10 +36,13 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1/general')->middleware('api')->group(function () {
     Route::get('home', [HomeController::class, 'index']);
     Route::get('nav-data', [HomeController::class, 'navData']);
-    Route::get('products', [ProductController::class, 'index']);
-    Route::get('products/{slug}', [ProductController::class, 'getProductBySlug'])->name('general-product-show');
-    Route::post('products/{id}/reviews', [ProductController::class, 'addProductReview']);
-    Route::put('products/reviews/{id}', [ProductController::class, 'updateProductReview']);
+    Route::get('checkout/promotions', [OrderController::class, 'eligiblePromotions'])->middleware('auth:sanctum');
+    Route::post('checkout', [OrderController::class, 'checkout'])->middleware('auth:sanctum');
+    Route::post('checkout/cod/{orderId}/mark-paid', [OrderController::class, 'markCodAsPaid'])->middleware(['auth:sanctum', 'permission:update-order-status']);
+    Route::post('checkout/cashier/{orderId}/mark-paid', [OrderController::class, 'markCashierPaid'])->middleware(['auth:sanctum', 'permission:update-order-status']);
+    Route::get('checkout/transaction-qr/{uuid}', [OrderController::class, 'getTransactionQr'])->middleware('auth:sanctum');
+    Route::any('checkout/callback', [OrderController::class, 'checkoutCallback'])->name('api.checkout.callback');
+    Route::any('checkout/error-callback', [OrderController::class, 'checkoutErrorCallback'])->name('api.checkout.errorCallback');
     Route::get('categories', [CategoryController::class, 'index']);
     Route::get('categories/{slug}', [CategoryController::class, 'getCategoryBySlug']);
     Route::get('brands', [BrandController::class, 'index']);
