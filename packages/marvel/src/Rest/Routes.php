@@ -166,13 +166,22 @@ Route::put('sliders/reorder', [SliderController::class, 'reorder']);
 Route::apiResource('sliders', SliderController::class);
 
 Route::get('fast-shipping/settings', [FastShippingController::class, 'getSettings']);
-Route::put('fast-shipping/settings', [FastShippingController::class, 'updateSettings']);   
+Route::put('fast-shipping/settings', [FastShippingController::class, 'updateSettings']);
 
 Route::put('categories/feature', [CategoryController::class, 'addOrRemoveCategoryFromFeature']);
 Route::apiResource('categories', CategoryController::class);
 
 Route::get('logs/activity', [ActivityLogController::class, 'index']);
 
+Route::middleware(['auth:sanctum', "throttle:cart"])->group(function () {
+    Route::get('cart', [CartController::class, 'index']);
+    Route::post('cart', [CartController::class, 'store']);
+    Route::get('cart/{id}', [CartController::class, 'show'])->whereNumber('id');
+    Route::post('cart/bulk-items', [CartController::class, 'pluckItemsToCart']);
+    Route::put('cart/update-item', [CartController::class, 'update']);
+    Route::delete('cart/delete-item/{itemId}', [CartController::class, 'deleteItemFromCart']);
+    Route::delete('cart/delete-items', [CartController::class, 'destroy']);
+});
 
 Route::middleware(['throttle:analytics'])->prefix('dashboard')->group(function () {
     Route::get('overview', [DashboardController::class, 'overview']);
@@ -835,15 +844,7 @@ Route::group([
      * Dashboard API — platform-wide metrics
      */
 });
-Route::middleware(['auth:sanctum', "throttle:cart"])->group(function () {
-    Route::get('cart', [CartController::class, 'index']);
-    Route::post('cart', [CartController::class, 'store']);
-    Route::get('cart/{id}', [CartController::class, 'show'])->whereNumber('id');
-    Route::post('cart/bulk-items', [CartController::class, 'pluckItemsToCart']);
-    Route::put('cart/update-item', [CartController::class, 'update']);
-    Route::delete('cart/delete-item/{itemId}', [CartController::class, 'deleteItemFromCart']);
-    Route::delete('cart/delete-items', [CartController::class, 'destroy']);
-});
+
 
 
 Route::apiResource('became-seller', BecameSellerController::class);

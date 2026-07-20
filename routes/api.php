@@ -79,6 +79,7 @@ Route::prefix('v1/general')->middleware('api')->group(function () {
     Route::post('fast-shipping/checkout', [FastShippingController::class, 'checkout'])->middleware('auth:sanctum');
     Route::get('fast-shipping/orders', [FastShippingController::class, 'orders'])->middleware('auth:sanctum');
 
+    Route::get('orders', [OrderController::class, 'index'])->middleware('auth:sanctum');
 
     Route::get('checkout/promotions', [OrderController::class, 'eligiblePromotions'])->middleware('auth:sanctum');
     Route::post('checkout', [OrderController::class, 'checkout'])->middleware('auth:sanctum');

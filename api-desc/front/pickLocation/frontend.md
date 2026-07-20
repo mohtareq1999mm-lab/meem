@@ -13,6 +13,7 @@
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | limit | int | 10 | Items per page |
+| limit | int | 10 | Items per page |
 | search | string | - | Search by store_name |
 | page | int | 1 | Page number |
 
