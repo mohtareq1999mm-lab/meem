@@ -201,10 +201,10 @@ Route::apiResource('countries', CountryController::class);
 Route::get('countries/{id}/governorates', [CountryController::class, 'governorates']);
 Route::post('countries/change-status', [CountryController::class, 'bulkStatus']);
 
-Route::apiResource('governorates', GovernorateController::class);
-Route::get('governorates/{id}/cities', [GovernorateController::class, 'cities']);
 Route::put('governorates/change-status', [GovernorateController::class, 'bulkStatus']);
 Route::put('governorates/{id}/fast-shipping', [GovernorateController::class, 'toggleFastShipping']);
+Route::get('governorates/{id}/cities', [GovernorateController::class, 'cities']);
+Route::apiResource('governorates', GovernorateController::class);
 
 Route::apiResource('cities', CityController::class);
 

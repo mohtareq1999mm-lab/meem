@@ -76,3 +76,21 @@ GovernorateController@toggleFastShipping($request, 5)
   v
 200 + GovernorateResource
 ```
+
+## Flow: Bulk Status Update
+
+```
+PUT /api/v1/governorates/change-status
+Body: { ids: [1, 2, 3], status: 0 }
+  |
+  v
+GovernorateController@bulkStatus($request)
+  |  -- BulkStatusRequest validation
+  |  -- GovernorateRepository::bulkStatus($ids, $status)
+  |       +-- Governorate::whereIn('id', $ids)->update(['status' => $status])
+  |
+  v
+200 + { count: 3 }
+```
+
+> **Important:** The `change-status` route must be defined BEFORE `apiResource('governorates')` in `Routes.php`. Otherwise `PUT /governorates/change-status` is intercepted by `PUT /governorates/{governorate}` and dispatched to `update()` with `$id = "change-status"`, causing a type error.

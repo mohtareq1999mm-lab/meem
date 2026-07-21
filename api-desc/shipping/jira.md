@@ -33,11 +33,12 @@
 
 ## Bug Tickets
 
-| Ticket | Description | Priority | Severity |
-|--------|-------------|----------|----------|
-| BUG-001 | Missing EN/AR translation keys for country/city messages | High | Medium |
-| BUG-002 | Governorate delete throws on cities but error is generic | Low | Low |
-| BUG-003 | No auth middleware on routes (only permission middleware in constructor) | Medium | Medium |
+| Ticket | Description | Priority | Severity | Status |
+|--------|-------------|----------|----------|--------|
+| BUG-001 | Missing EN/AR translation keys for country/city messages | High | Medium | Open |
+| BUG-002 | Governorate delete throws on cities but error is generic | Low | Low | Open |
+| BUG-003 | No auth middleware on routes (only permission middleware in constructor) | Medium | Medium | Open |
+| BUG-004 | `PUT /governorates/change-status` route conflict — caught as `{id}`, hits `update()` with string param | Critical | Critical | FIXED |
 
 ## Technical Debt
 

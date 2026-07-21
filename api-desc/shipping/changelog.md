@@ -15,6 +15,9 @@
 - Spatie Translatable for multilingual name fields
 - UniqueTranslationRule validation for unique names per locale
 
+### Fixed
+- Governorate `PUT /change-status` route ordering: moved before `apiResource` to prevent Laravel matching `"change-status"` as `{id}` parameter (caused `TypeError: must be of type int, string given`)
+
 ### Known Issues
 - Missing EN/AR translation keys for country and city response messages
 - No auth:sanctum middleware on route group (relies on Spatie permission middleware)

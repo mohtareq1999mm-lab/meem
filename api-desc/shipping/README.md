@@ -90,7 +90,7 @@ Country (id, name, phone_code, status)
 | Resource (City) | `packages/marvel/src/Http/Resources/CityResource.php` |
 | Resource (ShippingPrice) | `packages/marvel/src/Http/Resources/ShippingPriceResource.php` |
 | Enum (Permission) | `packages/marvel/src/Enums/Permission.php` |
-| Routes | `packages/marvel/src/Rest/Routes.php` (lines 216–229) |
+| Routes | `packages/marvel/src/Rest/Routes.php` (lines 200–209) |
 
 ## Tech Stack
 
@@ -103,3 +103,9 @@ Country (id, name, phone_code, status)
 - **Form Requests** with `CodeZero\UniqueTranslationRule`
 - **Translations:** EN keys missing for country/city messages; AR has governorate keys only
 - **No dedicated tests** for Country/Governorate/City CRUD
+
+## Bug Fixes
+
+| # | Issue | Fix |
+|---|-------|-----|
+| BUG-001 | `PUT /governorates/change-status` returned 500 — route caught by `apiResource` as `{id}` parameter | Moved custom routes before `apiResource` in `Routes.php` |

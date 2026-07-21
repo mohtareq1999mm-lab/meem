@@ -27,6 +27,19 @@
 | `bulkStatus` | UPDATE_GOVERNORATE | Bulk update status |
 | `toggleFastShipping` | UPDATE_GOVERNORATE | Toggle is_fast_shipping_enabled |
 
+### Route Ordering (Critical)
+
+**Custom routes** (`change-status`, `fast-shipping`, `cities`) **must be defined BEFORE** `Route::apiResource('governorates', ...)` in `Routes.php`. Otherwise `PUT /governorates/change-status` is captured by `PUT /governorates/{governorate}` with `{governorate} = "change-status"`, hitting `GovernorateController@update(int $id)` with a string argument (HTTP 500).
+
+Fixed in `packages/marvel/src/Rest/Routes.php`:
+
+```php
+Route::put('governorates/change-status', [GovernorateController::class, 'bulkStatus']);      // MUST be first
+Route::put('governorates/{id}/fast-shipping', [GovernorateController::class, 'toggleFastShipping']);
+Route::get('governorates/{id}/cities', [GovernorateController::class, 'cities']);
+Route::apiResource('governorates', GovernorateController::class);                               // generic last
+```
+
 ### CityController (`packages/marvel/src/Http/Controllers/CityController.php`)
 
 | Method | Permission | Description |

@@ -4,6 +4,8 @@
 
 **No dedicated tests exist** for CountryController, GovernorateController, or CityController. Fast Shipping tests exist in `tests/Feature/FastShippingControllerTest.php` but cover the fast-shipping service layer, not governorate CRUD.
 
+**Bug Fix:** `PUT /api/v1/governorates/change-status` route ordering was fixed. Custom routes must precede `apiResource` to prevent Laravel from matching `"change-status"` as `{id}`.
+
 ## Recommended Tests
 
 ### Country CRUD
@@ -32,7 +34,8 @@
 | FT-015 | Update modifies shipping price (upsert) | High |
 | FT-016 | Destroy fails if governorate has cities | High |
 | FT-017 | ToggleFastShipping updates boolean | High |
-| FT-018 | BulkStatus updates status | Medium |
+ | FT-018 | BulkStatus updates status | Medium |
+| FT-018b | BulkStatus route not caught by `{id}` parameter | High |
 
 ### City CRUD
 

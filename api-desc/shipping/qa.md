@@ -46,6 +46,7 @@
 | TC-SHP-023 | No permission | 403 on all endpoints |
 | TC-SHP-024 | Translatable names | Returns correct locale |
 | TC-SHP-025 | JSON search | Matches EN and AR names |
+| TC-SHP-026 | Route ordering: `PUT /change-status` before `PUT /{id}` | Returns 200, not 500 |
 
 ## Manual Test Checklist
 

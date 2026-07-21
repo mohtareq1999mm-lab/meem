@@ -18,7 +18,11 @@
 - **File:** `packages/marvel/src/Rest/Routes.php`
 - **Description:** These routes are not wrapped in `auth:sanctum`. Authentication relies solely on the Spatie `permission:` middleware in each controller constructor. If permission middleware is misconfigured, endpoints could be accessible without authentication.
 
-## Issue 3 (LOW): Generic Error on Governorate Delete
+## Issue 4 (CRITICAL): Governorate `PUT /change-status` route conflict — FIXED
 
-- **File:** `packages/marvel/src/Http/Controllers/GovernorateController.php:130`
-- **Description:** When deleting a governorate with cities, the repository throws `InvalidArgumentException('Cannot delete a governorate that has cities.')`, but the controller catches no exception and will propagate a 500 error instead of a clean 409/422 response.
+- **Description:** Route `PUT /api/v1/governorates/change-status` was defined AFTER `Route::apiResource('governorates', ...)`. Laravel's `apiResource` registers `PUT /governorates/{governorate}` first, causing `"change-status"` to be captured as `{governorate}`. Request hit `GovernorateController@update(int $id)` with `$id = "change-status"`, causing `TypeError: must be of type int, string given`.
+- **Fix:** Moved `change-status`, `fast-shipping`, and `cities` routes BEFORE `apiResource('governorates')` in `Routes.php`.
+
+## Issue 5 (MEDIUM): Country `POST /change-status` — no conflict, but inconsistency
+
+- **Status:** Not a bug — `POST /countries/change-status` doesn't conflict with `POST /countries` (different URL segment count).
