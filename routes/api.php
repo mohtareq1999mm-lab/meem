@@ -87,8 +87,6 @@ Route::prefix('v1/general')->middleware('api')->group(function () {
     Route::get('flash-sale-products-ending-this-week', [FlashSaleController::class, 'getFlashSaleProductsEndingThisWeek']);
     Route::get('flash-sale-products-ending-today', [FlashSaleController::class, 'getFlashSaleProductsEndingToday']);
 
-    Route::get('pages', [ContentPageController::class, 'index']);
-    Route::get('pages/{slug}', [ContentPageController::class, 'show']);
     Route::get('settings', [SettingController::class, 'index']);
     Route::get('faqs', [FAQController::class, 'index']);
 
@@ -103,11 +101,5 @@ Route::prefix('v1/general')->middleware('api')->group(function () {
 
     Route::get('orders', [OrderController::class, 'index'])->middleware('auth:sanctum');
 
-    Route::get('checkout/promotions', [OrderController::class, 'eligiblePromotions'])->middleware('auth:sanctum');
-    Route::post('checkout', [OrderController::class, 'checkout'])->middleware('auth:sanctum');
-    Route::post('checkout/cod/{orderId}/mark-paid', [OrderController::class, 'markCodAsPaid'])->middleware(['auth:sanctum', 'permission:update-order-status']);
-    Route::post('checkout/cashier/{orderId}/mark-paid', [OrderController::class, 'markCashierPaid'])->middleware(['auth:sanctum', 'permission:update-order-status']);
-    Route::get('checkout/transaction-qr/{uuid}', [OrderController::class, 'getTransactionQr'])->middleware('auth:sanctum');
-    Route::any('checkout/callback', [OrderController::class, 'checkoutCallback'])->name('api.checkout.callback');
-    Route::any('checkout/error-callback', [OrderController::class, 'checkoutErrorCallback'])->name('api.checkout.errorCallback');
+   
 });
