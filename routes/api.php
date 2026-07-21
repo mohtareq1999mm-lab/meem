@@ -118,7 +118,7 @@ Route::get('/enum-types', function () {
         200
     );
 });
-Route::get('/product-type', function () {
+Route::prefix('v1')->get('product-type', function () {
     return [
         'best_product_sales',
         'brands_product',
