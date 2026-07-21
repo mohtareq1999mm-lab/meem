@@ -960,14 +960,20 @@ class UserController extends CoreController
      *     @OA\Response(response=422, description="Invalid provider or token")
      * )
      */
-    public function socialLogin(Request $request)
+
+
+    public function redirectToProvider(Request $request)
     {
         $provider = $request->provider;
-        $token = $request->access_token;
         $this->validateProvider($provider);
+        return Socialite::driver($provider)->stateless()->redirect();
+    }
+    public function callbackProvider(Request $request)
+    {
+        $provider = $request->provider;
 
         try {
-            $user = Socialite::driver($provider)->userFromToken($token);
+            $user = Socialite::driver($provider)->user();
             $userExist = User::where('email', $user->email)->exists();
 
             $userCreated = User::firstOrCreate(
@@ -977,7 +983,8 @@ class UserController extends CoreController
                 [
                     'email_verified_at' => now(),
                     'name' => $user->getName(),
-                    'password' => Hash::make('password')
+                    'password' => Hash::make('password'),
+                    'type' => 'user',
                 ]
             );
 
@@ -987,14 +994,6 @@ class UserController extends CoreController
                     'provider_user_id' => $user->getId(),
                 ]
             );
-
-
-
-
-
-            // if (empty($userExist)) {
-            //     $this->giveSignupPointsToCustomer($userCreated->id);
-            // }
             $data = [
                 "token" => $userCreated->createToken('auth_token')->plainTextToken,
             ];
