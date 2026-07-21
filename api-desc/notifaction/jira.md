@@ -28,9 +28,11 @@
 
 ## Bug Tickets
 
-| Ticket | Description | Priority | Severity |
-|--------|-------------|----------|----------|
-| BUG-001 | Missing EN/AR translation keys for all 6 notification messages | High | Medium |
+| Ticket | Description | Priority | Severity | Status |
+|--------|-------------|----------|----------|--------|
+| BUG-001 | Missing EN translation keys for all 6 notification messages | High | Medium | FIXED |
+| BUG-002 | Non-existent `admin` middleware causes 500 on all 6 endpoints | Critical | Critical | FIXED |
+| BUG-003 | `SendAdminLoginNotification` listener never registered in EventServiceProvider | Medium | Medium | FIXED |
 
 ## Technical Debt
 

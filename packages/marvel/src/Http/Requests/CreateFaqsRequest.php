@@ -33,7 +33,7 @@ class CreateFaqsRequest extends FormRequest
             'faq_title.*'       => ['required', 'string', 'min:3', 'max:1000',  UniqueTranslationRule::for('faqs')],
             'faq_description' => ['required', 'array'],
             'faq_description.*' => ['required', 'string', 'min:3', 'max:1000', UniqueTranslationRule::for('faqs')],
-            'shop_id'         => ['nullable', 'exists:shops,id'],
+            'status'          => ['sometimes', "in:1,0"],
         ];
     }
 

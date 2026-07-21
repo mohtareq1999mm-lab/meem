@@ -12,9 +12,6 @@ Admin Client
 auth:sanctum middleware
   |
   v
-admin middleware (check user->type === 'admin')
-  |
-  v
 permission:VIEW_NOTIFICATIONS middleware
   |
   v

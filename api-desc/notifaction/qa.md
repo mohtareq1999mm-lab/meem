@@ -17,7 +17,7 @@
 | TC-NOT-011 | DELETE /admin/notifications | All own deleted |
 | TC-NOT-012 | DELETE /admin/notifications (other user's) | Not affected |
 | TC-NOT-013 | Unauthenticated | 401 on all 6 |
-| TC-NOT-014 | Non-admin user | 403 on all 6 |
+| TC-NOT-014 | User without view-notifications permission | 403 on all 6 |
 | TC-NOT-015 | View-only permission | 403 on mark/delete |
 
 ## Manual Test Checklist

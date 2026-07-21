@@ -6,7 +6,7 @@ Admin Notification Management
 
 ## Description
 
-6 endpoints under `/api/v1/admin/notifications` for managing Laravel's `DatabaseNotification` model. Uses Laravel's built-in notification system — the `notifications` table stores polymorphic notifications. Scoped to the authenticated user's own notifications only. Protected by `auth:sanctum`, `admin` middleware, and Spatie permissions.
+6 endpoints under `/api/v1/admin/notifications` for managing Laravel's `DatabaseNotification` model. Uses Laravel's built-in notification system — the `notifications` table stores polymorphic notifications. Scoped to the authenticated user's own notifications only. Protected by `auth:sanctum` and Spatie permissions.
 
 ## Architecture
 
@@ -22,7 +22,7 @@ Admin Notification Management
     |
     v
 [NotificationController]
-    |--- auth:sanctum → admin → permission
+    |--- auth:sanctum → permission
     |--- Uses Laravel's DatabaseNotification (polymorphic, user-scoped)
     |
     v
@@ -52,16 +52,14 @@ Admin Notification Management
 | Layer | Path |
 |-------|------|
 | Controller | `packages/marvel/src/Http/Controllers/NotificationController.php` |
-| Middleware (admin) | `app/Http/Middleware/AdminMiddleware.php` |
 | Enum (Permission) | `packages/marvel/src/Enums/Permission.php` |
 | Enum (UserType) | `app/Enums/UserType.php` |
 | Routes | `packages/marvel/src/Rest/Routes.php` (lines 248–255) |
-| Test | `tests/Feature/NotificationTest.php` (844 lines, 34 tests) |
+| Test | `tests/Feature/NotificationTest.php` (845 lines, 38 tests) |
 
 ## Tech Stack
 
 - **Laravel** `DatabaseNotification` (polymorphic, UUID-keyed)
 - **Sanctum** authentication
-- **AdminMiddleware** — checks `user->type === 'admin'`
 - **Spatie permissions** — `VIEW_NOTIFICATIONS`, `MANAGE_NOTIFICATIONS`
 - **Event-driven creation** — OrderCreated, ContactMessageReceived, AdminLoggedIn

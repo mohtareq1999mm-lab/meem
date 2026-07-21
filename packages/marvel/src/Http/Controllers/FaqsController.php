@@ -46,43 +46,7 @@ class FaqsController extends CoreController
     }
 
 
-    /**
-     * @OA\Get(
-     *     path="/faqs",
-     *     operationId="getFaqs",
-     *     tags={"FAQs"},
-     *     summary="List all FAQs",
-     *     description="Retrieve a paginated list of FAQs. Filterable by shop_id and language.",
-     *     @OA\Parameter(
-     *         name="limit",
-     *         in="query",
-     *         description="Number of items per page",
-     *         @OA\Schema(type="integer", default=10)
-     *     ),
-     *     @OA\Parameter(
-     *         name="shop_id",
-     *         in="query",
-     *         description="Filter FAQs by Shop ID",
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Parameter(
-     *         name="language",
-     *         in="query",
-     *         description="Filter by language code",
-     *         @OA\Schema(type="string", default="en")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="List of FAQs retrieved successfully",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Faq")),
-     *             @OA\Property(property="current_page", type="integer"),
-     *             @OA\Property(property="total", type="integer")
-     *         )
-     *     )
-     * )
-     */
+
     public function index(Request $request)
     {
         $limit = $request->limit ? $request->limit : 10;
@@ -123,67 +87,9 @@ class FaqsController extends CoreController
      */
     public function fetchFAQs(Request $request)
     {
-        //        $language = $request->language ?? DEFAULT_LANGUAGE;
         try {
-            $user = $request->user();
-
-            if ($user) {
-                switch ($user) {
-                    case $user->hasRole(Role::SUPER_ADMIN):
-                        return $this->repository
-                            ->with('shop')
-                            ->whereNotNull('id');
-                        //                            ->where('language', $language);
-                        break;
-
-                    case $user->hasRole(Role::STORE_OWNER):
-                        if ($this->repository->hasPermission($user, $request->shop_id)) {
-                            return $this->repository
-                                ->with('shop')
-                                ->where('shop_id', '=', $request->shop_id);
-                            //                                ->where('language', $language);
-                        } else {
-                            return $this->repository
-                                ->with('shop')
-                                ->where('user_id', '=', $user->id)
-                                //                                ->where('language', $language)
-                                ->whereIn('shop_id', $user->shops->pluck('id'));
-                        }
-                        break;
-
-                    case $user->hasRole(Role::STAFF):
-                        // if ($this->repository->hasPermission($user, $request->shop_id)) {
-                        return $this->repository
-                            ->with('shop')
-                            ->where('shop_id', '=', $request->shop_id);
-                        //                            ->where(
-                        //                                'language',
-                        //                                $language
-                        //                            );
-                        // }
-                        break;
-
-                    default:
-                        return $this->repository
-                            ->with('shop')
-                            //                            ->where('language', $language)
-                            ->whereNotNull('id');
-                        break;
-                }
-            } else {
-                if ($request->shop_id) {
-                    return $this->repository
-                        ->with('shop')
-                        ->where('shop_id', '=', $request->shop_id)
-                        //                        ->where('language', $language)
-                        ->whereNotNull('id');
-                } else {
-                    return $this->repository
-                        ->with('shop')
-                        //                        ->where('language', $language)
-                        ->whereNotNull('id');
-                }
-            }
+            $faqsQuery = $this->repository->query()->paginate($request->limit ?? 10);
+            return $faqsQuery;
         } catch (MarvelException $e) {
             throw new MarvelException(SOMETHING_WENT_WRONG, $e->getMessage());
         }
@@ -213,7 +119,7 @@ class FaqsController extends CoreController
      *     @OA\Response(response=422, description="Validation error")
      * )
      */
-    public function store(Request $request)
+    public function store(CreateFaqsRequest $request)
     {
         try {
             $faq = $this->repository->storeFaqs($request);

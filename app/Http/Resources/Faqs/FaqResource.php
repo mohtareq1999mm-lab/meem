@@ -18,6 +18,8 @@ class FaqResource extends JsonResource
             'id'              => $this->id,
             'faq_title'       => $this->getTranslation('faq_title', app()->getLocale()),
             'faq_description' => $this->getTranslation('faq_description', app()->getLocale()),
+            'status'          => (int) $this->status,
+            'order'           => (int) $this->order,
         ];
     }
 }

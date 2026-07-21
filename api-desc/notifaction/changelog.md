@@ -8,11 +8,15 @@
 - Unread-only endpoint
 - Mark as read (single + all)
 - Delete (single + all)
-- `auth:sanctum` + `admin` middleware + Spatie permissions
+- `auth:sanctum` + Spatie permissions middleware
 - 3 event-driven notification types (OrderCreated, ContactMessageReceived, AdminLoggedIn)
 - Custom `formatNotification()` extracting typed fields from data JSON
-- 34 test methods covering auth, permissions, CRUD, events, and JSON structure
+- 38 test methods covering auth, permissions, CRUD, events, and JSON structure
+
+### Fixed
+- Removed non-existent `admin` middleware from `NotificationController` (caused "Target class [admin] does not exist" on all endpoints)
+- Registered `SendAdminLoginNotification` listener in `EventServiceProvider` (was missing, `AdminLoggedIn` event never created notifications)
+- Added 6 missing translation keys to `resources/lang/en/message.php`
 
 ### Known Issues
-- All 6 translation keys missing from EN and AR language files
 - No real-time delivery (polling via frontend)

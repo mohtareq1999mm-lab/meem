@@ -94,7 +94,6 @@ User-scoped — deletes only authenticated user's notifications.
 ## Business Rules
 
 1. **User-scoped:** All operations scoped to `$user->notifications()` or `$user->unreadNotifications()`
-2. **Permissions:** `VIEW_NOTIFICATIONS` for reads, `MANAGE_NOTIFICATIONS` for writes (mark/delete)
-3. **Admin gate:** `auth:sanctum` + `admin` middleware (user.type must be 'admin')
-4. **Notification format:** Custom `formatNotification()` extracts `title`, `message`, `icon`, `resource_type`, `resource_id`, `action_url` from the `data` JSON column
-5. **Events trigger creation:** Notifications are created by event listeners, not via this API
+2. **Permissions:** `view-notifications` for reads, `manage-notifications` for writes (mark/delete)
+3. **Notification format:** Custom `formatNotification()` extracts `title`, `message`, `icon`, `resource_type`, `resource_id`, `action_url` from the `data` JSON column
+4. **Events trigger creation:** Notifications are created by event listeners, not via this API

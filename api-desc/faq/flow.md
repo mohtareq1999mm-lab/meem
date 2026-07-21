@@ -13,11 +13,9 @@ Client → GET /api/v1/faqs?order=faq_title&sortedBy=asc&page=1&limit=10
          ↓
     FaqsController@fetchFAQs(Request)
          ↓
-    Check user role:
-      ├─ SUPER_ADMIN → repository with shop, all records
-      ├─ STORE_OWNER → repository with shop, scoped to user's shops (with permission check)
-      ├─ STAFF → repository with shop, scoped to request.shop_id
-      └─ Other/Guest → repository with shop, all records (or filter by shop_id)
+    Simplified query (role-based scoping removed):
+      repository->query()->paginate(limit)
+      (shop_id/user_id columns don't exist in migration)
          ↓
     Apply ordering:
       - if order is valid column → orderBy(order, sortedBy)
@@ -37,18 +35,19 @@ Client → POST /api/v1/faqs (JSON: { faq_title: {en, ar}, faq_description: {en,
          ↓
     [auth:sanctum] → [permission:create-faq]
          ↓
-    CreateFaqsRequest → validation (title array, title.* unique, description array)
+    CreateFaqsRequest → validation (title array, title.* unique, description array, status optional)
          ↓
     Fail? → 422 with field errors
          ↓
-    FaqsController@store($request)
+    FaqsController@store(CreateFaqsRequest $request)  [type-hinted]
          ↓
     FaqsRepository::storeFaqs($request)
          ↓
     1. Extract faq_title + faq_description from request
-    2. Faqs::create($data)
+    2. status (only if present — DB defaults to 1)
+    3. Faqs::create($data)
          ↓
-    FaqResource::make($faq)
+    FaqResource::make($faq)  → includes status and order
          ↓
     Return: { status:201, message, success:true, data }
 ```

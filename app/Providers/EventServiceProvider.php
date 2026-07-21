@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Events\AdminLoggedIn;
 use App\Events\ContactMessageReceived;
 use App\Events\OrderCancelled;
 use App\Events\OrderCreated;
@@ -10,6 +11,7 @@ use App\Events\PaymentFailed;
 use App\Events\PaymentSucceeded;
 use App\Events\UserRolesUpdated;
 use App\Listeners\LogUserRolesUpdated;
+use App\Listeners\SendAdminLoginNotification;
 use App\Listeners\SendContactMessageNotification;
 use App\Listeners\RestoreProductInventory;
 use App\Listeners\SendNewOrderNotification;
@@ -52,6 +54,9 @@ class EventServiceProvider extends ServiceProvider
      * @var array
      */
     protected $listen = [
+        AdminLoggedIn::class => [
+            SendAdminLoginNotification::class,
+        ],
         ContactMessageReceived::class => [
             SendContactMessageNotification::class,
         ],

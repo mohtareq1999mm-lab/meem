@@ -59,11 +59,14 @@ class FaqsRepository extends BaseRepository
     public function storeFaqs($request)
     {
         try {
-           
+
 
             $faqs                    = [];
             $faqs['faq_title']       = $request['faq_title'];
             $faqs['faq_description'] = $request['faq_description'];
+            if ($request->has('status')) {
+                $faqs['status'] = $request['status'];
+            }
             $faqs = $this->create($faqs);
             return $faqs;
         } catch (Exception $th) {

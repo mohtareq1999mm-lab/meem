@@ -16,7 +16,6 @@ class NotificationController extends Controller
     public function __construct()
     {
         $this->middleware('auth:sanctum');
-        $this->middleware('admin');
 
         $this->middleware('permission:' . Permission::VIEW_NOTIFICATIONS)->only(['index', 'unread']);
         $this->middleware('permission:' . Permission::MANAGE_NOTIFICATIONS)->except(['index', 'unread']);

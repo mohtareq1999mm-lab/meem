@@ -101,6 +101,8 @@ class FaqResourceTest extends TestCase
         $this->assertArrayHasKey('id', $item);
         $this->assertArrayHasKey('faq_title', $item);
         $this->assertArrayHasKey('faq_description', $item);
+        $this->assertArrayHasKey('status', $item);
+        $this->assertArrayHasKey('order', $item);
     }
 
     /** @test */
@@ -128,6 +130,8 @@ class FaqResourceTest extends TestCase
                 'id',
                 'faq_title',
                 'faq_description',
+                'status',
+                'order',
             ],
         ]);
     }
@@ -140,8 +144,8 @@ class FaqResourceTest extends TestCase
         $response = $this->getJson(self::PREFIX . "/faqs/{$faq->id}");
 
         $data = $response->json('data');
-        $this->assertArrayNotHasKey('status', $data);
-        $this->assertArrayNotHasKey('order', $data);
+        $this->assertArrayHasKey('status', $data);
+        $this->assertArrayHasKey('order', $data);
         $this->assertArrayNotHasKey('deleted_at', $data);
     }
 

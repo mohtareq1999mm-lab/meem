@@ -8,7 +8,6 @@ Extends `App\Http\Controllers\Controller`. Uses `Marvel\Traits\ApiResponse`.
 
 ```php
 $this->middleware('auth:sanctum');
-$this->middleware('admin');  // checks user->type === 'admin'
 $this->middleware('permission:' . Permission::VIEW_NOTIFICATIONS)->only(['index', 'unread']);
 $this->middleware('permission:' . Permission::MANAGE_NOTIFICATIONS)->except(['index', 'unread']);
 ```
@@ -41,19 +40,6 @@ Extracts from `$notification->data` JSON:
 | `created_at` | `$notification->created_at?->toIso8601String()` | |
 | `read_at` | `$notification->read_at?->toIso8601String()` | |
 
-## AdminMiddleware - `app/Http/Middleware/AdminMiddleware.php`
-
-```php
-public function handle(Request $request, Closure $next): Response
-{
-    $user = $request->user();
-    if (!$user || $user->type !== UserType::ADMIN->value) {
-        abort(403, 'NOT_AUTHORIZED');
-    }
-    return $next($request);
-}
-```
-
 ## Event-Driven Notification Types
 
 | Event | Notification Class | Title | resource_type |
@@ -62,18 +48,18 @@ public function handle(Request $request, Closure $next): Response
 | `ContactMessageReceived` | `NewContactMessageNotification` | "New Contact Message" | contact |
 | `AdminLoggedIn` | `AdminLoggedInNotification` | "Admin Login" | admin |
 
-## Translations (MISSING)
+## Translations (EN)
 
-All 6 constants are defined in `constants.php` but **missing** from both `resources/lang/en/message.php` and `resources/lang/ar/message.php`:
+Present in `resources/lang/en/message.php`:
 
-| Constant | Key |
-|----------|-----|
-| NOTIFICATIONS_FETCHED | MESSAGE.NOTIFICATIONS_FETCHED |
-| UNREAD_NOTIFICATIONS_FETCHED | MESSAGE.UNREAD_NOTIFICATIONS_FETCHED |
-| NOTIFICATION_MARKED_READ | MESSAGE.NOTIFICATION_MARKED_READ |
-| ALL_NOTIFICATIONS_MARKED_READ | MESSAGE.ALL_NOTIFICATIONS_MARKED_READ |
-| NOTIFICATION_DELETED | MESSAGE.NOTIFICATION_DELETED |
-| ALL_NOTIFICATIONS_DELETED | MESSAGE.ALL_NOTIFICATIONS_DELETED |
+| Constant | Key | Value |
+|----------|-----|-------|
+| NOTIFICATIONS_FETCHED | MESSAGE.NOTIFICATIONS_FETCHED | Notifications fetched successfully. |
+| UNREAD_NOTIFICATIONS_FETCHED | MESSAGE.UNREAD_NOTIFICATIONS_FETCHED | Unread notifications fetched successfully. |
+| NOTIFICATION_MARKED_READ | MESSAGE.NOTIFICATION_MARKED_READ | Notification marked as read successfully. |
+| ALL_NOTIFICATIONS_MARKED_READ | MESSAGE.ALL_NOTIFICATIONS_MARKED_READ | All notifications marked as read successfully. |
+| NOTIFICATION_DELETED | MESSAGE.NOTIFICATION_DELETED | Notification deleted successfully. |
+| ALL_NOTIFICATIONS_DELETED | MESSAGE.ALL_NOTIFICATIONS_DELETED | All notifications deleted successfully. |
 
 ## Permissions
 

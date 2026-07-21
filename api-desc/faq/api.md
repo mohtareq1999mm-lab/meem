@@ -18,9 +18,8 @@ Paginated list of FAQs with ordering and shop scoping.
 |-----------|------|---------|-------------|
 | page | int | 1 | Page number |
 | limit | int | 10 | Items per page |
-| order | string | - | Sort column (id, faq_title, faq_type, issued_by, status, created_at, updated_at) |
+| order | string | - | Sort column (id, faq_title, status, created_at, updated_at) |
 | sortedBy | string | asc | Sort direction (asc, desc) |
-| shop_id | int | - | Filter by shop (staff/store owner scope) |
 
 **Response 200**:
 ```json
@@ -33,7 +32,9 @@ Paginated list of FAQs with ordering and shop scoping.
       {
         "id": 1,
         "faq_title": "How to return a product?",
-        "faq_description": "You can return any product within 30 days of purchase."
+        "faq_description": "You can return any product within 30 days of purchase.",
+        "status": 1,
+        "order": 0
       }
     ],
     "page": 1,
@@ -67,10 +68,7 @@ curl -X GET "http://example.com/api/v1/faqs?order=faq_title&sortedBy=asc" \
 
 **Business Rules**:
 - Results on `faqs.index` return translated strings for the current locale (not raw JSON)
-- Super admin sees all FAQs across all shops
-- Store owner sees FAQs scoped to their shops
-- Staff sees FAQs scoped to their assigned shop
-- Unauthenticated requests with `shop_id` filter by shop
+- All authenticated users see all FAQs (role-based scoping removed — shop_id/user_id columns don't exist in migration)
 
 ---
 
@@ -88,7 +86,7 @@ Create a new FAQ.
 | faq_title.* | string | required | Per-locale title (min:3, max:1000, unique per locale) |
 | faq_description | object | required | Translatable description (e.g., `{"en": "Details...", "ar": "التفاصيل..."}`) |
 | faq_description.* | string | required | Per-locale description (min:3, max:1000) |
-| shop_id | int | sometimes | Shop ID for multi-vendor setups |
+| status | int | sometimes | 0 or 1 (defaults to 1) |
 
 **Validation Rules**:
 | Field | Rules |
@@ -97,7 +95,7 @@ Create a new FAQ.
 | faq_title.* | required, string, min:3, max:1000, unique_translation:faqs |
 | faq_description | required, array |
 | faq_description.* | required, string, min:3, max:1000 |
-| shop_id | nullable, exists:shops,id |
+| status | sometimes, in:0,1 |
 
 **Response 201**:
 ```json
@@ -114,7 +112,9 @@ Create a new FAQ.
     "faq_description": {
       "en": "You can return any product within 30 days.",
       "ar": "يمكنك إرجاع أي منتج خلال 30 يومًا."
-    }
+    },
+    "status": 1,
+    "order": 5
   }
 }
 ```
@@ -161,9 +161,10 @@ Get a single FAQ by ID.
     "faq_description": {
       "en": "You can return any product within 30 days.",
       "ar": "يمكنك إرجاع أي منتج خلال 30 يومًا."
-    }
+    },
+    "status": 1,
+    "order": 0
   }
-}
 ```
 
 **Response 404**:
@@ -226,7 +227,9 @@ Update an existing FAQ.
     "faq_description": {
       "en": "Updated description.",
       "ar": "الوصف المُحدّث."
-    }
+    },
+    "status": 1,
+    "order": 0
   }
 }
 ```
@@ -325,7 +328,9 @@ List all active FAQs (no authentication required).
     {
       "id": 1,
       "faq_title": "How to return a product?",
-      "faq_description": "You can return any product within 30 days."
+      "faq_description": "You can return any product within 30 days.",
+      "status": 1,
+      "order": 0
     }
   ]
 }

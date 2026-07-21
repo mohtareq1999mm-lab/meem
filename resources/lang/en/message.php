@@ -97,6 +97,14 @@ return [
     'MESSAGE.ALL_CONTACTS_DELETED_SUCCESSFULLY' => 'All contacts deleted successfully',
     'MESSAGE.ALL_READ_CONTACTS_DELETED_SUCCESSFULLY' => 'All read contacts deleted successfully',
 
+    // Notifications
+    'MESSAGE.NOTIFICATIONS_FETCHED' => 'Notifications fetched successfully.',
+    'MESSAGE.UNREAD_NOTIFICATIONS_FETCHED' => 'Unread notifications fetched successfully.',
+    'MESSAGE.NOTIFICATION_MARKED_READ' => 'Notification marked as read successfully.',
+    'MESSAGE.ALL_NOTIFICATIONS_MARKED_READ' => 'All notifications marked as read successfully.',
+    'MESSAGE.NOTIFICATION_DELETED' => 'Notification deleted successfully.',
+    'MESSAGE.ALL_NOTIFICATIONS_DELETED' => 'All notifications deleted successfully.',
+
     // General
     'MESSAGE.WRONG_CSV' => 'Invalid CSV format. Please check the file and try again.',
     'MESSAGE.NOT_AUTHORIZED' => 'You are not authorized to perform this action',

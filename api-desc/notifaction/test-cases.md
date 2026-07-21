@@ -2,12 +2,12 @@
 
 ## Current Coverage
 
-**File:** `tests/Feature/NotificationTest.php` (844 lines, 34 tests)
+**File:** `tests/Feature/NotificationTest.php` (845 lines, 38 tests)
 
 | Category | Tests | Coverage |
 |----------|-------|----------|
 | Authentication (unauthenticated) | 6 | All 6 endpoints return 401 |
-| Authorization (non-admin) | 3 | List, mark, delete return 403 |
+| Authorization (non-admin / no permission) | 3 | List, mark, delete return 403 |
 | Permission (view-only) | 5 | Mark/delete blocked, list allowed |
 | Fetch notifications | 4 | Pagination, scoping, empty state |
 | Unread | 2 | Filters read, empty state |
@@ -21,7 +21,7 @@
 ## What's Covered
 
 ✅ Unauthenticated blocked on all 6 endpoints
-✅ Non-admin blocked (user.type !== 'admin')
+✅ Non-admin blocked (users without permissions)
 ✅ View-only permission blocked for write operations
 ✅ Pagination on list
 ✅ User-scoping (own notifications only)
@@ -32,6 +32,7 @@
 ✅ Delete all user-scoped
 ✅ Event → notification creation (3 event types)
 ✅ Full JSON response structure validation
+✅ `AdminLoggedIn` event listener registration
 
 ## Recommended Additional Tests
 

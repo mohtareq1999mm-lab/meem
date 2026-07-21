@@ -75,17 +75,16 @@ FaqsController
 │
 ├── index(Request)
 │   ├── fetchFAQs(Request)
-│   │   ├── SUPER_ADMIN → all FAQs with shop
-│   │   ├── STORE_OWNER → FAQs scoped to shops (with permission check)
-│   │   ├── STAFF → FAQs scoped to assigned shop
-│   │   ├── Authenticated (other) → all FAQs with shop
-│   │   └── Guest → filter by shop_id if provided
+│   │   └── Simplified: repository->query()->paginate(limit)
+│   │       (Role-based scoping removed — shop_id/user_id columns
+│   │        don't exist in the faqs migration)
 │   ├── orderBy(order, sortedBy)
 │   └── paginate(limit) → FaqResource::collection()
 │
-├── store(Request)
+├── store(CreateFaqsRequest)  [was Request, now type-hinted]
 │   └── FaqsRepository::storeFaqs($request)
 │       ├── extract faq_title + faq_description
+│       ├── status (only if present — DB defaults to 1)
 │       └── Faqs::create()
 │
 ├── show($id)
@@ -189,6 +188,8 @@ The model uses `Illuminate\Database\Eloquent\SoftDeletes`.
 | id | int | FAQ ID |
 | faq_title | string/object | On `faqs.index`: translated string for current locale. On other routes: raw JSON with all locales |
 | faq_description | string/object | Same behavior as faq_title |
+| status | int | 1 = active, 0 = inactive (was missing — fixed 2026-07-21) |
+| order | int | Display order (was missing — fixed 2026-07-21) |
 
 ### Public FaqResource (`app/Http/Resources/Faqs/FaqResource.php`)
 
@@ -197,6 +198,8 @@ The model uses `Illuminate\Database\Eloquent\SoftDeletes`.
 | id | int | FAQ ID |
 | faq_title | string | Translated string for current locale |
 | faq_description | string | Translated string for current locale |
+| status | int | 1 = active, 0 = inactive (was missing — fixed 2026-07-21) |
+| order | int | Display order (was missing — fixed 2026-07-21) |
 
 ## Permissions
 

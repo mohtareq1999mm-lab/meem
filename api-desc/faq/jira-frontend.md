@@ -10,6 +10,8 @@
 - Loading skeleton state
 - Empty state when no FAQs found
 - Drag-and-drop reorder handles
+- **Response now includes** `status` (int: 1=active, 0=inactive) and `order` (int) on every FAQ object
+- Show status badge (Active/Inactive) and order number in table
 
 ---
 
@@ -20,7 +22,8 @@
 **Fields:**
 - `faq_title` — multilingual (en, ar) text inputs
 - `faq_description` — multilingual (en, ar) textareas
-- `status` — toggle switch
+- `status` — toggle switch (optional on create, defaults to Active)
+- No `shop_id` field — shop scoping removed, all users see all FAQs
 
 ---
 
@@ -49,6 +52,7 @@
 - Smooth open/close animation
 - Locale-aware content
 - Mobile-responsive layout
+- Each item now includes `status` and `order` in response — display order can be shown if needed
 
 ---
 
