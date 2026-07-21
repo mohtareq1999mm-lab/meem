@@ -430,7 +430,6 @@ Route::group(
         Route::delete('cms-pages/{id}', [CmsPageController::class, 'destroy']);
 
         // Puck page builder save endpoint (with upsert)
-        Route::post('puck/page', [CmsPageController::class, 'storePuckPage']);
         Route::post('content-pages/{content_page}/attach-sections', [ContentPageController::class, 'attachSections']);
         Route::patch('content-pages/{content_page}/toggle-active', [ContentPageController::class, 'toggleActive']);
         Route::apiResource('content-pages', ContentPageController::class);

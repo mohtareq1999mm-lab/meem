@@ -100,6 +100,41 @@ Route::prefix('v1/general')->middleware('api')->group(function () {
     Route::get('fast-shipping/orders', [FastShippingController::class, 'orders'])->middleware('auth:sanctum');
 
     Route::get('orders', [OrderController::class, 'index'])->middleware('auth:sanctum');
+Route::get('/enum-types', function () {
+    return response()->json(
+        [
+            'discount-type' => \Marvel\Enums\DiscountType::getValues(),
+            'coupon-type' => \Marvel\Enums\CouponType::getValues(),
+            'product-type' => \Marvel\Enums\ProductType::getValues(),
+            'promotion-type' => \Marvel\Enums\PromotionType::getValues(),
+            'promotion-mount-type' => \Marvel\Enums\PromotionMountType::getValues(),
+            'flash-sale-type' => \Marvel\Enums\FlashSaleType::getValues(),
+        ],
+        200
+    );
+});
 
-   
+
+
+Route::get('product-type', function () {
+    return [
+        'best_product_sales',
+        'brands_product',
+        'new_arrivals',
+        'all_product_discounts',
+        'product_discount_today_or_low_qty',
+        'flash_sales_product',
+        'flash_sales_end_today',
+        'product_for_parent_category',
+        'flash_sales_end_week',
+    ];
+});
+Route::get('check-card-payment', function () {
+    return [
+        'CardNumber' => '2223000000000007',
+        'CardExpiryMonthand year' => '01/39',
+        'CardCVV' => '100',
+    ];
+});
+
 });
