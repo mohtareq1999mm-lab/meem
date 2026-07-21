@@ -171,6 +171,29 @@ Clear the entire cart. If a coupon is applied and `confirm` is not provided, ret
 
 ---
 
+## CartResource Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | integer | Cart ID |
+| user_id | integer | User ID |
+| coupon | object\|null | Full coupon object (CouponResource) when coupon applied |
+| coupon_code | string\|null | Raw coupon code string |
+| status | string | active, checked_out, expired |
+| reserved_at | datetime\|null | Last inventory reservation timestamp |
+| expires_at | datetime\|null | Reservation expiry (3 days) |
+| total_items | integer\|null | Number of unique items in cart |
+| total_quantity | integer\|null | Sum of all item quantities |
+| total_price | float | Sum of all items' total_price (before coupon discount) |
+| subtotal | float | Same as total_price (alias for clarity) |
+| coupon_discount | float | Calculated coupon discount amount (0 if no coupon) |
+| total_after_coupon | float | subtotal - coupon_discount (min 0) |
+| normal_items_count | integer | Count of SCHEDULED shipping items |
+| fast_items_count | integer | Count of FAST shipping items |
+| normal_items | array | CartItemResource array (SCHEDULED) |
+| fast_items | array | CartItemResource array (FAST) |
+| has_eligible_promotion | boolean | Whether cart qualifies for a promotion |
+
 ## Business Rules
 
 - Each user has exactly one active cart at a time (created on first add)
@@ -182,3 +205,6 @@ Clear the entire cart. If a coupon is applied and `confirm` is not provided, ret
 - Promotion discounts are cleared on any cart mutation via `revalidatePromotion()`
 - Gift items (from promotions) have price/total_price = 0 and is_gift = true
 - Coupon applied to cart is checked before clearing — requires `?confirm=true` to proceed
+- Coupon discount is calculated via `CouponCalculator::calculate()` using the coupon model and subtotal
+- `coupon_discount` supports PERCENTAGE (with optional max_discount_amount cap) and FIXED_RATE types
+- `total_after_coupon` is floored at 0 (never negative)

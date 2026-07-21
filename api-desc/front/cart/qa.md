@@ -39,9 +39,14 @@
 | S1 | Index top-level | status, message, success, data | Correct keys |
 | S2 | Index pagination | page, current_page, total, per_page, etc. | Correct types |
 | S3 | Cart object | id, user_id, coupon, total_price, normal_items, fast_items, etc. | Correct types |
-| S4 | CartItem object | id, product_id, quantity, price, total_price, shipping_method, product | Correct types |
-| S5 | Product in item | id, name, slug, thumbnail | Correct types |
-| S6 | Store response | 201, CartResource in data | Correct |
+| S4 | Cart object coupon fields | subtotal, coupon_discount, total_after_coupon, coupon_code, coupon | Correct types and values |
+| S5 | CartItem object | id, product_id, quantity, price, total_price, shipping_method, product | Correct types |
+| S6 | Product in item | id, name, slug, thumbnail | Correct types |
+| S7 | Store response | 201, CartResource in data | Correct |
+| S8 | Coupon discount zero when no coupon | No coupon applied | coupon_discount = 0, total_after_coupon = subtotal |
+| S9 | Coupon discount positive with percentage coupon | 10% off coupon applied | coupon_discount = 10% of subtotal |
+| S10 | Coupon discount capped by max_discount_amount | 50% off with max $10 | coupon_discount <= 10 |
+| S11 | Coupon discount with fixed_rate coupon | $5 off coupon applied | coupon_discount = 5.00 |
 
 ---
 

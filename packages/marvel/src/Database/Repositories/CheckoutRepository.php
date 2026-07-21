@@ -3,15 +3,19 @@
 
 namespace Marvel\Database\Repositories;
 
+use App\Services\Coupon\CouponCalculator;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Arr;
+use Marvel\Database\Models\Cart;
+use Marvel\Database\Models\Coupon;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\Tax;
 use Marvel\Database\Models\Shipping;
 use Marvel\Database\Models\Settings;
 use Marvel\Database\Models\User;
 use Marvel\Database\Models\Variation;
+use Marvel\Enums\DiscountType;
 use Marvel\Traits\WalletsTrait;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -38,6 +42,22 @@ class CheckoutRepository
         $shipping_charge = !empty($settings['options']['freeShipping']) && $settings['options']['freeShippingAmount'] <= $amount ? 0 : $this->calculateShippingCharge($request, $amount);
         $tax = $this->calculateTax($request, $shipping_charge, $amount);
         $total = $amount + $tax + $shipping_charge;
+
+        $couponCode = null;
+        $couponDiscount = 0.0;
+        $cart = $user ? Cart::where('user_id', $user->id)->where('status', 'active')->first() : null;
+        if ($cart && $cart->coupon) {
+            $couponCode = $cart->coupon;
+            $couponModel = Coupon::where('code', $couponCode)->first();
+            if ($couponModel) {
+                $calculation = CouponCalculator::calculate($couponModel, $amount);
+                $couponDiscount = $calculation['discountAmount'];
+                if ($calculation['freeShipping']) {
+                    $shipping_charge = 0;
+                }
+            }
+        }
+
         if ($total < $minimumOrderAmount) {
             throw new HttpException(400, 'Minimum order amount is ' . $minimumOrderAmount);
         }
@@ -46,7 +66,9 @@ class CheckoutRepository
             'shipping_charge'      => $shipping_charge,
             'unavailable_products' => $unavailable_products,
             'wallet_amount' => isset($wallet->available_points) ? $wallet->available_points : 0,
-            'wallet_currency' => isset($wallet->available_points) ? $this->walletPointsToCurrency($wallet->available_points) : 0
+            'wallet_currency' => isset($wallet->available_points) ? $this->walletPointsToCurrency($wallet->available_points) : 0,
+            'coupon_code'    => $couponCode,
+            'coupon_discount' => $couponDiscount,
         ];
     }
 

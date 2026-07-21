@@ -1,5 +1,17 @@
 # Cart Module — Changelog (Authenticated API)
 
+## [1.1.0] — 2026-07-21
+
+### Added
+- `subtotal` field in CartResource (alias for total_price, for clarity in coupon context)
+- `coupon_discount` field in CartResource — calculated via CouponCalculator (supports percentage and fixed_rate)
+- `total_after_coupon` field in CartResource — subtotal minus coupon discount (floored at 0)
+- CartResource now computes coupon discount at response time using the stored coupon code
+- Dependencies: CouponCalculator, CouponResource, PromotionService integrated into CartResource
+
+### Changed
+- CartResource response now includes subtotal, coupon_discount, and total_after_coupon in all cart responses
+
 ## [1.0.0] — 2026-07-20
 
 ### Added

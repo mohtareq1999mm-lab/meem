@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Cart module manages the authenticated user's shopping cart. It handles item addition/updating/deletion, inventory reservation with 3-day TTL, promotion/pricing enrichment, coupon application, shipping method splitting (SCHEDULED vs FAST), and bulk operations.
+The Cart module manages the authenticated user's shopping cart. It handles item addition/updating/deletion, inventory reservation with 3-day TTL, promotion/pricing enrichment, coupon application and discount calculation, shipping method splitting (SCHEDULED vs FAST), and bulk operations. The CartResource response includes `subtotal`, `coupon_discount`, and `total_after_coupon` fields for frontend display of coupon savings.
 
 ## Key Files
 

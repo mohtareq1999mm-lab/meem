@@ -60,6 +60,24 @@ Client → POST /api/v1/cart { item: { product_id: 10, quantity: 2, shipping_met
          ↓
     CartResource::make($cart->load(['items.product', ...]))
          ↓
+    [CartResource::toArray]
+         ↓
+    Items split by shipping_method → normal_items (SCHEDULED), fast_items (FAST)
+         ↓
+    Coupon model = Coupon::where('code', $cart->coupon)->first()
+         ├─ EXISTS? YES → CouponCalculator::calculate($couponModel, $subtotal)
+         │                Returns: { discountAmount, finalPrice, discountType, freeShipping }
+         │                → coupon_discount = discountAmount
+         │                → total_after_coupon = subtotal - coupon_discount
+         └─ EXISTS? NO  → coupon_discount = 0, total_after_coupon = subtotal
+         ↓
+    PromotionService::hasEligiblePromotion($cart) → has_eligible_promotion
+         ↓
+    Response fields:
+      total_price = 99.98 (raw sum before coupon)
+      subtotal = 99.98
+      coupon_discount = 9.998 (10% of 99.98, or 0 if no coupon)
+      total_after_coupon = 89.98 (floored at 0)
     Response: 201 { CartResource }
 ```
 
@@ -117,6 +135,11 @@ Client → PUT /api/v1/cart/update-item { item: { product_id: 10, quantity: 1 } 
          ↓
     DB::commit
          ↓
+    CartResource::make($cart->load(...))
+         ↓
+    [CartResource coupon calculation — same as Flow 1]
+    Recalculates coupon_discount based on new subtotal
+         ↓
     Response: 200 { CartResource }
 ```
 
@@ -140,10 +163,12 @@ Client → DELETE /api/v1/cart/delete-item/1
     Product::whereKey(10)->lockForUpdate()
     releaseStock: reserved_quantity -= delta
     $item->delete()
-    CartItem count for this cart = 0 → clear coupon
+    CartItem count for this cart = 0 → clear coupon (set cart.coupon = null)
          ↓
     revalidatePromotion($cart)
     Cart total_price = items sum
+         ↓
+    [No coupon → coupon_discount = 0, total_after_coupon = total_price]
          ↓
     Response: 200 { "message": "Cart item deleted successfully", "success": true }
 ```

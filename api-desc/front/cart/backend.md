@@ -120,9 +120,11 @@ DELETE /api/v1/cart/delete-items?confirm=false
 | `CartController` | index, store, show, update, deleteItemFromCart, destroy, pluckItemsToCart | HTTP entry points |
 | `CartRepository` | storeCart, updateCart, revalidatePromotion, syncItems | Persistence logic |
 | `CartInventoryService` | reserveItem, releaseItem, releaseCart, finalizeCart, expireCarts | Inventory management |
-| `CartResource` | toArray | Response transformation with shipping split |
+| `CartResource` | toArray | Response transformation with shipping split + coupon discount display |
 | `CartItemResource` | toArray | Single cart item response |
 | `ProductPricingService` | calculateProductCurrentPrice, calculateVariantCurrentPrice | Price with discounts/flash sales |
+| `CouponCalculator` | calculate | Static coupon discount calculation (percentage/fixed_rate) |
+| `CouponService` | addCouponToCart | Coupon validation + cart application orchestration |
 
 ## Model Schema
 

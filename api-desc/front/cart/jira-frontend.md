@@ -17,7 +17,9 @@
 - [ ] Cart items displayed grouped by shipping method (normal_items, fast_items)
 - [ ] Each item shows: product thumbnail, name, price, quantity selector, shipping method badge
 - [ ] Variant attributes shown (e.g., Size: L, Color: Red)
-- [ ] Cart summary: total items, total quantity, total price
+- [ ] Cart summary: total items, total quantity, total price, subtotal, coupon discount, total after coupon
+- [ ] Coupon discount shown as savings line item when `coupon_discount > 0`
+- [ ] `total_after_coupon` displayed as the effective total when coupon applied
 - [ ] Promotion eligibility indicator (`has_eligible_promotion`)
 - [ ] Applied coupon display (if `coupon` object present)
 - [ ] **Loading state:** Skeleton list of items

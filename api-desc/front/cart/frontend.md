@@ -32,6 +32,9 @@
         "total_items": 3,
         "total_quantity": 5,
         "total_price": 149.97,
+        "subtotal": 149.97,
+        "coupon_discount": 0,
+        "total_after_coupon": 149.97,
         "normal_items_count": 2,
         "fast_items_count": 1,
         "has_eligible_promotion": false,
@@ -94,6 +97,46 @@
     "prev_page_url": null,
     "last_page_url": null,
     "first_page_url": "http://example.com/api/v1/cart?page=1"
+  }
+}
+```
+
+**Response 200 (with coupon applied):**
+```json
+{
+  "status": 200,
+  "message": "Data fetched successfully",
+  "success": true,
+  "data": {
+    "data": [
+      {
+        "id": 1,
+        "user_id": 42,
+        "coupon": {
+          "id": 5,
+          "code": "SUMMER10",
+          "name": "Summer Sale 10%",
+          "slug": "summer-sale-10",
+          "discount_type": "percentage",
+          "discount": 10,
+          "max_discount_amount": 50,
+          "status": true
+        },
+        "coupon_code": "SUMMER10",
+        "status": "active",
+        "total_items": 3,
+        "total_quantity": 5,
+        "total_price": 149.97,
+        "subtotal": 149.97,
+        "coupon_discount": 14.997,
+        "total_after_coupon": 134.97,
+        "normal_items_count": 2,
+        "fast_items_count": 1,
+        "has_eligible_promotion": false,
+        "normal_items": [ /* ... */ ],
+        "fast_items": [ /* ... */ ]
+      }
+    ]
   }
 }
 ```
@@ -301,4 +344,16 @@ Note: Mode is `set` — quantity replaces existing value (not additive).
 The `normal_items` and `fast_items` arrays separate items by shipping method. Render them in separate sections with different delivery expectations.
 
 ### Coupon Integration
-When a coupon is applied, `coupon` object contains full coupon info and `coupon_code` has the raw code. Display applied coupon with remove option (clearing cart or removing coupon via coupon endpoint).
+When a coupon is applied, `coupon` object contains full coupon info, `coupon_code` has the raw code, and `coupon_discount` shows the calculated discount amount. Display applied coupon with:
+- Coupon code and name
+- Discount amount (`coupon_discount`) — shown as savings line item
+- Total after coupon (`total_after_coupon`) — shown as the effective total
+- Remove option (clearing cart or removing coupon via coupon endpoint)
+
+### Coupon Discount Display
+| Field | When Coupon Applied | When No Coupon |
+|-------|-------------------|----------------|
+| `subtotal` | Sum of item prices before discount | Same as `total_price` |
+| `coupon_discount` | Calculated discount value (> 0) | 0 |
+| `total_after_coupon` | `subtotal - coupon_discount` | Same as `total_price` |
+| `total_price` | Always the raw sum of items (before coupon) | Always the raw sum of items |

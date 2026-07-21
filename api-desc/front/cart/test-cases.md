@@ -66,6 +66,19 @@
 | 3 | `test_cart_item_structure` | Feature | CartItemResource fields |
 | 4 | `test_store_response_structure` | Feature | 201, CartResource |
 
+### Coupon Discount Tests
+
+| # | Test Name | Type | Description |
+|---|-----------|------|-------------|
+| 1 | `test_coupon_discount_zero_when_no_coupon` | Feature | No coupon → coupon_discount = 0 |
+| 2 | `test_coupon_discount_percentage` | Feature | 10% coupon → coupon_discount = 10% of subtotal |
+| 3 | `test_coupon_discount_fixed_rate` | Feature | $5 coupon → coupon_discount = 5.00 |
+| 4 | `test_coupon_discount_capped_by_max` | Feature | 50% with max $10 → discount capped at $10 |
+| 5 | `test_coupon_discount_free_shipping` | Feature | free_shipping type → coupon_discount = 0 (no price discount) |
+| 6 | `test_total_after_coupon_never_negative` | Feature | Discount > subtotal → total_after_coupon = 0 |
+| 7 | `test_coupon_discount_updates_when_coupon_removed` | Feature | Remove coupon → coupon_discount resets to 0 |
+| 8 | `test_coupon_resource_structure_in_cart` | Feature | coupon object present when coupon applied |
+
 ### Regression Tests
 
 | # | Test Name | Type | Description |
