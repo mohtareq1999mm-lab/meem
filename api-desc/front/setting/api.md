@@ -32,9 +32,11 @@ Fetch platform settings. Returns a singleton settings object with site informati
     "youtube": "https://youtube.com/@marvel",
     "phone": "+1-555-0123",
     "fast_shipping_page_publish": true,
+    "minimumOrderAmount": 0,
     "options": {
       "currency": "USD",
-      "tax_rate": 0.1
+      "tax_rate": 0.1,
+      "minimumOrderAmount": 0
     }
   }
 }
@@ -50,5 +52,6 @@ curl -X GET "http://example.com/api/v1/general/settings" \
 - Returns exactly one record (singleton pattern)
 - Translatable fields returned in request locale (Accept-Language header)
 - Media URLs are returned from Spatie Media Library collections (`logo-setting`, `favicon-setting`)
+- `minimumOrderAmount` exposed at top level (also inside `options`); used by checkout to enforce minimum order total
 - `options` field is free-form JSON for arbitrary configuration
 - No pagination needed (single object)

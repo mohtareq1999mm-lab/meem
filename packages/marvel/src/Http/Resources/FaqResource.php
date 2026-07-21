@@ -16,8 +16,8 @@ class FaqResource extends Resource
     {
         return [
             'id'              => $this->id,
-            'faq_title'       => request()->routeIs('faqs.index') ? $this->getTranslation('faq_title', app()->getLocale()) : $this->getRawOriginal('faq_title'),
-            'faq_description' => request()->routeIs('faqs.index') ? $this->getTranslation('faq_description', app()->getLocale()) : $this->getRawOriginal('faq_description'),
+            'faq_title'       => request()->routeIs('faqs.index') ? $this->getTranslation('faq_title', app()->getLocale()) : $this->faq_title,
+            'faq_description' => request()->routeIs('faqs.index') ? $this->getTranslation('faq_description', app()->getLocale()) : $this->faq_description,
             'status'          => (int) $this->status,
             'order'           => (int) $this->order,
         ];
