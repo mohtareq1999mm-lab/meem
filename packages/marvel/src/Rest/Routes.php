@@ -123,7 +123,7 @@ Route::middleware(['throttle:otp'])->group(function () {
 
 
 Route::middleware(["throttle:sensitive"])->group(function () {
-    Route::post('contacts/{id}/reply', [ContactController::class, 'sendReplay']);
+    Route::post('contacts/{id}/reply', [ContactController::class, 'sendReply']);
     Route::post('contact-us', [ContactController::class, 'store']);
     Route::delete('contacts/delete-all', [ContactController::class, 'deleteAll']);
     Route::delete('contacts/delete-all-read', [ContactController::class, 'deleteAllReadContacts']);
@@ -133,29 +133,11 @@ Route::middleware(["throttle:sensitive"])->group(function () {
 Route::get('settings', [SettingsController::class, 'index']);
 
 Route::get('me', [UserController::class, 'me']);
-Route::get('users', [UserController::class, 'index']);
-Route::get('users/{id}', [UserController::class, 'show']);
-Route::put('users/{id}', [UserController::class, 'update']);
 Route::post('admin-users/add', [UserController::class, 'adminAddUsers']);
 Route::put('admin-users/update-activation', [UserController::class, 'adminUpdateActivationUsers']);
 Route::delete('admin-users/delete/{id}', [UserController::class, 'adminDeleteUsers']);
 Route::put('admin-users/restore/{id}', [UserController::class, 'adminRestoreUser']);
 Route::delete('admin-users/delete-forever/{id}', [UserController::class, 'adminDeleteUsersForever']);
-
-
-Route::get('/roles', [RoleAndPermissionController::class, 'getAllRoles']);
-Route::get('/roles/{id}', [RoleAndPermissionController::class, 'showRole']);
-Route::post('/roles', [RoleAndPermissionController::class, 'addRole']);
-Route::put('/roles/{id}', [RoleAndPermissionController::class, 'updateRole']);
-Route::delete('/roles/{id}', [RoleAndPermissionController::class, 'destroyRole']);
-Route::post('/users/{userId}/assign-role', [RoleAndPermissionController::class, 'assignRole']);
-Route::post('/users/{userId}/remove-role', [RoleAndPermissionController::class, 'removeRoleFromUser']);
-
-Route::get('/permissions', [RoleAndPermissionController::class, 'getAllPermissions']);
-Route::post('/roles/{roleId}/permissions', [RoleAndPermissionController::class, 'assignPermissionToRole']);
-Route::post('/users/{userId}/permissions', [RoleAndPermissionController::class, 'givePermission']);
-Route::put('/users/{userId}/permissions', [RoleAndPermissionController::class, 'syncPermissions']);
-Route::delete('/users/{userId}/permissions', [RoleAndPermissionController::class, 'removePermission']);
 
 
 Route::put('brands/reorder', [BrandController::class, 'reorder']);

@@ -32,6 +32,10 @@ None
 **Current Status:**
 Production Ready
 
+**Revision History:**
+- Rev 1 (2026-07-17): Initial production audit — fixed 2 bugs (missing translations, showRole 500)
+- Rev 2 (2026-07-20): Full production hardening — fixed 8 bugs (duplicate routes, display_name false, missing fields, delete cascade, login missing fields)
+
 ---
 
 ## Admin Users
@@ -327,6 +331,36 @@ None
 
 **Current Status:**
 Not Started
+
+---
+
+## Contacts
+
+**Purpose:**
+Manage contact messages and replies — create, list, filter (read/unread/replied), reply, delete, bulk delete.
+
+**Dependency Confidence:**
+Dependencies partially verified from source code.
+
+**Depends On:**
+- Authentication — Sanctum (Verified)
+- Permissions — `permission:` middleware on admin endpoints (Verified)
+- Translation System — constant keys resolved via `__()` and `translateNotice()` (Verified)
+
+**Used By:**
+- Contact Forms — public contact form submission (Verified)
+- Admin Notifications — `ContactMessageReceived` event triggers `NewContactMessageNotification` (Verified)
+- Notifications — database + broadcast notifications for new contact messages (Verified)
+
+**Regression Required When Changed:**
+- Contacts
+- Notifications (if event/listener structure changes)
+
+**Blocking Dependencies:**
+None
+
+**Current Status:**
+Production Ready
 
 ---
 

@@ -240,7 +240,11 @@ class RoleAndPermissionTest extends TestCase
         $response->assertJsonStructure([
             'status', 'message', 'success',
             'data' => [
-                '*' => ['id', 'display_name'],
+                'data' => [
+                    '*' => ['id', 'display_name', 'name', 'guard_name', 'created_at', 'updated_at'],
+                ],
+                'page', 'current_page', 'from', 'to', 'last_page', 'path', 'per_page', 'total',
+                'next_page_url', 'prev_page_url', 'last_page_url', 'first_page_url',
             ],
         ]);
     }
@@ -341,7 +345,7 @@ class RoleAndPermissionTest extends TestCase
         $this->assertDatabaseMissing('roles', ['id' => $role->id]);
     }
 
-    public function test_delete_role_cascades_to_assigned_users(): void
+    public function test_delete_role_with_assigned_users_returns_conflict(): void
     {
         $user = $this->createSuperAdminUser();
         Sanctum::actingAs($user);
@@ -362,13 +366,9 @@ class RoleAndPermissionTest extends TestCase
 
         $response = $this->deleteJson(self::PREFIX . "/roles/{$role->id}");
 
-        $response->assertOk();
-        $response->assertJsonPath('success', true);
-        $this->assertDatabaseMissing('roles', ['id' => $role->id]);
-        $this->assertDatabaseMissing('model_has_roles', [
-            'role_id' => $role->id,
-            'model_id' => $customer->id,
-        ]);
+        $response->assertStatus(409);
+        $response->assertJsonPath('success', false);
+        $this->assertDatabaseHas('roles', ['id' => $role->id]);
     }
 
     public function test_delete_nonexistent_role_returns_error(): void

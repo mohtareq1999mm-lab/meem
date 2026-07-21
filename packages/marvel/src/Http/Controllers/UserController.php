@@ -233,9 +233,7 @@ class UserController extends CoreController
         try {
 
             $user = $this->repository->findOrFail($id);
-            if ($user->type === 'admin') {
-                $user->load(['roles', 'permissions']);
-            }
+            $user->load(['roles', 'permissions']);
             if ($user->type === 'user') {
                 $user->load(['address']);
             }
@@ -493,9 +491,10 @@ class UserController extends CoreController
         $email_verified = $user->hasVerifiedEmail();
         $data = [
             "token" => $user->createToken('auth_token')->plainTextToken,
-            "email_verified" => $email_verified
+            "email_verified" => $email_verified,
+            "permissions" => $user->getAllPermissions()->pluck('name'),
+            "role" => $user->roles->pluck('name'),
         ];
-        AdminLoggedIn::dispatch($user, request()->ip(), request()->userAgent());
 
         return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true, $data);
     }

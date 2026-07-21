@@ -18,6 +18,7 @@ use Marvel\Traits\ApiResponse;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Exceptions\RoleDoesNotExist;
 use Marvel\Enums\Permission as PermissionEnum;
+use Marvel\Enums\Role as RoleEnum;
 
 class RoleAndPermissionController extends CoreController
 {
@@ -33,7 +34,7 @@ class RoleAndPermissionController extends CoreController
         $this->middleware('permission:' . PermissionEnum::ASSIGN_ROLE)->only('assignRole');
         $this->middleware('permission:' . PermissionEnum::REMOVE_ROLE)->only('removeRoleFromUser');
 
-        $this->middleware('permission:' . PermissionEnum::SUPER_ADMIN)->only([
+        $this->middleware('role:' . RoleEnum::SUPER_ADMIN)->only([
             'getAllPermissions',
             'assignPermissionToRole',
             'givePermission',
@@ -49,11 +50,26 @@ class RoleAndPermissionController extends CoreController
         try {
             $limit = request('limit', 10);
             $search = request('search', null);
-            $roles = Role::when($search, function ($query) use ($search) {
+            $roles = Role::with('permissions')->when($search, function ($query) use ($search) {
                 $query->where('name', 'like', "%{$search}%")
                     ->orWhere('display_name', 'like', "%{$search}%");
             })->paginate($limit);
-            return $this->apiResponse(ROLES_FETCHED_SUCCESSFULLY, 200, true, RoleResource::collection($roles));
+            $paginated = RoleResource::collection($roles)->response()->getData(true);
+            return $this->apiResponse(ROLES_FETCHED_SUCCESSFULLY, 200, true, [
+                "data" => $paginated['data'] ?? [],
+                "page" => $roles->currentPage(),
+                "current_page" => $roles->currentPage(),
+                "from" => $roles->firstItem() ?? 0,
+                "to" => $roles->lastItem() ?? 0,
+                "last_page" => $roles->lastPage(),
+                "path" => $roles->path(),
+                "per_page" => $roles->perPage(),
+                "total" => $roles->total(),
+                "next_page_url" => $roles->nextPageUrl() ?? "",
+                "prev_page_url" => $roles->previousPageUrl() ?? "",
+                "last_page_url" => $roles->url($roles->lastPage()),
+                "first_page_url" => $roles->url(1),
+            ]);
         } catch (ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {
@@ -75,11 +91,11 @@ class RoleAndPermissionController extends CoreController
 
             $name = strtolower(str_replace(' ', '_', $request->display_name['en']));
 
-            $role = Role::create([
-                'name' => $name,
-                'display_name' => $request->display_name,
-                'guard_name' => 'api',
-            ]);
+            $role = new Role();
+            $role->name = $name;
+            $role->setTranslations('display_name', $request->display_name);
+            $role->guard_name = 'api';
+            $role->save();
 
             return $this->apiResponse(ROLE_ADDED_SUCCESSFULLY, 200, true, RoleResource::make($role));
         } catch (ValidationException $e) {
@@ -117,10 +133,9 @@ class RoleAndPermissionController extends CoreController
                 ],
             ]);
             $name = strtolower(str_replace(' ', '_', $request->display_name['en']));
-            $role->update([
-                'name' => $name,
-                'display_name' => $request->display_name,
-            ]);
+            $role->name = $name;
+            $role->setTranslations('display_name', $request->display_name);
+            $role->save();
 
             return $this->apiResponse(ROLE_UPDATED_SUCCESSFULLY, 200, true, RoleResource::make($role));
         } catch (RoleDoesNotExist | ModelNotFoundException $e) {
@@ -136,6 +151,11 @@ class RoleAndPermissionController extends CoreController
     {
         try {
             $role = Role::findById($id, 'api');
+
+            if ($role->users()->count() > 0) {
+                return $this->apiResponse(CANNOT_DELETE_ROLE_WITH_ASSIGNED_USERS, 409, false);
+            }
+
             $role->delete();
             return $this->apiResponse(ROLE_DELETED_SUCCESSFULLY, 200, true, null);
         } catch (RoleDoesNotExist | ModelNotFoundException $e) {
