@@ -13,31 +13,37 @@
 **Response 200:**
 ```json
 {
-  "status": 200,
-  "message": "Data fetched successfully",
-  "success": true,
-  "data": {
-    "site_name": "Marvel E-Commerce",
-    "site_desc": "Your one-stop shop for everything",
-    "meta_desc": "Best online store with great deals",
-    "site_copy_right": "© 2026 Marvel. All rights reserved.",
-    "logo": "https://cdn.example.com/settings/logo.png",
-    "favicon": "https://cdn.example.com/settings/favicon.ico",
-    "site_email": "info@marvel.com",
-    "email_support": "support@marvel.com",
-    "facebook": "https://facebook.com/marvel",
-    "instagram": "https://instagram.com/marvel",
-    "linkedin": "https://linkedin.com/company/marvel",
-    "promotion_video_url": "https://youtube.com/watch?v=xyz",
-    "youtube": "https://youtube.com/@marvel",
-    "phone": "+1-555-0123",
-    "fast_shipping_page_publish": true,
-    "options": {
-      "currency": "USD",
-      "tax_rate": 0.1,
-      "shipping_threshold": 50
+    "status": 200,
+    "message": "تم جلب البيانات بنجاح",
+    "success": true,
+    "data": {
+        "site_name": "موقعي",
+        "site_desc": "هذا هو وصف الموقع.",
+        "meta_desc": "الوصف التعريفي للموقع.",
+        "site_copy_right": "© 2026 جميع الحقوق محفوظة.",
+        "logo": "",
+        "favicon": "",
+        "site_email": "info@example.com",
+        "email_support": "support@example.com",
+        "facebook": "https://facebook.com/mywebsite",
+        "instagram": "https://instagram.com/mywebsite",
+        "linkedin": "https://linkedin.com/company/mywebsite",
+        "promotion_video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "youtube": "https://youtube.com/@mywebsite",
+        "phone": "+201001234567",
+        "fast_shipping_page_publish": 1,
+        "minimumOrderAmount": 100,
+        "options": {
+            "minimumOrderAmount": 100,
+            "fast_shipping": {
+                "enabled": true,
+                "duration_minutes": 120,
+                "fee": 0,
+                "start_hour": "08:00",
+                "end_hour": "22:00"
+            }
+        }
     }
-  }
 }
 ```
 
@@ -56,6 +62,9 @@ Use `site_email`, `email_support`, `phone` for contact section or "Reach Us" blo
 
 ### Promotional
 Use `promotion_video_url` for hero section video backgrounds or promotional sections.
+
+### Checkout Minimum
+Use `minimumOrderAmount` to enforce minimum cart total before the user can place an order. If their cart total is below this value, show a message and disable the checkout button.
 
 ### Feature Flags
 Use `fast_shipping_page_publish` to conditionally show/hide the fast shipping page link. Use `options` for arbitrary feature flags and configuration values.

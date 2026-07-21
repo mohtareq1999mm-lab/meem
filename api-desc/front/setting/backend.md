@@ -8,7 +8,7 @@
 
 ## Route Definitions
 
-**File:** `routes/api.php` (line 65)
+**File:** `routes/api.php`
 
 ```php
 Route::prefix('v1/general')->middleware('api')->group(function () {
@@ -66,11 +66,24 @@ Client → GET /api/v1/general/settings
 | youtube | string | | YouTube URL |
 | phone | string | | Phone number |
 | fast_shipping_page_publish | boolean | | Fast shipping page flag |
-| options | json | | Arbitrary settings (array cast) |
+| options | json | | Arbitrary settings (array cast) — includes `minimumOrderAmount` |
 
 ## Resource: SettingResource
 
-Returns 17 fields — 4 translatable strings, 2 media URLs, 3 contact fields, 4 social links, 1 video URL, 1 boolean flag, 1 json object.
+Returns 18 fields — 4 translatable strings, 2 media URLs, 3 contact fields, 4 social links, 1 video URL, 1 boolean flag, `minimumOrderAmount`, 1 json object.
+
+| Field | Type | Source | Description |
+|-------|------|--------|-------------|
+| `minimumOrderAmount` | float | `options.minimumOrderAmount` | Min cart total to place order; enforced in `CheckoutRepository::verify()` |
+
+## Where `minimumOrderAmount` Is Used
+
+| File | Line | Usage |
+|------|------|-------|
+| `SettingResource.php` | 34 | Exposed as top-level field in API response |
+| `CheckoutRepository.php` | 39 | Read from `settings.options.minimumOrderAmount` |
+| `CheckoutRepository.php` | 61-63 | Throws 400 if `total < minimumOrderAmount` |
+| `SettingsSeeder.php` | 126 | Default value: 0 |
 
 ## Caching
 

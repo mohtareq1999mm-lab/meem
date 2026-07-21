@@ -27,11 +27,12 @@
 | # | Test | Description | Expected |
 |---|------|-------------|----------|
 | S1 | Top-level keys | status, message, success, data | Correct keys |
-| S2 | Settings object fields | All 17 fields present | Correct types |
+| S2 | Settings object fields | All 18 fields present | Correct types |
 | S3 | Translatable fields | site_name, site_desc, meta_desc, site_copy_right | Strings |
 | S4 | Media fields | logo, favicon | URL strings or null |
 | S5 | Social fields | facebook, instagram, linkedin, youtube | URL strings or null |
 | S6 | Options | Arbitrary JSON | Object or null |
+| S7 | minimumOrderAmount | Top-level float | 0 or configured value |
 
 ---
 
@@ -51,3 +52,4 @@
 |---|------|-------------|----------|
 | P1 | Response time | Baseline | <100ms (no caching currently) |
 | P2 | DB query count | 1 query (Settings::first()) | 1 query max |
+| R4 | minimumOrderAmount after update | Change via admin PUT, verify public GET | Updated value returned |

@@ -12,7 +12,7 @@ The Settings module exposes platform-wide configuration (site name, SEO metadata
 | Service | `app/Services/General/SettingService.php` |
 | Resource | `Marvel\Http\Resources\SettingResource.php` |
 | Model | `Marvel\Database\Models\Settings.php` |
-| Routes | `routes/api.php` (line 65) |
+| Routes | `routes/api.php` |
 | Translation (EN) | `resources/lang/en/message.php` |
 | Translation (AR) | `resources/lang/ar/message.php` |
 
@@ -21,6 +21,10 @@ The Settings module exposes platform-wide configuration (site name, SEO metadata
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
 | GET | `/api/v1/general/settings` | Public | Fetch platform settings |
+
+## Response Fields (18)
+
+`site_name`, `site_desc`, `meta_desc`, `site_copy_right`, `logo`, `favicon`, `site_email`, `email_support`, `facebook`, `instagram`, `linkedin`, `promotion_video_url`, `youtube`, `phone`, `fast_shipping_page_publish`, **`minimumOrderAmount`**, `options`
 
 ## Dependencies
 

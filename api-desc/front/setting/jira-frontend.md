@@ -67,7 +67,27 @@
 
 ---
 
-## Task 4: Feature Flag — Fast Shipping Page
+## Task 4: Minimum Order Amount — Checkout Guard
+
+**Priority:** High
+**Component:** Frontend — Checkout
+**Story Points:** 3
+
+**Description:** Read `minimumOrderAmount` from settings and enforce it on the checkout page. If cart total is below this amount, disable the checkout/submit button and show a message.
+
+**API Endpoint:**
+- `GET /api/v1/general/settings`
+
+**Acceptance Criteria:**
+- [ ] `minimumOrderAmount` compared against cart total before checkout
+- [ ] If cart total < minimumOrderAmount, show message: "Minimum order amount is {amount}"
+- [ ] Checkout button disabled until minimum is met
+- [ ] Default to 0 (no minimum) if field is missing
+- [ ] **Loading state:** Assume 0 (allow checkout while loading)
+
+---
+
+## Task 5: Feature Flag — Fast Shipping Page
 
 **Priority:** Medium
 **Component:** Frontend — Navigation

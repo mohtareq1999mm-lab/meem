@@ -40,4 +40,19 @@
 
 **Component:** `packages/marvel/src/Http/Resources/SettingResource.php` (line 33)
 
-**Description:** `options` is `$this->options` with no null coalesce. The column is nullable and casts to `array`. If `options` is null in the DB, the resource will return `null` rather than an empty object `{}`. While this may be acceptable behavior, it could cause frontend type errors when expecting an object.
+**Description:** `$this->options` has no null coalesce on the `options` field. `minimumOrderAmount` was added with `?? 0` fallback, but the parent `options` field itself still returns `null` if the DB value is null.
+
+## FIX-SETTING-001: Added `minimumOrderAmount` to SettingResource
+
+**Severity:** Medium
+**Status:** FIXED (2026-07-21)
+
+**Component:** `packages/marvel/src/Http/Resources/SettingResource.php`
+
+**Description:** `minimumOrderAmount` was only accessible inside `options` JSON. Added as a top-level field:
+
+```php
+'minimumOrderAmount' => $this->options['minimumOrderAmount'] ?? 0,
+```
+
+**Related:** CheckoutRepository reads from `settings.options.minimumOrderAmount` to enforce minimum cart total (line 39, 61-63).

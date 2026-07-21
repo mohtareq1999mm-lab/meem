@@ -1,5 +1,18 @@
 # Settings Module — Changelog (Public API)
 
+## [1.1.0] — 2026-07-21
+
+### Added
+- `minimumOrderAmount` as top-level field in SettingResource
+- `minimumOrderAmount` now surfaced from `options` JSON to dedicated response field
+- Enforced in CheckoutRepository (400 if cart total < minimum)
+
+### Documentation
+- Updated frontend, flow, QA, test-cases, jira-frontend with minimumOrderAmount references
+- Field count: 17 → 18
+
+---
+
 ## [1.0.0] — 2026-07-20
 
 ### Added

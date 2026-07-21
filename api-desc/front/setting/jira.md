@@ -45,7 +45,7 @@
 **Files:**
 - `packages/marvel/src/Http/Resources/SettingResource.php`
 
-**Description:** Use `$this->options ?? []` or `(object) []` to ensure `options` is always an object in the response.
+**Description:** Use `$this->options ?? []` or `(object) []` to ensure `options` is always an object in the response. `minimumOrderAmount` already uses `?? 0` fallback.
 
 **Acceptance Criteria:**
 - [ ] `options` returns `{}` when DB value is null

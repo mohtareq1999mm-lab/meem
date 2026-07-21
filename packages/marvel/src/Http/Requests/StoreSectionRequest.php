@@ -2,7 +2,6 @@
 
 namespace Marvel\Http\Requests;
 
-use CodeZero\UniqueTranslation\UniqueTranslationRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -19,7 +18,7 @@ class StoreSectionRequest extends FormRequest
         return [
             'type' => 'required|string|max:100|exists:section_types,type',
             'title' => 'required|array',
-            'title.*' => ['required', 'string', 'max:50', UniqueTranslationRule::for('sections', 'title')],
+            'title.*' => ['required', 'string', 'max:50'],
             'is_active' => 'nullable|in:0,1',
             'title_visible' => 'nullable|in:0,1',
             'order' => 'nullable|integer',

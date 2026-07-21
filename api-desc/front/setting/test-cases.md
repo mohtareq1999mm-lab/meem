@@ -33,7 +33,7 @@
 | # | Test Name | Type | Description |
 |---|-----------|------|-------------|
 | 1 | `test_response_structure` | Feature | Top-level status, message, success, data |
-| 2 | `test_settings_object_fields` | Feature | All 17 fields present with correct types |
+| 2 | `test_settings_object_fields` | Feature | All 18 fields present with correct types |
 
 ### Regression Tests
 
@@ -42,3 +42,5 @@
 | 1 | `test_settings_after_update` | Feature | Update site_name via admin, verify public reflects change |
 | 2 | `test_options_as_object` | Feature | Options returns {} when null, object when populated |
 | 3 | `test_fast_shipping_flag` | Feature | Boolean field toggles correctly |
+| 4 | `test_minimum_order_amount_present` | Feature | minimumOrderAmount field exists, is float |
+| 5 | `test_minimum_order_amount_default` | Feature | Defaults to 0 when not configured |

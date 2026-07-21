@@ -1,4 +1,4 @@
-# Settings Module — Database (Public API)
+# Settings Module — Database (Admin API)
 
 ## Tables
 
@@ -22,7 +22,7 @@
 | youtube | varchar(255) | | YouTube URL |
 | phone | varchar(255) | | Phone number |
 | fast_shipping_page_publish | tinyint(1) | | Default: 1 |
-| options | json | | Free-form JSON (includes `minimumOrderAmount`, `fast_shipping`, etc.) |
+| options | json | | Free-form JSON |
 | created_at | timestamp | | |
 | updated_at | timestamp | | |
 
@@ -32,6 +32,21 @@
 **Migrations:**
 - `packages/marvel/database/migrations/2020_06_02_051901_create_marvel_tables.php`
 
+## JSON Structure: `options`
+
+```json
+{
+    "minimumOrderAmount": 100,
+    "fast_shipping": {
+        "enabled": true,
+        "duration_minutes": 120,
+        "fee": 0,
+        "start_hour": "08:00",
+        "end_hour": "22:00"
+    }
+}
+```
+
 ## Query Patterns
 
 ### Fetch Settings
@@ -39,40 +54,19 @@
 SELECT * FROM `settings` LIMIT 1;
 ```
 
+### Update minimumOrderAmount
+```sql
+UPDATE `settings`
+SET `options` = JSON_SET(`options`, '$.minimumOrderAmount', 100)
+WHERE `id` = 1;
+```
+
 ## N+1 Prevention
 
-- **Fetch settings:** 1 query, no relations loaded — no N+1 risk
-
-## `minimumOrderAmount`
-
-- Stored inside `options` JSON as `options.minimumOrderAmount`
-- Exposed at top level in `SettingResource` via `$this->options['minimumOrderAmount'] ?? 0`
-- Enforced in `CheckoutRepository::verify()` — throws 400 if cart total < minimum
+- Singleton table — no relations, no N+1 risk
 
 ## Performance
 
 - **Fetch settings:** 1 query, <5ms
-- **No caching** — singleton table hit on every request
-
-## Update via Admin
-
-```http
-PUT /api/v1/settings
-Authorization: Bearer <super_admin_token>
-Content-Type: application/json
-
-{
-  "options": {
-    "minimumOrderAmount": 100,
-    ...other existing options...
-  }
-}
-```
-
-⚠️ Replaces entire `options` JSON — include all existing keys to avoid data loss.
-
-## Media
-
-- **Logo:** Collection `logo-setting`, disk `settings`
-- **Favicon:** Collection `favicon-setting`, disk `settings`
-- Managed via `Marvel\Traits\MediaManager`
+- **Fast shipping settings:** Cached 1 hour
+- **Settings update:** `lockForUpdate()` transaction
