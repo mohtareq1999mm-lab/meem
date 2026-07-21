@@ -37,6 +37,17 @@ return [
     'MESSAGE.FAQ_DELETED_SUCCESSFULLY' => 'FAQ deleted successfully',
     'MESSAGE.FAQS_REORDERED_SUCCESSFULLY' => 'FAQs reordered successfully',
 
+    // Product Types (Home Page Sections)
+    'PRODUCT_TYPE.BEST_PRODUCT_SALES' => 'Best Product Sales',
+    'PRODUCT_TYPE.BRANDS_PRODUCT' => 'Brands Product',
+    'PRODUCT_TYPE.NEW_ARRIVALS' => 'New Arrivals',
+    'PRODUCT_TYPE.ALL_PRODUCT_DISCOUNTS' => 'All Product Discounts',
+    'PRODUCT_TYPE.PRODUCT_DISCOUNT_TODAY_OR_LOW_QTY' => 'Product Discount Today or Low Quantity',
+    'PRODUCT_TYPE.FLASH_SALES_PRODUCT' => 'Flash Sales Product',
+    'PRODUCT_TYPE.FLASH_SALES_END_TODAY' => 'Flash Sales End Today',
+    'PRODUCT_TYPE.PRODUCT_FOR_PARENT_CATEGORY' => 'Product for Parent Category',
+    'PRODUCT_TYPE.FLASH_SALES_END_WEEK' => 'Flash Sales End Week',
+
     // Content Pages & Sections
     'MESSAGE.SECTION_CREATED_SUCCESSFULLY' => 'Section created successfully',
     'MESSAGE.SECTION_UPDATED_SUCCESSFULLY' => 'Section updated successfully',

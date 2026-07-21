@@ -165,7 +165,7 @@ Route::middleware(['auth:sanctum', "throttle:cart"])->group(function () {
     Route::delete('cart/delete-items', [CartController::class, 'destroy']);
 });
 
- Route::apiResource('pickup-locations', PickupLocationController::class);
+Route::apiResource('pickup-locations', PickupLocationController::class);
 
 
 Route::middleware(['throttle:analytics'])->prefix('dashboard')->group(function () {
@@ -244,6 +244,52 @@ Route::put('settings', [SettingsController::class, 'update']);
 Route::get('fast-shipping/settings', [FastShippingController::class, 'getSettings']);
 Route::put('fast-shipping/settings', [FastShippingController::class, 'updateSettings']);
 
+
+Route::get('/roles', [RoleAndPermissionController::class, 'getAllRoles']);
+Route::get('/roles/{id}', [RoleAndPermissionController::class, 'showRole']);
+Route::post('/roles', [RoleAndPermissionController::class, 'addRole']);
+Route::put('/roles/{id}', [RoleAndPermissionController::class, 'updateRole']);
+Route::delete('/roles/{id}', [RoleAndPermissionController::class, 'destroyRole']);
+Route::post('/users/{userId}/assign-role', [RoleAndPermissionController::class, 'assignRole']);
+Route::post('/users/{userId}/remove-role', [RoleAndPermissionController::class, 'removeRoleFromUser']);
+
+Route::get('/permissions', [RoleAndPermissionController::class, 'getAllPermissions']);
+Route::post('/roles/{roleId}/permissions', [RoleAndPermissionController::class, 'assignPermissionToRole']);
+Route::post('/users/{userId}/permissions', [RoleAndPermissionController::class, 'givePermission']);
+Route::put('/users/{userId}/permissions', [RoleAndPermissionController::class, 'syncPermissions']);
+Route::delete('/users/{userId}/permissions', [RoleAndPermissionController::class, 'removePermission']);
+
+
+Route::post('content-pages/{content_page}/attach-sections', [ContentPageController::class, 'attachSections']);
+Route::patch('content-pages/{content_page}/toggle-active', [ContentPageController::class, 'toggleActive']);
+Route::apiResource('content-pages', ContentPageController::class);
+Route::put('sections/reorder', [SectionController::class, 'reorder']);
+Route::get('sections/types', [SectionController::class, 'getTypeSection']);
+Route::patch('sections/{section}/toggle-active', [SectionController::class, 'toggleStatus']);
+Route::apiResource('sections', SectionController::class);
+Route::apiResource('section-types', SectionTypeController::class);
+Route::post('section-types/{type}/settings', [SectionTypeController::class, 'updateSettings']);
+Route::get('section-types/{type}/settings', [SectionTypeController::class, 'settings']);
+Route::get('product-type', function () {
+    $keys = [
+        'best_product_sales',
+        'brands_product',
+        'new_arrivals',
+        'all_product_discounts',
+        'product_discount_today_or_low_qty',
+        'flash_sales_product',
+        'flash_sales_end_today',
+        'product_for_parent_category',
+        'flash_sales_end_week',
+    ];
+
+    $result = [];
+    foreach ($keys as $key) {
+        $result[$key] = __("message.PRODUCT_TYPE." . strtoupper($key));
+    }
+
+    return $result;
+});
 Route::get('top-authors', [AuthorController::class, 'topAuthor']);
 Route::get('top-manufacturers', [ManufacturerController::class, 'topManufacturer']);
 Route::get('popular-products', [ProductController::class, 'popularProducts']);
@@ -430,16 +476,7 @@ Route::group(
         Route::delete('cms-pages/{id}', [CmsPageController::class, 'destroy']);
 
         // Puck page builder save endpoint (with upsert)
-        Route::post('content-pages/{content_page}/attach-sections', [ContentPageController::class, 'attachSections']);
-        Route::patch('content-pages/{content_page}/toggle-active', [ContentPageController::class, 'toggleActive']);
-        Route::apiResource('content-pages', ContentPageController::class);
-        Route::post('sections/reorder', [SectionController::class, 'reorder']);
-        Route::get('sections/types', [SectionController::class, 'getTypeSection']);
-        Route::patch('sections/{section}/toggle-active', [SectionController::class, 'toggleStatus']);
-        Route::apiResource('sections', SectionController::class);
-        Route::apiResource('section-types', SectionTypeController::class);
-        Route::post('section-types/{type}/settings', [SectionTypeController::class, 'updateSettings']);
-        Route::get('section-types/{type}/settings', [SectionTypeController::class, 'settings']);
+
     }
 );
 
@@ -796,19 +833,6 @@ Route::group([
     ]);
 
 
-    Route::get('/roles', [RoleAndPermissionController::class, 'getAllRoles']);
-    Route::get('/roles/{id}', [RoleAndPermissionController::class, 'showRole']);
-    Route::post('/roles', [RoleAndPermissionController::class, 'addRole']);
-    Route::put('/roles/{id}', [RoleAndPermissionController::class, 'updateRole']);
-    Route::delete('/roles/{id}', [RoleAndPermissionController::class, 'destroyRole']);
-    Route::post('/users/{userId}/assign-role', [RoleAndPermissionController::class, 'assignRole']);
-    Route::post('/users/{userId}/remove-role', [RoleAndPermissionController::class, 'removeRoleFromUser']);
-
-    Route::get('/permissions', [RoleAndPermissionController::class, 'getAllPermissions']);
-    Route::post('/roles/{roleId}/permissions', [RoleAndPermissionController::class, 'assignPermissionToRole']);
-    Route::post('/users/{userId}/permissions', [RoleAndPermissionController::class, 'givePermission']);
-    Route::put('/users/{userId}/permissions', [RoleAndPermissionController::class, 'syncPermissions']);
-    Route::delete('/users/{userId}/permissions', [RoleAndPermissionController::class, 'removePermission']);
 
     Route::apiResource('ownership-transfer', OwnershipTransferController::class, [
         'only' => ['update', 'destroy'],
@@ -822,19 +846,7 @@ Route::group([
 
 
 
-Route::get('product-type', function () {
-    return [
-        'best_product_sales',
-        'brands_product',
-        'new_arrivals',
-        'all_product_discounts',
-        'product_discount_today_or_low_qty',
-        'flash_sales_product',
-        'flash_sales_end_today',
-        'product_for_parent_category',
-        'flash_sales_end_week',
-    ];
-});
+
 
 Route::get('/enum-types', function () {
     return response()->json(
