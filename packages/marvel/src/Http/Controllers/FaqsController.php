@@ -2,12 +2,10 @@
 
 namespace Marvel\Http\Controllers;
 
-use Database\Seeders\FlashSaleSeeder;
+use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Marvel\Database\Models\Faqs;
 use Marvel\Database\Repositories\FaqsRepository;
 use Marvel\Enums\Permission;
 use Marvel\Enums\Role;
@@ -53,13 +51,12 @@ class FaqsController extends CoreController
         $order = $request->order;
         $sortedBy = $request->sortedBy ?? 'asc';
 
-        $faqsQuery = $this->fetchFAQs($request);
-
-        if ($order && in_array($order, ['id', 'faq_title', 'faq_type', 'issued_by', 'status', 'created_at', 'updated_at'])) {
-            $faqsQuery = $faqsQuery->orderBy($order, $sortedBy === 'desc' ? 'desc' : 'asc');
+        if ($order && in_array($order, ['id', 'faq_title', 'faq_description', 'status', 'created_at', 'updated_at'])) {
+            $this->repository->orderBy($order, $sortedBy === 'desc' ? 'desc' : 'asc');
         }
 
-        $faqs = $faqsQuery->paginate($limit)->withQueryString();
+        $faqs = $this->repository->paginate($limit);
+        $faqs->withQueryString();
         $faqData = FaqResource::collection($faqs)->response()->getData(true);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
             "data" => $faqData['data'] ?? [],
@@ -76,23 +73,6 @@ class FaqsController extends CoreController
             "last_page_url" => $faqData['links']['last'] ?? "",
             "first_page_url" => $faqData['links']['first'] ?? "",
         ]);
-    }
-
-
-    /**
-     * fetchFAQs
-     *
-     * @param Request $request
-     * @return object
-     */
-    public function fetchFAQs(Request $request)
-    {
-        try {
-            $faqsQuery = $this->repository->query()->paginate($request->limit ?? 10);
-            return $faqsQuery;
-        } catch (MarvelException $e) {
-            throw new MarvelException(SOMETHING_WENT_WRONG, $e->getMessage());
-        }
     }
 
     /**

@@ -59,15 +59,8 @@ class FaqsRepository extends BaseRepository
     public function storeFaqs($request)
     {
         try {
-
-
-            $faqs                    = [];
-            $faqs['faq_title']       = $request['faq_title'];
-            $faqs['faq_description'] = $request['faq_description'];
-            if ($request->has('status')) {
-                $faqs['status'] = $request['status'];
-            }
-            $faqs = $this->create($faqs);
+            $data = $request->only($this->dataArray);
+            $faqs = $this->create($data);
             return $faqs;
         } catch (Exception $th) {
             throw new Exception(SOMETHING_WENT_WRONG, 500);
@@ -75,18 +68,10 @@ class FaqsRepository extends BaseRepository
     }
 
 
-    /**
-     * updateFaqs
-     *
-     * @param  mixed $request
-     * @param  mixed $faqs
-     * @return void
-     */
     public function updateFaqs(Request $request, Faqs $faqs)
     {
         try {
-          $faqs->update($request->only($this->dataArray));
-
+            $faqs->update($request->only($this->dataArray));
             return $faqs;
         } catch (Exception $e) {
             throw new Exception(SOMETHING_WENT_WRONG, 500);
