@@ -836,4 +836,17 @@ Route::get('product-type', function () {
     ];
 });
 
+Route::get('/enum-types', function () {
+    return response()->json(
+        [
+            'discount-type' => \Marvel\Enums\DiscountType::getValues(),
+            'coupon-type' => \Marvel\Enums\CouponType::getValues(),
+            'product-type' => \Marvel\Enums\ProductType::getValues(),
+            'promotion-type' => \Marvel\Enums\PromotionType::getValues(),
+            'promotion-mount-type' => \Marvel\Enums\PromotionMountType::getValues(),
+            'flash-sale-type' => \Marvel\Enums\FlashSaleType::getValues(),
+        ],
+        200
+    );
+});
 Route::apiResource('became-seller', BecameSellerController::class);

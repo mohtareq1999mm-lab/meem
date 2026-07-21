@@ -105,19 +105,6 @@ Route::prefix('v1/general')->middleware('api')->group(function () {
 
 
 
-Route::get('/enum-types', function () {
-    return response()->json(
-        [
-            'discount-type' => \Marvel\Enums\DiscountType::getValues(),
-            'coupon-type' => \Marvel\Enums\CouponType::getValues(),
-            'product-type' => \Marvel\Enums\ProductType::getValues(),
-            'promotion-type' => \Marvel\Enums\PromotionType::getValues(),
-            'promotion-mount-type' => \Marvel\Enums\PromotionMountType::getValues(),
-            'flash-sale-type' => \Marvel\Enums\FlashSaleType::getValues(),
-        ],
-        200
-    );
-});
 Route::get('check-card-payment', function () {
     return [
         'CardNumber' => '2223000000000007',
