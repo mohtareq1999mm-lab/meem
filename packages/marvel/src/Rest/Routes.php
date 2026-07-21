@@ -822,4 +822,18 @@ Route::group([
 
 
 
+Route::get('product-type', function () {
+    return [
+        'best_product_sales',
+        'brands_product',
+        'new_arrivals',
+        'all_product_discounts',
+        'product_discount_today_or_low_qty',
+        'flash_sales_product',
+        'flash_sales_end_today',
+        'product_for_parent_category',
+        'flash_sales_end_week',
+    ];
+});
+
 Route::apiResource('became-seller', BecameSellerController::class);
