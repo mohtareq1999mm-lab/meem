@@ -19,7 +19,7 @@ use Mockery;
 ### Success Cases (Email)
 5. **Send OTP to valid email** — POST /send-otp-code with existing email → 200
 6. **OTP email sent via notification** — Notification::assertSentTo($user)
-7. **Response for email OTP** — assert `data.otp` is present (static "123456" per sendUserOtp)
+7. **Response for email OTP** — assert `data.otp_id` is present (integer, the OneTimePassword model ID)
 
 ### Validation Failures
 8. **Missing email AND phone_number** → 422
@@ -56,6 +56,14 @@ use Mockery;
 ### Gateway Errors
 26. **Gateway exception during verify** → 400 OTP_VERIFICATION_FAILED
 27. **Gateway exception during login** → 422 INVALID_GATEWAY
+
+## Queue Behavior
+
+| # | Test | Expected |
+|---|------|----------|
+| 33a | **OTP notification queued** — send OTP for email → assert job in `jobs` table | `queue=high` |
+| 33b | **OTP email logged on queue work** — run queue worker → assert email in `laravel.log` | log contains OTP code |
+| 33c | **API returns before queue processes** — send OTP → response returned immediately | 200 returned, `data.otp_id` present, no email body in response |
 
 ## Rate Limiting
 

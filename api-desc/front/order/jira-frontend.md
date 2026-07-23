@@ -14,13 +14,14 @@
 **So that** I can track my purchases and check status
 
 **Acceptance Criteria:**
-- Fetches `GET /api/v1/general/orders` on mount
+- Fetches `GET /api/v1/general/orders?status={filter}&page={n}&limit={n}` on mount
+- Status filter now works correctly (backend bug fixed 2026-07-23)
 - Displays table/list with: order number, date, status badge, total, payment method
 - Status badges with color coding (pending=yellow, processing=blue, completed=green, cancelled=red)
 - Click row → order detail (FE-US-002)
-- Pagination
+- Pagination with `page` and `limit` params
 - Search by order number
-- Filter by status tabs (All, Pending, Completed, Cancelled)
+- Filter by status tabs (All, Pending, Completed, Cancelled) — pass `status` param to API
 - Loading skeleton
 - Empty state ("No orders yet — Start shopping!")
 - Error state with retry
@@ -178,9 +179,15 @@ test('redirects on 401', async () => {
 | FE-BUG-003 | Price breakdown rounding mismatch | Medium | Medium |
 | FE-BUG-004 | Status timeline shows invalid transitions | High | Medium |
 
+## Backend Bugs Affecting Frontend (Fixed)
+
+| Bug | Description | Fix Date | Impact |
+|-----|-------------|----------|--------|
+| Status filter ignored on `GET /api/v1/general/orders` | `?status=` parameter was completely bypassed — all orders returned regardless of filter | 2026-07-23 | Frontend status tab filtering now works correctly |
+
 ## API Routes for Frontend Integration
 
 | Method | Endpoint | Auth | Usage |
 |--------|----------|------|-------|
-| GET | `/api/v1/general/orders` | Sanctum | My orders |
+| GET | `/api/v1/general/orders?status=&limit=&page=` | Sanctum | My orders (with optional filters) |
 

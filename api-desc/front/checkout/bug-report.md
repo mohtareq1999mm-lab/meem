@@ -69,3 +69,18 @@
 **Component:** `OrderService.php` (lines 369-398)
 
 **Description:** `refreshCartItemPrices()` iterates `$cart->items` but the cart only has SCHEDULED items loaded. FAST items' prices are stale.
+
+---
+
+## BUG-CHK-008: Global `minimumOrderAmount` Setting Not Enforced in New Checkout Flow
+
+**Severity:** HIGH
+**Status:** FIXED (2026-07-23)
+
+**Component:** `app/Services/General/OrderService.php::addItemsInOrder()` (line ~197)
+
+**Root Cause:** The global `minimumOrderAmount` setting was only validated in the old Marvel checkout flow (`CheckoutRepository::verify()`). The new `POST /api/v1/general/checkout` endpoint (`OrderService::addItemsInOrder()`) had zero checks against this setting — customers could checkout with any cart value regardless of the configured minimum.
+
+**Fix:** Added a check after `calculateCheckoutTotals()` that reads `settings.options.minimumOrderAmount` and compares it against `$checkoutTotals->subtotal` (the pre-discount total). If `subtotal < minimumOrderAmount`, the transaction is rolled back and an `InvalidArgumentException` is thrown with a translated message.
+
+**Why subtotal?** The minimum order amount should reflect the raw cart value before any discounts reduce it. A customer with 90 EGP of products and a 20 EGP coupon should still meet a 100 EGP minimum because the minimum is about order value, not final payment.

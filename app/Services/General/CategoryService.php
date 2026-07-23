@@ -59,7 +59,7 @@ class CategoryService
                     $query->active()->withCount('products');
                 },
             ])
-            ->withCount('products')
+            ->withCount(['products' => fn($q) => $this->applyChannelHomeFilter($q)])
             ->where('slug', $slug)
             ->firstOrFail();
 

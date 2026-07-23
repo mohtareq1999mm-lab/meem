@@ -27,6 +27,7 @@ POST /checkout { payment_method: "online" } [auth:sanctum]
     │  refreshCartItemPrices (ProductPricingService)
     │  Coupon: lock + validate
     │  calculateCheckoutTotals(promotion, coupon)
+    │  minimumOrderAmount check (subtotal vs settings)
     │  Resolve shipping (governorate → price)
     │  OrderCreationService::createOrder
     │  OrderCreationService::createOrderItems

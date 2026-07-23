@@ -50,6 +50,7 @@ Place order. Supports online, cod, pay_at_cashier.
 **Response 200 (online):** `{ "data": { "url": "https://gateway.com/pay/123" } }`
 **Response 200 (COD):** `{ "data": { "order_id": 1 } }`
 **Response 200 (cashier):** `{ "data": { "order_id": 1, "transaction_uuid": "abc", "qr_code": "data:..." } }`
+**Response 400 (minimum order):** `{ "message": "Minimum order amount is 100" }` — checked against subtotal (pre-discount)
 **Response 422 (COD+pickup):** `{ "message": "COD not available for pickup" }`
 
 ---
@@ -95,6 +96,7 @@ Place order. Supports online, cod, pay_at_cashier.
 
 ## Business Rules
 - Requires active cart with SCHEDULED items
+- **Minimum Order Amount:** If `settings.options.minimumOrderAmount > 0`, it is enforced against the **subtotal** (total price before discounts, promotions, coupons, or flash sales). This ensures the minimum reflects raw cart value.
 - Prices recalculated in real-time at checkout
 - Inventory finalized immediately for COD/cashier, on callback for online
 - Order stores immutable pricing snapshots

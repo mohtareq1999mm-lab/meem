@@ -21,7 +21,38 @@
 
 ---
 
+## Task 1.5: Fix Multilingual Section Title via FormData (KAN-26)
+
+**Status:** COMPLETED (2026-07-23)
+
+**Severity:** HIGH
+**Component:** SectionController, StoreSectionRequest, UpdateSectionRequest
+**Effort:** Small
+**Files:**
+- `packages/marvel/src/Http/Controllers/SectionController.php` (fixed)
+
+**Root Cause:** Laravel's Validator Factory enables `excludeUnvalidatedArrayKeys` by default. When rules include `'title' => 'required|array'` AND `'title.*' => 'required|string|max:50'`, the `validated()` method drops the parent `title` key. Only `title.*` wildcard results are returned, but `Arr::set()` on missing parent produces `[]`.
+
+**Fix:** Re-add `title` from raw request input when absent from validated data:
+```php
+if (! isset($data['title']) && $request->has('title')) {
+    $data['title'] = $request->input('title');
+}
+```
+
+**Acceptance Criteria:**
+- [x] Section creation via FormData stores multilingual title correctly
+- [x] Section update via FormData spoofed PUT stores multilingual title correctly
+- [x] JSON API requests unaffected (they use different request body path)
+- [x] No regression in ContentPage (uses `$request->only()` instead of `validated()`)
+
+**Related Bug Report:** `api-desc/bugfixed/section-multilingual-title-formdata.md`
+
+---
+
 ## Task 2: Remove Dead Code in SectionController@store
+
+**Status:** COMPLETED (2026-07-23, during KAN-26 fix)
 
 **Priority:** Low
 **Component:** SectionController
@@ -32,8 +63,8 @@
 **Description:** Lines 42-48 contain commented-out code for auto-creating section types and upserting settings during section creation. Remove or uncomment if needed.
 
 **Acceptance Criteria:**
-- [ ] Dead code removed
-- [ ] No change in behavior
+- [x] Dead code removed
+- [x] No change in behavior
 
 ---
 

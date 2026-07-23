@@ -12,9 +12,9 @@ Request a password reset OTP sent to the user's email.
 ```
 
 ### Validation
-No form request class — inline validation via `$request->email`. If email is missing, Laravel returns 500 (no explicit validation in the method body). Email existence is checked against `users` table.
+No form request class — inline validation via `$request->email`. Email is validated to be present and in valid format.
 
-### Success Response (200)
+### Response (always 200)
 ```json
 {
   "success": true,
@@ -22,21 +22,11 @@ No form request class — inline validation via `$request->email`. If email is m
 }
 ```
 
-### Error Response (404)
-```json
-{
-  "success": false,
-  "message": "Not found"
-}
-```
+**Always returns 200** — does not disclose whether the email exists in the system (prevents email enumeration).
 
-### Error Response (500)
-```json
-{
-  "success": false,
-  "message": "Something went wrong"
-}
-```
+### Notes
+- OTP email is **queued** via `Mail::queue()` on `high` queue
+- Uses `updateOrInsert()` for race-condition-safe upsert
 
 ---
 
@@ -52,22 +42,32 @@ Verify whether an OTP is valid and not expired.
 }
 ```
 
+### Validation
+- email: required, valid email
+- otp: required, string
+
 ### Business Logic
 1. Look up `password_resets` by email
 2. `Hash::check($otp, $token)` — verify OTP matches
-3. Check `created_at + 5 minutes` is not in the past
+3. Check `created_at + config('auth.passwords.users.expire', 60)` minutes is not in the past
 
-### Response (valid)
-```
-true
-```
-
-### Response (invalid/expired)
-```
-false
+### Response (200 — valid)
+```json
+{
+  "success": true,
+  "message": "Token is valid"
+}
 ```
 
-**Note**: Returns raw boolean, not a JSON envelope. Frontend must handle both `true` and `false` as raw response bodies.
+### Response (400 — invalid/expired)
+```json
+{
+  "success": false,
+  "message": "Invalid token"
+}
+```
+
+**Note**: Returns standard JSON envelope `{success, message}`. Frontend checks `response.success`.
 
 ---
 

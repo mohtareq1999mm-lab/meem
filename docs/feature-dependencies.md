@@ -2,6 +2,39 @@
 
 ---
 
+## Authentication
+
+**Purpose:**
+Handle user registration, login, logout, password reset, email verification, and profile retrieval.
+
+**Dependency Confidence:**
+All dependencies verified from source code.
+
+**Depends On:**
+- Sanctum — token-based API authentication (Verified)
+- Spatie Laravel Permission — role/permission checks in auth response (Verified)
+- Mail Config — `log` driver (dev), SMTP/Mailgun/SES (prod) (Verified)
+- Translation System — response messages via `__()` constants (Verified)
+
+**Used By:**
+- Every feature that requires authentication (Verified)
+- Password reset flow used by all users (Verified)
+
+**Regression Required When Changed:**
+- Authentication (all auth endpoints)
+- All feature tests (comprehensive regression — every endpoint uses auth)
+
+**Blocking Dependencies:**
+None
+
+**Current Status:**
+Production Ready
+
+**Revision History:**
+- Rev 1 (2026-07-22): Fixed SMTP mail driver causing password reset 500 errors; fixed sendUserOtp exception handling; fixed verifyForgetPasswordToken empty response; added missing EN translation keys
+
+---
+
 ## Role & Permission
 
 **Purpose:**

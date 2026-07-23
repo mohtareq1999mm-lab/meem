@@ -67,6 +67,8 @@ The Order feature is event-driven with a complex lifecycle spanning cart → che
 
 | Method | Description |
 |--------|-------------|
+| `paginateForUser($request)` | Lists user's orders with optional `status` and `limit` filters |
+| `addItemsInOrder($request)` | Creates order from cart |
 | `changeOrderStatus($invoice_id, $status, $user)` | Status transition with validation |
 | `syncStatus($orderId)` | Syncs legacy order_status → modern status |
 | `markCodAsPaid($orderId, $user)` | Mark COD paid, update transaction |
@@ -135,3 +137,4 @@ The Order feature is event-driven with a complex lifecycle spanning cart → che
 2. **Commented Routes:** Standard `apiResource('orders')` routes are commented out in Routes.php.
 3. **No Base Migration Found:** `create_orders_table` migration missing (may be squashed).
 4. **inventory_restored_at** guard column prevents double-restoration on cancellation.
+5. ~~**Status filter ignored on `/api/v1/general/orders`:** The `status` query parameter was not read by `paginateForUser()`. Fixed 2026-07-23.~~

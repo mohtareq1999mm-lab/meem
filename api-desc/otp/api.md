@@ -26,13 +26,23 @@ At least one of `email` or `phone_number` must be provided.
 3. If email provided → call `$user->sendOneTimePassword()` (sends OTP via email)
 4. If phone_number provided → call `sendOtpCode()` which delegates to the configured OTP gateway
 
-### Success Response (200)
+### Success Response (200) — Email
 ```json
 {
   "success": true,
   "message": "User logged in successfully",
   "data": {
-    "otp": "123456",
+    "otp_id": 42
+  }
+}
+```
+
+### Success Response (200) — Phone (via gateway)
+```json
+{
+  "success": true,
+  "message": "User logged in successfully",
+  "data": {
     "otp_id": "verification-id-from-gateway",
     "provider": "twilio"
   }
@@ -74,7 +84,18 @@ Login using a verified OTP code.
 - If `email` present → calls `verifyLoginOtp()` which validates email + OTP
 - If `phone_number` present → calls `verifyOtp()` via gateway, then looks up user by phone
 
-### Success Response (200)
+### Success Response (200) — Email
+```json
+{
+  "success": true,
+  "message": "User logged in successfully",
+  "data": {
+    "token": "1|abc123..."
+  }
+}
+```
+
+### Success Response (200) — Phone
 ```json
 {
   "success": true,
@@ -89,3 +110,8 @@ Login using a verified OTP code.
 - **404** — User not found by phone/email, or REQUIRED_INFO_MISSING
 - **400** — OTP verification failed
 - **422** — Invalid gateway or OTP verification exception
+
+### Notes
+- OTP emails are **queued** via `ShouldQueue` on `high` queue — requires queue worker running
+- `send-otp-code` response: 200 on success (was returning without `$data` — now fixed to include `otp_id`)
+- `otp-login` response: token always wrapped in `data.token` (consistent with all other auth endpoints)

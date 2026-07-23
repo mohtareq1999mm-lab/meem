@@ -27,6 +27,17 @@
 | Variant Pricing | Flash sale for variants (percentage/fixed/final), Discount for variants (percentage/fixed) (5) |
 | Edge Cases | Product without variant, Variant without price, Variant product unit price (3) |
 
+### TC-REG-ORD-001: Status Filter on List Orders
+
+- **Bug:** Status filter completely ignored
+- **Fix Applied:** 2026-07-23
+- **Test:** `GET /api/v1/general/orders?status=pending` returns only pending orders
+- **Test:** `GET /api/v1/general/orders?status=completed` returns only completed orders
+- **Test:** `GET /api/v1/general/orders?status=invalid` returns empty result (no matching status)
+- **Test:** `GET /api/v1/general/orders` (no filter) still returns all user orders (regression)
+
+---
+
 ## Recommended Additional Tests
 
 | # | Test | Description |

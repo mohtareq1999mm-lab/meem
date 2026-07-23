@@ -53,6 +53,29 @@
 
 ---
 
+## Task 5: Enforce Global minimumOrderAmount in New Checkout Flow
+
+**Priority:** HIGH
+**Status:** COMPLETED (2026-07-23)
+
+**Component:** OrderService, Settings
+**Effort:** Small
+**Files:**
+- `app/Services/General/OrderService.php`
+
+**Description:** The global `minimumOrderAmount` setting (`settings.options.minimumOrderAmount`) was only validated in the old Marvel checkout flow. The new `POST /api/v1/general/checkout` endpoint was missing this check entirely.
+
+**Fix:** Added check in `addItemsInOrder()` after `calculateCheckoutTotals()`. Compares `subtotal` (pre-discount total) against the setting. If below minimum, rolls back and throws `InvalidArgumentException`.
+
+**Acceptance Criteria:**
+- [x] Subtotal below minimum → 400 error
+- [x] Subtotal at or above minimum → checkout proceeds
+- [x] Promotions/coupons don't reduce effective minimum (uses subtotal)
+- [x] Setting = 0 (default) → always passes
+- [x] Translation key used for error message
+
+---
+
 ## Task 4: Lock FAST Items During Checkout
 
 **Priority:** Low

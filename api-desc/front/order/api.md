@@ -22,6 +22,8 @@
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `page` | `integer` | Page number |
+| `limit` | `integer` | Items per page (default: 15, max: 100) |
+| `status` | `string` | Filter by order status (`pending`, `processing`, `completed`, `cancelled`, `delivered`, `refunded`, `failed`, `at_local_facility`, `out_for_delivery`, `ready_for_pickup`) |
 | `search` | `string` | Search by order ID or status |
 
 #### Success Response (200)

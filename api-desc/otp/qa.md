@@ -66,7 +66,16 @@
 | 29 | OTP in response body | Static "123456" is in response for email — dev-only risk |
 | 30 | Token impersonation | Token belongs to correct user |
 
-## 6. Regression Tests
+## 6. Queue Tests
+
+| # | Test | Expected |
+|---|------|----------|
+| 35 | Send OTP email — job goes to `jobs` table | Job exists with `queue=high` |
+| 36 | Send OTP email — logged when queue worker runs | `storage/logs/laravel.log` contains OTP |
+| 37 | API responds immediately without waiting for mail | 200 returned before queue worker runs |
+| 38 | Registration OTP also queued (separate system) | Job exists with `queue=high` |
+
+## 7. Regression Tests
 
 | # | Test | Expected |
 |---|------|----------|

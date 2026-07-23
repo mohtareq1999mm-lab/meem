@@ -234,6 +234,54 @@ Contacts
 
 ---
 
+## Authentication
+
+**Changed Feature:**
+Authentication
+
+**Affected Features:**
+- All features — every API endpoint requires auth
+
+**Regression:**
+
+| Suite | Status | Reason |
+|-------|--------|--------|
+| All Feature Tests | NOT RUN | No dedicated auth test suite exists |
+
+**Changes Applied (Revision 1):**
+- `.env`: MAIL_MAILER changed from `smtp` to `log` — password reset emails logged instead of SMTP delivery
+- `UserController.php`: Added try/catch in `sendUserOtp()` for mail failure resilience
+- `UserController.php`: Refactored `verifyForgetPasswordToken()` to return proper JSON response (was returning raw boolean)
+- `UserController.php`: Extracted `checkResetToken()` private method for internal use by `resetPassword()`
+- `resources/lang/en/message.php`: Added 4 missing password reset translation keys
+- Created `api-decs/auth/authentication.md`: Auth endpoint documentation
+- Created `api-decs/auth/password-reset.md`: Password reset endpoint documentation
+- Created `api-decs/bug-fixed/smtp-password-reset-fix.md`: Bug fix report
+
+---
+
+## Categories
+
+**Changed Feature:**
+Categories
+
+**Affected Features:**
+- Categories — products_count consistency in category-by-slug endpoint
+
+**Regression:**
+
+| Suite | Status | Reason |
+|-------|--------|--------|
+| CategoryResourceTest | PASS (7/7) | Existing resource tests pass |
+| CategoryProductsCountConsistencyTest | PASS (4/4) | New regression tests — count matches products array length |
+| CategoryCombinedSuite | PASS (98/98) | All 98 category tests pass (94 existing + 4 new) |
+
+**Changes Applied (Revision 2):**
+- `app/Services/General/CategoryService.php`: Changed `withCount('products')` to `withCount(['products' => fn($q) => $this->applyChannelHomeFilter($q)])` — the count now uses the same channel filter as the eager-loaded products, fixing `products_count` mismatch when the home context filters out fast-shipping products
+- Created `tests/Feature/Categories/CategoryProductsCountConsistencyTest.php`: 4 tests covering the bug regression
+
+---
+
 ## Full Suite Status
 
 | Suite | Status | Date | Notes |
@@ -246,5 +294,5 @@ Contacts
 | FlashSaleCombinedSuite | PASS (87/87) | 2026-07-19 | All Flash Sale (38) + Pricing (34) + OrderCreation (15) tests pass after production hardening |
 | ProductSuite | PASS (76/76) | 2026-07-17 | All Product feature tests pass after 4 bug fixes |
 | BrandCombinedSuite | PASS (63/63) | 2026-07-18 | All Brand feature tests pass after slug dirty-check fix |
-| CategoryCombinedSuite | PASS (94/94) | 2026-07-18 | All Category feature tests pass after slug dirty-check + pivot constraint fixes |
+| CategoryCombinedSuite | PASS (98/98) | 2026-07-23 | Categories Rev 2: products_count mismatch fixed + 4 new regression tests |
 | AttributeCombinedSuite | PASS (48/48) | 2026-07-19 | All Attribute + Attribute Values tests pass (16 existing + 32 new) after 3 bug fixes |

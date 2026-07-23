@@ -1,5 +1,24 @@
 # Request Flows — Pages Module
 
+## Flow 0: Section Title Fix (excludeUnvalidatedArrayKeys)
+
+```
+$data = $request->validated()
+         ↓
+    [Laravel excludeUnvalidatedArrayKeys = true]
+    `title` (parent key with array + wildcard sub-rules) → SKIPPED
+    `title.*` (wildcard) → Arr::set($results, 'title.*', [...])
+         ↓
+    RESULT: $data['title'] = [] (empty array)
+         ↓
+    FIX: if (! isset($data['title']) && $request->has('title'))
+         $data['title'] = $request->input('title')
+         ↓
+    $section = Section::create($data) — title now correct
+```
+
+---
+
 ## Flow 1: Create Content Page
 
 ```

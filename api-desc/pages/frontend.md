@@ -2,6 +2,22 @@
 
 ---
 
+## FormData Handling (Critical)
+
+When sending Section create/update as FormData (e.g., with file uploads or `_method=PUT` spoofing), the multilingual `title` field **must** be sent as:
+```
+title[en]: English Title
+title[ar]: عنوان عربي
+```
+NOT as:
+```
+title: {"en":"English Title","ar":"عنوان عربي"}
+```
+
+The backend's `StoreSectionRequest` validates `title.*` as individual wildcard rules. Laravel's `excludeUnvalidatedArrayKeys` will drop the parent `title` key from `validated()`. The controller fix re-adds it from raw input, but only if sent in the `title[key]` format.
+
+---
+
 ### 0. GET /api/v1/product-type — Product Type Labels (Public)
 
 **Authentication:** Not required

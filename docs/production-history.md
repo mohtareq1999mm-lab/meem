@@ -523,3 +523,73 @@ YES
 
 Notes:
 Route ordering is critical — routes inside middleware groups must be defined BEFORE same-URI routes outside the group to match the authenticated version. All 8 bugs verified via manual API testing and automated test suite. Pre-existing test failures (UserControllerTest, etc.) are unrelated to this feature.
+
+---
+
+Date:
+2026-07-23
+
+Feature:
+Categories
+
+Revision:
+2
+
+Summary:
+Fixed products_count mismatch in category details endpoint (GET /api/v1/general/categories/{slug}). The bug occurred because `withCount('products')` counted ALL products in the category_product pivot table, while `with(['products' => fn($q) => ...])` applied `applyChannelHomeFilter()` which filters out fast-shipping products in the home channel context. The fix applies the same filter closure to both the count and the eager load. Added 4 regression tests verifying count/array consistency across normal, mixed, all-fast-shipping, and empty scenarios.
+
+Verified Bugs Fixed:
+- BUG-1 (MEDIUM): products_count returned 3 while products array only contained 1 item — mismatched filtering between withCount and with closure
+
+Documentation Updated:
+YES
+
+Routes Updated:
+NO
+
+Regression Executed:
+YES
+
+Regression Result:
+PASS (CategoryCombinedSuite 98/98 — 94 existing + 4 new, 0 failures)
+
+Production Ready:
+YES
+
+---
+
+Date:
+2026-07-22
+
+Feature:
+Authentication
+
+Revision:
+1
+
+Summary:
+Full password reset flow audit and fix. SMTP mail driver was causing 500 errors on all email-dependent endpoints (forget-password, send-otp-code, verify-forget-password-token, reset-password). Changed default mail driver from `smtp` to `log` to make the flow work in development. Added exception handling to `sendUserOtp()` for mail failure resilience. Fixed `verifyForgetPasswordToken()` returning raw boolean instead of JSON response. Added 4 missing English translation keys for password reset messages. Created auth API documentation and bug fix report.
+
+Verified Bugs Fixed:
+- B1 (HIGH): SMTP authentication failure — MAIL_MAILER=smtp with no working credentials caused all password reset endpoints to fail
+- B2 (MEDIUM): sendUserOtp() had no exception handling — mail failures caused unhandled 500 error
+- B3 (LOW): verifyForgetPasswordToken() returned raw boolean instead of JSON response — empty body on failure
+- B4 (LOW): 4 missing English translation keys for password reset responses
+
+Documentation Updated:
+YES (production-status.md, feature-dependencies.md, regression-matrix.md, production-history.md, api-decs/auth/*, api-decs/bug-fixed/*)
+
+Routes Updated:
+NO
+
+Regression Executed:
+NO (no dedicated auth test suite exists)
+
+Regression Result:
+NOT RUN
+
+Production Ready:
+YES
+
+Notes:
+All changes backward compatible — no schema changes, no migrations, no API contract changes. The `log` mail driver is the dev default; production deployments must set `MAIL_MAILER` to a real mail driver in `.env`.

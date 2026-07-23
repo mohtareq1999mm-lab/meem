@@ -21,6 +21,7 @@ use Marvel\Database\Models\CartItem;
 use Marvel\Database\Models\Governorate;
 use Marvel\Database\Models\Order;
 use Marvel\Database\Models\Promotion;
+use Marvel\Database\Models\Settings;
 use Marvel\Database\Models\ShippingPrice;
 use Marvel\Database\Models\Transaction;
 use Marvel\Enums\ShippingMethod;
@@ -59,6 +60,7 @@ class OrderService
 
         $orders = Order::query()
             ->forUser($userId)
+            ->when($request->has('status'), fn($q) => $q->where('status', $request->get('status')))
             ->with($this->orderListRelations())
             ->paginate($limit)
             ->withQueryString();
@@ -191,6 +193,14 @@ class OrderService
                 $selectedGiftProductId ? (int) $selectedGiftProductId : null,
                 ShippingMethod::SCHEDULED,
             );
+
+            $minimumOrderAmount = (float) (Settings::first()?->options['minimumOrderAmount'] ?? 0);
+            if ($minimumOrderAmount > 0 && $checkoutTotals->subtotal < $minimumOrderAmount) {
+                DB::rollBack();
+                throw new \InvalidArgumentException(
+                    __('Minimum order amount is :amount', ['amount' => $minimumOrderAmount])
+                );
+            }
 
             $orderData = $request->only(array_merge($this->dataArray, [
                 'fulfillment_type', 'payment_method', 'payment_gateway', 'pickup_location_id',

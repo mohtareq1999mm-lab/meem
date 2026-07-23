@@ -42,20 +42,21 @@
 
 ### forgetPassword()
 1. Uses `$this->repository->findByField('email', $request->email)` — returns collection
-2. `count($user) < 1` check — returns 404 if not found
+2. `count($user) < 1` check — **still queries DB but always returns 200** (no email enumeration)
 3. Generates `Str::random(6)` — 6-character alphanumeric OTP
-4. Upserts into `password_resets` — checks existing record, inserts or updates
+4. **`updateOrInsert()`** — atomic upsert (replaced manual insert/update, no race condition)
 5. Stores `Hash::make($plainTextToken)` — never stores plaintext
-6. Calls `$this->repository->sendResetEmail()` — returns boolean
+6. Calls `$this->repository->sendResetEmail()` — uses `Mail::queue()` (queued on `high`)<｜end▁of▁thinking｜>
 
 ### verifyForgetPasswordToken()
-1. Fetches `password_resets` by email
-2. `Hash::check($request->otp, $tokenData->token)` — verifies OTP
-3. Checks 5-minute expiry: `Carbon::parse($tokenData->created_at)->addMinutes(5)->isPast()`
-4. Returns raw `true`/`false` — NOT a JSON response
+1. **`$request->validate([email, otp])`** — explicit validation (was missing)
+2. Fetches `password_resets` by email
+3. `Hash::check($request->otp, $tokenData->token)` — verifies OTP
+4. Checks expiry: `Carbon::parse(...)->addMinutes(config('auth.passwords.users.expire', 60))->isPast()`
+5. Returns **JSON** `{success, message}` with HTTP 200/400 (not raw boolean)
 
 ### resetPassword()
-1. Inline `$request->validate()` — no Form Request class
+1. **`$request->validate([password, password_confirmation, email, otp])` — outside try/catch** (so 422 errors work, not swallowed by catch)
 2. Wraps everything in `DB::transaction`
 3. Calls `verifyForgetPasswordToken()` for OTP verification
 4. Finds user via `$this->repository->where('email', $request->email)->first()`

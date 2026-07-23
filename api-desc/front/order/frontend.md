@@ -9,7 +9,9 @@
 ### 1. My Orders Page (Customer)
 
 ```
-GET /api/v1/general/orders
+GET /api/v1/general/orders?status=pending&limit=15&page=1
+
+Supports `status` filter (pending, processing, completed, cancelled, delivered, refunded, failed, at_local_facility, out_for_delivery, ready_for_pickup) plus `limit` and `page` pagination.
 
 Response:
 {

@@ -525,23 +525,7 @@ class UserController extends CoreController
     }
     public function loginWithOutEmailVerification(UserAuthEmailAndPasswordRequest $request)
     {
-        $request->validated();
-
-        $user = User::where(function ($query) use ($request) {
-            $query->where('email', $request->email)
-                ->orWhere('phone_number', $request->phone_number);
-        })->where('is_active', true)->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return $this->apiResponse(INVALID_CREDENTIALS, 404, false);
-        }
-        // event(new ProcessUserData());
-        $data = [
-            "token" => $user->createToken('auth_token')->plainTextToken,
-            "permissions" => $user->getAllPermissions()->pluck('name'),
-            "role" => $user->roles->pluck('name')
-        ];
-        return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true, $data);
+        abort(410, __('message.gone'));
     }
     public function sendUserOtp(Request $request)
     {
@@ -560,17 +544,25 @@ class UserController extends CoreController
         }
         $data = [];
         if ($request->email) {
-            $oneTimePassword = $user->createOneTimePassword();
-            $notificationClass = config('one-time-passwords.notification');
-            $user->notify(new $notificationClass($oneTimePassword));
-            $data['otp_id'] = $oneTimePassword->id;
+            try {
+                $oneTimePassword = $user->createOneTimePassword();
+                $notificationClass = config('one-time-passwords.notification');
+                $user->notify(new $notificationClass($oneTimePassword));
+                $data['otp_id'] = $oneTimePassword->id;
+            } catch (\Exception $e) {
+                $data = [
+                    'otp_status' => false,
+                    'requires_resend' => true,
+                ];
+                return $this->apiResponse(ACCOUNT_CREATED_BUT_OTP_FAILED, 201, true, $data);
+            }
         } else {
             $otpResponse = $this->sendOtpCode($request);
             if (is_array($otpResponse)) {
                 $data['otp_id'] = $otpResponse['otp_id'] ?? null;
             }
         }
-        return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true);
+        return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true, $data);
     }
     public function verifyLoginOtp(Request $request)
     {
@@ -765,28 +757,18 @@ class UserController extends CoreController
     {
         $user = $this->repository->findByField('email', $request->email);
         if (count($user) < 1) {
-            return $this->apiResponse(NOT_FOUND, 404);
+            return $this->apiResponse(CHECK_INBOX_FOR_PASSWORD_RESET_EMAIL, 200);
         }
 
         $plainTextToken = Str::random(6);
 
-        $tokenData = DB::table('password_resets')
-            ->where('email', $request->email)->first();
-        if (!$tokenData) {
-            DB::table('password_resets')->insert([
-                'email' => $request->email,
+        DB::table('password_resets')->updateOrInsert(
+            ['email' => $request->email],
+            [
                 'token' => Hash::make($plainTextToken),
                 'created_at' => Carbon::now(),
-            ]);
-        } else {
-            DB::table('password_resets')
-                ->where('email', $request->email)
-                ->update([
-                    'token' => Hash::make($plainTextToken),
-                    'created_at' => Carbon::now(),
-                ]);
-        }
-
+            ]
+        );
 
         if ($this->repository->sendResetEmail($request->email, $plainTextToken)) {
             return $this->apiResponse(CHECK_INBOX_FOR_PASSWORD_RESET_EMAIL, 200);
@@ -798,6 +780,20 @@ class UserController extends CoreController
 
 
     public function verifyForgetPasswordToken(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'otp' => 'required|string',
+        ]);
+
+        if ($this->checkResetToken($request)) {
+            return $this->apiResponse(TOKEN_IS_VALID, 200, true);
+        }
+
+        return $this->apiResponse(INVALID_TOKEN, 400, false);
+    }
+
+    private function checkResetToken(Request $request): bool
     {
         $tokenData = DB::table('password_resets')
             ->where('email', $request->email)
@@ -813,7 +809,7 @@ class UserController extends CoreController
 
         if (
             Carbon::parse($tokenData->created_at)
-            ->addMinutes(5)
+            ->addMinutes(config('auth.passwords.users.expire', 60))
             ->isPast()
         ) {
             return false;
@@ -825,16 +821,16 @@ class UserController extends CoreController
 
     public function resetPassword(Request $request)
     {
-        try {
-            $request->validate([
-                'password' => 'required|string|min:8|max:50|confirmed',
-                'password_confirmation' => ['required', 'string', 'min:8', 'max:50'],
-                'email' => 'email|required',
-                'otp' => 'required|string'
-            ]);
+        $request->validate([
+            'password' => 'required|string|min:8|max:50|confirmed',
+            'password_confirmation' => ['required', 'string', 'min:8', 'max:50'],
+            'email' => 'email|required',
+            'otp' => 'required|string'
+        ]);
 
+        try {
             return DB::transaction(function () use ($request) {
-                if (!$this->verifyForgetPasswordToken($request)) {
+                if (!$this->checkResetToken($request)) {
                     return $this->apiResponse(INVALID_TOKEN, 400, false);
                 }
 
@@ -1113,7 +1109,7 @@ class UserController extends CoreController
 
                 $token = $user->createToken('auth_token')->plainTextToken;
 
-                return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true, $token);
+                return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true, ['token' => $token]);
             } else {
                 return $this->apiResponse(OTP_VERIFICATION_FAILED, 400, false);
             }

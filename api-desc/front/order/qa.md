@@ -4,7 +4,7 @@
 
 | TC ID | Description | Expected |
 |-------|-------------|----------|
-| TC-ORD-001 | Customer lists own orders | Only user's orders |
+| TC-ORD-000 | List orders filtered by status | `?status=pending` returns only pending |
 | TC-ORD-002 | Checkout with COD | 201, order created |
 | TC-ORD-003 | Checkout with online payment | 201, transaction pending |
 | TC-ORD-004 | Checkout with empty cart | 422 |

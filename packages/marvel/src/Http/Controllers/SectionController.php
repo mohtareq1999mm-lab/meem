@@ -32,25 +32,16 @@ class SectionController extends CoreController
 
     public function store(StoreSectionRequest $request)
     {
-        try {
-            $data = $request->validated();
-            $data['endpoint'] = $data['endpoint'] ?? 'general/' . $data['type'];
-            $setting = $data['setting'] ?? null;
+        $data = $request->validated();
+        $data['endpoint'] = $data['endpoint'] ?? 'general/' . $data['type'];
 
-            $section = Section::create($data);
-
-            // if ($setting) {
-            //     $sectionType = $this->sectionTypeService->getByType($section->type);
-            //     if (!$sectionType) {
-            //         $sectionType = $this->sectionTypeService->createType(['type' => $section->type]);
-            //     }
-            //     $this->sectionTypeService->upsertSettings($sectionType->id, $setting);
-            // }
-
-            return $this->apiResponse(SECTION_CREATED_SUCCESSFULLY, 200, true, PagesSectionResource::make($section));
-        } catch (\Exception $e) {
-            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
+        if (! isset($data['title']) && $request->has('title')) {
+            $data['title'] = $request->input('title');
         }
+
+        $section = Section::create($data);
+
+        return $this->apiResponse(SECTION_CREATED_SUCCESSFULLY, 200, true, PagesSectionResource::make($section));
     }
 
     public function show(Section $section)
@@ -61,7 +52,10 @@ class SectionController extends CoreController
     public function update(UpdateSectionRequest $request, Section $section)
     {
         $data = $request->validated();
-        $setting = $data['setting'] ?? null;
+
+        if (! isset($data['title']) && $request->has('title')) {
+            $data['title'] = $request->input('title');
+        }
 
         $section->update($data);
 

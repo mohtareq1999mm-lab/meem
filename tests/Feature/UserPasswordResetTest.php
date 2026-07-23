@@ -19,7 +19,7 @@ class UserPasswordResetTest extends TestCase
 {
     use DatabaseTransactions, CreatesTestTables;
 
-    private const PREFIX = '/api';
+    private const PREFIX = '/api/v1';
 
     private User $user;
     private string $plainPassword = 'Password123!';
@@ -83,13 +83,14 @@ class UserPasswordResetTest extends TestCase
         ]);
     }
 
-    public function test_forget_password_fails_for_nonexistent_email(): void
+    public function test_forget_password_does_not_leak_email_existence(): void
     {
         $response = $this->postJson(self::PREFIX . '/forget-password', [
             'email' => 'nonexistent@example.com',
         ]);
 
-        $response->assertStatus(404);
+        $response->assertOk();
+        $response->assertJsonPath('success', true);
     }
 
     public function test_forget_password_updates_existing_token(): void
@@ -135,11 +136,12 @@ class UserPasswordResetTest extends TestCase
 
     public function test_verify_forget_password_token_fails_with_expired_token(): void
     {
+        $expireMinutes = (int) config('auth.passengers.users.expire', 60);
         $token = 'expired-token';
         DB::table('password_resets')->insert([
             'email' => $this->user->email,
             'token' => Hash::make($token),
-            'created_at' => Carbon::now()->subMinutes(10),
+            'created_at' => Carbon::now()->subMinutes($expireMinutes + 1),
         ]);
 
         $response = $this->postJson(self::PREFIX . '/verify-forget-password-token', [
@@ -147,8 +149,8 @@ class UserPasswordResetTest extends TestCase
             'otp' => $token,
         ]);
 
-        $response->assertOk();
-        $this->assertTrue($response->getContent() === 'false' || $response->json() === false);
+        $response->assertStatus(400);
+        $response->assertJsonPath('success', false);
     }
 
     public function test_verify_forget_password_token_fails_with_invalid_token(): void
@@ -164,8 +166,8 @@ class UserPasswordResetTest extends TestCase
             'otp' => 'wrong-token',
         ]);
 
-        $response->assertOk();
-        $this->assertTrue($response->getContent() === 'false' || $response->json() === false);
+        $response->assertStatus(400);
+        $response->assertJsonPath('success', false);
     }
 
     // ========================================================================
@@ -254,7 +256,7 @@ class UserPasswordResetTest extends TestCase
             'subject' => 'Test Subject',
             'name' => 'Test User',
             'email' => $this->user->email,
-            'description' => 'This is a test message.',
+            'message' => 'This is a test message.',
         ]);
 
         $response->assertOk();
@@ -268,7 +270,7 @@ class UserPasswordResetTest extends TestCase
         $this->postJson(self::PREFIX . '/contact-us', [
             'name' => 'Test',
             'email' => $this->user->email,
-            'description' => 'Message',
+            'message' => 'Message',
         ])->assertStatus(422);
     }
 }

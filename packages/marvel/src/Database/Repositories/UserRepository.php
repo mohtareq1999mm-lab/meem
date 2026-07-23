@@ -104,7 +104,7 @@ class UserRepository extends BaseRepository
     public function sendResetEmail($email, $token)
     {
         try {
-            Mail::to($email)->send(new ForgetPassword($token));
+            Mail::to($email)->queue(new ForgetPassword($token));
             return true;
         } catch (\Exception $e) {
             return false;

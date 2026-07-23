@@ -12,8 +12,8 @@
 - [ ] Validate phone number format client-side (11-15 digits)
 - [ ] "Send OTP" button with loading state
 - [ ] Tab/option to switch between phone and email OTP
-- [ ] On success (Step 1) → show OTP input, auto-focus
-- [ ] Disable resend button for 20 seconds (cooldown)
+- [ ] On success (Step 1) → save `data.otp_id` from response, show OTP input, auto-focus
+- [ ] Disable resend button for 5-10 seconds (email is queued, not instant — avoid confusion)
 - [ ] On 429: "Too many attempts. Please wait 1 minute."
 - [ ] On 404: "No account found with this phone number"
 
@@ -27,8 +27,8 @@
 - [ ] Auto-submit when 6 characters entered
 - [ ] Auto-advance between digit boxes on mobile
 - [ ] Show remaining retry count (3 attempts before rate limit)
-- [ ] "Resend OTP" link with cooldown timer (20s)
-- [ ] On success: store token, redirect to home
+- [ ] "Resend OTP" link with cooldown timer (5-10s for queued email)
+- [ ] On success: store `data.token`, redirect to home
 - [ ] On error: show "Invalid verification code. X attempts remaining."
 - [ ] After 3 failed attempts: show "Too many attempts. Please wait 1 minute."
 
@@ -41,7 +41,8 @@
 - [ ] Tab-based toggle between "Phone" and "Email"
 - [ ] Email input with client-side format validation
 - [ ] Same OTP input UX as phone flow
-- [ ] Note: email OTP is returned in the API response body (static "123456") — do NOT display this to user in production
+- [ ] Email OTP is **queued** — brief delay before email arrives; do not show instant delivery message
+- [ ] API response for email OTP includes `data.otp_id` (integer) — use for tracking verification session
 
 ### Story OTP-FE-4: Rate Limit Awareness
 **As a** frontend developer
@@ -61,6 +62,7 @@
 **So that** the user is authenticated
 
 **Acceptance Criteria:**
+- [ ] Extract token from `data.token` (wrapped in array, consistent with `/token`)
 - [ ] Save token to localStorage
 - [ ] Call GET /api/v1/me to load user profile
 - [ ] Redirect based on user role (admin → admin panel, customer → home)
@@ -81,11 +83,11 @@
 
 ### OtpVerificationInput
 10. Auto-submits on 6 digits
-11. Handles raw response for email OTP login
-12. Handles structured response for phone OTP login
+11. Handles email OTP login response (`data.token` wrapped in object)
+12. Handles phone OTP login response (`data.token` wrapped in object)
 13. Shows error on invalid OTP (400)
 14. Shows error on gateway error (422)
-15. Resend OTP link works
+15. Resend OTP link works (cooldown 5-10s for queued email)
 16. Resend cooldown timer counts down
 17. All retries exhausted → shows block message
 
