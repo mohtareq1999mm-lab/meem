@@ -46,7 +46,7 @@ class SettingsRequest extends FormRequest
             'youtube' => ['sometimes', 'url'],
             'phone' => ['sometimes', 'string'],
             'fast_shipping_page_publish' => ['sometimes', 'in:0,1'],
-            'minimumOrderAmount' => ['sometimes', 'numeric', 'min:0'],
+            'minimum_order_amount' => ['sometimes', 'numeric', 'min:0'],
             'options' => ['sometimes', 'array'],
         ];
     }

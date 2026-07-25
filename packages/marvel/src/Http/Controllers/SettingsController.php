@@ -117,7 +117,7 @@ class SettingsController extends CoreController
             'fast_shipping_page_publish', 'options',"minimum_order_amount"
         ]);
 
-       
+
 
         $settings->fill($data);
         $settings->save();
