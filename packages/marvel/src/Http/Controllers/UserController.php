@@ -577,6 +577,7 @@ class UserController extends CoreController
         }
 
         if ($user->verifyOneTimePassword($request->code)) {
+            $user->update(['email_verified_at' => now()]);
             $data = [
                 "token" => $user->createToken('auth_token')->plainTextToken,
             ];
@@ -649,7 +650,7 @@ class UserController extends CoreController
                 'type' => 'user',
                 'is_active' => true,
             ]);
-           
+
             if ($request->hasFile('avatar')) {
                 $user->addMedia($request->file('avatar'))->toMediaCollection('avatar');
             }
