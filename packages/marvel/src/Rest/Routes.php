@@ -290,6 +290,16 @@ Route::get('product-type', function () {
 
     return $result;
 });
+
+
+Route::get('check-card-payment', function () {
+    return [
+        'CardNumber' => '2223000000000007',
+        'CardExpiryMonthand year' => '01/39',
+        'CardCVV' => '100',
+    ];
+});
+
 Route::get('top-authors', [AuthorController::class, 'topAuthor']);
 Route::get('top-manufacturers', [ManufacturerController::class, 'topManufacturer']);
 Route::get('popular-products', [ProductController::class, 'popularProducts']);

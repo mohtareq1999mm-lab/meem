@@ -657,11 +657,7 @@ class UserController extends CoreController
                 'type' => 'user',
                 'is_active' => true,
             ]);
-            try {
-                $user->assignRole('customer');
-            } catch (\Spatie\Permission\Exceptions\RoleDoesNotExist $e) {
-                // Role not yet seeded; skip assignment
-            }
+           
             if ($request->hasFile('avatar')) {
                 $user->addMedia($request->file('avatar'))->toMediaCollection('avatar');
             }

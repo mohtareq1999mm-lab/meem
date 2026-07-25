@@ -20,9 +20,9 @@ class UpdateFaqsRequest extends FormRequest
     {
         return [
             'faq_title'         => ['sometimes', 'array'],
-            'faq_title.*'       => ['sometimes', 'string', 'min:3', 'max:1000',UniqueTranslationRule::for('faqs', "title")->ignore($this->route("faq"))],
+            'faq_title.*'       => ['sometimes', 'string', 'min:3', 'max:1000',UniqueTranslationRule::for('faqs', "faq_title")->ignore($this->route("faq"))],
             'faq_description'   => ['sometimes', 'array'],
-            'faq_description.*' => ['sometimes', 'string', 'min:3', 'max:1000',UniqueTranslationRule::for('faqs', "description")->ignore($this->route("faq"))],
+            'faq_description.*' => ['sometimes', 'string', 'min:3', 'max:1000',UniqueTranslationRule::for('faqs', "faq_description")->ignore($this->route("faq"))],
             'status'            => ['sometimes', 'in:0,1'],
         ];
     }

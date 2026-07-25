@@ -29,6 +29,7 @@ class ContentPageController extends Controller
     }
     public function index(Request $request)
     {
+        dd('hello');
         $pages = ContentPage::with('sections')->paginate(15);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ContentPageResource::collection($pages));
     }
@@ -41,23 +42,24 @@ class ContentPageController extends Controller
 
     public function store(StoreContentPageRequest $request)
     {
-        return DB::transaction(function () use ($request) {
-            $data = $request->only(['title']);
-            $data['slug'] = Str::slug($data['title']['en']);
-            $page = ContentPage::create($data + ['is_active' => true]);
 
-            return $this->apiResponse(CREATE_DATA_SUCCESSFULLY, 201, true, ContentPageResource::make($page));
-        });
+        $data = $request->only(['title']);
+        $data['slug'] = Str::slug($data['title']['en']);
+        $page = ContentPage::create($data + ['is_active' => true]);
+
+        return $this->apiResponse(CREATE_DATA_SUCCESSFULLY, 201, true, ContentPageResource::make($page));
     }
 
-    public function update(UpdateContentPageRequest $request, ContentPage $content_page)
+    public function update(UpdateContentPageRequest $request, $id)
     {
-        return DB::transaction(function () use ($request, $content_page) {
-            $content_page->update($request->only(['title', 'is_active' ]));
-            $content_page->load('sections');
+        $content_page = ContentPage::find($id);
+        if (!$content_page) {
+            return $this->apiResponse(NOT_FOUND, 404, false);
+        }
+        $content_page->update($request->only(['title', 'is_active']));
+        $content_page->load('sections');
 
-            return  $this->apiResponse(UPDATE_DATA_SUCCESSFULLY, 200, true, ContentPageResource::make($content_page));
-        });
+        return  $this->apiResponse(UPDATE_DATA_SUCCESSFULLY, 200, true, ContentPageResource::make($content_page));
     }
 
     /**
@@ -65,7 +67,6 @@ class ContentPageController extends Controller
      */
     public function attachSections(AttachSectionsRequest $request, ContentPage $content_page)
     {
-        return DB::transaction(function () use ($request, $content_page) {
             $sectionIds = $request->input('sections', []);
 
             // if empty array provided, delete the content page as requested
@@ -77,7 +78,7 @@ class ContentPageController extends Controller
             $attached = $content_page->attachSectionsByIds($sectionIds);
             $content_page->load('sections');
             return $this->apiResponse(UPDATE_DATA_SUCCESSFULLY, 200, true, ContentPageResource::make($content_page));
-        });
+        
     }
 
     public function destroy(ContentPage $content_page): JsonResponse

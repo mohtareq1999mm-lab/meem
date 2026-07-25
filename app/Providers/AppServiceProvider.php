@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Mail\Transport\ResendTransport;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
 
@@ -28,5 +30,11 @@ class AppServiceProvider extends ServiceProvider
         if (!\App::environment('local')) {
             $this->app['request']->server->set('HTTPS', true);
         }
+
+        Mail::extend('resend', function (array $config) {
+            $apiKey = $config['key'] ?? config('services.resend.key');
+
+            return new ResendTransport(\Resend::client($apiKey));
+        });
     }
 }

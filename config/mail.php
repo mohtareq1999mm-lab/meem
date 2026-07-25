@@ -71,6 +71,11 @@ return [
         'array' => [
             'transport' => 'array',
         ],
+
+        'resend' => [
+            'transport' => 'resend',
+            'key' => env('RESEND_API_KEY'),
+        ],
     ],
 
     /*

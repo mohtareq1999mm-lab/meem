@@ -101,14 +101,3 @@ Route::prefix('v1/general')->middleware('api')->group(function () {
 
     Route::get('orders', [OrderController::class, 'index'])->middleware('auth:sanctum');
 });
-
-
-
-
-Route::get('check-card-payment', function () {
-    return [
-        'CardNumber' => '2223000000000007',
-        'CardExpiryMonthand year' => '01/39',
-        'CardCVV' => '100',
-    ];
-});
