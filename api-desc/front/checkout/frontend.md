@@ -62,6 +62,7 @@
 **Response 200 (online):** `{ "data": { "url": "https://gateway.com/pay/123" } }`
 **Response 200 (COD):** `{ "data": { "order_id": 1 } }`
 **Response 200 (cashier):** `{ "data": { "order_id": 1, "transaction_uuid": "abc", "qr_code": "data:..." } }`
+**Response 400 (minimum order):** `{ "success": false, "message": "Minimum order amount is 100", "errors": {} }`
 **Response 422 (COD+pickup):** `{ "message": "COD not available for pickup", "success": false }`
 
 ---
@@ -118,6 +119,7 @@
 | **COD success** | Order confirmation page |
 | **Online success** | Redirect/open payment URL |
 | **Cashier success** | Show QR code for scanning |
+| **Min order not met** | Show banner "Minimum order amount is X" |
 | **Validation error** | Inline errors |
 | **Callback success** | Success page with order ID |
 | **Callback failed** | Failure page with error |

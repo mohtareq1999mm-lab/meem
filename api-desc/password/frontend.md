@@ -19,10 +19,12 @@ Body: { email }
 **Frontend:**
 - Single email input field
 - Submit button with loading state
-- On 200 → "Check your inbox for the OTP" → advance to Step 2
-- On 404 → "No account found with this email"
+- **Always returns 200** — does NOT disclose whether the email exists (prevents email enumeration)
+- Show generic message: "If this email is registered, check your inbox"
+- Do NOT show "No account found" — this leaks which emails are registered
 - On 429 → "Too many attempts. Try again in 1 minute."
 - Pre-fill email in Step 2
+- Reset email is **queued** — may take a few seconds to arrive; do not promise instant delivery
 
 ## Step 2: Verify OTP
 
@@ -34,17 +36,17 @@ Body: { email, otp }
 **Frontend:**
 - 6-character OTP input (single input or 6 individual digit boxes)
 - Auto-submit when 6 characters entered (mobile-friendly)
-- ⚠ **Response is raw boolean** — not a JSON envelope
-  - `true` → advance to Step 3
-  - `false` → "Invalid or expired OTP"
-- Show remaining time (5-minute countdown from Step 1)
+- ✓ **Response is JSON** `{ success, message }` — check `response.success`
+  - `success: true` → advance to Step 3
+  - `success: false` → "Invalid or expired OTP"
+- Show remaining time (60-minute countdown from Step 1)
 - "Resend OTP" link → returns to Step 1
 - On 429 → rate limit notice
 
-**Implementation note:** Because the response is a raw boolean (not `{ success: true, data: true }`), use:
+**Implementation note:** The response is a standard JSON envelope:
 ```js
 const res = await api.post('/verify-forget-password-token', body);
-if (res.data === true) { /* advance */ }
+if (res.data.success) { /* advance */ }
 ```
 
 ## Step 3: Reset Password
@@ -68,10 +70,16 @@ Body: { email, otp, password, password_confirmation }
 |--------|---------|--------|
 | 200 | Success | Advance to next step or redirect |
 | 400 | Invalid OTP | Show error, allow retry or resend |
-| 404 | Email not found | Show error, stay on Step 1 |
+| 404 | User not found (on reset) | Show error (forget-password is always 200) |
 | 422 | Validation error | Show field errors |
 | 429 | Rate limited | Show timer, disable submit |
 | 500 | Server error | Show generic error, retry |
+
+## Queue Behavior
+All password reset emails are **queued** on the `high` queue:
+- `POST /forget-password` returns immediately — email arrives after queue worker processes it
+- Do NOT promise instant delivery; show a brief loading state before enabling resend
+- For production, ensure `php artisan queue:work --queue=high,default` is running as a daemon
 
 ## Rate Limiting
 All 3 endpoints share `throttle:sensitive` — 5 requests/min per IP.

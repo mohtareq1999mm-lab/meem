@@ -1,6 +1,6 @@
 # Pages Module — Changelog
 
-## [1.0.0] — 2026-07-21
+## [1.0.0] — 2026-07-23
 
 ### Added
 - Comprehensive API investigation documentation (`api-desc/pages/`)
@@ -14,6 +14,9 @@
 - SectionType settings management (front/back key-value pairs, full replace on update)
 - Public API: filtered listing (active sections only)
 - Permission-based authorization via 12 Spatie permissions
+
+### Fixed
+- **SECTION-B002 (HIGH):** Multilingual title (`title[en]`/`title[ar]`) not stored on create/update via FormData — root cause: Laravel `excludeUnvalidatedArrayKeys` skips parent `title` key in `validated()` when wildcard sub-rules exist. Fixed by re-adding `title` from raw request input in `SectionController::store()`/`update()`.
 
 ### Known Issues
 1. **Commented-out cache** in public ContentPageController — Cache::remember is commented out, no caching implemented

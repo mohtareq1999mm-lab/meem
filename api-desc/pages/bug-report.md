@@ -2,6 +2,33 @@
 
 ---
 
+## BUG-PAGE-008 (SECTION-B002): Multilingual Title Not Stored via FormData
+
+**Severity:** HIGH
+
+**Status:** FIXED (2026-07-23)
+
+**Component:** `packages/marvel/src/Http/Controllers/SectionController.php` (lines 38-40, 56-58)
+
+**Root Cause:** Laravel's Validator Factory enables `excludeUnvalidatedArrayKeys` by default. When a FormRequest has rules like `'title' => 'required|array'` + `'title.*' => 'required|string|max:50'`, the `validated()` method SKIPS the parent `title` key because it has `array` rule AND wildcard sub-rules exist. Only `title.*` is processed via `Arr::set($results, 'title.*', [...])`, which on a non-existent parent key produces an empty array `[]`.
+
+**Fix:** Added guard in both `store()` and `update()`:
+```php
+if (! isset($data['title']) && $request->has('title')) {
+    $data['title'] = $request->input('title');
+}
+```
+
+This matches the ContentPage pattern which uses `$request->only(['title'])` instead of `validated()`.
+
+**Impact:** Any section create/update via FormData (including `_method=PUT` spoofing) silently stored `title` as empty JSON array `[]` instead of the multilingual payload. JSON API requests were unaffected because of different request body parsing paths.
+
+**Related:** Same latent bug exists in any FormRequest using `array` + `wildcard.*` rules with translatable fields. The ContentPage form requests also use `UniqueTranslationRule` (unrelated).
+
+---
+
+---
+
 ## BUG-PAGE-001: `attachSections` Returns "Deleted" Message When Detaching
 
 **Severity:** Low

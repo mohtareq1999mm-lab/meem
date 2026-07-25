@@ -109,3 +109,11 @@ The existing test suite covers:
 | 42 | `test_section_detached_from_page_removed` | Feature | After detach, section not in page.sections |
 | 43 | `test_reorder_persists_after_refetch` | Feature | Reorder → GET → same order |
 | 44 | `test_toggle_active_persists` | Feature | Toggle → GET → updated status |
+
+### New Regression Tests (Bug SECTION-B002)
+
+| # | Test Name | Type | Description |
+|---|-----------|------|-------------|
+| R45 | `test_create_section_with_multilingual_title_via_formdata` | Regression | POST FormData with title[en], title[ar] → title stored as JSON object |
+| R46 | `test_update_section_with_multilingual_title_via_formdata` | Regression | PUT (spoofed) FormData with title[en], title[ar] → title updated correctly |
+| R47 | `test_create_section_title_not_empty_array` | Regression | Ensure title !== [] after create from any content type |

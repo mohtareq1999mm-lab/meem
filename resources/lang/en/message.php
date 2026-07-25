@@ -162,4 +162,12 @@ return [
     'DASHBOARD.FINANCE_ANALYTICS_FETCHED' => 'Finance analytics fetched successfully.',
     'DASHBOARD.DATABASE_ERROR' => 'A database error occurred. Please check your request and try again.',
     'ERROR.SOMETHING_WENT_WRONG' => 'Something went wrong.',
+
+    // Password Reset
+    'MESSAGE.PASSWORD_RESET_SUCCESSFUL' => 'Password reset successfully',
+    'MESSAGE.INVALID_TOKEN' => 'Invalid token',
+    'MESSAGE.TOKEN_IS_VALID' => 'Token is valid',
+    'MESSAGE.CHECK_INBOX_FOR_PASSWORD_RESET_EMAIL' => 'Check your inbox for password reset email',
+
+    'gone' => 'This resource is no longer available.',
 ];

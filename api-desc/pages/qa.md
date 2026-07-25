@@ -65,6 +65,27 @@
 
 ---
 
+## Regression Tests (Applied 2026-07-23)
+
+### SECTION-B002: Multilingual Title via FormData
+
+**Given** the Create Section FormData payload:
+```
+_method: POST
+title[en]: Test Section
+title[ar]: قسم اختبار
+```
+
+**When** `SectionController::store()` is called
+
+**Then** `$section->title` must be `{"en":"Test Section","ar":"قسم اختبار"}` (object, not empty array)
+
+**Same test for Update** using `_method: PUT` with `title[en]: Updated` and `title[ar]: محدث`.
+
+**Covers:** Both `store()` and `update()` paths, FormData content type, multilingual array structure.
+
+---
+
 ## Validation Tests
 
 | # | Test | Description | Expected |

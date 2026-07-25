@@ -269,7 +269,7 @@ Create a new section.
 |-------|-------|
 | type | required, string, max:100, exists:section_types,type |
 | title | required, array |
-| title.* | required, string, max:50, unique translation |
+| title.* | required, string, max:50 |
 | is_active | nullable, in:0,1 |
 | title_visible | nullable, in:0,1 |
 | order | nullable, integer |

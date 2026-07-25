@@ -59,3 +59,6 @@
 | R8 | Coupon usage recorded | used incremented |
 | R9 | No duplicate coupon usage | firstOrCreate |
 | R10 | Free shipping coupon | shipping=0 |
+| R11 | Minimum order amount enforced | 90 < 100 → 400 |
+| R12 | Minimum order with promotion | 90 with promo discount → still 400 (uses subtotal) |
+| R13 | Minimum order amount zero = skip | 0 → always passes |

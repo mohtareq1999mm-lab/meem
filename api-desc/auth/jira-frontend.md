@@ -64,13 +64,15 @@
 **So that** I can regain access
 
 **Acceptance Criteria:**
-- [ ] Step 1: Enter email → POST /forget-password → "Check your inbox"
-- [ ] Step 2: Enter 6-digit OTP → POST /verify-forget-password-token → advance on true
+- [ ] Step 1: Enter email → POST /forget-password → "Check your inbox" (always 200, no email enumeration)
+- [ ] Forget-password email is **queued** — brief delay; do not show instant delivery
+- [ ] Step 2: Enter 6-digit OTP → POST /verify-forget-password-token → advance on `success: true`
+- [ ] Response is JSON `{ success, message }` — check `response.success`, not raw boolean
 - [ ] Step 3: Enter new password + confirmation → POST /reset-password
-- [ ] Handle raw true/false response from verify endpoint
-- [ ] Show "Invalid or expired OTP" on error
+- [ ] Show "Invalid or expired OTP" on 400 / `success: false`
 - [ ] OTP input: 6 characters, auto-advance on mobile
 - [ ] Rate limit handling (5/min)
+- [ ] Token expiry: 60 minutes (configurable — no hardcoded 5-min timer)
 
 ### Story AUTH-FE-6: Auth State Management
 **As a** frontend developer
@@ -117,9 +119,11 @@
 4. `socialLogin()` — POST /api/v1/social-login-token → returns token
 5. `getMe()` — GET /api/v1/me → returns user data
 6. `logout()` — POST /api/v1/logout → clears token
-7. `forgetPassword()` — POST /api/v1/forget-password → success message
-8. `verifyOtp()` — POST /api/v1/verify-forget-password-token → true/false
-9. `resetPassword()` — POST /api/v1/reset-password → success message
+7. `forgetPassword()` — POST /api/v1/forget-password → always 200, success message (no email enumeration)
+8. `verifyOtp()` — POST /api/v1/verify-forget-password-token → JSON `{ success, message }` (not raw boolean)
+9. `resetPassword()` — POST /api/v1/reset-password → 422 if validation fails (outside try/catch, works correctly)
+10. `sendOtpCode()` — POST /api/v1/send-otp-code → returns `data.otp_id` for session tracking
+11. `otpLogin()` — POST /api/v1/otp-login → returns `data.token` (wrapped in object)
 10. All API calls handle 401 → auto-logout
 11. All API calls handle 429 → rate limit error message
 12. All API calls handle 422 → field validation errors

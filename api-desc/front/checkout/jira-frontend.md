@@ -23,6 +23,7 @@
 - [ ] Order summary: subtotal, promotions, coupon, shipping, total
 - [ ] Promotions section with gift product selection
 - [ ] Submit button with loading state
+- [ ] Handle 400 "Minimum order amount" error — show banner above form
 - [ ] **Loading:** Full form skeleton
 - [ ] **Error:** Inline validation on each field
 - [ ] **Cart expired:** "Your cart has expired" with CTA

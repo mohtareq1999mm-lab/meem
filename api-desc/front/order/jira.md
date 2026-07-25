@@ -49,10 +49,11 @@
 
 ## Bug Tickets
 
-| Ticket | Description | Priority | Severity |
-|--------|-------------|----------|----------|
-| BUG-001 | Dual model system: legacy vs modern columns | Medium | Medium |
-| BUG-002 | Commented apiResource routes in Routes.php | Low | Low |
-| BUG-003 | No base orders migration found | Low | Low |
-| BUG-004 | Duplicate route definitions for checkout endpoints | Low | Low |
-| BUG-005 | Missing EN/AR translation files (only DE exists) | Medium | Medium |
+| Ticket | Description | Priority | Severity | Status |
+|--------|-------------|----------|----------|--------|
+| BUG-000 | Status filter ignored on `/api/v1/general/orders` — all statuses returned regardless of query param | High | High | **FIXED** |
+| BUG-001 | Dual model system: legacy vs modern columns | Medium | Medium | Open |
+| BUG-002 | Commented apiResource routes in Routes.php | Low | Low | Open |
+| BUG-003 | No base orders migration found | Low | Low | Open |
+| BUG-004 | Duplicate route definitions for checkout endpoints | Low | Low | Open |
+| BUG-005 | Missing EN/AR translation files (only DE exists) | Medium | Medium | Open |

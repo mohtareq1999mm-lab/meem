@@ -1,6 +1,16 @@
 # Bug Report - Order Feature
 
-## Issue 1: Dual Model System
+## Issue 1: Status Filter Completely Ignored on `/api/v1/general/orders`
+
+- **Severity:** HIGH
+- **Status:** FIXED (2026-07-23)
+- **Component:** `app/Services/General/OrderService.php::paginateForUser()`
+- **Root Cause:** The method never read the `status` query parameter.
+- **Fix:** Added `->when($request->has('status'), ...)` to the query chain.
+
+---
+
+## Issue 2: Dual Model System
 
 - **Description:** Two separate Order model schemas coexist. Marvel package uses legacy columns (`tracking_number`, `order_status`, `payment_status`, `amount`, `total`, `paid_total`). App layer uses modern columns (`status`, `price`, `total_price`, `promotion_id`). The `syncOrderStatusColumn()` method bridges the gap but is a potential inconsistency point.
 - **Impact:** Medium — status changes must be synced explicitly or modern/legacy columns can diverge.

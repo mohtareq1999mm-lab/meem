@@ -2,11 +2,22 @@
 
 namespace Marvel\Notifications;
 
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
+use Spatie\OneTimePasswords\Models\OneTimePassword;
 use Spatie\OneTimePasswords\Notifications\OneTimePasswordNotification as SpatieNotification;
 
-class OneTimePasswordNotification extends SpatieNotification
+class OneTimePasswordNotification extends SpatieNotification implements ShouldQueue
 {
+    use Queueable;
+
+    public function __construct(OneTimePassword $oneTimePassword)
+    {
+        parent::__construct($oneTimePassword);
+        $this->onQueue('high');
+    }
+
     public function toMail(object $notifiable)
     {
         return (new MailMessage)

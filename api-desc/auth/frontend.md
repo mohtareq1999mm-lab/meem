@@ -21,6 +21,7 @@ Body: { first_name, last_name, email, phone_number, password, password_confirmat
 - On 422 → display field-level validation errors
 - On 429 → show "Too many attempts. Please try again later."
 - The `policy` field must be checked via UI checkbox
+- OTP email is **queued** (has slight delay) — don't show failure immediately
 
 ### Login
 ```
@@ -46,6 +47,31 @@ Body: { email, password }
 - Store `permissions` and `role` from response for UI routing
 - 404 with USER_NOT_VERIFIED → show "Please verify your email before logging in"
 - 404 with USER_NOT_FOUND → show "No admin account found with this email"
+
+### Send OTP Code
+```
+POST /api/v1/send-otp-code
+Body: { email } or { phone_number }
+```
+
+**Frontend handling:**
+- Request OTP for email or phone verification
+- Response includes `otp_id` in `data` — store it to track verification session
+- OTP email is **queued** — may take 1-3 seconds to arrive
+- On 201 (mail failed) → show existing "OTP service unavailable" banner with resend option
+- Do NOT disable resend for longer than 5 seconds (email is queued, not sent)
+
+### OTP Login
+```
+POST /api/v1/otp-login
+Body: { email, code } or { phone_number, code }
+```
+
+**Frontend handling:**
+- Verify the OTP code and receive authentication token
+- On 200 → `data.token` contains the Sanctum token (same format as `/token`)
+- On 400 → "Invalid or expired code"
+- Show remaining attempts if available
 
 ### Social Login
 ```
@@ -91,10 +117,12 @@ Body: { email }
 ```
 
 **Frontend handling:**
-- Show success message "Check your inbox"
-- On 404 → "No account found with this email"
+- Always returns 200 — does NOT disclose whether the email exists
+- Show generic success message: "If this email is registered, check your inbox"
+- Do NOT show "no account found" — this prevents email enumeration
 - On 429 → rate limit notice
-- No token returned — user must check email
+- Password reset email is **queued** — may take a few seconds to arrive
+- Wait at least 2 seconds before offering "resend" option
 
 ### Verify OTP
 ```
@@ -104,9 +132,10 @@ Body: { email, otp }
 
 **Frontend handling:**
 - 6-character OTP input field
-- Response is raw boolean — handle both `true` and `false`
-- On true → advance to password reset form
-- On false → "Invalid or expired OTP"
+- Response is JSON: `{ success: true/false, message: "..." }`
+- On 200 (`success: true`) → advance to password reset form
+- On 400 (`success: false`) → "Invalid or expired OTP"
+- OTP expires after 60 minutes (configurable via backend)
 
 ### Reset Password
 ```
@@ -117,7 +146,7 @@ Body: { email, otp, password, password_confirmation }
 **Frontend handling:**
 - On 200 → "Password reset successful!" → redirect to login
 - On 400 (INVALID_TOKEN) → "Invalid or expired OTP, please request a new one"
-- On 422 → field validation errors
+- On 422 → field validation errors (password too short, mismatch, missing email)
 
 ## Error Handling
 

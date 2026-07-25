@@ -107,8 +107,8 @@ class UserAuthRegressionTest extends TestCase
             'otp' => '123456',
         ]);
 
-        $this->assertEmpty($response->content());
-        $this->assertEquals(200, $response->status());
+        $response->assertStatus(400);
+        $response->assertJsonPath('success', false);
     }
 
     public function test_reset_password_rejects_static_otp(): void

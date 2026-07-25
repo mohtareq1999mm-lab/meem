@@ -10,8 +10,8 @@
 **Acceptance Criteria:**
 - [ ] Single input: email (validated client-side for format)
 - [ ] Submit button with loading spinner
-- [ ] On success: show success message "Check your inbox" and advance to Step 2
-- [ ] On 404: show "No account found with this email"
+- [ ] **Always shows success message** "If this email is registered, check your inbox" — never shows "No account found" (prevents email enumeration)
+- [ ] Email is **queued** — show brief delay before enabling resend; do not promise instant delivery
 - [ ] On 429: show "Too many attempts. Please wait 1 minute."
 - [ ] On 500: show "Something went wrong. Please try again."
 - [ ] "Back to login" link
@@ -27,10 +27,10 @@
 - [ ] Auto-advance on mobile digit entry
 - [ ] Auto-submit when 6 characters entered
 - [ ] Display email being verified (grayed out, read-only)
-- [ ] ⚠ Handle raw `true`/`false` response (not JSON envelope)
-- [ ] On `true`: advance to Step 3
-- [ ] On `false`: show "Invalid or expired OTP. Please try again."
-- [ ] Show countdown timer for OTP expiry (5 minutes)
+- [ ] ✓ Handle JSON `{success, message}` response (was raw boolean — now standard JSON)
+- [ ] On `success: true`: advance to Step 3
+- [ ] On `success: false`: show "Invalid or expired OTP. Please try again."
+- [ ] Show countdown timer for OTP expiry (60 minutes, configurable)
 - [ ] "Resend OTP" link → returns to Step 1
 - [ ] On 429: rate limit notice
 
@@ -47,7 +47,7 @@
 - [ ] Password strength indicator (optional enhancement)
 - [ ] On 200: show "Password reset successful!" → redirect to login page
 - [ ] On 400 (INVALID_TOKEN): show "OTP expired or invalid. Start again." → redirect to Step 1
-- [ ] On 422: show field-level errors
+- [ ] On 422: show field-level errors (validation moved outside try/catch — now works correctly)
 - [ ] On 429: rate limit notice
 
 ### Story PWD-FE-4: Auth State After Reset
@@ -80,8 +80,8 @@
 4. Step 1 404 response → "No account found" message
 5. Step 2 renders after successful Step 1
 6. Step 2 auto-submits on 6 characters
-7. Step 2 handles raw `true` → advances
-8. Step 2 handles raw `false` → shows error
+7. Step 2 handles `{success: true}` → advances
+8. Step 2 handles `{success: false}` → shows error
 9. Step 3 renders after successful Step 2
 10. Step 3 validates password match
 11. Step 3 validates min length
@@ -89,6 +89,6 @@
 13. Step 3 success → redirects to login
 14. Step 3 400 error → redirects to Step 1
 15. Rate limit (429) shows message on all steps
-16. OTP expiry countdown reaches 0 → shows expired message
+16. OTP expiry countdown (60 min) reaches 0 → shows expired message
 17. "Resend OTP" → returns to Step 1 with email pre-filled
 18. "Back to login" link present on all steps

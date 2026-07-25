@@ -47,6 +47,7 @@ POST /checkout { payment_method: "online" }
       → refreshCartItemPrices (real-time)
       → Validate coupon (lock row)
       → Calculate totals (promotion + coupon + shipping)
+      → Enforce minimumOrderAmount (against subtotal, pre-discount)
       → OrderCreationService::createOrder (snapshot pricing)
       → createOrderItems, finalizeOrder
       → finalizeItemsByShippingMethod(SCHEDULED)

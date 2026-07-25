@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+### Fixed
+- **HIGH:** `GET /api/v1/general/orders?status={status}` now correctly filters by order status. The `status` query parameter was previously completely ignored — all orders were returned regardless of the specified status.
 ### Added
 - Complete order lifecycle management: checkout → payment → fulfillment → delivery
 - Customer endpoints: list my orders, checkout, view order details

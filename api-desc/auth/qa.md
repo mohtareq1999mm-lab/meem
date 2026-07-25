@@ -59,15 +59,27 @@
 | # | Test | Expected |
 |---|------|----------|
 | 28 | Request reset for existing email | 200 |
-| 29 | Request reset for non-existing email | 404 |
-| 30 | Verify valid OTP | true |
-| 31 | Verify invalid OTP | false |
-| 32 | Verify expired OTP (wait 6 min) | false |
+| 29 | Request reset for non-existing email | **200** (no email enumeration) |
+| 30 | Verify valid OTP | **200, JSON `success: true`** |
+| 31 | Verify invalid OTP | **400, JSON `success: false`** |
+| 32 | Verify expired OTP (wait 61 min) | **400, JSON `success: false`** |
 | 33 | Reset password with valid OTP | 200, can login with new password |
 | 34 | Reset password with invalid OTP | 400 |
-| 35 | Reset password with too-short new password | 422 |
+| 35 | Reset password with too-short new password | 422 (was 500 before fix) |
 | 36 | After reset, old token cannot be used | 401 |
 | 37 | After reset, login with old password fails | 404 |
+
+### OTP Endpoints
+| # | Test | Expected |
+|---|------|----------|
+| 28a | Request OTP for existing email | 200, `data.otp_id` present |
+| 28b | Request OTP for non-existing email | 404 |
+| 28c | Request OTP with both email+phone missing | 422 |
+| 28d | Verify OTP with valid code | 200, `data.token` present |
+| 28e | Verify OTP with invalid code | 400, `success: false` |
+| 28f | Verify OTP for wrong email | 404 |
+| 28g | Phone OTP login with valid code | 200, `data.token` present |
+| 28h | Phone OTP login with invalid code | 400 |
 
 ## 3. Rate Limiting Tests
 
@@ -91,12 +103,30 @@
 | 48 | Password in response | Never — only token returned |
 | 49 | Reset password without OTP field | 422 |
 | 50 | Try to use another user's reset token | Fails (email-bound) |
+| 51 | Forget password with unknown email | 200 (no enumeration) |
+| 52 | Verify token without email field | 422 (validation added) |
+| 53 | Concurrent password reset requests | No duplicate tokens (updateOrInsert) |
 
-## 5. Regression Tests
+## 5. Queue Tests
 
 | # | Test | Expected |
 |---|------|----------|
-| 51 | Full flow: register → email verify → login → me → logout | All steps succeed |
-| 52 | Full flow: register → forget password → reset → login with new password | All steps succeed |
-| 53 | Full flow: admin login → me → logout | All steps succeed |
-| 54 | Token reuse after logout | 401 |
+| 54 | Register — OTP email goes to `jobs` table | Job exists with `queue=high` |
+| 55 | Forget password — reset email goes to `jobs` table | Job exists with `queue=high` |
+| 56 | Run queue worker — email is logged | `storage/logs/laravel.log` contains email |
+| 57 | API responds immediately without waiting for mail | 200 received before queue worker runs |
+| 57a | Send-otp-code — OTP notification goes to `jobs` table | Job exists with `queue=high` |
+| 57b | Send-otp-code — OTP email logged when queue runs | `storage/logs/laravel.log` contains OTP |
+| 57c | Send-otp-code — returns 200 immediately, before queue processes | Response does NOT contain email body |
+
+## 6. Regression Tests
+
+| # | Test | Expected |
+|---|------|----------|
+| 58 | Full flow: register → email verify → login → me → logout | All steps succeed |
+| 59 | Full flow: register → forget password → reset → login with new password | All steps succeed |
+| 60 | Full flow: admin login → me → logout | All steps succeed |
+| 61 | Token reuse after logout | 401 |
+
+## Known Test Limitations
+- `contact_us` tests fail because `contacts` table is missing in test SQLite database (pre-existing infrastructure issue)

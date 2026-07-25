@@ -1,5 +1,31 @@
 # Data Flow - Order Feature
 
+## Flow 0: List Orders with Status Filter
+
+```
+Client (Auth)
+  |
+  GET /api/v1/general/orders?status=pending&limit=15&page=1
+  |
+  v
+OrderController@index(Request)
+  |
+  v
+OrderService::paginateForUser($request)
+  |
+  +-- $limit = $request->get('limit', 15)
+  +-- $userId = auth()->user()->id
+  |
+  +-- Order::query()
+  |     |-- forUser($userId)              // WHERE user_id = ?
+  |     |-- when(status present)          // WHERE status = 'pending'
+  |     |-- with(orderListRelations)      // Eager loads
+  |     |-- paginate($limit)              // Paginated result
+  |
+  v
+Response: Paginated orders filtered by status
+```
+
 ## Flow 1: Checkout → Order Creation
 
 ```

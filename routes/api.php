@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\General\CouponController;
 use App\Http\Controllers\Api\General\FAQController;
 use App\Http\Controllers\Api\General\FastShippingController;
 use App\Http\Controllers\Api\General\FlashSaleController;
+use App\Http\Controllers\Api\General\GovernorateController;
 use App\Http\Controllers\Api\General\HomeController;
 use App\Http\Controllers\Api\General\OrderController;
 use App\Http\Controllers\Api\General\PickupLocationController;
@@ -90,6 +91,8 @@ Route::prefix('v1/general')->middleware('api')->group(function () {
     Route::get('settings', [SettingController::class, 'index']);
     Route::get('faqs', [FAQController::class, 'index']);
 
+    //======================== governorates ========================/
+    Route::get('governorates', [GovernorateController::class, 'index']);
 
     Route::get('search', [SearchController::class, 'index']);
     Route::get('pickup-locations', [PickupLocationController::class, 'index']);

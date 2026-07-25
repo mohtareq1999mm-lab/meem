@@ -280,4 +280,6 @@ return [
     'cart.inventory.quantity_exceeds_stock' => 'الكمية تتجاوز المخزون المتاح.',
     'cart.inventory.reserved_stock_insufficient' => 'المخزون المحجوز غير كاف.',
     'cart.inventory.physical_stock_insufficient' => 'المخزون الفعلي غير كاف.',
+
+    'gone' => 'لم يعد هذا المورد متاحًا.',
 ];

@@ -14,6 +14,9 @@
 - Coupon usage recording (firstOrCreate + assignment consumption)
 - Extensive existing test coverage
 
+### Fixed
+- **HIGH:** `POST /api/v1/general/checkout` now enforces the global `minimumOrderAmount` setting (from `settings.options.minimumOrderAmount`). Previously the check was only present in the old Marvel checkout flow (`CheckoutRepository::verify()`), not in the new `OrderService::addItemsInOrder()`. The check compares against `subtotal` (pre-discount) so promotions, coupons, flash sales, and discounts cannot bypass the minimum.
+
 ### Known Issues
 1. **Duplicated callback logic** — ~230 lines shared (BUG-CHK-002)
 2. **No cart vs empty cart** — Same 400 response (BUG-CHK-001)

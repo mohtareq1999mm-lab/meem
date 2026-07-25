@@ -103,6 +103,27 @@ Loaded via `RouteServiceProvider` with `prefix('api')` + `prefix('v1/general')`.
 
 ## Request Flow
 
+### Bug Fix: excludeUnvalidatedArrayKeys
+
+Laravel's Validator Factory enables `excludeUnvalidatedArrayKeys` by default. When a FormRequest has rules like:
+```
+'title' => 'required|array',
+'title.*' => 'required|string|max:50',
+```
+The `validated()` method skips the parent `title` key because it has `array` rule AND wildcard sub-rules. Only `title.*` is returned, and `Arr::set($results, 'title.*', [...])` on a non-existent parent key creates an empty array `[]`.
+
+**Fix:** In `SectionController::store()` and `update()`, if `title` is missing from validated data but present in the request, re-add it from `$request->input('title')`.
+
+```php
+if (! isset($data['title']) && $request->has('title')) {
+    $data['title'] = $request->input('title');
+}
+```
+
+This matches the pattern used by `ContentPageController::store()` which uses `$request->only(['title'])` instead of `validated()`.
+
+---
+
 ### Flow: Create Page with Sections
 
 ```

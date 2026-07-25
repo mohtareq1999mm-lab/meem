@@ -47,6 +47,15 @@
 | 4 | test_callback_currency_mismatch | Redirect /failed |
 | 5 | test_callback_mobile_response | JSON response |
 
+### Minimum Order Amount Tests
+| # | Test | Description |
+|---|------|-------------|
+| 1 | test_checkout_below_minimum_rejected | Subtotal 90, minimum 100 → 400 |
+| 2 | test_checkout_at_minimum_succeeds | Subtotal 100, minimum 100 → 201 |
+| 3 | test_checkout_minimum_with_promotion | Subtotal 90, promo discount applied → still 400 |
+| 4 | test_checkout_minimum_with_coupon | Subtotal 90, coupon applied → still 400 |
+| 5 | test_checkout_minimum_zero_disabled | minimum = 0 → always passes |
+
 ### Regression Tests
 | # | Test | Description |
 |---|------|-------------|

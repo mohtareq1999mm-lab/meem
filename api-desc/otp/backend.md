@@ -46,9 +46,9 @@
 ### sendUserOtp()
 1. Validates email XOR phone_number
 2. Looks up active user by email or phone
-3. If email → calls `$user->sendOneTimePassword()` (Laravel Notification)
+3. If email → calls `$user->sendOneTimePassword()` (Laravel Notification, queued via ShouldQueue)
 4. If phone → calls `$this->sendOtpCode($request)` which uses the gateway
-5. Returns static OTP data including `otp_id` for verification step
+5. Returns JSON response with `$data` (now correctly passed as 4th arg — `otp_id` included)
 6. ⚠ Uses `USER_LOGGED_IN_SUCCESSFULLY` translation key (misleading — user hasn't logged in yet)
 
 ### sendOtpCode()
@@ -66,7 +66,7 @@
 ### otpLogin()
 1. If email present → delegates to `verifyLoginOtp()`
 2. If phone_number present → calls `verifyOtp()`, looks up user by phone, creates token
-3. Returns Sanctum token on success
+3. Returns Sanctum token wrapped in `['token' => $token]` (fixed from raw string)
 
 ### verifyOtp()
 1. Reads `$request->otp_id`, `$request->code`, `$request->phone_number`
@@ -76,7 +76,7 @@
 ### verifyLoginOtp()
 1. Validates email + otp
 2. Calls `$user->validateOneTimePassword($request->otp)`
-3. Returns token on success
+3. Returns token in `data.token` on success
 
 ## Routes (Currently Disabled)
 ```php
