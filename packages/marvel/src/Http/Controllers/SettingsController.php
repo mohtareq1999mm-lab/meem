@@ -63,12 +63,15 @@ class SettingsController extends CoreController
         $settings = Settings::first();
 
         if ($settings) {
-            $settings->update($request->only([
-                'options',
-            ]));
+            $data = $request->only(['options']);
+            if ($request->has('minimumOrderAmount')) {
+                $data['minimum_order_amount'] = $request->input('minimumOrderAmount');
+            }
+            $settings->update($data);
         } else {
             $settings = Settings::create([
                 'options' => $request->options ?? [],
+                'minimum_order_amount' => $request->input('minimumOrderAmount', 0),
             ]);
         }
 
@@ -107,12 +110,18 @@ class SettingsController extends CoreController
             $settings = new Settings();
         }
 
-        $settings->fill($request->only([
+        $data = $request->only([
             'site_name', 'site_desc', 'meta_desc', 'site_copy_right',
             'site_email', 'email_support', 'facebook', 'instagram',
             'linkedin', 'promotion_video_url', 'youtube', 'phone',
             'fast_shipping_page_publish', 'options',
-        ]));
+        ]);
+
+        if ($request->has('minimumOrderAmount')) {
+            $data['minimum_order_amount'] = $request->input('minimumOrderAmount');
+        }
+
+        $settings->fill($data);
         $settings->save();
 
         if ($request->hasFile('logo')) {

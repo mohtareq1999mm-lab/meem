@@ -147,6 +147,7 @@ class SettingsSeeder extends Seeder
                 ...$this->maintenanceSettings(),
                 ...$this->promoPopupSettings(),
             ]),
+            "minimum_order_amount" => 0,
             "language" => DEFAULT_LANGUAGE ?? "en",
             "created_at" => Carbon::now(),
             "updated_at" => Carbon::now(),

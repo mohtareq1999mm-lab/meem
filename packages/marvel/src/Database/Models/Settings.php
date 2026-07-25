@@ -38,6 +38,7 @@ class Settings extends Model implements HasMedia
         'phone',
         'fast_shipping_page_publish',
         'options',
+        'minimum_order_amount',
     ];
 
     protected $casts = [

@@ -30,7 +30,7 @@ class SettingResource extends Resource
             'youtube' => $this?->youtube,
             'phone' => $this?->phone,
             'fast_shipping_page_publish' => $this->fast_shipping_page_publish,
-            'minimumOrderAmount' => $this->options['minimumOrderAmount'] ?? null ,
+            'minimumOrderAmount' => $this->minimum_order_amount,
             'options' => $this->options ?? null,
         ];
 
