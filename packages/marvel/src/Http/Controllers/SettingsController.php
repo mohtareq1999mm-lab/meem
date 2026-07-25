@@ -117,7 +117,6 @@ class SettingsController extends CoreController
 
 
         $settings->update($data);
-        $settings->save();
 
         if ($request->hasFile('logo')) {
             $settings->addMedia($request->file('logo'))->toMediaCollection('logo-setting');
