@@ -106,9 +106,6 @@ class SettingsController extends CoreController
     {
         $settings = Settings::first();
 
-        if (!$settings) {
-            $settings = new Settings();
-        }
 
         $data = $request->only([
             'site_name', 'site_desc', 'meta_desc', 'site_copy_right',
@@ -119,7 +116,7 @@ class SettingsController extends CoreController
 
 
 
-        $settings->fill($data);
+        $settings->update($data);
         $settings->save();
 
         if ($request->hasFile('logo')) {
