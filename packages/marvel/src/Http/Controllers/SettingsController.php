@@ -108,10 +108,21 @@ class SettingsController extends CoreController
 
 
         $data = $request->only([
-            'site_name', 'site_desc', 'meta_desc', 'site_copy_right',
-            'site_email', 'email_support', 'facebook', 'instagram',
-            'linkedin', 'promotion_video_url', 'youtube', 'phone',
-            'fast_shipping_page_publish', 'options',"minimum_order_amount"
+            'site_name',
+            'site_desc',
+            'meta_desc',
+            'site_copy_right',
+            'site_email',
+            'email_support',
+            'facebook',
+            'instagram',
+            'linkedin',
+            'promotion_video_url',
+            'youtube',
+            'phone',
+            'fast_shipping_page_publish',
+            'options',
+            "minimum_order_amount"
         ]);
 
 
@@ -125,8 +136,8 @@ class SettingsController extends CoreController
         if ($request->hasFile('favicon')) {
             $settings->addMedia($request->file('favicon'))->toMediaCollection('favicon-setting');
         }
-
-        return $this->apiResponse(SETTINGS_UPDATED_SUCCESSFULLY, 200, true, SettingResource::make($settings->fresh()));
+        $settings = Settings::first();
+        return $this->apiResponse(SETTINGS_UPDATED_SUCCESSFULLY, 200, true, SettingResource::make($settings));
     }
 
     /**
