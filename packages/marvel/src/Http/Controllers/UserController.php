@@ -548,13 +548,12 @@ class UserController extends CoreController
                 $oneTimePassword = $user->createOneTimePassword();
                 $notificationClass = config('one-time-passwords.notification');
                 $user->notify(new $notificationClass($oneTimePassword));
-                $data['otp_id'] = $oneTimePassword->id;
             } catch (\Exception $e) {
                 $data = [
                     'otp_status' => false,
                     'requires_resend' => true,
                 ];
-                return $this->apiResponse(ACCOUNT_CREATED_BUT_OTP_FAILED, 201, true, $data);
+                return $this->apiResponse(ACCOUNT_CREATED_BUT_OTP_FAILED, 201, true);
             }
         } else {
             $otpResponse = $this->sendOtpCode($request);
