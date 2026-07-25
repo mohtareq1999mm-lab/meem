@@ -114,12 +114,10 @@ class SettingsController extends CoreController
             'site_name', 'site_desc', 'meta_desc', 'site_copy_right',
             'site_email', 'email_support', 'facebook', 'instagram',
             'linkedin', 'promotion_video_url', 'youtube', 'phone',
-            'fast_shipping_page_publish', 'options',
+            'fast_shipping_page_publish', 'options',"minimum_order_amount"
         ]);
 
-        if ($request->has('minimumOrderAmount')) {
-            $data['minimum_order_amount'] = $request->input('minimumOrderAmount');
-        }
+       
 
         $settings->fill($data);
         $settings->save();
