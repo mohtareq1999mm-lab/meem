@@ -240,7 +240,7 @@ Route::apiResource('coupons', CouponController::class);
 Route::apiResource('promotions', PromotionController::class);
 Route::apiResource('banners', BannerController::class);
 
-Route::put('settings', [SettingsController::class, 'update']);
+Route::patch('settings', [SettingsController::class, 'update']);
 Route::get('fast-shipping/settings', [FastShippingController::class, 'getSettings']);
 Route::put('fast-shipping/settings', [FastShippingController::class, 'updateSettings']);
 
