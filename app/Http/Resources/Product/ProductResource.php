@@ -6,6 +6,7 @@ use App\Http\Resources\Banner\BannerResource;
 use App\Http\Resources\Brand\BrandResource;
 use App\Http\Resources\Slider\SliderResource;
 use App\Traits\HasProductFilters;
+use Marvel\Database\Models\Category;
 use Marvel\Http\Resources\TagResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -46,6 +47,7 @@ class ProductResource extends JsonResource
             $this->mergeWhen($this->has_discount, fn() => ['discount_valid' => (bool) $this->discount_active]),
             'discount_active' => (bool) $this->discount_active,
             'flash_sale_active' => (bool) $this->flash_sale_active,
+            'categories'             => $this->whenLoaded('categories', fn() => $this->getFlatCategoryHierarchy()),
             "images"                 => [
                 'thumbnail'  => $this->getFirstMediaUrl('products'),
                 'original' => $this->getMediaImages('products'),
@@ -104,5 +106,32 @@ class ProductResource extends JsonResource
         }
 
         return round((float) $value, 2);
+    }
+
+    private function getFlatCategoryHierarchy(): array
+    {
+        $all = collect();
+
+        foreach ($this->categories as $category) {
+            $all->push([
+                'id'    => $category->id,
+                'level' => $category->level,
+                'name'  => $category->getTranslation('name', app()->getLocale()),
+                'slug'  => $category->slug,
+            ]);
+
+            $current = $category;
+            while ($current->parent) {
+                $all->push([
+                    'id'    => $current->parent->id,
+                    'level' => $current->parent->level,
+                    'name'  => $current->parent->getTranslation('name', app()->getLocale()),
+                    'slug'  => $current->parent->slug,
+                ]);
+                $current = $current->parent;
+            }
+        }
+
+        return $all->unique('id')->sortBy('level')->values()->all();
     }
 }
