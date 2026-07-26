@@ -83,9 +83,9 @@ Route::prefix('v1/general')->middleware('api')->group(function () {
     Route::get('products/{slug}', [ProductController::class, 'getProductBySlug']);
 
   //========================= product reviews =========================//
-        Route::post('products/{id}/reviews', 'addProductReview')->middleware('auth:sanctum');
-        Route::put('products/reviews/{id}', 'updateProductReview')->middleware('auth:sanctum');
-    
+        Route::post('products/{id}/reviews',[ProductController::class, 'addProductReview'])->middleware('auth:sanctum');
+        Route::put('products/reviews/{id}', [ProductController::class, 'updateProductReview'])->middleware('auth:sanctum');
+
     Route::get('flash-sales', [FlashSaleController::class, 'index']);
     Route::get('flash-sales/{slug}', [FlashSaleController::class, 'getFlashSaleBySlug']);
     Route::get('flash-sale-products', [FlashSaleController::class, 'getFlashSalesAndHereProductsByQtySet']);
