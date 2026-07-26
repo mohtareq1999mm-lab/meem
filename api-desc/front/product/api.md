@@ -20,51 +20,74 @@
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `type` | `string` | No | Strategy: `index`, `best_product_sales`, `brands_product`, `new_arrivals`, `all_product_discounts`, `product_discount_today_or_low_qty`, `flash_sales_product`, `flash_sales_end_today`, `product_for_parent_category`, `flash_sales_end_week` |
-| `search` | `string` | No | Full-text search (name, desc, sku, categories) |
+| `type` | `string` | No | Strategy: `index`, `best_product_sales`, `brands_product`, `new_arrivals`, `all_product_discounts`, `product_discount_today_or_low_qty`, `flash_sales_product`, `flash_sales_end_today`, `flash_sales_end_week`, `product_for_parent_category` |
+| `search` | `string` | No | Full-text search (name, desc, sku, categories) via Laravel Scout (Meilisearch) |
 | `limit` | `integer` | No | Per page (max 100, default 30) |
-| `order` | `asc|desc` | No | Sort by ID |
-| `order_price` | `asc|desc` | No | Sort by current price |
-| `category` | `string|array` | No | Filter by category slug (recursive) |
-| `brand` | `string|array` | No | Filter by brand name/slug |
-| `tag` | `string|array` | No | Filter by tag slug (AND logic) |
-| `promotion` | `string|array` | No | Filter by promotion slug |
-| `flash_sale` | `string|array` | No | Filter by flash sale |
-| `banner` | `string|array` | No | Filter by banner slug/title |
-| `slider` | `string|array` | No | Filter by slider slug |
-| `minPrice` | `float` | No | Minimum price |
-| `maxPrice` | `float` | No | Maximum price |
+| `order` | `asc\|desc` | No | Sort by ID |
+| `order_price` | `asc\|desc` | No | Sort by current price |
+| `category` | `string\|array` | No | Filter by category slug (recursive descendants) |
+| `brand` | `string\|array` | No | Filter by brand name/slug |
+| `tag` | `string\|array` | No | Filter by tag slug (AND logic) |
+| `promotion` | `string\|array` | No | Filter by promotion slug |
+| `flash_sale` | `string\|array` | No | Filter by flash sale slug/title |
+| `banner` | `string\|array` | No | Filter by banner slug/title |
+| `slider` | `string\|array` | No | Filter by slider slug |
+| `minPrice` | `float` | No | Minimum price (product + variant) |
+| `maxPrice` | `float` | No | Maximum price (product + variant) |
 | `rating` | `float` | No | Minimum avg rating |
+| `rating_min` | `float` | No | Minimum rating floor |
+| `rating_max` | `float` | No | Maximum rating ceiling |
+| `height` | `string\|array` | No | Filter by height |
+| `width` | `string\|array` | No | Filter by width |
+| `length` | `string\|array` | No | Filter by length |
+| `weight` | `string\|array` | No | Filter by weight |
 | `productsId` | `string` | No | Comma-separated product IDs |
 | `categoriesId` | `string` | No | Comma-separated category IDs |
 | `brandsId` | `string` | No | Comma-separated brand IDs |
+| `promotionsId` | `string` | No | Comma-separated promotion IDs |
+| `flashSalesId` | `string` | No | Comma-separated flash sale IDs |
+| `bannersId` | `string` | No | Comma-separated banner IDs |
+| `couponsId` | `string` | No | Comma-separated coupon IDs |
+| `slidersId` | `string` | No | Comma-separated slider IDs |
 
 #### Success Response (200)
 
 ```json
 {
-    "data": [
-        {
-            "id": 1,
-            "name": "Wireless Headphones",
-            "slug": "wireless-headphones",
-            "price": 99.99,
-            "current_price": 79.99,
-            "in_stock": true,
-            "quantity": 50,
-            "has_discount": true,
-            "discount_active": true,
-            "flash_sale_active": false,
-            "is_fast_shipping_available": true,
-            "ratings": 4.5,
-            "image": { "id": 1, "thumbnail": "https://...", "original": "https://..." }
-        }
-    ],
-    "meta": {
+    "success": true,
+    "message": "MESSAGE.FETCH_DATA_SUCCESSFULLY",
+    "data": {
+        "data": [
+            {
+                "id": 1,
+                "name": "Wireless Headphones",
+                "slug": "wireless-headphones",
+                "price": 99.99,
+                "has_variants": false,
+                "current_price": 79.99,
+                "quantity": 50,
+                "in_stock": true,
+                "discount_active": true,
+                "flash_sale_active": false,
+                "is_fast_shipping_available": true,
+                "ratings": 4.5,
+                "image": {
+                    "thumbnail": "https://cdn.example.com/thumb.jpg",
+                    "original": [
+                        "https://cdn.example.com/img1.jpg",
+                        "https://cdn.example.com/img2.jpg"
+                    ]
+                }
+            }
+        ],
         "current_page": 1,
+        "from": 1,
+        "to": 30,
         "last_page": 5,
         "per_page": 30,
-        "total": 150
+        "total": 150,
+        "filters": { "brands": [], "categories": [], "attributes": [], "ratings": {}, "dimensions": {} },
+        "categories": [ { "id": 1, "name": "Subcategory", "slug": "sub-cat", "image": { "desktop": null, "mobile": null } } ]
     }
 }
 ```
@@ -93,6 +116,8 @@
 
 ```json
 {
+    "success": true,
+    "message": "MESSAGE.FETCH_DATA_SUCCESSFULLY",
     "data": {
         "id": 1,
         "name": "Wireless Headphones",
@@ -100,20 +125,61 @@
         "description": "Premium wireless headphones with noise cancellation.",
         "price": 99.99,
         "current_price": 79.99,
-        "price_after_discount": 79.99,
-        "price_after_flash_sale": null,
         "discount_type": "percentage",
         "discount_amount": 20,
         "start_date": "2026-07-01",
         "end_date": "2026-07-31",
-        "product_type": "simple",
         "sku": "PRD-001",
+        "quantity": 50,
+        "sold_quantity": 25,
         "in_stock": true,
-        "images": [{ "id": 1, "thumbnail": "...", "original": "..." }],
-        "categories": [{ "id": 1, "name": "Electronics", "slug": "electronics" }],
-        "reviews": [{ "id": 1, "rating": 5, "comment": "Great product!" }],
-        "related_products": [{ "id": 2, "name": "Earbuds", "slug": "earbuds", "current_price": 49.99 }],
-        "filters": { "brands": [...], "categories": [...], "attributes": [...] }
+        "product_type": "simple",
+        "height": null,
+        "width": null,
+        "length": null,
+        "weight": null,
+        "has_flash_sale": false,
+        "has_discount": true,
+        "is_fast_shipping_available": false,
+        "discount_valid": true,
+        "discount_active": true,
+        "flash_sale_active": false,
+        "categories": [
+            { "id": 1, "level": 1, "name": "Electronics", "slug": "electronics" },
+            { "id": 2, "level": 0, "name": "Root Category", "slug": "root" }
+        ],
+        "images": {
+            "thumbnail": "https://cdn.example.com/thumb.jpg",
+            "original": [
+                "https://cdn.example.com/img1.jpg",
+                "https://cdn.example.com/img2.jpg"
+            ]
+        },
+        "tags": [
+            { "id": 1, "name": "new", "slug": "new" }
+        ],
+        "variants": [
+            {
+                "id": 10,
+                "price": 109.99,
+                "current_price": 89.99,
+                "quantity": 20,
+                "height": null,
+                "width": null,
+                "length": null,
+                "weight": null,
+                "attributes": [
+                    { "attribute_name": "Color", "value": "Black" }
+                ]
+            }
+        ],
+        "reviews": [
+            { "id": 1, "rating": 5, "comment": "Great product!", "user": { "name": "John" }, "images": [], "created_at": "2026-07-15T10:00:00Z" }
+        ],
+        "related_products": [
+            { "id": 2, "name": "Earbuds", "slug": "earbuds", "price": 49.99, "has_variants": false, "current_price": 49.99, "quantity": 30, "in_stock": true, "discount_active": false, "flash_sale_active": false, "is_fast_shipping_available": false, "ratings": 4.0, "image": { "thumbnail": null, "original": [] } }
+        ],
+        "filters": { "brands": [], "categories": [], "attributes": [], "ratings": {}, "dimensions": {} }
     }
 }
 ```
@@ -387,12 +453,16 @@ mutation {
 | `id` | `integer` | Primary key |
 | `name` | `string` | Translated name |
 | `slug` | `string` | URL slug |
-| `price` | `float` | Base price |
-| `current_price` | `float` | Effective price |
+| `price` | `float` | Base price (nullable, rounded 2dp) |
+| `has_variants` | `boolean` | `true` if product_type !== `simple` |
+| `current_price` | `float` | Effective price (rounded 2dp) |
+| `quantity` | `integer` | Stock quantity |
 | `in_stock` | `boolean` | Stock flag |
-| `discount_active` | `boolean` | Discount active |
-| `ratings` | `float` | Average rating |
-| `image` | `object` | Thumbnail + original URLs |
+| `discount_active` | `boolean` | Discount currently active |
+| `flash_sale_active` | `boolean` | Flash sale currently active |
+| `is_fast_shipping_available` | `boolean` | Fast shipping eligible |
+| `ratings` | `float` | Average rating (reviews_avg_rating, rounded 2dp) |
+| `image` | `object` | `{ thumbnail: string, original: string[] }` |
 
 ### ProductResource (Public Detail)
 
@@ -402,17 +472,34 @@ mutation {
 | `name` | `string` | Translated name |
 | `slug` | `string` | URL slug |
 | `description` | `string` | Translated description |
-| `price` | `float` | Base price |
-| `current_price` | `float` | Final effective price |
+| `price` | `float` | Base price (nullable, rounded 2dp) |
+| `current_price` | `float` | Final effective price (rounded 2dp) |
+| `discount_type` | `string` | `percentage`, `fixed_rate`, `free_shipping` |
+| `discount_amount` | `float` | Discount value (rounded 2dp) |
+| `start_date` | `string` | Discount start date |
+| `end_date` | `string` | Discount end date |
 | `sku` | `string` | Stock keeping unit |
-| `product_type` | `string` | simple/variable |
+| `quantity` | `integer` | Stock quantity |
+| `sold_quantity` | `integer` | Units sold |
 | `in_stock` | `boolean` | Stock flag |
-| `categories` | `array` | Category list |
-| `images` | `array` | Image gallery |
-| `reviews` | `array` | Customer reviews |
-| `variants` | `array` | Product variants |
-| `related_products` | `array` | Related products |
-| `filters` | `object` | Dynamic filters |
+| `product_type` | `string` | `simple` or `variable` |
+| `height` | `string` | Product height (nullable) |
+| `width` | `string` | Product width (nullable) |
+| `length` | `string` | Product length (nullable) |
+| `weight` | `string` | Product weight (nullable) |
+| `has_flash_sale` | `boolean` | Has flash sale assigned |
+| `has_discount` | `boolean` | Has discount assigned |
+| `is_fast_shipping_available` | `boolean` | Fast shipping eligible |
+| `discount_valid` | `boolean` | Only present when `has_discount=true` |
+| `discount_active` | `boolean` | Discount currently active |
+| `flash_sale_active` | `boolean` | Flash sale currently active |
+| `categories` | `array` | Flat category hierarchy `[{ id, level, name, slug }]` |
+| `images` | `object` | `{ thumbnail: string, original: string[] }` |
+| `tags` | `array` | `TagResource` collection |
+| `variants` | `array` | Variants `[{ id, price, current_price, quantity, attributes }]` |
+| `reviews` | `array` | `ReviewResource` collection |
+| `related_products` | `array` | `ProductMiniResource` collection (only when loaded) |
+| `filters` | `object` | Dynamic filters `{ brands, categories, attributes, ratings, dimensions }` (only when NOT on `general-product-show` route) |
 
 ## Business Rules
 

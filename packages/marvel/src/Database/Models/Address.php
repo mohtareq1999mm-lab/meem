@@ -9,11 +9,18 @@ class Address extends Model
 {
     protected $table = 'address';
 
-    public $guarded = [];
+    public $fillable = [
+        'title',
+        'type',
+        'default',
+        'address',
+        'customer_id',
+        'location'
+    ];
 
     protected $casts = [
-        'address' => 'json',
-        'location' => 'json'
+        'address' => 'array',
+        'location' => 'array'
     ];
 
     /**

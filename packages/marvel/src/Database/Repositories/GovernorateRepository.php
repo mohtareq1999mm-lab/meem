@@ -31,7 +31,7 @@ class GovernorateRepository
 
     public function allActive(?int $countryId = null): Collection
     {
-        $query = Governorate::query()->active();
+        $query = Governorate::query()->with('shippingPrice')->active();
 
         if ($countryId) {
             $query->where('country_id', $countryId);

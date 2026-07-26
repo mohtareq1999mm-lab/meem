@@ -15,19 +15,35 @@ GET /api/v1/general/products?type=index&category=electronics&minPrice=10&maxPric
 
 Response:
 {
-  "data": [
-    {
-      "id": 1,
-      "name": "Wireless Headphones",
-      "slug": "wireless-headphones",
-      "price": 99.99,
-      "current_price": 79.99,
-      "in_stock": true,
-      "ratings": 4.5,
-      "image": { "thumbnail": "...", "original": "..." }
-    }
-  ],
-  "meta": { "current_page": 1, "per_page": 30, "total": 150, "last_page": 5 }
+  "success": true,
+  "message": "MESSAGE.FETCH_DATA_SUCCESSFULLY",
+  "data": {
+    "data": [
+      {
+        "id": 1,
+        "name": "Wireless Headphones",
+        "slug": "wireless-headphones",
+        "price": 99.99,
+        "has_variants": false,
+        "current_price": 79.99,
+        "quantity": 50,
+        "in_stock": true,
+        "discount_active": true,
+        "flash_sale_active": false,
+        "is_fast_shipping_available": true,
+        "ratings": 4.5,
+        "image": { "thumbnail": "...", "original": ["..."] }
+      }
+    ],
+    "current_page": 1,
+    "from": 1,
+    "to": 30,
+    "last_page": 5,
+    "per_page": 30,
+    "total": 150,
+    "filters": {},
+    "categories": []
+  }
 }
 ```
 
@@ -50,6 +66,8 @@ GET /api/v1/general/products/wireless-headphones
 
 Response:
 {
+  "success": true,
+  "message": "MESSAGE.FETCH_DATA_SUCCESSFULLY",
   "data": {
     "id": 1,
     "name": "Wireless Headphones",
@@ -59,15 +77,51 @@ Response:
     "current_price": 79.99,
     "discount_type": "percentage",
     "discount_amount": 20,
-    "product_type": "simple",
+    "start_date": "2026-07-01",
+    "end_date": "2026-07-31",
     "sku": "PRD-001",
+    "quantity": 50,
+    "sold_quantity": 25,
+    "product_type": "simple",
     "in_stock": true,
-    "images": [{ "id": 1, "thumbnail": "...", "original": "..." }],
-    "categories": [{ "id": 1, "name": "Electronics" }],
+    "height": null,
+    "width": null,
+    "length": null,
+    "weight": null,
+    "has_flash_sale": false,
+    "has_discount": true,
+    "is_fast_shipping_available": true,
+    "discount_valid": true,
+    "discount_active": true,
+    "flash_sale_active": false,
+    "categories": [
+      { "id": 1, "level": 1, "name": "Electronics", "slug": "electronics" },
+      { "id": 2, "level": 0, "name": "Root", "slug": "root" }
+    ],
+    "images": {
+      "thumbnail": "...",
+      "original": ["..."]
+    },
+    "tags": [],
+    "variants": [
+      {
+        "id": 1, "price": 99.99, "current_price": 79.99,
+        "quantity": 10, "height": null, "width": null,
+        "length": null, "weight": null,
+        "attributes": [{ "attribute_name": "Color", "value": "Black" }]
+      }
+    ],
     "reviews": [{ "id": 1, "rating": 5, "comment": "Great!", "user": { "name": "John" }, "images": [] }],
-    "related_products": [{ "id": 2, "name": "Earbuds", "current_price": 49.99 }],
-    "variants": [{ "id": 1, "price": 99.99, "stock_quantity": 10, "attributes": [{ "name": "Color", "value": "Black" }] }],
-    "filters": { "brands": [], "categories": [], "attributes": [{ "name": "Color", "values": ["Black", "White"] }] }
+    "related_products": [
+      {
+        "id": 2, "name": "Earbuds", "slug": "earbuds", "price": 49.99,
+        "has_variants": false, "current_price": 49.99, "quantity": 30,
+        "in_stock": true, "discount_active": false,
+        "flash_sale_active": false, "is_fast_shipping_available": false,
+        "ratings": 4.0, "image": { "thumbnail": null, "original": [] }
+      }
+    ],
+    "filters": { "brands": [], "categories": [], "attributes": [], "ratings": {}, "dimensions": {} }
   }
 }
 ```
@@ -195,7 +249,7 @@ export const productApi = {
 **Public Product Detail:**
 ```
 GET /api/v1/general/products/wireless-headphones
-Response: { data: { id, name, slug, description, price, current_price, images, reviews, variants, related_products, filters } }
+Response: { data: { id, name, slug, description, price, current_price, discount_type, discount_amount, start_date, end_date, sku, quantity, sold_quantity, in_stock, product_type, height, width, length, weight, has_flash_sale, has_discount, is_fast_shipping_available, discount_valid, discount_active, flash_sale_active, categories, images, tags, variants, reviews, related_products, filters } }
 ```
 
 **Admin Create with Variants:**

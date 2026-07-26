@@ -29,13 +29,16 @@ class AddressRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             'type' => ['required', 'string', 'max:255'],
-            // 'default' => ['required','in:0,1'],
+            'default' => ['required','in:0,1'],
             'address' => ['required', 'array'],
             'address.zip' => ['required', 'string'],
             'address.city' => ['required', 'string'],
             'address.state' => ['required', 'string'],
             'address.country' => ['required', 'string'],
             'address.street_address' => ['required', 'string'],
+            'location' => ['sometimes', 'array'],
+            'location.latitude' => ['sometimes', 'numeric'],
+            'location.longitude' => ['sometimes', 'numeric'],
         ];
     }
 

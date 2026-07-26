@@ -21,6 +21,7 @@ class AddressResource extends Resource
             "type"=> $this->type,
             "default"=> (bool)$this->default,
             "address"=> $this->address,
+            "location"=> $this->location ?? [],
             "customer_id"=> $this->customer_id,
             "created_at"=> $this->created_at->toIsoString(),
         ];
