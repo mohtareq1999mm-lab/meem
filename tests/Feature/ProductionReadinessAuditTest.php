@@ -79,6 +79,7 @@ class ProductionReadinessAuditTest extends TestCase
                 $table->string('series');
                 $table->integer('sequence_year');
                 $table->integer('last_sequence')->default(0);
+                $table->timestamps();
                 $table->primary(['series', 'sequence_year']);
             });
         }
