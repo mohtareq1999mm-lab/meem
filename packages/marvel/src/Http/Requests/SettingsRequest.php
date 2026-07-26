@@ -36,6 +36,7 @@ class SettingsRequest extends FormRequest
             "site_copy_right" => ['sometimes', 'array'],
             "site_copy_right.*" => ['sometimes', 'string', 'min:3', "max:200"],
             "logo" => ['sometimes', "image", "mimes:jpeg,png,jpg,gif,svg", "max:2048"],
+            "footer_logo" => ['sometimes', "image", "mimes:jpeg,png,jpg,gif,svg", "max:2048"],
             "favicon" => ['sometimes', "image", "mimes:jpeg,png,jpg,gif,svg", "max:2048"],
             "site_email" => ['sometimes', 'email'],
             "email_support" => ['sometimes', 'email'],

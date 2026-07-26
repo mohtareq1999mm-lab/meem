@@ -126,17 +126,17 @@ class SettingsController extends CoreController
 
 
         if ($request->has('logo')) {
-            if (!$this->updateSingleImage($request, 'logo', $settings, 'logo', 'settings')) {
+            if (!$this->updateSingleImage($request, 'logo', $settings, 'logo-setting', 'settings')) {
                 throw new HttpException(422, __('message.ERROR.LOGO_UPLOAD_FAILED'));
             }
         }
         if ($request->has('footer_logo')) {
-            if (!$this->updateSingleImage($request, 'footer_logo', $settings, 'footer_logo', 'settings')) {
+            if (!$this->updateSingleImage($request, 'footer_logo', $settings, 'footer_logo-setting', 'settings')) {
                 throw new HttpException(422, __('message.ERROR.FOOTER_LOGO_UPLOAD_FAILED'));
             }
         }
         if ($request->has('favicon')) {
-            if (!$this->updateSingleImage($request, 'favicon', $settings, 'favicon', 'settings')) {
+            if (!$this->updateSingleImage($request, 'favicon', $settings, 'favicon-setting', 'settings')) {
                 throw new HttpException(422, __('message.ERROR.FAVICON_UPLOAD_FAILED'));
             }
         }

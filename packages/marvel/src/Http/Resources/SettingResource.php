@@ -20,6 +20,7 @@ class SettingResource extends Resource
             "meta_desc" => $this->getTranslation('meta_desc', app()->getLocale()),
             "site_copy_right" => $this->getTranslation('site_copy_right', app()->getLocale()),
             "logo" => $this->getFirstMediaUrl('logo-setting'),
+            "footer_logo" => $this->getFirstMediaUrl('footer_logo-setting'),
             "favicon" => $this->getFirstMediaUrl('favicon-setting'),
             "site_email" => $this->site_email,
             "email_support" => $this?->email_support,
