@@ -21,6 +21,7 @@ class OrderCreationService
         return Order::query()
             ->where('user_id', $userId)
             ->where('status', 'pending')
+            ->lockForUpdate()
             ->first();
     }
 

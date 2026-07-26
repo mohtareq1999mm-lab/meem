@@ -171,11 +171,13 @@ class OrderService
                     $validation = CouponOrchestrator::validate($lockedCoupon, $request->user(), $cart->items);
                     if (!$validation['valid']) {
                         $cart->update(['coupon' => null]);
+                        $cart->refresh();
                     } elseif ($lockedCoupon->discount_type === DiscountType::FREE_SHIPPING) {
                         $freeShippingCoupon = true;
                     }
                 } else {
                     $cart->update(['coupon' => null]);
+                    $cart->refresh();
                 }
             }
 

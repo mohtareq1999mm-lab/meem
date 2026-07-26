@@ -11,6 +11,7 @@ use App\Events\PaymentFailed;
 use App\Events\PaymentSucceeded;
 use App\Events\UserRolesUpdated;
 use App\Listeners\LogUserRolesUpdated;
+use App\Listeners\GenerateInvoiceListener;
 use App\Listeners\SendAdminLoginNotification;
 use App\Listeners\SendContactMessageNotification;
 use App\Listeners\RestoreProductInventory;
@@ -84,6 +85,7 @@ class EventServiceProvider extends ServiceProvider
         ],
         PaymentSucceeded::class => [
             SendPaymentSucceededNotification::class,
+            GenerateInvoiceListener::class,
         ],
     ];
 

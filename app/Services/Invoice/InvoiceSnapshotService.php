@@ -81,9 +81,9 @@ class InvoiceSnapshotService
             'payment' => [
                 'method' => $order->payment_method,
                 'gateway' => $order->payment_gateway,
-                'transaction_id' => $order->transactions->first()?->id,
-                'gateway_transaction_id' => $order->transactions->first()?->gateway_transaction_id,
-                'paid_at' => $order->transactions->first()?->paid_at,
+                'transaction_id' => $order->transactions->firstWhere('status', 'paid')?->id,
+                'gateway_transaction_id' => $order->transactions->firstWhere('status', 'paid')?->gateway_transaction_id,
+                'paid_at' => $order->transactions->firstWhere('status', 'paid')?->paid_at,
                 'gateway_invoice_id' => null,
                 'gateway_response_summary' => null,
             ],

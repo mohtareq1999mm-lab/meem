@@ -37,20 +37,26 @@ class CancelUnpaidOrders extends Command
 
         foreach ($orders as $order) {
             DB::transaction(function () use ($order, &$cancelledCount) {
-                $order->update(['status' => 'cancelled']);
+                $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->first();
 
-                $order->transactions()
+                if (!$lockedOrder || $lockedOrder->status !== 'pending') {
+                    return;
+                }
+
+                $lockedOrder->update(['status' => 'cancelled']);
+
+                $lockedOrder->transactions()
                     ->where('status', 'pending')
                     ->update(['status' => 'failed']);
 
                 try {
-                    event(new OrderCancelled($order));
+                    event(new OrderCancelled($lockedOrder));
                 } catch (\Throwable $e) {
                     report($e);
                 }
 
                 try {
-                    event(new PaymentFailed($order));
+                    event(new PaymentFailed($lockedOrder));
                 } catch (\Throwable $e) {
                     report($e);
                 }
@@ -58,7 +64,7 @@ class CancelUnpaidOrders extends Command
                 // Release reserved inventory and expire the cart
                 try {
                     $cart = Cart::query()
-                        ->where('user_id', $order->user_id)
+                        ->where('user_id', $lockedOrder->user_id)
                         ->where('status', 'active')
                         ->first();
 

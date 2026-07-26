@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\General\FastShippingController;
 use App\Http\Controllers\Api\General\FlashSaleController;
 use App\Http\Controllers\Api\General\GovernorateController;
 use App\Http\Controllers\Api\General\HomeController;
+use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\General\OrderController;
 use App\Http\Controllers\Api\General\PickupLocationController;
 use App\Http\Controllers\Api\General\ProductController;
@@ -107,4 +108,11 @@ Route::prefix('v1/general')->middleware('api')->group(function () {
     Route::get('fast-shipping/orders', [FastShippingController::class, 'orders'])->middleware('auth:sanctum');
 
     Route::get('orders', [OrderController::class, 'index'])->middleware('auth:sanctum');
+
+    //======================== invoices ========================/
+    Route::prefix('invoices')->middleware(['auth:sanctum', 'permission:super-admin'])->group(function () {
+        Route::get('/', [InvoiceController::class, 'index']);
+        Route::get('{id}', [InvoiceController::class, 'show']);
+        Route::post('{id}/regenerate', [InvoiceController::class, 'regenerate']);
+    });
 });
