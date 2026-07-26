@@ -21,8 +21,9 @@ class ReviewResource extends JsonResource
             "comment"           => $this->comment,
             "user"              => UserResource::make($this->whenLoaded('user')),
             "images"            => $this->getmedia('reviews') ? $this->getmedia('reviews')->map(function ($media) {
-                                    return $media->getUrl();
-                                }) : [],
+                return $media->getUrl();
+            }) : [],
+            "is_approved"        => (bool)$this->is_approved,
         ];
     }
 }

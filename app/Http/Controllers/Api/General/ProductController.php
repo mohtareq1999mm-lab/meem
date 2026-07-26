@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\General;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Product\ProductMiniResource;
 use App\Http\Resources\Product\ProductResource;
+use App\Http\Resources\Product\ReviewResource;
 use App\Services\General\ProductEngine\ProductStrategyResolver;
 use App\Services\General\ProductService;
 use Illuminate\Http\JsonResponse;
@@ -179,7 +180,7 @@ class ProductController extends Controller
      * @param int $id Product ID.
      * @return JsonResponse 404 if product not found.
      */
-    public function addProductReview(ReviewCreateRequest $request, $id): JsonResponse
+    public function addProductReview(ReviewCreateRequest $request, $id)
     {
         $review = $this->productService->addProductReview($request, $id);
 
@@ -187,7 +188,7 @@ class ProductController extends Controller
             return $this->apiResponse(NOT_FOUND, 404, false);
         }
 
-        return $this->apiResponse(REVIEW_CREATED_SUCCESSFULLY, 200, true);
+        return $this->apiResponse(REVIEW_CREATED_SUCCESSFULLY, 200, true,ReviewResource::make($review));
     }
 
     /**
@@ -205,6 +206,6 @@ class ProductController extends Controller
             return $this->apiResponse(NOT_FOUND, 404, false);
         }
 
-        return $this->apiResponse(REVIEW_UPDATED_SUCCESSFULLY, 200, true);
+        return $this->apiResponse(REVIEW_UPDATED_SUCCESSFULLY, 200, true, ReviewResource::make($review));
     }
 }
