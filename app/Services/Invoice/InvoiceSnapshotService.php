@@ -60,6 +60,7 @@ class InvoiceSnapshotService
                 'promotion_discount' => (float) $order->promotion_discount,
                 'coupon_discount' => (float) $order->coupon_discount,
                 'shipping_price' => (float) $order->shipping_price,
+                'fast_shipping_fee' => (float) ($order->fast_shipping_fee ?? 0),
                 'total' => (float) $order->total_price,
                 'currency' => $order->transactions->first()?->currency ?? 'EGP',
                 'exchange_rate' => null,

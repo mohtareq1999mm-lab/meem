@@ -171,6 +171,11 @@ return [
     'DASHBOARD.DATABASE_ERROR' => 'A database error occurred. Please check your request and try again.',
     'ERROR.SOMETHING_WENT_WRONG' => 'Something went wrong.',
 
+    // Settings
+    'ERROR.LOGO_UPLOAD_FAILED' => 'Logo upload failed, please check the file format or size.',
+    'ERROR.FOOTER_LOGO_UPLOAD_FAILED' => 'Footer logo upload failed, please check the file format or size.',
+    'ERROR.FAVICON_UPLOAD_FAILED' => 'Favicon upload failed, please check the file format or size.',
+
     // Password Reset
     'MESSAGE.PASSWORD_RESET_SUCCESSFUL' => 'Password reset successfully',
     'MESSAGE.INVALID_TOKEN' => 'Invalid token',

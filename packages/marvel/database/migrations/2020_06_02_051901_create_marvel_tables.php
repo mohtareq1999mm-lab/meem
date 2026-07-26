@@ -387,6 +387,7 @@ class CreateMarvelTables extends Migration
             $table->text('meta_desc')->nullable();
             $table->string('site_copy_right')->nullable();
             $table->string('logo')->nullable();
+            $table->string('footer_logo')->nullable();
             $table->string('favicon')->nullable();
             $table->string('site_email')->nullable();
             $table->string('email_support')->nullable();

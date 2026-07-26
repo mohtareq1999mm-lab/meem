@@ -288,5 +288,9 @@ return [
     'cart.inventory.reserved_stock_insufficient' => 'المخزون المحجوز غير كاف.',
     'cart.inventory.physical_stock_insufficient' => 'المخزون الفعلي غير كاف.',
 
+    'ERROR.LOGO_UPLOAD_FAILED' => 'فشل رفع الشعار، يرجى التحقق من تنسيق الملف أو حجمه.',
+    'ERROR.FOOTER_LOGO_UPLOAD_FAILED' => 'فشل رفع شعار التذييل، يرجى التحقق من تنسيق الملف أو حجمه.',
+    'ERROR.FAVICON_UPLOAD_FAILED' => 'فشل رفع أيقونة الموقع، يرجى التحقق من تنسيق الملف أو حجمه.',
+
     'gone' => 'لم يعد هذا المورد متاحًا.',
 ];

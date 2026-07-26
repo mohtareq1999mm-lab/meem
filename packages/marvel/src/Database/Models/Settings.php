@@ -27,6 +27,7 @@ class Settings extends Model implements HasMedia
         'meta_desc',
         'site_copy_right',
         'logo',
+        'footer_logo',
         'favicon',
         'site_email',
         'email_support',

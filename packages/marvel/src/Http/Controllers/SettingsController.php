@@ -11,10 +11,12 @@ use Marvel\Database\Models\Settings;
 use Marvel\Http\Requests\SettingsRequest;
 use Marvel\Http\Resources\SettingResource;
 use Marvel\Traits\ApiResponse;
+use Marvel\Traits\MediaManager;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class SettingsController extends CoreController
 {
-    use ApiResponse;
+    use ApiResponse,  MediaManager;
     public $repository;
 
     public function __construct(SettingsRepository $repository)
@@ -94,14 +96,7 @@ class SettingsController extends CoreController
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, SettingResource::make($settings));
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param SettingsRequest $request
-     * @param int $id
-     * @return JsonResponse
-     * @throws ValidatorException
-     */
+
     public function update(SettingsRequest $request)
     {
         $settings = Settings::first();
@@ -129,12 +124,21 @@ class SettingsController extends CoreController
 
         $settings->update($data);
 
-        if ($request->hasFile('logo')) {
-            $settings->addMedia($request->file('logo'))->toMediaCollection('logo-setting');
-        }
 
-        if ($request->hasFile('favicon')) {
-            $settings->addMedia($request->file('favicon'))->toMediaCollection('favicon-setting');
+        if ($request->has('logo')) {
+            if (!$this->updateSingleImage($request, 'logo', $settings, 'logo', 'settings')) {
+                throw new HttpException(422, __('message.ERROR.LOGO_UPLOAD_FAILED'));
+            }
+        }
+        if ($request->has('footer_logo')) {
+            if (!$this->updateSingleImage($request, 'footer_logo', $settings, 'footer_logo', 'settings')) {
+                throw new HttpException(422, __('message.ERROR.FOOTER_LOGO_UPLOAD_FAILED'));
+            }
+        }
+        if ($request->has('favicon')) {
+            if (!$this->updateSingleImage($request, 'favicon', $settings, 'favicon', 'settings')) {
+                throw new HttpException(422, __('message.ERROR.FAVICON_UPLOAD_FAILED'));
+            }
         }
         $settings = Settings::first();
         return $this->apiResponse(SETTINGS_UPDATED_SUCCESSFULLY, 200, true, SettingResource::make($settings));

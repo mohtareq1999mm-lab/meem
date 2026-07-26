@@ -37,12 +37,12 @@ class SettingsRepository extends BaseRepository
             $setting->update($data->except('logo', 'favicon'));
             if (isset($data['logo'])) {
                 if (!$this->updateSingleImage($data, 'logo', $setting, 'logo-setting', 'settings')) {
-                    throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
+                    throw new HttpException(422, __('message.ERROR.LOGO_UPLOAD_FAILED'));
                 }
             }
             if (isset($data['favicon'])) {
                 if (!$this->updateSingleImage($data, 'favicon', $setting, 'favicon-setting', 'settings')) {
-                    throw new HttpException(422, 'Favicon upload failed, please check the file format or size.');
+                    throw new HttpException(422, __('message.ERROR.FAVICON_UPLOAD_FAILED'));
                 }
             }
             DB::commit();
