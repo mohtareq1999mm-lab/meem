@@ -133,7 +133,7 @@ class CheckoutApiTest extends TestCase
         $this->assertContains($response->status(), [200, 409]);
     }
 
-    public function test_checkout_finalizes_inventory()
+    public function test_checkout_does_not_finalize_inventory()
     {
         $this->auth();
         $this->createCartWithItem();
@@ -149,8 +149,36 @@ class CheckoutApiTest extends TestCase
         ]);
 
         $this->product->refresh();
-        $this->assertEquals(49, $this->product->stock_quantity);
-        $this->assertEquals(1, $this->product->sold_quantity);
+        $this->assertEquals(50, $this->product->stock_quantity, 'Stock should NOT be deducted at checkout');
+        $this->assertEquals(0, $this->product->sold_quantity, 'Sold quantity should NOT change at checkout');
+    }
+
+    public function test_mark_cod_as_paid_finalizes_inventory()
+    {
+        $this->auth();
+        $this->createCartWithItem();
+
+        $this->postJson(self::PREFIX . '/checkout', [
+            'name' => 'John',
+            'user_phone' => '01000000001',
+            'user_email' => 'john@example.com',
+            'address' => ['street' => '123 Main St'],
+            'governorate_id' => $this->governorate->id,
+            'shipping_method' => 'SCHEDULED',
+            'payment_method' => 'cod',
+        ]);
+
+        $order = \Marvel\Database\Models\Order::where('user_id', $this->user->id)->first();
+        $this->assertNotNull($order);
+
+        $permission = \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'update-order-status', 'guard_name' => 'api']);
+        $this->user->givePermissionTo($permission);
+
+        $this->postJson(self::PREFIX . '/checkout/cod/' . $order->id . '/mark-paid');
+
+        $this->product->refresh();
+        $this->assertEquals(49, $this->product->stock_quantity, 'Stock should be deducted after COD is marked paid');
+        $this->assertEquals(1, $this->product->sold_quantity, 'Sold quantity should increment after COD is marked paid');
     }
 
     public function test_checkout_cod_with_pickup_rejected()

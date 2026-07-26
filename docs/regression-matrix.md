@@ -295,4 +295,38 @@ Categories
 | ProductSuite | PASS (76/76) | 2026-07-17 | All Product feature tests pass after 4 bug fixes |
 | BrandCombinedSuite | PASS (63/63) | 2026-07-18 | All Brand feature tests pass after slug dirty-check fix |
 | CategoryCombinedSuite | PASS (98/98) | 2026-07-23 | Categories Rev 2: products_count mismatch fixed + 4 new regression tests |
+
+---
+
+## Coupon Assignments
+
+**Changed Feature:**
+Coupon Assignments (Admin CRUD)
+
+**Affected Features:**
+- Coupon Assignment consumption (customer-facing apply/checkout flow)
+- Coupons — existing CRUD and consumption tests
+
+**Regression:**
+
+| Suite | Status | Reason |
+|-------|--------|--------|
+| CouponAssignmentApiTest | PASS (30/30) | Full CRUD API tests — auth, permissions, list, create, show, update, delete, conflict, resource computed fields |
+| CouponAssignmentValidationTest | PASS (13/13) | Validation rules — store/update field validation, null expiry, optional fields |
+| CouponSystemTest | PASS (7/7) | Existing coupon consumption tests — no regressions |
+| CouponsProductionHardenTest | PASS (30/30) | Existing production hardening tests — no regressions |
+| AssignedCouponSystemTest | PASS (10/10) | Existing assigned coupon consumption tests — no regressions |
+
+**Changes Applied (Revision 1):**
+- Created `CouponAssignmentController.php`: 5 methods (index, store, show, update, destroy) with individual permission middleware
+- Created `CouponAssignmentRepository.php`: listByCoupon, findAssignment, assignCoupon (transaction + duplicate detection), updateAssignment (max_uses >= used guard), removeAssignment (transaction + lockForUpdate + delete-blocked-when-used)
+- Created `CouponAssignmentRequest.php`: Validation for store (user_id required+exists, max_uses required+integer+min:1, expires_at nullable+date+future)
+- Created `UpdateCouponAssignmentRequest.php`: Validation for update (max_uses sometimes, expires_at nullable)
+- Created `CouponAssignmentResource.php`: Computed remaining (max_uses - used), is_expired (expires_at in past), eager-loaded user data
+- `Permission.php`: Added 4 constants (VIEW_COUPON_ASSIGNMENTS, CREATE_COUPON_ASSIGNMENT, UPDATE_COUPON_ASSIGNMENT, DELETE_COUPON_ASSIGNMENT)
+- `Routes.php`: Added 5 routes in super_admin group at lines 720-726
+- `constants.php`: Added 7 constants for response messages and errors
+- `message.php` (en + ar): Added 7 translation keys
+- Created `CouponAssignmentApiTest.php`: 30 tests covering auth, CRUD, edge cases, computed fields
+- Created `CouponAssignmentValidationTest.php`: 13 tests covering validation rules
 | AttributeCombinedSuite | PASS (48/48) | 2026-07-19 | All Attribute + Attribute Values tests pass (16 existing + 32 new) after 3 bug fixes |

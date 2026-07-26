@@ -17,7 +17,7 @@ trait WalletsTrait
 
     $points = $currency * $currencyToWalletRatio;
 
-    return  intval($points);
+    return  (int) round($points);
   }
 
   /**

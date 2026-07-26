@@ -22,6 +22,7 @@ use Marvel\Http\Controllers\CategoryController;
 use Marvel\Http\Controllers\CheckoutController;
 use Marvel\Http\Controllers\CityController;
 use Marvel\Http\Controllers\ConversationController;
+use Marvel\Http\Controllers\CouponAssignmentController;
 use Marvel\Http\Controllers\CouponController;
 use Marvel\Http\Controllers\CmsPageController;
 use Marvel\Http\Controllers\DeliveryTimeController;
@@ -236,6 +237,13 @@ Route::group(['prefix' => 'admin', 'controller' => NotificationController::class
     Route::delete('notifications', 'destroyAll');
 });
 
+Route::prefix('coupons/{coupon}')->group(function () {
+    Route::get('assignments', [CouponAssignmentController::class, 'index']);
+    Route::post('assignments', [CouponAssignmentController::class, 'store']);
+    Route::get('assignments/{assignment}', [CouponAssignmentController::class, 'show']);
+    Route::put('assignments/{assignment}', [CouponAssignmentController::class, 'update']);
+    Route::delete('assignments/{assignment}', [CouponAssignmentController::class, 'destroy']);
+});
 Route::apiResource('coupons', CouponController::class);
 Route::apiResource('promotions', PromotionController::class);
 Route::apiResource('banners', BannerController::class);
@@ -715,6 +723,8 @@ Route::group(
         Route::apiResource('coupons', CouponController::class, [
             'only' => ['store', 'destroy'],
         ]);
+
+
         Route::apiResource('promotions', PromotionController::class, [
             'only' => ['store', 'destroy'],
         ]);

@@ -616,7 +616,7 @@ class FastShippingHardenTest extends TestCase
 
         ]);
 
-        $response->assertStatus(500);
+        $response->assertStatus(400);
     }
 
     // ========== Cache Key Isolation ==========

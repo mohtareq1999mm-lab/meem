@@ -42,25 +42,26 @@ class Settings extends Model implements HasMedia
     ];
 
     protected $casts = [
-        'options'   => 'array',
+        'options'              => 'array',
+        'minimum_order_amount' => 'decimal:2',
     ];
 
-    // public static function getData(string $language = null): ?self
-    // {
-        // $language = app()->getLocale();
-        // $cacheKey = 'cached_settings_' . $language;
+    public static function getData(string $language = null): ?self
+    {
+        $language = app()->getLocale();
+        $cacheKey = 'cached_settings_' . $language;
 
-        // if (Cache::has($cacheKey)) {
-        //     return Cache::get($cacheKey);
-        // }
+        if (Cache::has($cacheKey)) {
+            return Cache::get($cacheKey);
+        }
 
-        // $settings = static::first();
+        $settings = static::first();
 
-        // if ($settings) {
-        //     Cache::put($cacheKey, $settings, 86400);
-        // }
+        if ($settings) {
+            Cache::put($cacheKey, $settings, 86400);
+        }
 
-    //     return $settings;
-    // }
+        return $settings;
+    }
 
 }

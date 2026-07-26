@@ -17,6 +17,7 @@ trait CreatesTestTables
             $table->id();
             $table->string('language')->default('en');
             $table->text('options')->nullable();
+            $table->decimal('minimum_order_amount', 10, 2)->default(0);
             $table->timestamps();
         });
 

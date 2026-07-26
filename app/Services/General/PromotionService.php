@@ -139,7 +139,7 @@ class PromotionService
             ->update([
                 'promotion_id' => null,
                 'discount_amount' => 0,
-                'total_price' => DB::raw('price * quantity'),
+                'total_price' => DB::raw('ROUND(price * quantity, 2)'),
             ]);
         $cart->refresh();
         $cart->load(['items.product', 'items.productVariant']);

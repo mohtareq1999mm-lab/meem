@@ -119,29 +119,46 @@ class FastShippingService
             ]);
             $orderData['user_id'] = $user->id;
 
-            $order = $this->orderCreationService->createOrder(
-                $orderData,
-                $cart,
-                $checkoutTotals,
-                ShippingMethod::FAST,
-                $eta,
-                $fastShippingFee,
-                $shippingPrice,
-                $governorateId,
-            );
+            $pendingOrder = $this->orderCreationService->findPendingOrderForUser((int) $user->id);
 
-            if (!$order) {
-                DB::rollBack();
-                throw new Exception('Failed to create order.');
+            if ($pendingOrder) {
+                $order = $this->orderCreationService->updateOrder(
+                    $pendingOrder,
+                    $orderData,
+                    $cart,
+                    $checkoutTotals,
+                    ShippingMethod::FAST,
+                    $eta,
+                    $fastShippingFee,
+                    $shippingPrice,
+                    $governorateId,
+                );
+                $this->orderCreationService->syncOrderItems($order, $cart);
+                $this->orderCreationService->updateTransactionAmount($order);
+            } else {
+                $order = $this->orderCreationService->createOrder(
+                    $orderData,
+                    $cart,
+                    $checkoutTotals,
+                    ShippingMethod::FAST,
+                    $eta,
+                    $fastShippingFee,
+                    $shippingPrice,
+                    $governorateId,
+                );
+
+                if (!$order) {
+                    DB::rollBack();
+                    throw new Exception('Failed to create order.');
+                }
+
+                if (!$this->orderCreationService->createOrderItems($order, $cart)) {
+                    DB::rollBack();
+                    throw new Exception('Failed to add items to order.');
+                }
+
+                $this->orderCreationService->finalizeOrder($order, $checkoutTotals);
             }
-
-            if (!$this->orderCreationService->createOrderItems($order, $cart)) {
-                DB::rollBack();
-                throw new Exception('Failed to add items to order.');
-            }
-
-            $this->orderCreationService->finalizeOrder($order, $checkoutTotals);
-            $this->cartInventoryService->finalizeItemsByShippingMethod($cart, ShippingMethod::FAST);
 
             DB::commit();
 

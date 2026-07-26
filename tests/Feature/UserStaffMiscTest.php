@@ -23,7 +23,7 @@ class UserStaffMiscTest extends TestCase
     use DatabaseTransactions, CreatesTestTables;
 
     private const GUARD = 'api';
-    private const PREFIX = '/api';
+    private const PREFIX = '/api/v1';
 
     private User $admin;
     private User $shopOwner;
@@ -224,7 +224,7 @@ class UserStaffMiscTest extends TestCase
         $response = $this->getJson(self::PREFIX . '/users?type=admin');
 
         $response->assertOk();
-        $emails = collect($response->json('data'))->pluck('email')->toArray();
+        $emails = collect($response->json('data.data'))->pluck('email')->toArray();
         $this->assertNotContains('typeuser@example.com', $emails);
     }
 
@@ -241,7 +241,7 @@ class UserStaffMiscTest extends TestCase
         $response = $this->getJson(self::PREFIX . '/users?users=true');
 
         $response->assertOk();
-        $emails = collect($response->json('data'))->pluck('email')->toArray();
+        $emails = collect($response->json('data.data'))->pluck('email')->toArray();
         $this->assertContains('flagged@example.com', $emails);
         $this->assertNotContains('staffadmin@example.com', $emails);
     }
@@ -253,7 +253,7 @@ class UserStaffMiscTest extends TestCase
         $response = $this->getJson(self::PREFIX . '/users?admins=true');
 
         $response->assertOk();
-        $emails = collect($response->json('data'))->pluck('email')->toArray();
+        $emails = collect($response->json('data.data'))->pluck('email')->toArray();
         $this->assertContains('staffadmin@example.com', $emails);
     }
 

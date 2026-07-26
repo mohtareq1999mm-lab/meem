@@ -55,7 +55,7 @@ class CancelUnpaidOrders extends Command
                     report($e);
                 }
 
-                // Release reserved inventory from the user's active cart
+                // Release reserved inventory and expire the cart
                 try {
                     $cart = Cart::query()
                         ->where('user_id', $order->user_id)
@@ -63,7 +63,7 @@ class CancelUnpaidOrders extends Command
                         ->first();
 
                     if ($cart) {
-                        $this->cartInventoryService->releaseCart($cart, false);
+                        $this->cartInventoryService->expireSingleCart($cart);
                     }
                 } catch (\Throwable $e) {
                     report($e);

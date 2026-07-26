@@ -438,26 +438,6 @@ class PermissionSeeder extends Seeder
             'guard_name' => 'api',
         ]);
 
-        $roleSuperAdmin = Role::firstOrCreate(
-            ['name' => 'super_admin', 'guard_name' => 'api'],
-            ['display_name' => 'Super Admin']
-        );
-        $roleOwner = Role::firstOrCreate(
-            ['name' => 'owner', 'guard_name' => 'api'],
-            ['display_name' => 'Owner']
-        );
-        $roleStaff = Role::firstOrCreate(
-            ['name' => 'staff', 'guard_name' => 'api'],
-            ['display_name' => 'Staff']
-        );
-        $roleCustomer = Role::firstOrCreate(
-            ['name' => 'customer', 'guard_name' => 'api'],
-            ['display_name' => 'Customer']
-        );
-        $roleEditor = Role::firstOrCreate(
-            ['name' => 'editor', 'guard_name' => 'api'],
-            ['display_name' => 'Editor']
-        );
         $roleSuperAdmin->syncPermissions($permissionsData);
         $roleOwner->syncPermissions($onwnerPermission);
         $roleStaff->syncPermissions($staffAndOnwner);

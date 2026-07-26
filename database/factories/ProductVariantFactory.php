@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 use Marvel\Database\Models\ProductVariant;
 
 class ProductVariantFactory extends Factory
@@ -11,20 +12,23 @@ class ProductVariantFactory extends Factory
 
     public function definition()
     {
-        $dimensionInCm = fn () => $this->faker->numberBetween(5, 200) . 'cm';
-        $dimensionInM  = fn () => $this->faker->randomFloat(1, 0.1, 5) . 'm';
-        $weightInG     = fn () => $this->faker->numberBetween(50, 5000) . 'g';
-        $weightInKg    = fn () => $this->faker->randomFloat(1, 0.1, 10) . 'kg';
+        $price = $this->faker->randomFloat(2, 10, 100);
+        $salePrice = $this->faker->boolean(30) ? round($price * (1 - $this->faker->randomFloat(2, 0.05, 0.3)), 2) : null;
 
         return [
-            'price' => $this->faker->randomFloat(2, 10, 100),
-            'sale_price' => $this->faker->randomFloat(2, 5, 90),
-            'quantity' => $this->faker->numberBetween(1, 100),
-            'height' => $this->faker->boolean(70) ? $dimensionInCm() : $dimensionInM(),
-            'width' => $this->faker->boolean(70) ? $dimensionInCm() : $dimensionInM(),
-            'length' => $this->faker->boolean(70) ? $dimensionInCm() : $dimensionInM(),
-            'weight' => $this->faker->boolean(70) ? $weightInG() : $weightInKg(),
+            'sku' => 'VAR-' . strtoupper(Str::random(8)),
+            'price' => $price,
+            'sale_price' => $salePrice,
+            'stock_quantity' => $this->faker->numberBetween(5, 100),
+            'quantity' => $this->faker->numberBetween(5, 100),
+            'reserved_quantity' => 0,
+            'sold_quantity' => $this->faker->numberBetween(0, 30),
+            'height' => (string) $this->faker->numberBetween(5, 30),
+            'width' => (string) $this->faker->numberBetween(3, 20),
+            'length' => (string) $this->faker->numberBetween(1, 15),
+            'weight' => (string) $this->faker->numberBetween(10, 2000),
             'product_id' => null,
+            'in_stock' => true,
         ];
     }
 }

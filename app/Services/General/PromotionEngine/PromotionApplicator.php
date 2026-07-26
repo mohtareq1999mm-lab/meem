@@ -80,7 +80,7 @@ class PromotionApplicator
                 foreach ($lines as $index => $entry) {
                     $line = $entry['line_total_cents'];
                     // exact fractional share as float
-                    $exactShare = ($line * $amountCents) / $baseCents;
+                    $exactShare = ($line * $amountCents) / $sumLineCents;
                     $floorShare = (int) floor($exactShare);
                     $allocations[$index] = min($floorShare, $line); // cap to line total
                     $allocatedSum += $allocations[$index];
@@ -128,7 +128,7 @@ class PromotionApplicator
                     $discountedSubtotalCents += max(0, $lineTotalCents - $alloc);
                 }
 
-                $cart->forceFill(['total_price' => $discountedSubtotalCents / 100.0])->save();
+$cart->forceFill(['total_price' => round($discountedSubtotalCents / 100.0, 2)])->save();
 
                 return ['discount' => $amountCents / 100.0, 'gift_items' => []];
             }
@@ -171,7 +171,7 @@ class PromotionApplicator
                     ->reject(fn($i) => (bool) ($i->is_gift ?? false))
                     ->sum(fn($item) => (float) ($item->total_price ?? 0)) * 100);
 
-                $cart->forceFill(['total_price' => $discountedSubtotalCents / 100.0])->save();
+$cart->forceFill(['total_price' => round($discountedSubtotalCents / 100.0, 2)])->save();
                 return ['discount' => 0.0, 'gift_items' => $reserved];
             }
 

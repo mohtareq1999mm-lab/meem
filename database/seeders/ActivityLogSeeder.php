@@ -3,6 +3,9 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Marvel\Database\Models\Order;
+use Marvel\Database\Models\Product;
+use Marvel\Database\Models\Settings;
 use Marvel\Database\Models\User;
 use Spatie\Activitylog\Models\Activity;
 
@@ -103,7 +106,7 @@ class ActivityLogSeeder extends Seeder
                 'description' => 'Product created',
                 'event' => 'created',
                 'subject_id' => 1,
-                'subject_type' => 'Marvel\Database\Models\Product',
+                'subject_type' => Product::class,
                 'causer_id' => $admin->id,
                 'causer_type' => User::class,
                 'properties' => ['product_name' => 'Sample Product'],
@@ -113,7 +116,7 @@ class ActivityLogSeeder extends Seeder
                 'description' => 'Order status changed',
                 'event' => 'statusChanged',
                 'subject_id' => 1,
-                'subject_type' => 'Marvel\Database\Models\Order',
+                'subject_type' => Order::class,
                 'causer_id' => $admin->id,
                 'causer_type' => User::class,
                 'properties' => ['previous_status' => 'pending', 'new_status' => 'processing'],
@@ -123,7 +126,7 @@ class ActivityLogSeeder extends Seeder
                 'description' => 'Settings updated',
                 'event' => 'updated',
                 'subject_id' => 1,
-                'subject_type' => 'Marvel\Database\Models\Settings',
+                'subject_type' => Settings::class,
                 'causer_id' => $admin->id,
                 'causer_type' => User::class,
                 'properties' => ['updated_fields' => ['currency', 'language']],

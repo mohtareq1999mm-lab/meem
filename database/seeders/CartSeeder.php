@@ -12,26 +12,29 @@ class CartSeeder extends Seeder
 {
     public function run()
     {
-        $user = User::first();
-        $products = Product::take(2)->get();
-
-        if (!$user || $products->isEmpty()) {
+        $customer = User::where('email', 'test@g.com')->first();
+        if (!$customer) {
             return;
         }
 
-        $cart = Cart::updateOrCreate([
-            'user_id' => $user->id,
-        ], [
+        $products = Product::inRandomOrder()->take(3)->get();
+
+        if ($products->isEmpty()) {
+            return;
+        }
+
+        Cart::where('user_id', $customer->id)->delete();
+
+        $cart = Cart::create([
+            'user_id' => $customer->id,
             'status' => 'active',
             'reserved_at' => now(),
             'expires_at' => now()->addDays(3),
             'total_price' => 0,
         ]);
 
-        CartItem::where('cart_id', $cart->id)->delete();
-
         foreach ($products as $product) {
-            $quantity = 1;
+            $quantity = random_int(1, 2);
             $price = $product->getCurrentPrice();
 
             CartItem::create([
@@ -41,6 +44,7 @@ class CartSeeder extends Seeder
                 'reserved_quantity' => $quantity,
                 'price' => $price,
                 'total_price' => $price * $quantity,
+                'shipping_method' => random_int(0, 1) ? 'FAST' : 'SCHEDULED',
             ]);
         }
 

@@ -71,7 +71,7 @@ class CmsPageTest extends TestCase
             ],
         ]);
 
-        $response = $this->getJson('/api/cms-pages/home');
+        $response = $this->getJson('/api/v1/cms-pages/home');
 
         $response->assertOk();
         $response->assertJsonPath('data.slug', 'home');
@@ -94,7 +94,7 @@ class CmsPageTest extends TestCase
             ],
         ];
 
-        $create = $this->postJson('/api/cms-pages', $createPayload);
+        $create = $this->postJson('/api/v1/cms-pages', $createPayload);
         $create->assertCreated();
         $create->assertJsonPath('data.slug', 'landing');
         $create->assertJsonPath('data.content.0.type', 'Heading');
@@ -110,12 +110,12 @@ class CmsPageTest extends TestCase
             ],
         ];
 
-        $update = $this->putJson("/api/cms-pages/{$pageId}", $updatePayload);
+        $update = $this->putJson("/api/v1/cms-pages/{$pageId}", $updatePayload);
         $update->assertOk();
         $update->assertJsonPath('data.title', 'Updated Landing');
 
         // Delete
-        $delete = $this->deleteJson("/api/cms-pages/{$pageId}");
+        $delete = $this->deleteJson("/api/v1/cms-pages/{$pageId}");
         $delete->assertOk();
     }
 
@@ -131,7 +131,7 @@ class CmsPageTest extends TestCase
 
         Sanctum::actingAs($user, [], 'api');
 
-        $response = $this->postJson('/api/cms-pages', [
+        $response = $this->postJson('/api/v1/cms-pages', [
             'slug' => 'blocked',
             'title' => 'Blocked',
         ]);

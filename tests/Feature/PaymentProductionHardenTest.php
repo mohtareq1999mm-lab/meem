@@ -369,6 +369,33 @@ class PaymentProductionHardenTest extends TestCase
             $table->timestamps();
         });
 
+        Schema::create('promotions', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('slug');
+            $table->string('code')->unique();
+            $table->string('type');
+            $table->string('type_amount');
+            $table->decimal('value', 10, 2);
+            $table->decimal('discount', 10, 2)->nullable();
+            $table->decimal('max_discount_amount', 10, 2)->nullable();
+            $table->integer('required_quantity_type')->nullable();
+            $table->decimal('minimum_order_amount', 10, 2)->default(0);
+            $table->string('apply_to')->default('specific_products');
+            $table->integer('limiter')->nullable();
+            $table->integer('usage')->default(0);
+            $table->date('start_at')->nullable();
+            $table->date('end_at')->nullable();
+            $table->boolean('status')->default(true);
+            $table->timestamps();
+        });
+
+        Schema::create('promotion_product', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('promotion_id')->constrained('promotions')->cascadeOnDelete();
+            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
+        });
+
         Schema::create('activity_log', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('log_name')->nullable();
@@ -475,7 +502,8 @@ class PaymentProductionHardenTest extends TestCase
     private function createOrderWithPendingTransaction(
         string $paymentMethod = 'cod',
         ?string $invoiceId = null,
-        bool $forOtherUser = false
+        bool $forOtherUser = false,
+        ?string $gateway = null,
     ): Order {
         $user = $forOtherUser ? $this->otherUser : $this->user;
         $order = Order::create([
@@ -493,7 +521,7 @@ class PaymentProductionHardenTest extends TestCase
         Transaction::create([
             'order_id' => $order->id,
             'user_id' => $user->id,
-            'payment_method' => $paymentMethod,
+            'payment_method' => $gateway ?? $paymentMethod,
             'status' => 'pending',
             'amount' => 100.00,
             'currency' => 'EGP',
@@ -521,7 +549,7 @@ class PaymentProductionHardenTest extends TestCase
     {
         Event::fake([PaymentSucceeded::class, OrderStatusChanged::class]);
         $invoiceId = 'INV-12345';
-        $order = $this->createOrderWithPendingTransaction('online', $invoiceId);
+        $order = $this->createOrderWithPendingTransaction('online', $invoiceId, gateway: 'myfatoorah');
 
         $mockGateway = \Mockery::mock(PaymentGatewayContract::class);
         $mockGateway->shouldReceive('verifyPayment')
@@ -559,11 +587,11 @@ class PaymentProductionHardenTest extends TestCase
     }
 
     /** @test */
-    public function callback_failure_cancels_order()
+    public function callback_failure_does_not_cancel_order()
     {
         Event::fake([PaymentFailed::class, OrderCancelled::class, OrderStatusChanged::class]);
         $invoiceId = 'INV-FAIL';
-        $order = $this->createOrderWithPendingTransaction('online', $invoiceId);
+        $order = $this->createOrderWithPendingTransaction('online', $invoiceId, gateway: 'myfatoorah');
 
         $mockGateway = \Mockery::mock(PaymentGatewayContract::class);
         $mockGateway->shouldReceive('verifyPayment')
@@ -589,18 +617,17 @@ class PaymentProductionHardenTest extends TestCase
         $response->assertStatus(302);
 
         $this->assertEquals('failed', $order->fresh()->transactions()->first()->status);
-        $this->assertEquals('cancelled', $order->fresh()->status);
+        $this->assertEquals('pending', $order->fresh()->status);
 
         Event::assertDispatched(PaymentFailed::class);
-        Event::assertDispatched(OrderCancelled::class);
     }
 
     /** @test */
-    public function callback_amount_mismatch_cancels_order()
+    public function callback_amount_mismatch_does_not_cancel_order()
     {
         Event::fake([PaymentFailed::class, OrderCancelled::class]);
         $invoiceId = 'INV-AMT';
-        $order = $this->createOrderWithPendingTransaction('online', $invoiceId);
+        $order = $this->createOrderWithPendingTransaction('online', $invoiceId, gateway: 'myfatoorah');
 
         $mockGateway = \Mockery::mock(PaymentGatewayContract::class);
         $mockGateway->shouldReceive('verifyPayment')
@@ -627,7 +654,7 @@ class PaymentProductionHardenTest extends TestCase
 
         $response->assertStatus(302);
 
-        $this->assertEquals('cancelled', $order->fresh()->status);
+        $this->assertEquals('pending', $order->fresh()->status);
 
         Event::assertDispatched(PaymentFailed::class);
     }
@@ -636,7 +663,7 @@ class PaymentProductionHardenTest extends TestCase
     public function callback_duplicate_is_idempotent()
     {
         $invoiceId = 'INV-DUP';
-        $order = $this->createOrderWithPendingTransaction('online', $invoiceId);
+        $order = $this->createOrderWithPendingTransaction('online', $invoiceId, gateway: 'myfatoorah');
 
         $mockGateway = \Mockery::mock(PaymentGatewayContract::class);
         $mockGateway->shouldReceive('verifyPayment')
@@ -671,18 +698,11 @@ class PaymentProductionHardenTest extends TestCase
     }
 
     /** @test */
-    public function callback_without_payment_id_returns_400()
+    public function error_callback_does_not_cancel_order()
     {
-        $response = $this->get(self::PREFIX . '/general/checkout/callback');
-        $response->assertStatus(400);
-    }
-
-    /** @test */
-    public function error_callback_cancels_order()
-    {
-        Event::fake([PaymentFailed::class, OrderCancelled::class, OrderStatusChanged::class]);
+        Event::fake([PaymentFailed::class, OrderCancelled::class]);
         $invoiceId = 'INV-ERR';
-        $order = $this->createOrderWithPendingTransaction('online', $invoiceId);
+        $order = $this->createOrderWithPendingTransaction('online', $invoiceId, gateway: 'myfatoorah');
 
         $mockGateway = \Mockery::mock(PaymentGatewayContract::class);
         $mockGateway->shouldReceive('verifyPayment')
@@ -707,8 +727,9 @@ class PaymentProductionHardenTest extends TestCase
         $response = $this->get(self::PREFIX . '/general/checkout/error-callback?paymentId=payment-err');
         $response->assertStatus(302);
 
-        $this->assertEquals('cancelled', $order->fresh()->status);
+        $this->assertEquals('pending', $order->fresh()->status);
         Event::assertDispatched(PaymentFailed::class);
+        Event::assertNotDispatched(OrderCancelled::class);
     }
 
     // =============================================
@@ -1083,7 +1104,7 @@ class PaymentProductionHardenTest extends TestCase
     {
         Event::fake([PaymentSucceeded::class, OrderStatusChanged::class]);
         $invoiceId = 'INV-TRANSITION';
-        $order = $this->createOrderWithPendingTransaction('online', $invoiceId);
+        $order = $this->createOrderWithPendingTransaction('online', $invoiceId, gateway: 'myfatoorah');
 
         $mockGateway = \Mockery::mock(PaymentGatewayContract::class);
         $mockGateway->shouldReceive('verifyPayment')
@@ -1114,11 +1135,11 @@ class PaymentProductionHardenTest extends TestCase
     }
 
     /** @test */
-    public function cancel_callback_still_cancels_pending_orders()
+    public function cancel_callback_does_not_cancel_pending_orders()
     {
         Event::fake([PaymentFailed::class, OrderCancelled::class, OrderStatusChanged::class]);
         $invoiceId = 'INV-CANCEL-TRANS';
-        $order = $this->createOrderWithPendingTransaction('online', $invoiceId);
+        $order = $this->createOrderWithPendingTransaction('online', $invoiceId, gateway: 'myfatoorah');
 
         $mockGateway = \Mockery::mock(PaymentGatewayContract::class);
         $mockGateway->shouldReceive('verifyPayment')
@@ -1142,8 +1163,9 @@ class PaymentProductionHardenTest extends TestCase
         $response = $this->get(self::PREFIX . '/general/checkout/callback?paymentId=payment-cancel-trans');
 
         $response->assertStatus(302);
-        $this->assertEquals('cancelled', $order->fresh()->status);
+        $this->assertEquals('pending', $order->fresh()->status);
         Event::assertDispatched(PaymentFailed::class);
+        Event::assertNotDispatched(OrderCancelled::class);
     }
 
     // =============================================
@@ -1191,7 +1213,7 @@ class PaymentProductionHardenTest extends TestCase
         Transaction::create([
             'order_id' => $order->id,
             'user_id' => $this->user->id,
-            'payment_method' => 'online',
+            'payment_method' => 'myfatoorah',
             'status' => 'pending',
             'amount' => 100.00,
             'currency' => 'EGP',
@@ -1294,4 +1316,283 @@ class PaymentProductionHardenTest extends TestCase
         $this->assertEquals(2, $coupon->fresh()->used);
     }
 
+    // =============================================
+    // SECTION 10: ATOMIC CALLBACK HARDENING
+    // =============================================
+
+    /** @test */
+    public function callback_duplicate_does_not_dispatch_events_twice()
+    {
+        Event::fake([PaymentSucceeded::class, OrderStatusChanged::class]);
+        $invoiceId = 'INV-EVENT-DUP';
+        $order = $this->createOrderWithPendingTransaction('online', $invoiceId, gateway: 'myfatoorah');
+
+        $mockGateway = \Mockery::mock(PaymentGatewayContract::class);
+        $mockGateway->shouldReceive('verifyPayment')
+            ->twice()
+            ->with('payment-event-dup')
+            ->andReturn(new GatewayResult(
+                success: true,
+                gatewayTransactionId: $invoiceId,
+                amount: 100.00,
+                currency: 'EGP',
+                status: 'paid',
+                rawResponse: ['status' => 'paid'],
+            ));
+
+        $factoryMock = \Mockery::mock(PaymentGatewayFactory::class);
+        $factoryMock->shouldReceive('make')
+            ->twice()
+            ->with('myfatoorah')
+            ->andReturn($mockGateway);
+
+        $this->app->instance(PaymentGatewayFactory::class, $factoryMock);
+
+        $this->get(self::PREFIX . '/general/checkout/callback?paymentId=payment-event-dup')->assertStatus(302);
+        $this->get(self::PREFIX . '/general/checkout/callback?paymentId=payment-event-dup')->assertStatus(302);
+
+        Event::assertDispatchedTimes(PaymentSucceeded::class, 1);
+        Event::assertDispatchedTimes(OrderStatusChanged::class, 1);
+        $this->assertEquals('completed', $order->fresh()->status);
+        $this->assertEquals('paid', $order->fresh()->transactions()->first()->status);
+    }
+
+    /** @test */
+    public function callback_duplicate_does_not_double_deduct_inventory()
+    {
+        $invoiceId = 'INV-STOCK-DUP';
+        $order = $this->createOrderWithPendingTransaction('online', $invoiceId, gateway: 'myfatoorah');
+
+        $this->product->stock_quantity = 10;
+        $this->product->reserved_quantity = 1;
+        $this->product->sold_quantity = 0;
+        $this->product->save();
+
+        $cart = Cart::create([
+            'user_id' => $this->user->id,
+            'status' => 'active',
+            'total_price' => 100.00,
+        ]);
+
+        CartItem::create([
+            'cart_id' => $cart->id,
+            'product_id' => $this->product->id,
+            'quantity' => 1,
+            'price' => 100.00,
+            'total_price' => 100.00,
+            'shipping_method' => 'SCHEDULED',
+            'reserved_quantity' => 1,
+        ]);
+
+        $mockGateway = \Mockery::mock(PaymentGatewayContract::class);
+        $mockGateway->shouldReceive('verifyPayment')
+            ->twice()
+            ->with('payment-stock-dup')
+            ->andReturn(new GatewayResult(
+                success: true,
+                gatewayTransactionId: $invoiceId,
+                amount: 100.00,
+                currency: 'EGP',
+                status: 'paid',
+                rawResponse: ['status' => 'paid'],
+            ));
+
+        $factoryMock = \Mockery::mock(PaymentGatewayFactory::class);
+        $factoryMock->shouldReceive('make')
+            ->twice()
+            ->with('myfatoorah')
+            ->andReturn($mockGateway);
+
+        $this->app->instance(PaymentGatewayFactory::class, $factoryMock);
+
+        $this->get(self::PREFIX . '/general/checkout/callback?paymentId=payment-stock-dup')->assertStatus(302);
+        $this->get(self::PREFIX . '/general/checkout/callback?paymentId=payment-stock-dup')->assertStatus(302);
+
+        $product = $this->product->fresh();
+        $this->assertEquals(9, $product->stock_quantity);
+        $this->assertEquals(0, $product->reserved_quantity);
+        $this->assertEquals(1, $product->sold_quantity);
+    }
+
+    /** @test */
+    public function callback_duplicate_does_not_double_increment_promotion()
+    {
+        $promotion = \Marvel\Database\Models\Promotion::create([
+            'name' => 'Test Promotion',
+            'slug' => 'test-promotion',
+            'code' => 'TEST-PROMO',
+            'type' => 'percentage',
+            'type_amount' => 'percentage',
+            'value' => 10.00,
+            'discount' => 10.00,
+            'limiter' => 100,
+            'usage' => 0,
+            'start_at' => now()->subDay(),
+            'end_at' => now()->addMonth(),
+            'status' => true,
+        ]);
+
+        $invoiceId = 'INV-PROMO-DUP';
+        $user = $this->user;
+        $order = Order::create([
+            'user_id' => $user->id,
+            'name' => 'Promo Order',
+            'user_phone' => '01000000001',
+            'user_email' => $user->email,
+            'address' => json_encode(['address' => '123 Street']),
+            'shipping_method' => 'SCHEDULED',
+            'total_price' => 100.00,
+            'status' => 'pending',
+            'payment_method' => 'online',
+            'promotion_id' => $promotion->id,
+        ]);
+
+        Transaction::create([
+            'order_id' => $order->id,
+            'user_id' => $user->id,
+            'payment_method' => 'myfatoorah',
+            'status' => 'pending',
+            'amount' => 100.00,
+            'currency' => 'EGP',
+            'invoice_id' => $invoiceId,
+        ]);
+
+        $mockGateway = \Mockery::mock(PaymentGatewayContract::class);
+        $mockGateway->shouldReceive('verifyPayment')
+            ->twice()
+            ->with('payment-promo-dup')
+            ->andReturn(new GatewayResult(
+                success: true,
+                gatewayTransactionId: $invoiceId,
+                amount: 100.00,
+                currency: 'EGP',
+                status: 'paid',
+                rawResponse: ['status' => 'paid'],
+            ));
+
+        $factoryMock = \Mockery::mock(PaymentGatewayFactory::class);
+        $factoryMock->shouldReceive('make')
+            ->twice()
+            ->with('myfatoorah')
+            ->andReturn($mockGateway);
+
+        $this->app->instance(PaymentGatewayFactory::class, $factoryMock);
+
+        $this->get(self::PREFIX . '/general/checkout/callback?paymentId=payment-promo-dup')->assertStatus(302);
+        $this->get(self::PREFIX . '/general/checkout/callback?paymentId=payment-promo-dup')->assertStatus(302);
+
+        $this->assertEquals(1, $promotion->fresh()->usage);
+    }
+
+    /** @test */
+    public function callback_transaction_rolls_back_on_failure()
+    {
+        Event::fake([PaymentSucceeded::class, PaymentFailed::class, OrderStatusChanged::class]);
+
+        $invoiceId = 'INV-ROLLBACK';
+        $order = $this->createOrderWithPendingTransaction('online', $invoiceId, gateway: 'myfatoorah');
+
+        $this->product->stock_quantity = 10;
+        $this->product->reserved_quantity = 1;
+        $this->product->sold_quantity = 0;
+        $this->product->save();
+
+        $cart = Cart::create([
+            'user_id' => $this->user->id,
+            'status' => 'active',
+            'total_price' => 100.00,
+        ]);
+
+        CartItem::create([
+            'cart_id' => $cart->id,
+            'product_id' => $this->product->id,
+            'quantity' => 1,
+            'price' => 100.00,
+            'total_price' => 100.00,
+            'shipping_method' => 'SCHEDULED',
+            'reserved_quantity' => 1,
+        ]);
+
+        $cartInventoryMock = \Mockery::mock(\App\Services\General\CartInventoryService::class);
+        $cartInventoryMock->shouldReceive('getActiveCartForUser')
+            ->once()
+            ->andReturn($cart);
+        $cartInventoryMock->shouldReceive('finalizeItemsByShippingMethod')
+            ->once()
+            ->andThrow(new \RuntimeException('Simulated inventory failure'));
+
+        $this->app->instance(\App\Services\General\CartInventoryService::class, $cartInventoryMock);
+
+        $mockGateway = \Mockery::mock(PaymentGatewayContract::class);
+        $mockGateway->shouldReceive('verifyPayment')
+            ->once()
+            ->with('payment-rollback')
+            ->andReturn(new GatewayResult(
+                success: true,
+                gatewayTransactionId: $invoiceId,
+                amount: 100.00,
+                currency: 'EGP',
+                status: 'paid',
+                rawResponse: ['status' => 'paid'],
+            ));
+
+        $factoryMock = \Mockery::mock(PaymentGatewayFactory::class);
+        $factoryMock->shouldReceive('make')
+            ->once()
+            ->with('myfatoorah')
+            ->andReturn($mockGateway);
+
+        $this->app->instance(PaymentGatewayFactory::class, $factoryMock);
+
+        $response = $this->get(self::PREFIX . '/general/checkout/callback?paymentId=payment-rollback');
+
+        $response->assertStatus(500);
+
+        $orderAfter = $order->fresh();
+        $this->assertEquals('pending', $orderAfter->status);
+
+        $transaction = $orderAfter->transactions()->first();
+        $this->assertEquals('pending', $transaction->status);
+
+        $product = $this->product->fresh();
+        $this->assertEquals(10, $product->stock_quantity);
+        $this->assertEquals(1, $product->reserved_quantity);
+        $this->assertEquals(0, $product->sold_quantity);
+
+        Event::assertNotDispatched(PaymentSucceeded::class);
+        Event::assertNotDispatched(PaymentFailed::class);
+    }
+
+    /** @test */
+    public function callback_duplicate_error_is_idempotent()
+    {
+        $invoiceId = 'INV-ERR-DUP';
+        $order = $this->createOrderWithPendingTransaction('online', $invoiceId, gateway: 'myfatoorah');
+
+        $mockGateway = \Mockery::mock(PaymentGatewayContract::class);
+        $mockGateway->shouldReceive('verifyPayment')
+            ->twice()
+            ->with('payment-err-dup')
+            ->andReturn(new GatewayResult(
+                success: false,
+                gatewayTransactionId: $invoiceId,
+                status: 'failed',
+                errorMessage: 'Duplicate error',
+                rawResponse: ['status' => 'failed'],
+            ));
+
+        $factoryMock = \Mockery::mock(PaymentGatewayFactory::class);
+        $factoryMock->shouldReceive('make')
+            ->twice()
+            ->with('myfatoorah')
+            ->andReturn($mockGateway);
+
+        $this->app->instance(PaymentGatewayFactory::class, $factoryMock);
+
+        $this->get(self::PREFIX . '/general/checkout/error-callback?paymentId=payment-err-dup')->assertStatus(302);
+        $this->get(self::PREFIX . '/general/checkout/error-callback?paymentId=payment-err-dup')->assertStatus(302);
+
+        $transaction = $order->fresh()->transactions()->first();
+        $this->assertEquals('failed', $transaction->status);
+    }
 }

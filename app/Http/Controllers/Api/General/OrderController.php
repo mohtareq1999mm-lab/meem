@@ -12,6 +12,7 @@ use App\Services\Payment\PaymentCheckoutHandler;
 use App\Services\Payment\PaymentGatewayFactory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Order;
 use Marvel\Database\Models\Transaction;
 use Marvel\Database\Models\User;
@@ -173,11 +174,13 @@ class OrderController extends Controller
             return $this->apiResponse(MISSING_PAYMENT_ID, 400, false);
         }
 
+        $gatewayName = 'myfatoorah';
+
         $transaction = Transaction::where('gateway_transaction_id', $paymentId)
             ->orWhere('invoice_id', $paymentId)
             ->first();
 
-        $gatewayName = $transaction?->payment_method ?? 'myfatoorah';
+        $gatewayName = $transaction?->payment_method ?? $gatewayName;
 
         try {
             $gateway = $this->paymentGatewayFactory->make($gatewayName);
@@ -195,26 +198,15 @@ class OrderController extends Controller
                 ->first();
         }
 
-        if ($transaction) {
-            $transaction->update([
-                'status' => $result->status ?? ($result->success ? 'paid' : 'failed'),
-                'gateway_response' => $result->rawResponse,
-                'error_message' => $result->errorMessage,
-                'paid_at' => $result->success ? now() : null,
-            ]);
-        }
+        $order = $transaction?->order;
 
         if (!$result->success) {
-            $order = null;
             if ($transaction) {
-                $order = $transaction->order;
-                $this->orderService->changeOrderStatus($transaction->invoice_id, 'cancelled');
-                if ($order && ($user = User::find($order->user_id))) {
-                    $cart = $this->cartInventoryService->getActiveCartForUser($user);
-                    if ($cart) {
-                        $this->cartInventoryService->releaseCart($cart, false);
-                    }
-                }
+                $transaction->update([
+                    'status' => $result->status ?? 'failed',
+                    'gateway_response' => $result->rawResponse,
+                    'error_message' => $result->errorMessage,
+                ]);
             }
 
             try {
@@ -234,77 +226,119 @@ class OrderController extends Controller
             ]));
         }
 
-        $order = null;
-        if ($transaction) {
-            $order = $transaction->order;
-
-            if ($order) {
-                $hasMismatch = false;
-
-                if ($result->amount !== null && abs((float) $result->amount - (float) $order->total_price) > 0.01) {
-                    $hasMismatch = true;
-                    \Log::warning('Payment amount mismatch - blocking order', [
-                        'order_id' => $order->id,
-                        'expected' => (float) $order->total_price,
-                        'received' => $result->amount,
-                        'currency' => $result->currency,
-                    ]);
-                }
-
-                if (!$hasMismatch && $result->currency !== null && $result->currency !== config('payment.default_currency', 'EGP')) {
-                    $hasMismatch = true;
-                    \Log::warning('Payment currency mismatch - blocking order', [
-                        'order_id' => $order->id,
-                        'expected' => config('payment.default_currency', 'EGP'),
-                        'received' => $result->currency,
-                    ]);
-                }
-
-                if ($hasMismatch) {
-                    $this->orderService->changeOrderStatus($transaction->invoice_id, 'cancelled');
-                    if ($user = User::find($order->user_id)) {
-                        $cart = $this->cartInventoryService->getActiveCartForUser($user);
-                        if ($cart) {
-                            $this->cartInventoryService->releaseCart($cart, false);
-                        }
-                    }
-                    try {
-                        event(new PaymentFailed($order));
-                    } catch (\Throwable $e) {
-                        report($e);
-                    }
-                    $errorMessage = $result->errorMessage ?? __(PAYMENT_FAILED);
-                    return redirect(config('app.app_url_frontend') . '/' . app()->getLocale() . '/payment/failed?' . http_build_query([
-                        'status' => 'failed',
-                        'message' => $errorMessage,
-                        'payment_id' => $paymentId,
-                    ]));
-                }
+        if (!$order) {
+            if (request()->type === 'mobile') {
+                return $this->apiResponse(CHECKOUT_SUCCESSFUL, 200, true, [
+                    'status' => 'success',
+                    'message' => __(PAYMENT_SUCCESSFUL),
+                    'payment_id' => $paymentId,
+                ]);
             }
 
-            if ($order) {
-                if ($user = User::find($order->user_id)) {
-                    $cart = $this->cartInventoryService->getActiveCartForUser($user);
-                    if ($cart) {
-                        $shippingMethod = $order->shipping_method ?? ShippingMethod::SCHEDULED;
-                        $this->cartInventoryService->finalizeItemsByShippingMethod($cart, $shippingMethod);
-
-                        if ($order->coupon && $cart->fresh()->coupon === $order->coupon) {
-                            $cart->fresh()->update(['coupon' => null]);
-                        }
-                    }
-                }
-            }
-
-            $order = $this->orderService->changeOrderStatus($transaction->invoice_id, 'completed');
+            return redirect(config('app.app_url_frontend') . '/' . app()->getLocale() . '/payment/success?' . http_build_query([
+                'status' => 'success',
+                'message' => __(PAYMENT_SUCCESSFUL),
+                'payment_id' => $paymentId,
+            ]));
         }
 
-        try {
-            if ($order) {
-                event(new PaymentSucceeded($order));
+        $hasMismatch = false;
+
+        if ($result->amount !== null && abs((float) $result->amount - (float) $order->total_price) > 0.01) {
+            $hasMismatch = true;
+            \Log::warning('Payment amount mismatch - blocking order', [
+                'order_id' => $order->id,
+                'expected' => (float) $order->total_price,
+                'received' => $result->amount,
+                'currency' => $result->currency,
+            ]);
+        }
+
+        if (!$hasMismatch && $result->currency !== null && $result->currency !== config('payment.default_currency', 'EGP')) {
+            $hasMismatch = true;
+            \Log::warning('Payment currency mismatch - blocking order', [
+                'order_id' => $order->id,
+                'expected' => config('payment.default_currency', 'EGP'),
+                'received' => $result->currency,
+            ]);
+        }
+
+        if ($hasMismatch) {
+            if ($transaction) {
+                $transaction->update([
+                    'error_message' => $result->errorMessage ?? 'Amount or currency mismatch',
+                ]);
             }
-        } catch (\Throwable $e) {
-            report($e);
+            try {
+                event(new PaymentFailed($order));
+            } catch (\Throwable $e) {
+                report($e);
+            }
+            $errorMessage = $result->errorMessage ?? __(PAYMENT_FAILED);
+            return redirect(config('app.app_url_frontend') . '/' . app()->getLocale() . '/payment/failed?' . http_build_query([
+                'status' => 'failed',
+                'message' => $errorMessage,
+                'payment_id' => $paymentId,
+            ]));
+        }
+
+        $processed = false;
+
+        DB::transaction(function () use ($order, $transaction, $paymentId, $verifiedInvoiceId, $result, &$processed) {
+            $lockedTransaction = Transaction::where('gateway_transaction_id', $paymentId)
+                ->orWhere('invoice_id', $paymentId)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$lockedTransaction) {
+                $lockedTransaction = Transaction::where('gateway_transaction_id', $verifiedInvoiceId)
+                    ->orWhere('invoice_id', $verifiedInvoiceId)
+                    ->lockForUpdate()
+                    ->first();
+            }
+
+            if (!$lockedTransaction) {
+                return;
+            }
+
+            $lockedOrder = $lockedTransaction->order()->lockForUpdate()->first();
+
+            if (!$lockedOrder) {
+                return;
+            }
+
+            if ($lockedTransaction->status === 'paid' && $lockedOrder->status === 'completed') {
+                return;
+            }
+
+            $lockedTransaction->update([
+                'status' => 'paid',
+                'gateway_response' => $result->rawResponse,
+                'error_message' => $result->errorMessage,
+                'paid_at' => now(),
+            ]);
+
+            if ($user = User::find($lockedOrder->user_id)) {
+                $cart = $this->cartInventoryService->getActiveCartForUser($user);
+                if ($cart) {
+                    $shippingMethod = $lockedOrder->shipping_method ?? ShippingMethod::SCHEDULED;
+                    $this->cartInventoryService->finalizeItemsByShippingMethod($cart, $shippingMethod);
+                }
+            }
+
+            $this->orderService->finalizePromotionUsageAfterPayment($lockedOrder);
+
+            $this->orderService->changeOrderStatus($lockedTransaction->invoice_id, 'completed');
+
+            $processed = true;
+        });
+
+        if ($processed) {
+            try {
+                event(new PaymentSucceeded($order->fresh()));
+            } catch (\Throwable $e) {
+                report($e);
+            }
         }
 
         if (request()->type === 'mobile') {
@@ -312,7 +346,7 @@ class OrderController extends Controller
                 'status' => 'success',
                 'message' => __(PAYMENT_SUCCESSFUL),
                 'payment_id' => $paymentId,
-                'order_id' => $order?->id,
+                'order_id' => $order->id,
             ]);
         }
 
@@ -320,7 +354,7 @@ class OrderController extends Controller
             'status' => 'success',
             'message' => __(PAYMENT_SUCCESSFUL),
             'payment_id' => $paymentId,
-            'order_id' => $order?->id,
+            'order_id' => $order->id,
         ]));
         
     }
@@ -332,11 +366,13 @@ class OrderController extends Controller
             return $this->apiResponse(MISSING_PAYMENT_ID, 400, false);
         }
 
+        $gatewayName = 'myfatoorah';
+
         $transaction = Transaction::where('gateway_transaction_id', $paymentId)
             ->orWhere('invoice_id', $paymentId)
             ->first();
 
-        $gatewayName = $transaction?->payment_method ?? 'myfatoorah';
+        $gatewayName = $transaction?->payment_method ?? $gatewayName;
 
         try {
             $gateway = $this->paymentGatewayFactory->make($gatewayName);
@@ -345,7 +381,6 @@ class OrderController extends Controller
         }
 
         $result = $gateway->verifyPayment($paymentId);
-        $invoiceStatus = $result->status;
         $errorMessage = $result->errorMessage ?? __(PAYMENT_FAILED);
 
         $verifiedInvoiceId = $result->gatewayTransactionId;
@@ -356,30 +391,42 @@ class OrderController extends Controller
                 ->first();
         }
 
-        if ($transaction) {
-            $transaction->update([
+        $order = $transaction?->order;
+
+        DB::transaction(function () use ($transaction, $paymentId, $verifiedInvoiceId, $result, $errorMessage) {
+            $lockedTransaction = Transaction::where('gateway_transaction_id', $paymentId)
+                ->orWhere('invoice_id', $paymentId)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$lockedTransaction) {
+                $lockedTransaction = Transaction::where('gateway_transaction_id', $verifiedInvoiceId)
+                    ->orWhere('invoice_id', $verifiedInvoiceId)
+                    ->lockForUpdate()
+                    ->first();
+            }
+
+            if (!$lockedTransaction) {
+                return;
+            }
+
+            if ($lockedTransaction->status === 'failed') {
+                return;
+            }
+
+            $lockedTransaction->update([
                 'status' => 'failed',
                 'gateway_response' => $result->rawResponse,
                 'error_message' => $errorMessage,
             ]);
-        }
+        });
 
-        if ($transaction && (!$invoiceStatus || $invoiceStatus !== 'paid')) {
-            $order = $this->orderService->changeOrderStatus($transaction->invoice_id, 'cancelled');
-            if ($order && ($user = User::find($order->user_id))) {
-                $cart = $this->cartInventoryService->getActiveCartForUser($user);
-                if ($cart) {
-                    $this->cartInventoryService->releaseCart($cart, false);
-                }
+        try {
+            if ($order) {
+                event(new PaymentFailed($order));
             }
-
-            try {
-                if (isset($order) && $order) {
-                    event(new PaymentFailed($order));
-                }
-            } catch (\Throwable $e) {
-                report($e);
-            }
+        } catch (\Throwable $e) {
+            report($e);
         }
 
         if ($request->type === 'mobile') {

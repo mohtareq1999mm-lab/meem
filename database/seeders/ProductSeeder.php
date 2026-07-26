@@ -195,7 +195,7 @@ class ProductSeeder extends Seeder
                 'Pore Tightening Mask' => 'Cleanser',
             ];
 
-            $variablePrefixes = ['FAC', 'LIP', 'NAI', 'EYE'];
+            $variablePrefixes = ['FAC', 'LIP', 'NAI', 'EYE', 'CHK'];
 
             $productDimensions = [
                 // Face Foundations
@@ -637,7 +637,14 @@ class ProductSeeder extends Seeder
                     ? ProductType::VARIABLE
                     : ProductType::SIMPLE;
 
-                $hasFlashSale = $this->randomBool(30);
+                $hasFlashSale = $weeklyFlashSalesCount > 0 && $this->randomBool(30);
+
+                $hasDiscount = $this->randomBool(30);
+                $discountType = $hasDiscount ? $this->randomElement($discountTypes) : DiscountType::PERCENTAGE;
+                $discountPercent = $hasDiscount ? random_int(5, 30) : 0;
+                $discountAmount = $hasDiscount ? round($basePrice * $discountPercent / 100, 2) : 0;
+                $startDate = $hasDiscount ? now()->subDays(random_int(0, 15))->toDateString() : null;
+                $endDate = $hasDiscount ? now()->addDays(random_int(15, 60))->toDateString() : null;
 
                 $dims = $productDimensions[$productNameEn] ?? $categoryDimensionDefaults[$skuPrefix] ?? [];
                 $product = Product::create([
@@ -652,11 +659,11 @@ class ProductSeeder extends Seeder
                     ],
                     'price' => $basePrice,
                     'product_type' => $productType,
-                    'sku' => $skuPrefix . '-' . Str::uuid(),
+                    'sku' => $skuPrefix . '-' . strtoupper(Str::random(8)),
                     'stock_quantity' => random_int(10, 200),
                     'reserved_quantity' => 0,
                     'pieces' => 1,
-                    'sold_quantity' => random_int(0, 100),
+                    'sold_quantity' => random_int(0, 50),
                     'in_stock' => true,
                     'status' => 1,
                     'height' => (string) $dims['h'],
@@ -664,14 +671,14 @@ class ProductSeeder extends Seeder
                     'length' => (string) $dims['l'],
                     'weight' => (string) $dims['wt'],
                     'has_flash_sale' => $hasFlashSale,
-                    'has_discount' => $this->randomBool(30),
-                    'discount_type' => $this->randomElement($discountTypes),
-                    'discount_amount' => round($basePrice * random_int(5, 30) / 100, 2),
-                    'start_date' => $this->maybeDate(30),
-                    'end_date' => $this->maybeDate(30),
+                    'has_discount' => $hasDiscount,
+                    'discount_type' => $discountType,
+                    'discount_amount' => $discountAmount,
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
                     'price_after_discount' => null,
                     'price_after_flash_sale' => null,
-                    'is_fast_shipping_available' => random_int(0, 1) == 1 ? true : false,
+                    'is_fast_shipping_available' => random_int(0, 1) == 1,
                 ]);
 
                 // images
@@ -751,12 +758,4 @@ class ProductSeeder extends Seeder
         return random_int(1, 100) <= $truePercent;
     }
 
-    private function maybeDate(int $percent): ?string
-    {
-        if (!$this->randomBool($percent)) {
-            return null;
-        }
-
-        return now()->addDays(random_int(-30, 90))->toDateString();
-    }
 }

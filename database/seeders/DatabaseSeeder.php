@@ -2,9 +2,6 @@
 
 namespace Database\Seeders;
 
-use Database\Seeders\ContactSeeder;
-use Database\Seeders\ProductVariantSeeder;
-use Database\Seeders\ReviewSeeder;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Marvel\Database\Models\User;
@@ -18,11 +15,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        $seedDemoData = filter_var(
-            env('SEED_DEMO_DATA', app()->environment('local')),
-            FILTER_VALIDATE_BOOLEAN
-        );
-
         // Keep permission roles and default admin user in sync across environments.
         $this->call([
             PermissionSeeder::class,
@@ -87,7 +79,6 @@ class DatabaseSeeder extends Seeder
             LocationSeeder::class,
             PromotionSeeder::class,
             WishlistSeeder::class,
-            SectionTypeSettingSeeder::class,
             ContentPageSeeder::class,
             SectionSeeder::class,
             DashboardDataSeeder::class,

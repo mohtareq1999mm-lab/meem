@@ -275,7 +275,7 @@ Not Started
 ## Coupons
 
 **Purpose:**
-Manage discount coupons — create, validate, approve, apply to orders.
+Manage discount coupons — create, validate, approve, apply to orders. Includes per-user assignment management for restricted coupons.
 
 **Dependency Confidence:**
 Dependencies partially verified from source code.
@@ -284,7 +284,10 @@ Dependencies partially verified from source code.
 - Authentication — Sanctum (Verified)
 - Products — coupon conditions on products (Verified)
 - Categories — coupon conditions on categories (Verified)
-- Permissions — `permission:` middleware in CouponController (Verified)
+- Permissions — `permission:` middleware in CouponController + CouponAssignmentController (Verified)
+- CouponAssignmentRepository — CRUD for per-user assignments (Verified)
+- CouponAssignmentRequest/UpdateCouponAssignmentRequest — validation (Verified)
+- CouponAssignmentResource — computed fields (remaining, is_expired) (Verified)
 
 **Used By:**
 - Cart — coupon applied in cart (Verified)
@@ -292,15 +295,20 @@ Dependencies partially verified from source code.
 - Checkout — coupon validation during checkout (Verified)
 
 **Regression Required When Changed:**
-- Coupons
-- Cart
-- Orders
+- Coupons (admin CRUD + assignment CRUD)
+- Cart (coupon consumption)
+- Orders (coupon checkout)
 
 **Blocking Dependencies:**
 None
 
 **Current Status:**
-Not Started
+Production Ready (admin CRUD layer complete)
+
+**Notes:**
+- CouponAssignment admin CRUD (Revision 1) complete as of 2026-07-25 — 43 new tests, 151 assertions
+- PermissionSeeder needs to be updated with 4 new coupon assignment permissions (deferred)
+- Existing consumption flow (apply, checkout, usage recording) unchanged — backward compatible
 
 ---
 

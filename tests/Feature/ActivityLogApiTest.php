@@ -23,7 +23,7 @@ class ActivityLogApiTest extends TestCase
     use DatabaseTransactions;
 
     private const GUARD = 'api';
-    private const PREFIX = '/api';
+    private const PREFIX = '/api/v1';
 
     protected function setUp(): void
     {
@@ -128,6 +128,25 @@ class ActivityLogApiTest extends TestCase
             $table->timestamps();
             $table->index('log_name');
         });
+
+        Schema::create('media', function (Blueprint $table) {
+            $table->id();
+            $table->morphs('model');
+            $table->uuid('uuid')->nullable()->unique();
+            $table->string('collection_name');
+            $table->string('name');
+            $table->string('file_name');
+            $table->string('mime_type')->nullable();
+            $table->string('disk');
+            $table->string('conversions_disk')->nullable();
+            $table->unsignedBigInteger('size');
+            $table->json('manipulations');
+            $table->json('custom_properties');
+            $table->json('generated_conversions');
+            $table->json('responsive_images');
+            $table->unsignedInteger('order_column')->nullable()->index();
+            $table->nullableTimestamps();
+        });
     }
 
     private function createSuperAdmin(): User
@@ -169,6 +188,7 @@ class ActivityLogApiTest extends TestCase
         $user = $this->createSuperAdmin();
         Sanctum::actingAs($user);
 
+        DB::table('activity_log')->delete();
         Activity::create([
             'log_name' => 'products',
             'description' => 'Test log entry',

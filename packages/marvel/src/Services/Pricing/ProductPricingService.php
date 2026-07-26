@@ -13,6 +13,8 @@ use App\Services\Coupon\CouponCalculator;
 
 /**
  * Service responsible for all product pricing calculations including discounts, flash sales, and coupon pricing.
+ *
+ * All monetary arithmetic uses integer cents to avoid floating-point precision errors.
  */
 class ProductPricingService
 {
@@ -253,22 +255,22 @@ class ProductPricingService
 
             $discountType = $discountType ?: DiscountType::PERCENTAGE;
             $amount = max(0, (float) $amount);
-            $priceUnits = $this->toUnits($normalizedPrice);
+            $priceCents = $this->toCents($normalizedPrice);
 
             if ($discountType === DiscountType::PERCENTAGE) {
                 $amount = min($amount, 100);
-                $discountUnits = (int) round($priceUnits * ($amount / 100));
+                $discountCents = (int) round($priceCents * $amount / 100);
 
-                return $this->toUnits(max(0, $priceUnits - $discountUnits));
+                return $this->fromCents(max(0, $priceCents - $discountCents));
             }
 
             if ($discountType === DiscountType::FIXED_RATE || $discountType === 'fixed') {
-                $discountUnits = $this->toUnits($amount);
+                $discountCents = $this->toCents($amount);
 
-                return $this->toUnits(max(0, $priceUnits - $discountUnits));
+                return $this->fromCents(max(0, $priceCents - $discountCents));
             }
 
-            return $this->toUnits($priceUnits);
+            return $this->fromCents($priceCents);
         }, null);
     }
 
@@ -288,14 +290,14 @@ class ProductPricingService
                 return null;
             }
 
-            $baseUnits = $this->toUnits($normalizedBasePrice);
-            $discountUnits = $this->resolveFlashSaleDiscountUnits($flashSale, $baseUnits);
+            $baseCents = $this->toCents($normalizedBasePrice);
+            $discountCents = $this->resolveFlashSaleDiscountCents($flashSale, $baseCents);
 
-            if ($discountUnits === null) {
-                return $this->toUnits($baseUnits);
+            if ($discountCents === null) {
+                return $this->fromCents($baseCents);
             }
 
-            return $this->toUnits(max(0, $baseUnits - $discountUnits));
+            return $this->fromCents(max(0, $baseCents - $discountCents));
         }, null);
     }
 
@@ -332,33 +334,35 @@ class ProductPricingService
     }
 
     /**
-     * Resolve the discount units for a flash sale based on its type (percentage, fixed rate, or final price).
+     * Resolve the discount amount in cents for a flash sale based on its type.
      *
      * @param  FlashSale $flashSale
-     * @param  float     $baseUnits
-     * @return float|null
+     * @param  int       $baseCents
+     * @return int|null
      */
-    private function resolveFlashSaleDiscountUnits(FlashSale $flashSale, float $baseUnits): ?float
+    private function resolveFlashSaleDiscountCents(FlashSale $flashSale, int $baseCents): ?int
     {
-        $discountUnits = max(0, $this->toUnits($flashSale->discount ?? 0));
-        $maxDiscountUnits = $flashSale->max_discount_amount !== null
-            ? max(0, $this->toUnits($flashSale->max_discount_amount))
+        $discountValue = max(0, (float) ($flashSale->discount ?? 0));
+        $maxDiscountCents = $flashSale->max_discount_amount !== null
+            ? $this->toCents($flashSale->max_discount_amount)
             : null;
 
         if ($flashSale->type === FlashSaleType::PERCENTAGE) {
-            $percentDiscountUnits = round($baseUnits * ($discountUnits / 100));
+            $percentDiscountCents = (int) round($baseCents * $discountValue / 100);
 
-            return $maxDiscountUnits  === null
-                ? $percentDiscountUnits
-                : min($percentDiscountUnits, $maxDiscountUnits);
+            return $maxDiscountCents === null
+                ? $percentDiscountCents
+                : min($percentDiscountCents, $maxDiscountCents);
         }
 
         if ($flashSale->type === FlashSaleType::FIXED_RATE) {
-            return $discountUnits;
+            return $this->toCents($discountValue);
         }
 
         if ($flashSale->type === FlashSaleType::FINAL_PRICE) {
-            return max(0, $baseUnits - $discountUnits);
+            $finalPriceCents = $this->toCents($discountValue);
+
+            return max(0, $baseCents - $finalPriceCents);
         }
 
         return null;
@@ -491,13 +495,24 @@ class ProductPricingService
     }
 
     /**
-     * Convert a monetary value to its float unit representation.
+     * Convert a monetary value to its cent (integer) representation.
      *
      * @param  mixed $amount
+     * @return int
+     */
+    private function toCents($amount): int
+    {
+        return (int) round((float) $amount * 100);
+    }
+
+    /**
+     * Convert cents back to a float dollar representation rounded to 2 decimal places.
+     *
+     * @param  int $cents
      * @return float
      */
-    private function toUnits($amount): float
+    private function fromCents(int $cents): float
     {
-        return (float) $amount;
+        return round($cents / 100, 2);
     }
 }

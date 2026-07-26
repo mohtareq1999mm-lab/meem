@@ -593,3 +593,39 @@ YES
 
 Notes:
 All changes backward compatible — no schema changes, no migrations, no API contract changes. The `log` mail driver is the dev default; production deployments must set `MAIL_MAILER` to a real mail driver in `.env`.
+
+---
+
+Date:
+2026-07-25
+
+Feature:
+Coupon Assignments (Admin CRUD)
+
+Revision:
+1
+
+Summary:
+Full implementation of the Coupon Assignment admin CRUD API — the missing administration layer for managing per-user coupon assignments. Built 5 RESTful endpoints (index, store, show, update, destroy) inside the super_admin role group with individual permission middleware. Created CouponAssignmentController, CouponAssignmentRepository (with transactions, lockForUpdate for concurrent delete safety, duplicate detection, delete-blocked-when-used protection), CouponAssignmentRequest + UpdateCouponAssignmentRequest (validation with null-safe expiry, max_uses >= used check, future-date validation), and CouponAssignmentResource (computed remaining/is_expired fields, eager-loaded user data). Added 4 Permission enum constants and registered 5 routes in Routes.php. Added 7 translation keys in both English and Arabic. Created 2 test suites: CouponAssignmentApiTest (30 tests — auth, CRUD, edge cases, resource computed fields, cross-coupon isolation) and CouponAssignmentValidationTest (13 tests — validation rules, null expiry, optional fields). All 43 new tests pass (151 assertions). All 47 existing coupon tests pass (0 regressions).
+
+Verified Bugs Fixed:
+- B1: `used` field returning null after create() instead of database default 0 — added `fresh()` in repository to reload from DB
+- B2: Validation error response format not matching Laravel default — added standard `{message, errors}` wrapper in failedValidation
+
+Documentation Updated:
+YES (production-status.md, production-history.md, regression-matrix.md, feature-dependencies.md)
+
+Routes Updated:
+YES (added 5 routes for coupon assignments at Routes.php:720-726)
+
+Regression Executed:
+YES
+
+Regression Result:
+PASS (CouponAssignmentApiTest 30/30 + CouponAssignmentValidationTest 13/13 = 43/43 new, 151 assertions; CouponSystemTest 7/7 + CouponsProductionHardenTest 30/30 + AssignedCouponSystemTest 10/10 = 47/47 existing, 104 assertions)
+
+Production Ready:
+YES
+
+Notes:
+The admin CRUD layer was missing — only customer-facing consumption (apply/checkout) existed. This implementation completes the administration side. The PermissionSeeder still needs to be updated with the 4 new permission constants (deferred — requires manual seeder refresh in production).

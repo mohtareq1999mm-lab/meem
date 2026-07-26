@@ -19,7 +19,7 @@ class CouponCalculator
                 $discountAmount = min($discountAmount, (float) $coupon->max_discount_amount);
             }
         } elseif ($coupon->discount_type === DiscountType::FIXED_RATE) {
-            $discountAmount = $discount;
+            $discountAmount = min($discount, $price);
         }
 
         $freeShipping = $coupon->discount_type === DiscountType::FREE_SHIPPING;

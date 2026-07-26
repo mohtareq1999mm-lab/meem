@@ -32,24 +32,6 @@ class DashboardDataSeeder extends Seeder
     {
         $this->command?->info('Seeding dashboard data...');
 
-        if (config('database.default') === 'sqlite') {
-            DB::statement('PRAGMA foreign_keys = OFF');
-        } else {
-            DB::statement('SET FOREIGN_KEY_CHECKS=0');
-        }
-        DB::table('order_products')->truncate();
-        DB::table('orders')->truncate();
-        DB::table('transactions')->truncate();
-        DB::table('refunds')->truncate();
-        DB::table('coupon_usages')->truncate();
-        DB::table('cart_items')->truncate();
-        DB::table('carts')->truncate();
-        if (config('database.default') === 'sqlite') {
-            DB::statement('PRAGMA foreign_keys = ON');
-        } else {
-            DB::statement('SET FOREIGN_KEY_CHECKS=1');
-        }
-
         $products = Product::all();
         $customers = User::where('type', 'user')->where('email', 'not like', '%@demo.com')->where('email', 'not like', '%@cms.com')->get();
         $coupons = Coupon::all();
@@ -151,6 +133,8 @@ class DashboardDataSeeder extends Seeder
             $totalPrice = 0;
             $orderProductsData = [];
 
+            $governorateId = \Marvel\Database\Models\Governorate::inRandomOrder()->value('id');
+
             $usedProductIds = [];
             for ($j = 0; $j < $itemCount; $j++) {
                 $product = $products->random();
@@ -164,9 +148,11 @@ class DashboardDataSeeder extends Seeder
                 $lineTotal = round($unitPrice * $qty, 2);
                 $totalPrice += $lineTotal;
 
+                $productName = is_array($product->name) ? ($product->name['en'] ?? 'Product') : $product->name;
+
                 $orderProductsData[] = [
                     'product_id' => $product->id,
-                    'product_name' => $product->name,
+                    'product_name' => $productName,
                     'product_sku' => $product->sku ?? ('SKU-' . $product->id),
                     'product_quantity' => $qty,
                     'product_price' => $unitPrice,
@@ -203,6 +189,7 @@ class DashboardDataSeeder extends Seeder
 
             $order = Order::create([
                 'user_id' => $customer->id,
+                'governorate_id' => $governorateId,
                 'name' => $customer->name,
                 'user_phone' => $customer->phone_number ?? '01000000000',
                 'user_email' => $customer->email,

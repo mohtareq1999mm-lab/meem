@@ -89,8 +89,6 @@ class PaymentCheckoutHandler
             return $this->apiResponse(ERROR_CREATING_TRANSACTION, 500, false);
         }
 
-        $this->finalizeInventory($request, $shippingMethod);
-
         return $this->apiResponse(__('checkout.cod_success'), 200, true, [
             'order_id' => $order->id,
         ]);
@@ -113,24 +111,10 @@ class PaymentCheckoutHandler
 
         $qrDataUri = $this->cashierQrService->generateBase64DataUri($transaction);
 
-        $this->finalizeInventory($request, $shippingMethod);
-
         return $this->apiResponse(CHECKOUT_SUCCESSFUL, 200, true, [
             'order_id' => $order->id,
             'transaction_uuid' => $transaction->uuid,
             'qr_code' => $qrDataUri,
         ]);
-    }
-
-    private function finalizeInventory(Request $request, string $shippingMethod): void
-    {
-        try {
-            $cart = $this->cartInventoryService->getActiveCartForUser($request->user());
-            if ($cart) {
-                $this->cartInventoryService->finalizeItemsByShippingMethod($cart, $shippingMethod);
-            }
-        } catch (\Throwable $e) {
-            report($e);
-        }
     }
 }

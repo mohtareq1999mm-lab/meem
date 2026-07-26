@@ -18,7 +18,7 @@ class UserAuthAdminTest extends TestCase
 {
     use DatabaseTransactions, CreatesTestTables;
 
-    private const PREFIX = '/api';
+    private const PREFIX = '/api/v1';
 
     private User $admin;
     private string $adminPassword = 'AdminPass123!';

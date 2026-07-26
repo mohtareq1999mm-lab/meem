@@ -7,20 +7,21 @@ use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str as SupportStr;
-use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Coupon;
 
 class CouponSeeder extends Seeder
 {
     public function run(): void
     {
-        $bannerImages = collect(File::files(public_path('images/coupon')));
+        $bannerImages = File::exists(public_path('images/coupon'))
+            ? collect(File::files(public_path('images/coupon')))
+            : collect();
         $bannerImagesCount = $bannerImages->count();
 
         $coupons = [
             ['name' => ['en' => 'Summer Sale', 'ar' => 'تخفيضات الصيف'], 'code' => 'SUMMER20', 'discount_type' => 'percentage', 'discount' => 20, 'max_discount_amount' => 100],
             ['name' => ['en' => 'First Order', 'ar' => 'أول طلب'], 'code' => 'WELCOME10', 'discount_type' => 'percentage', 'discount' => 10, 'max_discount_amount' => 50],
-            ['name' => ['en' => 'Free Shipping', 'ar' => 'شحن مجاني'], 'code' => 'FREESHIP', 'discount_type' => 'fixed_rate', 'discount' => 50, 'max_discount_amount' => null],
+            ['name' => ['en' => 'Free Shipping', 'ar' => 'شحن مجاني'], 'code' => 'FREESHIP', 'discount_type' => 'free_shipping', 'discount' => 0, 'max_discount_amount' => null],
             ['name' => ['en' => 'Flash Friday', 'ar' => 'جمعة الفلاش'], 'code' => 'FLASH25', 'discount_type' => 'percentage', 'discount' => 25, 'max_discount_amount' => 150],
             ['name' => ['en' => 'Weekend Deal', 'ar' => 'عرض نهاية الأسبوع'], 'code' => 'WEEKEND15', 'discount_type' => 'percentage', 'discount' => 15, 'max_discount_amount' => 75],
             ['name' => ['en' => 'New Arrivals', 'ar' => 'وصل حديثاً'], 'code' => 'NEW10', 'discount_type' => 'percentage', 'discount' => 10, 'max_discount_amount' => 50],
@@ -41,35 +42,21 @@ class CouponSeeder extends Seeder
         ];
 
         foreach ($coupons as $i => $couponData) {
-            $discountType = $couponData['discount_type'];
-            $discount = $couponData['discount'];
-
-            $slug = Str::slug($couponData['name']['en']);
-
-            // Insert directly via query builder to avoid model events that set arrays on attributes
-            $code = $couponData['code'];
-            $now = Carbon::now();
-            $insert = [
-                'code' => $code,
-                'name' => json_encode($couponData['name']),
-                'slug' => $slug,
-                'border_color' => sprintf('#%06x', mt_rand(0, 0xFFFFFF)),
-                'borderless' => (bool) rand(0, 1),
-                'discount' => $discount,
+            $coupon = Coupon::create([
+                'name' => $couponData['name'],
+                'slug' => Str::slug($couponData['name']['en']),
+                'code' => $couponData['code'],
+                'discount_type' => $couponData['discount_type'],
+                'discount' => $couponData['discount'],
                 'max_discount_amount' => $couponData['max_discount_amount'],
-                'discount_type' => $discountType,
                 'start_date' => Carbon::now()->subDays(rand(0, 5))->format('Y-m-d'),
                 'end_date' => Carbon::now()->addDays(rand(5, 60))->format('Y-m-d'),
                 'limiter' => rand(50, 500),
                 'used' => rand(0, 50),
                 'status' => true,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ];
-
-            DB::table('coupons')->insert($insert);
-
-            $coupon = Coupon::where('code', $code)->first();
+                'border_color' => sprintf('#%06x', mt_rand(0, 0xFFFFFF)),
+                'borderless' => (bool) rand(0, 1),
+            ]);
 
             if ($bannerImagesCount > 0 && $coupon) {
                 $image = $bannerImages[$i % $bannerImagesCount];
@@ -78,9 +65,6 @@ class CouponSeeder extends Seeder
                     ->preservingOriginal()
                     ->usingFileName(SupportStr::uuid() . '.' . $image->getExtension())
                     ->toMediaCollection('coupons-desktop', 'coupons');
-            }
-            if ($bannerImagesCount > 0 && $coupon) {
-                $image = $bannerImages[$i % $bannerImagesCount];
                 $coupon
                     ->addMedia($image->getPathname())
                     ->preservingOriginal()

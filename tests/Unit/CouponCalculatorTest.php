@@ -85,7 +85,7 @@ class CouponCalculatorTest extends TestCase
 
         $result = CouponCalculator::calculate($coupon, 100.0);
 
-        $this->assertSame(200.0, $result['discountAmount']);
+        $this->assertSame(100.0, $result['discountAmount'], 'Fixed discount capped to price');
         $this->assertSame(0.0, $result['finalPrice']);
     }
 

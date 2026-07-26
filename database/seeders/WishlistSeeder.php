@@ -12,24 +12,26 @@ class WishlistSeeder extends Seeder
 {
     public function run()
     {
-        $customer = User::where('email', 'test@g.com')->first();
-        if (!$customer) {
+        $customers = User::whereIn('email', ['test@g.com', 'admin@demo.com'])->get();
+        if ($customers->isEmpty()) {
             return;
         }
 
-        $products = Product::inRandomOrder()->take(5)->get();
-        if ($products->isEmpty()) {
-            return;
-        }
+        $productIds = Product::inRandomOrder()->take(10)->pluck('id');
 
-        foreach ($products as $product) {
-            $variant = ProductVariant::where('product_id', $product->id)->first();
+        foreach ($customers as $customer) {
+            $wishlistProducts = $productIds->random(min(5, $productIds->count()));
 
-            Wishlist::create([
-                'user_id' => $customer->id,
-                'product_id' => $product->id,
-                'product_variant_id' => $variant?->id,
-            ]);
+            foreach ($wishlistProducts as $productId) {
+                $variant = ProductVariant::where('product_id', $productId)->first();
+
+                Wishlist::firstOrCreate([
+                    'user_id' => $customer->id,
+                    'product_id' => $productId,
+                ], [
+                    'product_variant_id' => $variant?->id,
+                ]);
+            }
         }
     }
 }

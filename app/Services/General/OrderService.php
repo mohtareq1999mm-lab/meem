@@ -194,7 +194,7 @@ class OrderService
                 ShippingMethod::SCHEDULED,
             );
 
-            $minimumOrderAmount = (float) (Settings::first()?->options['minimumOrderAmount'] ?? 0);
+            $minimumOrderAmount = (float) (Settings::first()?->minimum_order_amount ?? 0);
             if ($minimumOrderAmount > 0 && $checkoutTotals->subtotal < $minimumOrderAmount) {
                 DB::rollBack();
                 throw new \InvalidArgumentException(
@@ -214,19 +214,29 @@ class OrderService
             }
             $governorateId = $shippingInfo['governorate_id'];
 
-            $order = $this->orderCreationService->createOrder(
-                $orderData, $cart, $checkoutTotals, null, null, null, $shippingPrice, $governorateId,
-            );
-            if (!$order) {
-                DB::rollBack();
-                return null;
+            $pendingOrder = $this->orderCreationService->findPendingOrderForUser((int) $request->user()->id);
+
+            if ($pendingOrder) {
+                $order = $this->orderCreationService->updateOrder(
+                    $pendingOrder, $orderData, $cart, $checkoutTotals, null, null, null, $shippingPrice, $governorateId,
+                );
+                $this->orderCreationService->syncOrderItems($order, $cart);
+                $this->orderCreationService->updateTransactionAmount($order);
+            } else {
+                $order = $this->orderCreationService->createOrder(
+                    $orderData, $cart, $checkoutTotals, null, null, null, $shippingPrice, $governorateId,
+                );
+                if (!$order) {
+                    DB::rollBack();
+                    return null;
+                }
+                if (!$this->orderCreationService->createOrderItems($order, $cart)) {
+                    DB::rollBack();
+                    return null;
+                }
+                $this->orderCreationService->finalizeOrder($order, $checkoutTotals);
             }
-            if (!$this->orderCreationService->createOrderItems($order, $cart)) {
-                DB::rollBack();
-                return null;
-            }
-            $this->orderCreationService->finalizeOrder($order, $checkoutTotals);
-            $this->cartInventoryService->finalizeItemsByShippingMethod($cart, ShippingMethod::SCHEDULED);
+
             DB::commit();
 
             return $order->load(['orderItems.product', 'orderItems.productVariant']);
@@ -237,6 +247,22 @@ class OrderService
             DB::rollBack();
             report($e);
             return null;
+        }
+    }
+
+    public function finalizeAfterPayment(Order $order, CheckoutTotals $checkoutTotals, Cart $cart, string $shippingMethod = ShippingMethod::SCHEDULED): void
+    {
+        DB::transaction(function () use ($order, $checkoutTotals, $cart, $shippingMethod) {
+            $this->orderCreationService->finalizePromotionUsage($checkoutTotals);
+            $this->cartInventoryService->finalizeItemsByShippingMethod($cart, $shippingMethod);
+        });
+    }
+
+    public function finalizePromotionUsageAfterPayment(Order $order): void
+    {
+        $promotionId = $order->promotion_id ? (int) $order->promotion_id : null;
+        if ($promotionId) {
+            $this->promotionService->incrementUsage($promotionId);
         }
     }
 
@@ -561,6 +587,10 @@ class OrderService
 
             $this->recordCouponUsage($order);
 
+            $this->finalizePromotionUsageAfterPayment($order);
+
+            $this->finalizeInventoryAfterPayment($order);
+
             event(new \App\Events\PaymentSucceeded($order));
         });
     }
@@ -588,8 +618,29 @@ class OrderService
 
             $this->recordCouponUsage($order);
 
+            $this->finalizePromotionUsageAfterPayment($order);
+
+            $this->finalizeInventoryAfterPayment($order);
+
             event(new \App\Events\PaymentSucceeded($order));
         });
+    }
+
+    private function finalizeInventoryAfterPayment(Order $order): void
+    {
+        try {
+            $cart = Cart::query()
+                ->where('user_id', $order->user_id)
+                ->where('status', 'active')
+                ->first();
+
+            if ($cart) {
+                $shippingMethod = $order->shipping_method ?? ShippingMethod::SCHEDULED;
+                $this->cartInventoryService->finalizeItemsByShippingMethod($cart, $shippingMethod);
+            }
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
     /**

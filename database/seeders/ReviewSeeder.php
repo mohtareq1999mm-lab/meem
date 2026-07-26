@@ -25,24 +25,33 @@ class ReviewSeeder extends Seeder
         }
 
         $positiveComments = [
-            'Great quality and fast delivery.',
-            'Exactly as described. Very satisfied.',
-            'Works well and feels durable.',
-            'Excellent product and great value for money.',
+            'Amazing coverage and lasts all day without creasing.',
+            'Love the texture and how smoothly it applies.',
+            'Perfect shade match and feels lightweight on the skin.',
+            'Great pigmentation and blends like a dream.',
+            'My new holy grail product! Highly recommend.',
+            'Beautiful finish that looks natural and flawless.',
+            'Exceeded my expectations. Will definitely repurchase.',
+            'Very comfortable to wear and does not clog pores.',
         ];
 
         $neutralComments = [
-            'It is okay, but there is room for improvement.',
-            'Matches the description, but nothing special.',
-            'Average quality for the price.',
-            'Decent product overall.',
+            'Decent product but the shade range could be better.',
+            'Works fine but nothing extraordinary for the price.',
+            'Good quality but the packaging feels cheap.',
+            'It does the job but takes a bit more effort to blend.',
+            'Average product. Might work better on different skin types.',
+            'Not bad but I have used better formulas.',
         ];
 
         $negativeComments = [
-            'The product did not meet my expectations.',
-            'Quality was below what I hoped for.',
-            'It arrived fine, but performance was disappointing.',
-            'I would not recommend this item.',
+            'Caused irritation and breakouts on my sensitive skin.',
+            'The shade was completely different from the online swatch.',
+            'Fades after just a few hours. Disappointing longevity.',
+            'Formula is too thick and difficult to work with.',
+            'Strong chemical smell that I did not like.',
+            'Arrived damaged and the consistency was off.',
+            'Not worth the price. Drugstore alternatives perform better.',
         ];
 
         foreach ($products as $product) {
@@ -67,7 +76,7 @@ class ReviewSeeder extends Seeder
 
     private function randomRating(): int
     {
-        $ratings = [5, 5, 5, 4, 4, 4, 3, 3, 2, 1];
+        $ratings = [5, 5, 5, 5, 4, 4, 4, 3, 3, 2, 1];
 
         return $ratings[array_rand($ratings)];
     }

@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\Slider;
 
@@ -11,15 +12,26 @@ class SliderProductSeeder extends Seeder
     public function run(): void
     {
         $sliderIds = Slider::pluck('id')->toArray();
-        $products = Product::all();
+        $productIds = Product::pluck('id')->toArray();
 
-        if (empty($sliderIds) || $products->isEmpty()) {
+        if (empty($sliderIds) || empty($productIds)) {
             return;
         }
 
-        foreach ($products as $product) {
-            $attachedSliders = (array) array_rand(array_flip($sliderIds), rand(1, min(3, count($sliderIds))));
-            $product->sliders()->attach($attachedSliders);
+        $pivotData = [];
+        foreach ($productIds as $productId) {
+            $count = rand(1, min(2, count($sliderIds)));
+            $selected = (array) array_rand(array_flip($sliderIds), $count);
+            foreach ($selected as $sliderId) {
+                $pivotData[] = [
+                    'slider_id' => $sliderId,
+                    'product_id' => $productId,
+                ];
+            }
+        }
+
+        foreach (array_chunk($pivotData, 100) as $chunk) {
+            DB::table('slider_product')->insertOrIgnore($chunk);
         }
     }
 }

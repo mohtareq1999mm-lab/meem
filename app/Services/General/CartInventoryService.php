@@ -328,11 +328,21 @@ class CartInventoryService
             $this->reserveStock($stock, $delta);
         } elseif ($delta < 0) {
             $this->releaseStock($stock, abs($delta));
+        } else {
+            $physicalQuantity = (int) ($stock->stock_quantity ?? 0);
+            if ($physicalQuantity < $desiredQuantity) {
+                throw new Exception(__(QUANTITY_EXCEEDS_STOCK));
+            }
         }
 
         if ($delta !== 0) {
             $item->update(['reserved_quantity' => $desiredQuantity]);
         }
+    }
+
+    public function expireSingleCart(Cart $cart): void
+    {
+        $this->expireCart($cart);
     }
 
     private function expireCart(Cart $cart): void

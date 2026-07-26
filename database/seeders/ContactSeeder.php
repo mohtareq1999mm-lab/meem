@@ -36,11 +36,14 @@ class ContactSeeder extends Seeder
             'I want to share feedback about my shopping experience.',
         ];
 
+        $names = ['Ahmed Hassan', 'Sara Ali', 'Mohamed Ibrahim', 'Nora Khalid', 'Omar Youssef', 'Layla Mahmoud', 'Khaled Mostafa', 'Dina Sherif'];
+
         for ($i = 1; $i <= 50; $i++) {
             $subject = $subjects[($i - 1) % count($subjects)] . ' #' . $i;
             $message = $messages[($i - 1) % count($messages)];
 
             Contact::create([
+                'name' => $names[($i - 1) % count($names)],
                 'email' => 'customer' . $i . '@example.com',
                 'subject' => $subject,
                 'message' => $message . ' Ref: ' . Str::upper(Str::random(6)),

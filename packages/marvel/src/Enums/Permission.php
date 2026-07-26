@@ -244,4 +244,10 @@ final class Permission extends Enum
     public const CREATE_PICKUP_LOCATION = 'create-pickup-location';
     public const UPDATE_PICKUP_LOCATION = 'update-pickup-location';
     public const DELETE_PICKUP_LOCATION = 'delete-pickup-location';
+
+    // 🎟 Coupon Assignments
+    public const VIEW_COUPON_ASSIGNMENTS = 'view-coupon-assignments';
+    public const CREATE_COUPON_ASSIGNMENT = 'create-coupon-assignment';
+    public const UPDATE_COUPON_ASSIGNMENT = 'update-coupon-assignment';
+    public const DELETE_COUPON_ASSIGNMENT = 'delete-coupon-assignment';
 }

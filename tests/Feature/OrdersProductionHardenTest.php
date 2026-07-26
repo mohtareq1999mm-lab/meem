@@ -972,7 +972,7 @@ class OrdersProductionHardenTest extends TestCase
     // ===================== INVENTORY =====================
 
     /** @test */
-    public function checkout_finalizes_inventory_correctly()
+    public function checkout_does_not_finalize_inventory()
     {
         $this->actAsCustomer();
         $this->createCartWithItems(2);
@@ -993,10 +993,10 @@ class OrdersProductionHardenTest extends TestCase
         $product = $this->product->fresh();
 
         $cart = Cart::where('user_id', $this->customer->id)->first();
-        $this->assertEquals('checked_out', $cart->status);
+        $this->assertEquals('active', $cart->status);
 
-        $this->assertEquals($initialStock - 2, $product->stock_quantity);
-        $this->assertEquals($initialSold + 2, $product->sold_quantity);
+        $this->assertEquals($initialStock, $product->stock_quantity);
+        $this->assertEquals($initialSold, $product->sold_quantity);
     }
 
     /** @test */
@@ -1308,11 +1308,11 @@ class OrdersProductionHardenTest extends TestCase
         $response1 = $this->postJson(self::PREFIX . '/checkout', $payload);
         $response1->assertStatus(200);
 
-        // Second checkout with same (now checked-out) cart should fail
+        // Second checkout should update existing pending order
         $response2 = $this->postJson(self::PREFIX . '/checkout', $payload);
-        $response2->assertStatus(400);
+        $response2->assertStatus(200);
 
-        // Only one order should exist
+        // Only one order should exist (the pending order was updated)
         $orders = Order::where('user_id', $this->customer->id)->count();
         $this->assertEquals(1, $orders);
     }
@@ -1464,7 +1464,7 @@ class OrdersProductionHardenTest extends TestCase
         ]);
 
         $response->assertStatus(200);
-        $this->assertEquals(1, $promotion->fresh()->usage);
+        $this->assertEquals(0, $promotion->fresh()->usage);
     }
 
     // ===================== AUTHORIZATION =====================

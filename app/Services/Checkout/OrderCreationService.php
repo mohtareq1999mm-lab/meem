@@ -16,6 +16,14 @@ class OrderCreationService
         private \App\Services\General\PromotionService $promotionService,
     ) {}
 
+    public function findPendingOrderForUser(int $userId): ?Order
+    {
+        return Order::query()
+            ->where('user_id', $userId)
+            ->where('status', 'pending')
+            ->first();
+    }
+
     public function createOrder(array $orderData, Cart $cart, CheckoutTotals $checkoutTotals, ?string $shippingMethod = null, ?\DateTime $eta = null, ?float $fastShippingFee = null, ?float $shippingPrice = null, ?int $governorateId = null): ?Order
     {
         $shippingPrice = $shippingPrice ?? 0;
@@ -62,6 +70,48 @@ class OrderCreationService
         }
 
         return $order;
+    }
+
+    public function updateOrder(Order $order, array $orderData, Cart $cart, CheckoutTotals $checkoutTotals, ?string $shippingMethod = null, ?\DateTime $eta = null, ?float $fastShippingFee = null, ?float $shippingPrice = null, ?int $governorateId = null): Order
+    {
+        $shippingPrice = $shippingPrice ?? 0;
+        $totalPrice = round((float) $checkoutTotals->finalTotal + $shippingPrice + ($fastShippingFee ?? 0), 2);
+
+        $pickupLocationId = $orderData['pickup_location_id'] ?? $order->pickup_location_id;
+        $pickupSnapshot = $this->resolvePickupLocationSnapshot($pickupLocationId);
+
+        $order->update([
+            'governorate_id' => $governorateId ?? $orderData['governorate_id'] ?? $order->governorate_id,
+            'name' => $orderData['name'] ?? $order->name,
+            'user_phone' => $orderData['user_phone'] ?? $order->user_phone,
+            'user_email' => $orderData['user_email'] ?? $order->user_email,
+            'address' => $orderData['address'] ?? $order->address,
+            'notes' => $orderData['notes'] ?? $order->notes,
+            'shipping_method' => $shippingMethod ?? $order->shipping_method,
+            'expected_delivery_at' => $eta ?? $order->expected_delivery_at,
+            'fast_shipping_fee' => $fastShippingFee ?? $order->fast_shipping_fee,
+            'fulfillment_type' => $orderData['fulfillment_type'] ?? $order->fulfillment_type,
+            'payment_method' => $orderData['payment_method'] ?? $order->payment_method,
+            'payment_gateway' => $orderData['payment_gateway'] ?? $order->payment_gateway,
+            'pickup_location_id' => $pickupLocationId,
+            'pickup_location_name' => $pickupSnapshot['name'],
+            'pickup_location_address' => $pickupSnapshot['address'],
+            'pickup_location_phone' => $pickupSnapshot['phone'],
+            'pickup_location_coordinates' => $pickupSnapshot['coordinates'],
+            'price' => $checkoutTotals->subtotal,
+            'shipping_price' => $shippingPrice,
+            'total_price' => $totalPrice,
+            'coupon' => $checkoutTotals->coupon ?? $cart->coupon ?? $order->coupon,
+            'coupon_discount' => $checkoutTotals->couponDiscount ?: $order->coupon_discount,
+            'coupon_discount_type' => $checkoutTotals->couponDiscountType ?? $order->coupon_discount_type,
+            'coupon_discount_max_amount' => $checkoutTotals->couponDiscountMaxAmount ?? $order->coupon_discount_max_amount,
+            'promotion_id' => $checkoutTotals->promotionId() ?? $order->promotion_id,
+            'promotion_code' => $checkoutTotals->promotionCode() ?? $order->promotion_code,
+            'promotion_type' => $checkoutTotals->promotionType() ?? $order->promotion_type,
+            'promotion_discount' => $checkoutTotals->promotionDiscount ?? $order->promotion_discount,
+        ]);
+
+        return $order->fresh();
     }
 
     public function createOrderItems(Order $order, Cart $cart): bool
@@ -122,6 +172,27 @@ class OrderCreationService
         return true;
     }
 
+    public function syncOrderItems(Order $order, Cart $cart): bool
+    {
+        $order->orderItems()->delete();
+
+        return $this->createOrderItems($order, $cart);
+    }
+
+    public function updateTransactionAmount(Order $order): void
+    {
+        $pendingTransaction = $order->transactions()
+            ->where('status', 'pending')
+            ->latest()
+            ->first();
+
+        if ($pendingTransaction) {
+            $pendingTransaction->update([
+                'amount' => (float) $order->total_price,
+            ]);
+        }
+    }
+
     private function resolvePickupLocationSnapshot(?int $pickupLocationId): array
     {
         if (!$pickupLocationId) {
@@ -159,12 +230,15 @@ class OrderCreationService
 
     public function finalizeOrder(Order $order, CheckoutTotals $checkoutTotals): void
     {
-        $this->promotionService->incrementUsage($checkoutTotals->promotionId());
-
         try {
             OrderCreated::dispatch($order);
         } catch (\Throwable $e) {
             report($e);
         }
+    }
+
+    public function finalizePromotionUsage(CheckoutTotals $checkoutTotals): void
+    {
+        $this->promotionService->incrementUsage($checkoutTotals->promotionId());
     }
 }

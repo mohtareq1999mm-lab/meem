@@ -123,7 +123,6 @@ class SettingsSeeder extends Seeder
                 "useEnableGateway" => false,
                 "useCashOnDelivery" => true,
                 "freeShippingAmount" => 0,
-                "minimumOrderAmount" => 0,
                 "useMustVerifyEmail" => false,
                 "maximumQuestionLimit" => 5,
                 "currencyToWalletRatio" => 3,

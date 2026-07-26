@@ -36,7 +36,7 @@ class CheckoutRepository
         }
         $wallet = $user->wallet ?? null;
         $settings = Settings::getData();
-        $minimumOrderAmount = isset($settings['options']['minimumOrderAmount']) ? $settings['options']['minimumOrderAmount'] : 0;
+        $minimumOrderAmount = (float) ($settings['minimum_order_amount'] ?? 0);
         $unavailable_products = $this->checkStock($request['products']);
         $amount = $this->getOrderAmount($request, $unavailable_products);
         $shipping_charge = !empty($settings['options']['freeShipping']) && $settings['options']['freeShippingAmount'] <= $amount ? 0 : $this->calculateShippingCharge($request, $amount);

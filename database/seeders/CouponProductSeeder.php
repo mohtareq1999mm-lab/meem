@@ -18,16 +18,19 @@ class CouponProductSeeder extends Seeder
             return;
         }
 
-        foreach ($productIds as $productId) {
-            $count = rand(1, min(3, count($couponIds)));
-            $selected = (array) array_rand(array_flip($couponIds), $count);
-
-            foreach ($selected as $couponId) {
-                DB::table('coupon_product')->insertOrIgnore([
+        $pivotData = [];
+        foreach ($couponIds as $couponId) {
+            $productSubset = (array) array_rand(array_flip($productIds), min(rand(5, 30), count($productIds)));
+            foreach ($productSubset as $productId) {
+                $pivotData[] = [
                     'coupon_id' => $couponId,
                     'product_id' => $productId,
-                ]);
+                ];
             }
+        }
+
+        foreach (array_chunk($pivotData, 100) as $chunk) {
+            DB::table('coupon_product')->insertOrIgnore($chunk);
         }
     }
 }

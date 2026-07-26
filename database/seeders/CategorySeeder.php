@@ -251,6 +251,8 @@ class CategorySeeder extends Seeder
             $slugEn = $slug . '-' . $i;
         }
 
+        $level = $parentCategory ? $parentCategory->level + 1 : 1;
+
         $existing = Category::where('slug', $slugEn)->first();
         if (! $existing) {
             $category = Category::create([
@@ -264,6 +266,7 @@ class CategorySeeder extends Seeder
                     'en' => "Details of {$nameEn}",
                 ],
                 'parent_id' => $parentCategory?->id,
+                'level' => $level,
             ]);
         } else {
             $existing->update([
@@ -277,6 +280,7 @@ class CategorySeeder extends Seeder
                     'en' => "Details of {$nameEn}",
                 ],
                 'parent_id' => $parentCategory?->id,
+                'level' => $level,
             ]);
             $category = $existing;
         }

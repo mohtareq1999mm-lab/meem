@@ -9,7 +9,7 @@
 | Cart | 1 | Production Ready | YES | Authentication (Sanctum), Products, Pricing | Checkout, Orders | Passed | 2026-07-18 | 32/32 (75 assertions) | None (4 fixed) |
 | Contacts | 1 | Production Ready | YES | Authentication (Sanctum), Permissions, Translation System | Contact Forms, Admin Notifications, Notifications | Passed | 2026-07-20 | 59/59 (120 assertions) | None (3 fixed) |
 | Orders | 0 | Not Started | NO | — | — | Not Required | — | — | — |
-| Coupons | 0 | Not Started | NO | — | — | Not Required | — | — | — |
+| Coupons (Admin CRUD) | 1 | Production Ready | YES | CouponAssignmentController, CouponAssignmentRepository, Permissions (4), Routes (5) | Coupon Assignment consumption (customer-facing) | PASS | 2026-07-25 | 43/43 (151 assertions) | None |
 | Flash Sales | 4 | Production Ready | YES | Products, Pricing, Permissions | Cart, Products, Orders | Passed | 2026-07-19 | 87 (38 flash sale + 49 pricing/order) | None (7 fixed, 1 dead code removed) |
 | Attributes + Values | 1 | Production Ready | YES | Products | Products (variants, filtering, pricing), Import/Export, Cart | Passed | 2026-07-19 | 48/48 attribute (0 new failures) + 32/32 new | None (4 fixed) |
 | Product Import/Export | 1 | Production Ready | YES | Products, Attributes, Categories, Brands, Pricing, Inventory, Media | Product Management | Passed | 2026-07-19 | 34/34 import/export + 76/76 product | None (1 fixed) |

@@ -29,7 +29,6 @@ class ContentPageController extends Controller
     }
     public function index(Request $request)
     {
-        dd('hello');
         $pages = ContentPage::with('sections')->paginate(15);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ContentPageResource::collection($pages));
     }
