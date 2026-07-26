@@ -10,6 +10,7 @@ use Marvel\Database\Repositories\AddressRepository;
 use Marvel\Enums\Permission;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\AddressRequest;
+use Marvel\Http\Requests\AddressRequestUpdate;
 use Marvel\Http\Resources\AddressResource;
 use Marvel\Traits\ApiResponse;
 use Prettus\Validator\Exceptions\ValidatorException;
@@ -140,7 +141,7 @@ class AddressController extends CoreController
      *     @OA\Response(response=404, description="Address not found")
      * )
      */
-    public function update(AddressRequest $request, $id)
+    public function update(AddressRequestUpdate $request, $id)
     {
         try {
             $validatedData = $request->except('customer_id');
