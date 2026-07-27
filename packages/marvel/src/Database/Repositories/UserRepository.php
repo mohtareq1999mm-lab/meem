@@ -10,8 +10,7 @@ use Spatie\Permission\Models\Permission;
 use Marvel\Enums\Permission as UserPermission;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Prettus\Repository\Exceptions\RepositoryException;
-use Marvel\Mail\ForgetPassword;
-use Illuminate\Support\Facades\Mail;
+use App\Jobs\SendPasswordResetEmailJob;
 use Marvel\Database\Models\Address;
 use Marvel\Database\Models\Profile;
 use Marvel\Exceptions\MarvelException;
@@ -101,10 +100,10 @@ class UserRepository extends BaseRepository
         }
     }
 
-    public function sendResetEmail($email, $token)
+    public function sendResetEmail(string $email, string $token): bool
     {
         try {
-            Mail::to($email)->queue(new ForgetPassword($token));
+            SendPasswordResetEmailJob::dispatch($email, $token);
             return true;
         } catch (\Exception $e) {
             return false;

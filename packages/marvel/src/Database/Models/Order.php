@@ -14,6 +14,24 @@ class Order extends Model
 {
     use SoftDeletes;
 
+    public const ORDER_STATUS_PENDING = 'pending';
+    public const ORDER_STATUS_PROCESSING = 'processing';
+    public const ORDER_STATUS_COMPLETED = 'completed';
+    public const ORDER_STATUS_CANCELLED = 'cancelled';
+    public const ORDER_STATUS_DELIVERED = 'delivered';
+
+    public const PAYMENT_STATUS_PENDING = 'payment-pending';
+    public const PAYMENT_STATUS_SUCCESS = 'payment-success';
+    public const PAYMENT_STATUS_FAILED = 'payment-failed';
+    public const PAYMENT_STATUS_REFUNDED = 'payment-refunded';
+
+    public const FULFILLMENT_STATUS_PENDING = 'pending';
+    public const FULFILLMENT_STATUS_PROCESSING = 'processing';
+    public const FULFILLMENT_STATUS_READY_FOR_PICKUP = 'ready_for_pickup';
+    public const FULFILLMENT_STATUS_OUT_FOR_DELIVERY = 'out_for_delivery';
+    public const FULFILLMENT_STATUS_DELIVERED = 'delivered';
+    public const FULFILLMENT_STATUS_CANCELLED = 'cancelled';
+
     protected $table = 'orders';
 
     public $fillable = [
@@ -48,6 +66,13 @@ class Order extends Model
         'promotion_type',
         'promotion_discount',
         'status',
+        'payment_status',
+        'fulfillment_status',
+        'coupon_consumed',
+        'promotion_consumed',
+        'paid_at',
+        'completed_at',
+        'cancelled_at',
     ];
 
     protected $casts = [
@@ -57,6 +82,11 @@ class Order extends Model
         'shipping_price' => 'float',
         'total_price' => 'float',
         'fast_shipping_fee' => 'float',
+        'coupon_consumed' => 'boolean',
+        'promotion_consumed' => 'boolean',
+        'paid_at' => 'datetime',
+        'completed_at' => 'datetime',
+        'cancelled_at' => 'datetime',
     ];
 
     protected $hidden = [
@@ -126,8 +156,12 @@ class Order extends Model
         return 'ORD-' . str_pad((string) $this->id, 8, '0', STR_PAD_LEFT);
     }
 
-    public function getPaymentStatusAttribute(): string
+    public function getPaymentStatusAttribute(): ?string
     {
+        if (array_key_exists('payment_status', $this->attributes) && $this->attributes['payment_status'] !== null) {
+            return $this->attributes['payment_status'];
+        }
+
         if (in_array($this->payment_method, ['cod', 'pay_at_cashier'])) {
             $latestTransaction = $this->transactions()->latest()->first();
             if ($latestTransaction) {

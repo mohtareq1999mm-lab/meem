@@ -9,7 +9,13 @@ use Illuminate\Support\Facades\Log;
 
 class GenerateInvoiceListener implements ShouldQueue
 {
+    public $afterCommit = true;
+
     public $queue = 'high';
+
+    public $tries = 5;
+
+    public $backoff = [10, 30, 60, 120, 300];
 
     public function __construct(
         private InvoiceService $invoiceService,
@@ -17,11 +23,14 @@ class GenerateInvoiceListener implements ShouldQueue
 
     public function handle(PaymentSucceeded $event): void
     {
+        $order = $event->order;
+
         try {
-            $this->invoiceService->generateFromOrder($event->order);
+            $this->invoiceService->generateFromOrder($order);
         } catch (\Throwable $e) {
-            Log::error('Failed to generate invoice for order ' . $event->order?->id . ': ' . $e->getMessage());
+            Log::error('Failed to generate invoice for order ' . ($order?->id ?? 'unknown') . ': ' . $e->getMessage());
             report($e);
+            throw $e;
         }
     }
 }

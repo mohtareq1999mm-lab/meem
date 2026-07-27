@@ -7,9 +7,9 @@ use App\Exceptions\UnsupportedSchemaException;
 
 class SnapshotVersionValidator implements SnapshotValidatorInterface
 {
-    private const SUPPORTED_SCHEMA_VERSIONS = [2];
+    private const SUPPORTED_SCHEMA_VERSIONS = [2, 3];
 
-    private const SUPPORTED_SNAPSHOT_VERSIONS = ['2.0.0'];
+    private const SUPPORTED_SNAPSHOT_VERSIONS = ['2.0.0', '2.1.0'];
 
     public function validate(array $snapshot): void
     {

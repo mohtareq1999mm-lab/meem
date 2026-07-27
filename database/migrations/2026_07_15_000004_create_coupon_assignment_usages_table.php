@@ -18,6 +18,7 @@ return new class extends Migration
             $table->index('coupon_assignment_id');
             $table->index('created_at');
             $table->index(['coupon_assignment_id', 'created_at']);
+            $table->unique(['coupon_assignment_id', 'order_id'], 'uq_coupon_assignment_order');
         });
     }
 

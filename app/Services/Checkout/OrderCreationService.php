@@ -4,11 +4,10 @@ namespace App\Services\Checkout;
 
 use App\DTOs\CheckoutTotals;
 use App\Events\OrderCreated;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Marvel\Database\Models\Cart;
 use Marvel\Database\Models\Order;
 use Marvel\Database\Models\PickupLocation;
-use Marvel\Database\Models\Promotion;
 
 class OrderCreationService
 {
@@ -33,7 +32,7 @@ class OrderCreationService
         $pickupLocationId = $orderData['pickup_location_id'] ?? null;
         $pickupSnapshot = $this->resolvePickupLocationSnapshot($pickupLocationId);
 
-        $order = Order::create([
+        $orderDataForCreate = [
             'user_id' => $orderData['user_id'] ?? auth()->id(),
             'governorate_id' => $governorateId ?? $orderData['governorate_id'] ?? null,
             'name' => $orderData['name'] ?? null,
@@ -63,8 +62,17 @@ class OrderCreationService
             'promotion_code' => $checkoutTotals->promotionCode(),
             'promotion_type' => $checkoutTotals->promotionType(),
             'promotion_discount' => $checkoutTotals->promotionDiscount,
-            'status' => 'pending',
-        ]);
+            'status' => Order::ORDER_STATUS_PENDING,
+        ];
+
+        if (Schema::hasColumn('orders', 'payment_status')) {
+            $orderDataForCreate['payment_status'] = Order::PAYMENT_STATUS_PENDING;
+        }
+        if (Schema::hasColumn('orders', 'fulfillment_status')) {
+            $orderDataForCreate['fulfillment_status'] = Order::FULFILLMENT_STATUS_PENDING;
+        }
+
+        $order = Order::create($orderDataForCreate);
 
         if (!$order) {
             return null;
@@ -238,8 +246,4 @@ class OrderCreationService
         }
     }
 
-    public function finalizePromotionUsage(CheckoutTotals $checkoutTotals): void
-    {
-        $this->promotionService->incrementUsage($checkoutTotals->promotionId());
-    }
 }

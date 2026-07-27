@@ -32,11 +32,12 @@ use Marvel\Database\Models\Promotion;
 use Marvel\Enums\PromotionMountType;
 use Marvel\Enums\ShippingMethod;
 use Marvel\Enums\OrderStatus;
+use Tests\Concerns\WithInvoiceTables;
 use Tests\TestCase;
 
 class OrdersProductionHardenTest extends TestCase
 {
-    use DatabaseTransactions;
+    use DatabaseTransactions, WithInvoiceTables;
 
     private const PREFIX = '/api/v1/general';
 
@@ -50,16 +51,9 @@ class OrdersProductionHardenTest extends TestCase
     {
         parent::setUp();
 
-        app()->setLocale('en');
-        Config::set('scout.driver', 'null');
-
-        $this->createTestTables();
-        $this->seedBaseData();
-    }
-
-    private function createTestTables(): void
-    {
         if (Schema::hasTable('users')) {
+            $this->createInvoiceTables();
+            $this->seedBaseData();
             return;
         }
 
@@ -432,6 +426,10 @@ class OrdersProductionHardenTest extends TestCase
             $table->timestamps();
             $table->index('log_name');
         });
+
+        $this->createInvoiceTables();
+
+        $this->seedBaseData();
     }
 
     private function seedBaseData(): void
@@ -1290,7 +1288,7 @@ class OrdersProductionHardenTest extends TestCase
     // ===================== DUPLICATE CHECKOUT PREVENTION =====================
 
     /** @test */
-    public function duplicate_checkout_request_returns_error()
+    public function duplicate_checkout_request_creates_new_order()
     {
         $this->actAsCustomer();
         $this->createCartWithItems(1);
@@ -1308,13 +1306,13 @@ class OrdersProductionHardenTest extends TestCase
         $response1 = $this->postJson(self::PREFIX . '/checkout', $payload);
         $response1->assertStatus(200);
 
-        // Second checkout should update existing pending order
+        // Second checkout should create a new order, not reuse pending
         $response2 = $this->postJson(self::PREFIX . '/checkout', $payload);
         $response2->assertStatus(200);
 
-        // Only one order should exist (the pending order was updated)
+        // Two orders should exist (each checkout creates a new order)
         $orders = Order::where('user_id', $this->customer->id)->count();
-        $this->assertEquals(1, $orders);
+        $this->assertEquals(2, $orders);
     }
 
     // ===================== ORDER ITEMS PRICE SNAPSHOT =====================

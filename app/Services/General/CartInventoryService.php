@@ -7,6 +7,7 @@ use Exception;
 use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Cart;
 use Marvel\Database\Models\CartItem;
+use Marvel\Database\Models\Order;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\ProductVariant;
 use Marvel\Database\Models\Promotion;
@@ -251,22 +252,84 @@ class CartInventoryService
                 $item->delete();
             }
 
-            $remainingItems = CartItem::where('cart_id', $cart->id)->count();
+            $remainingItems = CartItem::where('cart_id', $cart->id)
+                ->lockForUpdate()
+                ->get();
 
-            if ($remainingItems === 0) {
-                $cart->update([
-                    'status' => 'checked_out',
-                    'expires_at' => null,
-                    'reserved_at' => null,
-                    'total_price' => 0,
-                ]);
-            } else {
-                $cart->update([
-                    'total_price' => CartItem::where('cart_id', $cart->id)->sum('total_price'),
-                ]);
+            foreach ($remainingItems as $item) {
+                if ($item->reserved_quantity > 0) {
+                    $stock = $this->lockInventoryRowByItem($item);
+                    $this->releaseStock($stock, (int) $item->reserved_quantity);
+                }
+
+                $item->delete();
             }
 
+            $cart->update([
+                'status' => 'checked_out',
+                'expires_at' => null,
+                'reserved_at' => null,
+                'total_price' => 0,
+            ]);
+
             return true;
+        });
+    }
+
+    public function deductStockForOrder(Order $order): void
+    {
+        DB::transaction(function () use ($order) {
+            try {
+                $order->load(['orderItems.product', 'orderItems.productVariant']);
+            } catch (\Throwable $e) {
+                return;
+            }
+
+            if ($order->orderItems->isEmpty()) {
+                return;
+            }
+
+            foreach ($order->orderItems as $orderItem) {
+                $quantity = (int) $orderItem->product_quantity;
+                if ($quantity < 1) {
+                    continue;
+                }
+
+                $product = $orderItem->product;
+                if ($orderItem->product_variant_id && $orderItem->productVariant) {
+                    $variant = ProductVariant::query()
+                        ->whereKey($orderItem->product_variant_id)
+                        ->lockForUpdate()
+                        ->firstOrFail();
+
+                    $physicalQuantity = (int) ($variant->stock_quantity ?? 0);
+                    if ($physicalQuantity < $quantity) {
+                        $variant->stock_quantity = 0;
+                    } else {
+                        $variant->stock_quantity = $physicalQuantity - $quantity;
+                    }
+                    $variant->reserved_quantity = max(0, (int) ($variant->reserved_quantity ?? 0) - $quantity);
+                    $variant->sold_quantity = (int) ($variant->sold_quantity ?? 0) + $quantity;
+                    $variant->in_stock = $variant->stock_quantity > 0;
+                    $variant->save();
+                } elseif ($product) {
+                    $product = Product::query()
+                        ->whereKey($product->id)
+                        ->lockForUpdate()
+                        ->firstOrFail();
+
+                    $physicalQuantity = (int) ($product->stock_quantity ?? 0);
+                    if ($physicalQuantity < $quantity) {
+                        $product->stock_quantity = 0;
+                    } else {
+                        $product->stock_quantity = $physicalQuantity - $quantity;
+                    }
+                    $product->reserved_quantity = max(0, (int) ($product->reserved_quantity ?? 0) - $quantity);
+                    $product->sold_quantity = (int) ($product->sold_quantity ?? 0) + $quantity;
+                    $product->in_stock = $product->stock_quantity > 0;
+                    $product->save();
+                }
+            }
         });
     }
 

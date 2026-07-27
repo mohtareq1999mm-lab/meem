@@ -34,11 +34,12 @@ use Marvel\Database\Models\User;
 use Marvel\Enums\DiscountType;
 use Marvel\Enums\ShippingMethod;
 use Spatie\Permission\Models\Permission;
+use Tests\Concerns\WithInvoiceTables;
 use Tests\TestCase;
 
 class CouponsProductionHardenTest extends TestCase
 {
-    use DatabaseTransactions;
+    use DatabaseTransactions, WithInvoiceTables;
 
     private const PREFIX = '/api/v1/general';
 
@@ -52,16 +53,9 @@ class CouponsProductionHardenTest extends TestCase
     {
         parent::setUp();
 
-        app()->setLocale('en');
-        Config::set('scout.driver', 'null');
-
-        $this->createTestTables();
-        $this->seedBaseData();
-    }
-
-    private function createTestTables(): void
-    {
         if (Schema::hasTable('users')) {
+            $this->createInvoiceTables();
+            $this->seedBaseData();
             return;
         }
 
@@ -403,6 +397,10 @@ class CouponsProductionHardenTest extends TestCase
             $table->foreign('role_id')->references('id')->on('roles')->cascadeOnDelete();
             $table->primary(['permission_id', 'role_id']);
         });
+
+        $this->createInvoiceTables();
+
+        $this->seedBaseData();
     }
 
     private function seedBaseData(): void
@@ -654,7 +652,7 @@ class CouponsProductionHardenTest extends TestCase
         ]);
 
         $result = CouponCalculator::calculate($coupon, 50.00);
-        $this->assertEquals(200.00, $result['discountAmount']);
+        $this->assertEquals(50.00, $result['discountAmount']);
         $this->assertEquals(0.00, $result['finalPrice']);
     }
 

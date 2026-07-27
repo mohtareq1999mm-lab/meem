@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Marvel\Http\Resources\Order\OrderTransactionResource;
 use Marvel\Http\Resources\ShopResource;
+use App\Models\Invoice;
 
 class OrderResource extends JsonResource
 {
@@ -35,6 +36,20 @@ class OrderResource extends JsonResource
             'shipping_price' => $this->roundMoney($this->shipping_price),
             'fast_shipping_fee' => $this->roundMoney($this->fast_shipping_fee),
             'pickup_location' => $this->when($this->fulfillment_type === 'pickup', fn() => $this->resolvePickupLocation()),
+            'invoice_summary' => $this->when($this->relationLoaded('invoices'), function () {
+                $invoice = $this->invoices->last();
+                if (!$invoice) {
+                    return null;
+                }
+                return [
+                    'uuid' => $invoice->uuid,
+                    'invoice_number' => $invoice->invoice_number,
+                    'status' => $invoice->status,
+                    'total' => (float) $invoice->total,
+                    'currency' => $invoice->currency,
+                    'verification_url' => url('/api/v1/general/invoices/verify/' . $invoice->uuid),
+                ];
+            }),
             'created_at' => $this->created_at?->toIso8601String(),
             'order_items' => OrderItemResource::collection($this->whenLoaded('orderItems')),
             // 'pickup_location_id' => $this->pickup_location_id,

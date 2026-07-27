@@ -31,11 +31,12 @@ use Marvel\Enums\ProductType;
 use Marvel\Enums\PromotionType;
 use Marvel\Enums\ShippingMethod;
 use Tests\Concerns\CreatesTestTables;
+use Tests\Concerns\WithInvoiceTables;
 use Tests\TestCase;
 
 class CheckoutPendingOrderRedesignTest extends TestCase
 {
-    use DatabaseTransactions, CreatesTestTables;
+    use DatabaseTransactions, CreatesTestTables, WithInvoiceTables;
 
     private const PREFIX = '/api/v1/general';
 
@@ -49,6 +50,7 @@ class CheckoutPendingOrderRedesignTest extends TestCase
         app()->setLocale('en');
 
         $this->createAllTestTables();
+        $this->createInvoiceTables();
 
         $this->user = User::create([
             'name' => 'Pending Order User',
@@ -205,7 +207,7 @@ class CheckoutPendingOrderRedesignTest extends TestCase
         $this->assertEquals(0, $this->product->sold_quantity, 'Sold quantity should not change at checkout');
     }
 
-    public function test_only_one_pending_order_per_user(): void
+    public function test_each_checkout_creates_new_pending_order(): void
     {
         $this->auth();
         $this->createCartWithItem();
@@ -220,16 +222,16 @@ class CheckoutPendingOrderRedesignTest extends TestCase
             ->where('status', 'pending')
             ->get();
 
-        $this->assertCount(1, $pendingOrders, 'There should be only one pending order');
+        $this->assertCount(2, $pendingOrders, 'Each checkout should create a new pending order');
     }
 
-    public function test_second_checkout_updates_existing_pending_order(): void
+    public function test_second_checkout_creates_new_order_with_updated_cart(): void
     {
         $this->auth();
         $this->createCartWithItem(1, 100.00);
 
         $this->checkout();
-        $orderId = Order::where('user_id', $this->user->id)->first()->id;
+        $firstOrderId = Order::where('user_id', $this->user->id)->first()->id;
 
         $cart = Cart::where('user_id', $this->user->id)->where('status', 'active')->first();
         $cartItem = $cart->items()->first();
@@ -238,9 +240,16 @@ class CheckoutPendingOrderRedesignTest extends TestCase
 
         $this->checkout();
 
-        $updatedOrder = Order::find($orderId);
-        $this->assertNotNull($updatedOrder);
-        $this->assertEquals(200.00, $updatedOrder->price, 'Order price should reflect updated cart');
+        $firstOrder = Order::find($firstOrderId);
+        $this->assertNotNull($firstOrder);
+        $this->assertEquals(100.00, $firstOrder->price, 'First order price should remain unchanged');
+
+        $newOrder = Order::where('user_id', $this->user->id)
+            ->where('status', 'pending')
+            ->where('id', '!=', $firstOrderId)
+            ->first();
+        $this->assertNotNull($newOrder, 'Second checkout should create a new order');
+        $this->assertEquals(200.00, $newOrder->price, 'New order should reflect updated cart');
     }
 
     public function test_second_checkout_updates_transaction_amount(): void
@@ -502,15 +511,16 @@ class CheckoutPendingOrderRedesignTest extends TestCase
         $this->assertNotNull($order->user_email);
     }
 
-    public function test_order_products_are_updated_on_second_checkout(): void
+    public function test_order_products_are_created_on_each_checkout(): void
     {
         $this->auth();
         $this->createCartWithItem(1, 100.00);
 
         $this->checkout();
 
-        $order = Order::where('user_id', $this->user->id)->first();
-        $this->assertEquals(1, $order->orderItems()->count());
+        $firstOrder = Order::where('user_id', $this->user->id)->first();
+        $this->assertEquals(1, $firstOrder->orderItems()->count());
+        $this->assertEquals(1, $firstOrder->orderItems()->first()->product_quantity);
 
         $cart = Cart::where('user_id', $this->user->id)->where('status', 'active')->first();
         $cartItem = $cart->items()->first();
@@ -519,10 +529,16 @@ class CheckoutPendingOrderRedesignTest extends TestCase
 
         $this->checkout();
 
-        $order->refresh();
-        $this->assertEquals(1, $order->orderItems()->count());
-        $orderItem = $order->orderItems()->first();
-        $this->assertEquals(3, $orderItem->product_quantity);
+        $firstOrder->refresh();
+        $this->assertEquals(1, $firstOrder->orderItems()->count(), 'First order items should remain unchanged');
+        $this->assertEquals(1, $firstOrder->orderItems()->first()->product_quantity);
+
+        $secondOrder = Order::where('user_id', $this->user->id)
+            ->where('id', '!=', $firstOrder->id)
+            ->first();
+        $this->assertNotNull($secondOrder, 'Second checkout should create a new order');
+        $this->assertEquals(1, $secondOrder->orderItems()->count());
+        $this->assertEquals(3, $secondOrder->orderItems()->first()->product_quantity);
     }
 
     public function test_expired_pending_order_cancelled_by_command(): void
@@ -568,7 +584,7 @@ class CheckoutPendingOrderRedesignTest extends TestCase
         $response->assertJsonPath('success', true);
     }
 
-    public function test_checkout_does_not_fire_order_created_event_on_update(): void
+    public function test_each_checkout_fires_order_created_event(): void
     {
         Event::fake();
 
@@ -576,12 +592,12 @@ class CheckoutPendingOrderRedesignTest extends TestCase
         $this->createCartWithItem();
         $this->checkout();
 
-        Event::fake();
+        Event::assertDispatched(OrderCreated::class, 1);
 
         $this->createCartWithItem(2, 200.00);
         $this->checkout();
 
-        Event::assertNotDispatched(OrderCreated::class);
+        Event::assertDispatched(OrderCreated::class, 2);
     }
 
     public function test_checkout_fires_order_created_event_on_first_checkout(): void

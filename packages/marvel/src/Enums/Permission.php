@@ -250,4 +250,11 @@ final class Permission extends Enum
     public const CREATE_COUPON_ASSIGNMENT = 'create-coupon-assignment';
     public const UPDATE_COUPON_ASSIGNMENT = 'update-coupon-assignment';
     public const DELETE_COUPON_ASSIGNMENT = 'delete-coupon-assignment';
+
+    // 🧾 Invoices
+    public const VIEW_INVOICES = 'view-invoices';
+    public const VIEW_INVOICE = 'view-invoice';
+    public const REGENERATE_INVOICE = 'regenerate-invoice';
+    public const CORRECT_INVOICE = 'correct-invoice';
+    public const CANCEL_INVOICE = 'cancel-invoice';
 }

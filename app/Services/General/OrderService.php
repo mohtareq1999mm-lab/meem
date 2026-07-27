@@ -216,28 +216,18 @@ class OrderService
             }
             $governorateId = $shippingInfo['governorate_id'];
 
-            $pendingOrder = $this->orderCreationService->findPendingOrderForUser((int) $request->user()->id);
-
-            if ($pendingOrder) {
-                $order = $this->orderCreationService->updateOrder(
-                    $pendingOrder, $orderData, $cart, $checkoutTotals, null, null, null, $shippingPrice, $governorateId,
-                );
-                $this->orderCreationService->syncOrderItems($order, $cart);
-                $this->orderCreationService->updateTransactionAmount($order);
-            } else {
-                $order = $this->orderCreationService->createOrder(
-                    $orderData, $cart, $checkoutTotals, null, null, null, $shippingPrice, $governorateId,
-                );
-                if (!$order) {
-                    DB::rollBack();
-                    return null;
-                }
-                if (!$this->orderCreationService->createOrderItems($order, $cart)) {
-                    DB::rollBack();
-                    return null;
-                }
-                $this->orderCreationService->finalizeOrder($order, $checkoutTotals);
+            $order = $this->orderCreationService->createOrder(
+                $orderData, $cart, $checkoutTotals, null, null, null, $shippingPrice, $governorateId,
+            );
+            if (!$order) {
+                DB::rollBack();
+                return null;
             }
+            if (!$this->orderCreationService->createOrderItems($order, $cart)) {
+                DB::rollBack();
+                return null;
+            }
+            $this->orderCreationService->finalizeOrder($order, $checkoutTotals);
 
             DB::commit();
 
@@ -252,19 +242,19 @@ class OrderService
         }
     }
 
-    public function finalizeAfterPayment(Order $order, CheckoutTotals $checkoutTotals, Cart $cart, string $shippingMethod = ShippingMethod::SCHEDULED): void
-    {
-        DB::transaction(function () use ($order, $checkoutTotals, $cart, $shippingMethod) {
-            $this->orderCreationService->finalizePromotionUsage($checkoutTotals);
-            $this->cartInventoryService->finalizeItemsByShippingMethod($cart, $shippingMethod);
-        });
-    }
-
     public function finalizePromotionUsageAfterPayment(Order $order): void
     {
+        if ($order->promotion_consumed) {
+            return;
+        }
+
         $promotionId = $order->promotion_id ? (int) $order->promotion_id : null;
         if ($promotionId) {
             $this->promotionService->incrementUsage($promotionId);
+        }
+
+        if (Schema::hasColumn('orders', 'promotion_consumed')) {
+            $order->update(['promotion_consumed' => true]);
         }
     }
 
@@ -489,9 +479,23 @@ class OrderService
         'cancelled' => ['cancelled'],
     ];
 
+    private static array $allowedFulfillmentTransitions = [
+        'pending' => ['pending', 'processing', 'cancelled'],
+        'processing' => ['processing', 'ready_for_pickup', 'out_for_delivery', 'cancelled'],
+        'ready_for_pickup' => ['ready_for_pickup', 'delivered', 'cancelled'],
+        'out_for_delivery' => ['out_for_delivery', 'delivered', 'cancelled'],
+        'delivered' => ['delivered'],
+        'cancelled' => ['cancelled'],
+    ];
+
     private function canTransitionOrderStatus(string $from, string $to): bool
     {
         return in_array($to, self::$allowedOrderTransitions[$from] ?? [], true);
+    }
+
+    private function canTransitionFulfillmentStatus(string $from, string $to): bool
+    {
+        return in_array($to, self::$allowedFulfillmentTransitions[$from] ?? [], true);
     }
 
     public function changeOrderStatus($invoiceId, $status, $orderId = null)
@@ -529,7 +533,38 @@ class OrderService
                 );
             }
 
-            if (!$order->update(['status' => $status])) {
+            $updateData = ['status' => $status];
+
+            if ($status === 'completed' && Schema::hasColumn('orders', 'payment_status')) {
+                $updateData['payment_status'] = $order->getRawOriginal('payment_status') ?? Order::PAYMENT_STATUS_SUCCESS;
+            }
+            if ($status === 'completed' && Schema::hasColumn('orders', 'completed_at')) {
+                $updateData['completed_at'] = now();
+            }
+
+            if ($status === 'cancelled' && $previousStatus !== 'cancelled' && Schema::hasColumn('orders', 'cancelled_at')) {
+                $updateData['cancelled_at'] = now();
+            }
+
+            $fulfillmentStatusMap = [
+                'processing' => Order::FULFILLMENT_STATUS_PROCESSING,
+                'completed' => null,
+                'cancelled' => Order::FULFILLMENT_STATUS_CANCELLED,
+                'delivered' => Order::FULFILLMENT_STATUS_DELIVERED,
+            ];
+            if (array_key_exists($status, $fulfillmentStatusMap) && Schema::hasColumn('orders', 'fulfillment_status')) {
+                $newFulfillment = $fulfillmentStatusMap[$status];
+                $currentFulfillment = $order->getRawOriginal('fulfillment_status') ?? Order::FULFILLMENT_STATUS_PENDING;
+                if ($newFulfillment === null) {
+                    if ($currentFulfillment === Order::FULFILLMENT_STATUS_PENDING) {
+                        $updateData['fulfillment_status'] = Order::FULFILLMENT_STATUS_PROCESSING;
+                    }
+                } elseif ($this->canTransitionFulfillmentStatus($currentFulfillment, $newFulfillment)) {
+                    $updateData['fulfillment_status'] = $newFulfillment;
+                }
+            }
+
+            if (!$order->update($updateData)) {
                 return false;
             }
 
@@ -585,7 +620,20 @@ class OrderService
                 'paid_at' => now(),
             ]);
 
-            $order->update(['status' => 'completed']);
+            $orderUpdateData = ['status' => 'completed'];
+            if (Schema::hasColumn('orders', 'payment_status')) {
+                $orderUpdateData['payment_status'] = Order::PAYMENT_STATUS_SUCCESS;
+            }
+            if (Schema::hasColumn('orders', 'completed_at')) {
+                $orderUpdateData['completed_at'] = now();
+            }
+            if (Schema::hasColumn('orders', 'fulfillment_status')) {
+                $currentFulfillment = $order->getRawOriginal('fulfillment_status') ?? Order::FULFILLMENT_STATUS_PENDING;
+                if ($currentFulfillment === Order::FULFILLMENT_STATUS_PENDING) {
+                    $orderUpdateData['fulfillment_status'] = Order::FULFILLMENT_STATUS_PROCESSING;
+                }
+            }
+            $order->update($orderUpdateData);
 
             $this->recordCouponUsage($order);
 
@@ -616,7 +664,20 @@ class OrderService
                 'paid_at' => now(),
             ]);
 
-            $order->update(['status' => 'completed']);
+            $orderUpdateData = ['status' => 'completed'];
+            if (Schema::hasColumn('orders', 'payment_status')) {
+                $orderUpdateData['payment_status'] = Order::PAYMENT_STATUS_SUCCESS;
+            }
+            if (Schema::hasColumn('orders', 'completed_at')) {
+                $orderUpdateData['completed_at'] = now();
+            }
+            if (Schema::hasColumn('orders', 'fulfillment_status')) {
+                $currentFulfillment = $order->getRawOriginal('fulfillment_status') ?? Order::FULFILLMENT_STATUS_PENDING;
+                if ($currentFulfillment === Order::FULFILLMENT_STATUS_PENDING) {
+                    $orderUpdateData['fulfillment_status'] = Order::FULFILLMENT_STATUS_PROCESSING;
+                }
+            }
+            $order->update($orderUpdateData);
 
             $this->recordCouponUsage($order);
 
@@ -639,9 +700,12 @@ class OrderService
             if ($cart) {
                 $shippingMethod = $order->shipping_method ?? ShippingMethod::SCHEDULED;
                 $this->cartInventoryService->finalizeItemsByShippingMethod($cart, $shippingMethod);
+            } else {
+                $this->cartInventoryService->deductStockForOrder($order);
             }
         } catch (\Throwable $e) {
             report($e);
+            throw $e;
         }
     }
 
@@ -668,7 +732,7 @@ class OrderService
      */
     private function recordCouponUsage($order): void
     {
-        if (!$order->coupon) {
+        if (!$order->coupon || $order->coupon_consumed) {
             return;
         }
 
@@ -736,6 +800,10 @@ class OrderService
             if ($couponUsage->wasRecentlyCreated) {
                 $coupon->increment('used');
             }
+        }
+
+        if (Schema::hasColumn('orders', 'coupon_consumed')) {
+            $order->update(['coupon_consumed' => true]);
         }
     }
 }

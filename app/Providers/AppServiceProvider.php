@@ -17,6 +17,18 @@ class AppServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->singleton(\App\Contexts\ChannelContext::class);
+
+        $this->app->bind(
+            \App\Services\Invoice\InvoiceSnapshotValidator::class,
+            fn($app) => new \App\Services\Invoice\InvoiceSnapshotValidator(
+                $app->make(\App\Services\Invoice\Validators\StructureValidator::class),
+                $app->make(\App\Services\Invoice\Validators\FinancialInvariantValidator::class),
+                $app->make(\App\Services\Invoice\Validators\CurrencyValidator::class),
+                $app->make(\App\Services\Invoice\Validators\MoneyValidator::class),
+                $app->make(\App\Services\Invoice\Validators\MetadataValidator::class),
+                $app->make(\App\Services\Invoice\Validators\SnapshotVersionValidator::class),
+            )
+        );
     }
 
     /**

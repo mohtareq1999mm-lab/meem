@@ -13,18 +13,14 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        //
+        \App\Console\Commands\CancelUnpaidOrders::class,
+        \App\Console\Commands\ExpireCarts::class,
     ];
 
-    /**
-     * Define the application's command schedule.
-     *
-     * @param  \Illuminate\Console\Scheduling\Schedule  $schedule
-     * @return void
-     */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
+        $schedule->command('orders:cancel-unpaid')->everyFiveMinutes()->withoutOverlapping();
+        $schedule->command('carts:expire')->everyFiveMinutes()->withoutOverlapping();
     }
 
     /**

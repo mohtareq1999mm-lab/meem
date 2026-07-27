@@ -616,6 +616,109 @@ This is an order preview endpoint. Not locking is acceptable for a preview. But 
 
 **Severity**: LOW (this is a preview endpoint).
 
+### 8.4 expireCart Missing Status Check
+
+```php
+// CartInventoryService::expireCart()
+$cart = Cart::whereKey($cart->id)->lockForUpdate()->with('items')->firstOrFail();
+if ($cart->expires_at && $cart->expires_at->isFuture()) { return; }
+// releases inventory ...
+```
+
+**BUG-CON-001**: `expireCart()` checks `expires_at` but NOT `cart.status`. If a cart is `checked_out` or already `expired`, calling `expireCart()` would incorrectly release inventory that's already been finalized. Fix: add status guard.
+
+### 8.5 DeductStock Lock Window (CRITICAL)
+
+```php
+// OrderRepository
+protected function validateAndLockStock(array $products): void {
+    // lockForUpdate on products
+    // ... validates stock ...
+} // Lock RELEASED when method returns
+
+protected function deductStock(array $products): void {
+    foreach ($products as $item) {
+        Product::find($productId)->decrement('stock_quantity', ...);
+        // No lock! Called in a different scope
+    }
+}
+```
+
+**BUG-CON-009**: `validateAndLockStock()` locks products with `lockForUpdate()` but the lock is released when the method returns (it's in a separate transaction scope from `deductStock()`). Then `deductStock()` uses `decrement()` which is NOT atomic with the validation. Another request can oversell between validation and deduction.
+
+**Fix**: Wraps both in a single transaction:
+```php
+DB::transaction(function () use ($request) {
+    $this->validateAndLockStock($request['products']);
+    $this->deductStock($request['products']);
+    // ... rest of order creation ...
+});
+```
+
+### 8.6 Dual Callback Fragile Matching
+
+```php
+// OrderController::checkoutCallback()
+$lockedTransaction = Transaction::where('gateway_transaction_id', $paymentId)
+    ->orWhere('invoice_id', $paymentId)
+    ->lockForUpdate()
+    ->first();
+
+if (!$lockedTransaction) {
+    $lockedTransaction = Transaction::where('gateway_transaction_id', $verifiedInvoiceId)
+        ->orWhere('invoice_id', $verifiedInvoiceId)
+        ->lockForUpdate()
+        ->first();
+}
+```
+
+**BUG-CON-004**: The second-chance transaction lookup depends on the gateway returning a different `invoiceId` for already-processed payments. If the gateway returns the same response for both callbacks, both would find the transaction, and the second would proceed past the idempotency guard (because it reads the same locked row after the first commits). The idempotency guard at line 310-311 checks `status === 'paid' && status === 'completed'` which would correctly block it. **This is correct but fragile** — depends on the guard existing.
+
+### 8.7 Cancel/Recomplete Race (CRITICAL)
+
+```php
+// OrderController::checkoutCallback()
+if ($lockedTransaction->status === 'paid' && $lockedOrder->status === 'completed') {
+    return; // Idempotency guard
+}
+// ... proceeds to complete the order
+```
+
+**BUG-CON-005**: The idempotency guard only checks for `completed` status. If the order was **cancelled** (by `CancelUnpaidOrders` or admin), the guard passes (because `status !== 'completed'`), and the callback re-completes a cancelled order.
+
+**Fix**: Add `$lockedOrder->status !== 'pending'` to the guard:
+```php
+if ($lockedTransaction->status === 'paid' || $lockedOrder->status !== 'pending') {
+    return;
+}
+```
+
+### 8.8 No Deadlock Retry
+
+**BUG-CON-010**: There is no retry mechanism for deadlocks anywhere in the codebase. If a deadlock occurs (e.g., between `CancelUnpaidOrders` and `checkoutCallback`), MySQL rolls back one transaction and throws an exception. The callback catches `Throwable` via `report()` and the payment is silently dropped. The user sees "payment successful" on the gateway but the order is never completed.
+
+**Fix**: Add retry loop with exponential backoff:
+```php
+for ($attempt = 1; $attempt <= 3; $attempt++) {
+    try {
+        return DB::transaction(function () use (...) { ... });
+    } catch (\Illuminate\Database\QueryException $e) {
+        if ($e->getCode() !== 1213 || $attempt === 3) throw;
+        usleep(100 * $attempt * 1000);
+    }
+}
+```
+
+### 8.9 Payment After Cancellation (No Reconciliation)
+
+**BUG-CON-006**: If a payment is processed by the gateway but the callback arrives after `CancelUnpaidOrders` has already cancelled the order, the callback completes a cancelled order (BUG-CON-005). Even if BUG-CON-005 is fixed (guard rejects non-pending orders), there is no mechanism to detect "paid but order cancelled" and no reconciliation process.
+
+**Fix**: Add a reconciliation command that:
+1. Finds orders with `status = cancelled` but have a `transaction` with `gateway_transaction_id` (meaning payment was initiated)
+2. Checks the payment gateway for the actual payment status
+3. If paid: marks as completed (late callback handling)
+4. Logs for manual review
+
 ### 8.4 Governorate Read (no lock)
 
 ```php
@@ -639,6 +742,32 @@ Governorate data changes are rare (admin operations). **No lock needed.**
 | CONC-6 | LOW | `CancelUnpaidOrders:40` | The transaction inside the loop does NOT lock the order row before updating. Combined with CONC-3, this means a race between timeout and admin status change. |
 | CONC-7 | LOW | `CartInventoryService:58` | `total_price = price * desiredQuantity` without rounding uses a different precision than the decimal column. Not a concurrency issue but could cause consistency issues if the same cart item is read by another transaction. |
 | CONC-8 | INFO | `PaymentCheckoutHandler:58-68` | Transaction record is created OUTSIDE the order creation transaction. Between order creation (committed) and transaction creation (new request), a crash could leave an order without a transaction. However, the payment method handles this (COD/cashier don't create external transactions, online payment creates immediately after). |
+
+### 8.10 Lock Order Violation: Callback vs CancelUnpaidOrders
+
+```
+Callback:         Transaction → Order
+CancelUnpaidOrders: Order → Transaction (via expireSingleCart → ... → no, Cancel doesn't lock transaction)
+```
+
+Actually, `CancelUnpaidOrders` locks: Order → Cart → Inventory. The callback locks: Transaction → Order → Cart → Inventory. The overlap on Order is the same direction (Order after Transaction in callback, Order first in Cancel). 
+
+**Potential deadlock**:
+```
+T1 (Callback): LOCK Transaction → (waits for T2's Order lock)
+T2 (Cancel):   LOCK Order → (tries to LOCK Transaction → blocked by T1)
+```
+
+**Reality check**: Does CancelUnpaidOrders lock Transaction? Looking at the code: `$lockedOrder->transactions()->where('status', 'pending')->update(['status' => 'failed']);` — this is an UPDATE query, not a `lockForUpdate`. UPDATE uses an implicit row-level lock (IX lock), which is compatible with `lockForUpdate`'s X lock in different transactions. So the deadlock scenario is:
+
+- T1 (callback): `SELECT ... FOR UPDATE` on Transaction → X lock acquired
+- T2 (Cancel): `UPDATE transactions ...` → needs IX lock on Transaction → compatible with T1's X lock? No, IX is incompatible with X. T2 waits for T1's Transaction X lock.
+- T2 already holds Order X lock (via `lockForUpdate`)
+- T1 needs Order X lock (via `$lockedTransaction->order()->lockForUpdate()`) → blocked by T2
+
+**DEADLOCK**: T1 holds Transaction X, waits for Order X. T2 holds Order X, waits for Transaction X. Classic AB/BA.
+
+**BUG-CON-008 confirmed**: There IS a deadlock risk between `checkoutCallback` and `CancelUnpaidOrders`.
 
 ### Critical Concurrency Bug (CONC-3 + CONC-5)
 
@@ -664,9 +793,25 @@ T9   │ }                                       │
 
 ### Summary
 
-| Severity | Count | 
+## 10. New Findings (This Audit)
+
+| ID | Severity | Location | Description |
+|---|---|---|---|
+| BUG-CON-001 | MEDIUM | `CartInventoryService:348-372` | `expireCart()` doesn't check `status !== 'active'` before releasing inventory |
+| BUG-CON-004 | MEDIUM | `OrderController:287-298` | Dual callback protection depends on fragile gateway response matching |
+| BUG-CON-005 | CRITICAL | `OrderController:310-311` | Cancelled order can be re-completed by late-arriving payment callback |
+| BUG-CON-006 | HIGH | `OrderController` | No reconciliation for payments received after cancellation |
+| BUG-CON-008 | MEDIUM | Both callback and cancel | Potential deadlock between callback and CancelUnpaidOrders |
+| BUG-CON-009 | CRITICAL | `OrderRepository:268-321,329-351` | `validateAndLockStock` releases lock before `deductStock` — oversell window |
+| BUG-CON-010 | HIGH | `OrderController:287` | No retry mechanism on deadlock — silently drops payment |
+
+### Updated Severity Summary
+
+| Severity | Count |
 |----------|-------|
-| MEDIUM | 2 (CONC-3, CONC-5) |
+| CRITICAL | 2 (BUG-CON-005, BUG-CON-009) |
+| HIGH | 2 (BUG-CON-006, BUG-CON-010) |
+| MEDIUM | 4 (CONC-3, CONC-5, BUG-CON-001, BUG-CON-004, BUG-CON-008) |
 | LOW | 3 (CONC-2, CONC-6, CONC-7) |
 | INFO | 3 (CONC-1, CONC-4, CONC-8) |
 

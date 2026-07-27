@@ -16,6 +16,7 @@ class GenerateInvoicePdfJob implements ShouldQueue
 
     public $tries = 3;
     public $backoff = [30, 120, 300];
+    public $timeout = 120;
 
     public function __construct(
         public Invoice $invoice,
@@ -45,6 +46,12 @@ class GenerateInvoicePdfJob implements ShouldQueue
 
     public function failed(\Throwable $e): void
     {
-        Log::error('PDF generation failed for invoice ' . $this->invoice->invoice_number . ': ' . $e->getMessage());
+        Log::error('PDF generation failed for invoice ' . $this->invoice->invoice_number, [
+            'invoice_id' => $this->invoice->id,
+            'invoice_number' => $this->invoice->invoice_number,
+            'order_id' => $this->invoice->order_id,
+            'error' => $e->getMessage(),
+            'attempts' => $this->attempts(),
+        ]);
     }
 }

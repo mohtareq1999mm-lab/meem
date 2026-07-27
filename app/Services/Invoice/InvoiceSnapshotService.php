@@ -8,9 +8,19 @@ class InvoiceSnapshotService
 {
     public function buildFullSnapshot(Order $order): array
     {
+        $paidTransaction = $order->transactions->firstWhere('status', 'paid');
+
         return [
-            'snapshot_version' => '2.0.0',
-            'snapshot_schema' => 2,
+            'snapshot_version' => '2.1.0',
+            'snapshot_schema' => 3,
+
+            'order' => [
+                'id' => $order->id,
+                'order_number' => $order->order_number,
+                'status' => $order->status,
+                'payment_status' => $order->payment_status,
+                'fulfillment_status' => $order->fulfillment_status,
+            ],
 
             'customer' => [
                 'id' => $order->user_id,
@@ -26,6 +36,7 @@ class InvoiceSnapshotService
                 'type' => $order->fulfillment_type,
                 'shipping_method' => $order->shipping_method,
                 'shipping_price' => (float) $order->shipping_price,
+                'fast_shipping_fee' => (float) ($order->fast_shipping_fee ?? 0),
                 'expected_delivery_at' => $order->expected_delivery_at?->toIso8601String(),
             ],
 
@@ -45,11 +56,12 @@ class InvoiceSnapshotService
                 'attributes' => $item->attributes,
                 'quantity' => (int) $item->product_quantity,
                 'unit_price' => (float) $item->product_price,
-                'total_price' => (float) $item->product_total_price,
                 'original_price' => (float) $item->product_price,
+                'effective_unit_price' => (float) ($item->product_discount_price ?? $item->product_flash_sale_price ?? $item->product_price),
                 'discount_price' => $item->product_discount_price ? (float) $item->product_discount_price : null,
                 'flash_sale_price' => $item->product_flash_sale_price ? (float) $item->product_flash_sale_price : null,
                 'promotion_discount_amount' => $item->promotion_discount_amount ? (float) $item->promotion_discount_amount : null,
+                'total_price' => (float) $item->product_total_price,
                 'is_gift' => (bool) $item->is_gift,
                 'promotion_id' => $item->promotion_id,
                 'images' => [],
@@ -62,7 +74,7 @@ class InvoiceSnapshotService
                 'shipping_price' => (float) $order->shipping_price,
                 'fast_shipping_fee' => (float) ($order->fast_shipping_fee ?? 0),
                 'total' => (float) $order->total_price,
-                'currency' => $order->transactions->first()?->currency ?? 'EGP',
+                'currency' => $paidTransaction?->currency ?? 'EGP',
                 'exchange_rate' => null,
                 'coupon' => $order->coupon ? [
                     'code' => $order->coupon,
@@ -81,9 +93,9 @@ class InvoiceSnapshotService
             'payment' => [
                 'method' => $order->payment_method,
                 'gateway' => $order->payment_gateway,
-                'transaction_id' => $order->transactions->firstWhere('status', 'paid')?->id,
-                'gateway_transaction_id' => $order->transactions->firstWhere('status', 'paid')?->gateway_transaction_id,
-                'paid_at' => $order->transactions->firstWhere('status', 'paid')?->paid_at,
+                'transaction_id' => $paidTransaction?->id,
+                'gateway_transaction_id' => $paidTransaction?->gateway_transaction_id,
+                'paid_at' => $paidTransaction?->paid_at?->toIso8601String(),
                 'gateway_invoice_id' => null,
                 'gateway_response_summary' => null,
             ],

@@ -11,6 +11,8 @@ use Marvel\Database\Models\ProductVariant;
 
 class RestoreProductInventory implements ShouldQueue
 {
+    public $afterCommit = true;
+
     public $queue = 'medium';
 
     public function handle($event)
@@ -27,18 +29,15 @@ class RestoreProductInventory implements ShouldQueue
                     return;
                 }
 
+                if (!$order->paid_at) {
+                    return;
+                }
+
                 $orderItems = $order->orderItems;
 
                 foreach ($orderItems as $item) {
                     if ($item->is_gift) {
                         continue;
-                    }
-
-                    $product = Product::lockForUpdate()->find($item->product_id);
-                    if ($product && !$product->is_rental && !$product->is_digital) {
-                        $product->stock_quantity = max(0, (int) $product->stock_quantity + (int) $item->product_quantity);
-                        $product->sold_quantity = max(0, (int) $product->sold_quantity - (int) $item->product_quantity);
-                        $product->save();
                     }
 
                     if ($item->product_variant_id) {
@@ -47,6 +46,13 @@ class RestoreProductInventory implements ShouldQueue
                             $variant->stock_quantity = max(0, (int) $variant->stock_quantity + (int) $item->product_quantity);
                             $variant->sold_quantity = max(0, (int) $variant->sold_quantity - (int) $item->product_quantity);
                             $variant->save();
+                        }
+                    } else {
+                        $product = Product::lockForUpdate()->find($item->product_id);
+                        if ($product && !$product->is_rental && !$product->is_digital) {
+                            $product->stock_quantity = max(0, (int) $product->stock_quantity + (int) $item->product_quantity);
+                            $product->sold_quantity = max(0, (int) $product->sold_quantity - (int) $item->product_quantity);
+                            $product->save();
                         }
                     }
                 }

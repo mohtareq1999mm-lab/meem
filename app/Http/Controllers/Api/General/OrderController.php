@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Order;
 use Marvel\Database\Models\Transaction;
 use Marvel\Database\Models\User;
+use Marvel\Enums\PaymentStatus;
 use Marvel\Enums\ShippingMethod;
 use App\Events\OrderCancelled;
 use App\Events\PaymentFailed;
@@ -307,7 +308,7 @@ class OrderController extends Controller
                 return;
             }
 
-            if ($lockedTransaction->status === 'paid' && $lockedOrder->status === 'completed') {
+            if ($lockedOrder->status !== 'pending') {
                 return;
             }
 
@@ -318,11 +319,24 @@ class OrderController extends Controller
                 'paid_at' => now(),
             ]);
 
+            $orderUpdateData = [];
+            if (\Illuminate\Support\Facades\Schema::hasColumn('orders', 'payment_status')) {
+                $orderUpdateData['payment_status'] = \Marvel\Enums\PaymentStatus::SUCCESS;
+            }
+            if (\Illuminate\Support\Facades\Schema::hasColumn('orders', 'paid_at')) {
+                $orderUpdateData['paid_at'] = now();
+            }
+            if (!empty($orderUpdateData)) {
+                $lockedOrder->update($orderUpdateData);
+            }
+
             if ($user = User::find($lockedOrder->user_id)) {
                 $cart = $this->cartInventoryService->getActiveCartForUser($user);
                 if ($cart) {
                     $shippingMethod = $lockedOrder->shipping_method ?? ShippingMethod::SCHEDULED;
                     $this->cartInventoryService->finalizeItemsByShippingMethod($cart, $shippingMethod);
+                } else {
+                    $this->cartInventoryService->deductStockForOrder($lockedOrder);
                 }
             }
 

@@ -3,35 +3,23 @@
 namespace Marvel\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class ForgetPassword extends Mailable implements ShouldQueue
+class ForgetPassword extends Mailable
 {
     use Queueable, SerializesModels;
 
     public $token;
 
-    /**
-     * Create a new message instance.
-     *
-     * @return void
-     */
     public function __construct($token)
     {
         $this->token = $token;
-        $this->onQueue('high');
     }
 
-    /**
-     * Build the message.
-     *
-     * @return $this
-     */
     public function build()
     {
-        return $this->from(config('app.name').'@chawkbazar.com', 'ChawkBazar')
+        return $this->from(config('mail.from.address'), config('mail.from.name'))
             ->subject('Password Reset Token')
             ->markdown('emails.forget-password')
             ->with([

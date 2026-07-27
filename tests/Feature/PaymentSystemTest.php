@@ -28,11 +28,12 @@ use App\Events\OrderCancelled;
 use App\Events\OrderStatusChanged;
 use App\Events\PaymentFailed;
 use App\Events\PaymentSucceeded;
+use Tests\Concerns\WithInvoiceTables;
 use Tests\TestCase;
 
 class PaymentSystemTest extends TestCase
 {
-    use DatabaseTransactions;
+    use DatabaseTransactions, WithInvoiceTables;
 
     private const PREFIX = '/api/v1';
 
@@ -49,6 +50,8 @@ class PaymentSystemTest extends TestCase
         if (!Schema::hasTable('products')) {
             $this->createAllTables();
         }
+
+        $this->createInvoiceTables();
 
         $this->seedBaseData();
     }
@@ -372,6 +375,8 @@ class PaymentSystemTest extends TestCase
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
             $table->timestamps();
         });
+
+        $this->createInvoiceTables();
     }
 
     private function seedBaseData(): void

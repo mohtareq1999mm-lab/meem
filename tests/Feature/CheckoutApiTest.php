@@ -15,11 +15,12 @@ use Marvel\Database\Models\ShippingPrice;
 use Marvel\Database\Models\User;
 use Marvel\Enums\ProductType;
 use Tests\Concerns\CreatesTestTables;
+use Tests\Concerns\WithInvoiceTables;
 use Tests\TestCase;
 
 class CheckoutApiTest extends TestCase
 {
-    use DatabaseTransactions, CreatesTestTables;
+    use DatabaseTransactions, CreatesTestTables, WithInvoiceTables;
 
     private const PREFIX = '/api/v1/general';
 
@@ -33,6 +34,7 @@ class CheckoutApiTest extends TestCase
         app()->setLocale('en');
 
         $this->createAllTestTables();
+        $this->createInvoiceTables();
 
         $this->user = User::create([
             'name' => 'Checkout User',
@@ -80,8 +82,12 @@ class CheckoutApiTest extends TestCase
             'quantity' => 1,
             'price' => 100.00,
             'total_price' => 100.00,
+            'reserved_quantity' => 1,
             'shipping_method' => 'SCHEDULED',
         ]);
+
+        $this->product->refresh();
+        $this->product->update(['reserved_quantity' => 1]);
     }
 
     private function auth(): void
@@ -155,6 +161,8 @@ class CheckoutApiTest extends TestCase
 
     public function test_mark_cod_as_paid_finalizes_inventory()
     {
+        \Illuminate\Support\Facades\Event::fake([\App\Events\PaymentSucceeded::class]);
+
         $this->auth();
         $this->createCartWithItem();
 

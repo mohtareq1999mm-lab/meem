@@ -12,6 +12,8 @@ use Marvel\Database\Models\ProductVariant;
 
 class RestoreInventoryOnRefund implements ShouldQueue
 {
+    public $afterCommit = true;
+
     public $queue = 'medium';
 
     public function handle(RefundApproved $event)
@@ -37,19 +39,19 @@ class RestoreInventoryOnRefund implements ShouldQueue
                         continue;
                     }
 
-                    $product = Product::lockForUpdate()->find($item->product_id);
-                    if ($product && !$product->is_rental && !$product->is_digital) {
-                        $product->stock_quantity = max(0, (int) $product->stock_quantity + (int) $item->product_quantity);
-                        $product->sold_quantity = max(0, (int) $product->sold_quantity - (int) $item->product_quantity);
-                        $product->save();
-                    }
-
                     if ($item->product_variant_id) {
                         $variant = ProductVariant::lockForUpdate()->find($item->product_variant_id);
                         if ($variant) {
                             $variant->stock_quantity = max(0, (int) $variant->stock_quantity + (int) $item->product_quantity);
                             $variant->sold_quantity = max(0, (int) $variant->sold_quantity - (int) $item->product_quantity);
                             $variant->save();
+                        }
+                    } else {
+                        $product = Product::lockForUpdate()->find($item->product_id);
+                        if ($product && !$product->is_rental && !$product->is_digital) {
+                            $product->stock_quantity = max(0, (int) $product->stock_quantity + (int) $item->product_quantity);
+                            $product->sold_quantity = max(0, (int) $product->sold_quantity - (int) $item->product_quantity);
+                            $product->save();
                         }
                     }
                 }

@@ -43,7 +43,17 @@ class CancelUnpaidOrders extends Command
                     return;
                 }
 
-                $lockedOrder->update(['status' => 'cancelled']);
+                $cancelUpdateData = ['status' => 'cancelled'];
+                if (\Illuminate\Support\Facades\Schema::hasColumn('orders', 'payment_status')) {
+                    $cancelUpdateData['payment_status'] = \Marvel\Database\Models\Order::PAYMENT_STATUS_FAILED;
+                }
+                if (\Illuminate\Support\Facades\Schema::hasColumn('orders', 'fulfillment_status')) {
+                    $cancelUpdateData['fulfillment_status'] = \Marvel\Database\Models\Order::FULFILLMENT_STATUS_CANCELLED;
+                }
+                if (\Illuminate\Support\Facades\Schema::hasColumn('orders', 'cancelled_at')) {
+                    $cancelUpdateData['cancelled_at'] = now();
+                }
+                $lockedOrder->update($cancelUpdateData);
 
                 $lockedOrder->transactions()
                     ->where('status', 'pending')

@@ -35,11 +35,12 @@ use Marvel\Database\Models\Refund;
 use Marvel\Database\Models\Settings;
 use Marvel\Database\Models\Transaction;
 use Marvel\Database\Models\User;
+use Tests\Concerns\WithInvoiceTables;
 use Tests\TestCase;
 
 class EventSystemTest extends TestCase
 {
-    use DatabaseTransactions;
+    use DatabaseTransactions, WithInvoiceTables;
 
     private const PREFIX = '/api/v1';
 
@@ -56,6 +57,8 @@ class EventSystemTest extends TestCase
         if (!Schema::hasTable('products')) {
             $this->createAllTables();
         }
+
+        $this->createInvoiceTables();
 
         $this->seedBaseData();
     }
@@ -179,10 +182,39 @@ class EventSystemTest extends TestCase
             $table->decimal('promotion_discount', 10, 2)->nullable();
             $table->string('status')->default('pending');
             $table->string('language', 10)->default('en');
+            $table->timestamp('paid_at')->nullable();
             $table->timestamps();
             $table->unsignedBigInteger('parent_id')->nullable();
             $table->softDeletes();
             $table->timestamp('inventory_restored_at')->nullable();
+        });
+
+        Schema::create('carts', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->string('coupon')->nullable();
+            $table->decimal('total_price', 10, 2)->default(0);
+            $table->string('status')->default('active');
+            $table->timestamp('reserved_at')->nullable();
+            $table->timestamp('expires_at')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('cart_items', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('cart_id')->constrained('carts')->cascadeOnDelete();
+            $table->foreignId('product_id')->constrained()->cascadeOnDelete();
+            $table->integer('quantity')->default(1);
+            $table->unsignedBigInteger('product_variant_id')->nullable();
+            $table->decimal('price', 10, 2)->default(0);
+            $table->decimal('total_price', 10, 2)->default(0);
+            $table->text('attributes')->nullable();
+            $table->integer('reserved_quantity')->default(0);
+            $table->decimal('discount_amount', 10, 2)->default(0);
+            $table->string('shipping_method')->default('SCHEDULED');
+            $table->boolean('is_gift')->default(false);
+            $table->unsignedBigInteger('promotion_id')->nullable();
+            $table->timestamps();
         });
 
         Schema::create('order_products', function (Blueprint $table) {
@@ -318,6 +350,7 @@ class EventSystemTest extends TestCase
             'user_email' => $customer->email,
             'total_price' => 100.00,
             'status' => 'pending',
+            'paid_at' => now(),
         ]);
 
         OrderProduct::create([

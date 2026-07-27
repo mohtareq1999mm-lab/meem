@@ -31,11 +31,12 @@ use Marvel\Database\Models\Coupon;
 use Marvel\Database\Models\CouponAssignment;
 use Marvel\Database\Models\CouponAssignmentUsage;
 use Marvel\Enums\DiscountType;
+use Tests\Concerns\WithInvoiceTables;
 use Tests\TestCase;
 
 class PaymentProductionHardenTest extends TestCase
 {
-    use DatabaseTransactions;
+    use DatabaseTransactions, WithInvoiceTables;
 
     private const PREFIX = '/api/v1';
 
@@ -54,6 +55,8 @@ class PaymentProductionHardenTest extends TestCase
         if (!Schema::hasTable('products')) {
             $this->createAllTables();
         }
+
+        $this->createInvoiceTables();
 
         $this->seedBaseData();
     }

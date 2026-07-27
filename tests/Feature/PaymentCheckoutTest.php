@@ -32,11 +32,12 @@ use Marvel\Database\Models\Transaction;
 use Marvel\Database\Models\Country;
 use Marvel\Database\Models\PickupLocation;
 use Marvel\Enums\ShippingMethod;
+use Tests\Concerns\WithInvoiceTables;
 use Tests\TestCase;
 
 class PaymentCheckoutTest extends TestCase
 {
-    use DatabaseTransactions;
+    use DatabaseTransactions, WithInvoiceTables;
 
     private const PREFIX = '/api/v1';
 
@@ -56,7 +57,15 @@ class PaymentCheckoutTest extends TestCase
             $this->createAllTables();
         }
 
+        $this->createInvoiceTables();
+
         $this->seedBaseData();
+    }
+
+    protected function tearDown(): void
+    {
+        \Mockery::close();
+        parent::tearDown();
     }
 
     private function createAllTables(): void
@@ -467,6 +476,8 @@ class PaymentCheckoutTest extends TestCase
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
             $table->timestamps();
         });
+
+        $this->createInvoiceTables();
     }
 
     private function seedBaseData(): void
@@ -578,6 +589,17 @@ class PaymentCheckoutTest extends TestCase
     {
         Sanctum::actingAs($this->user);
         $this->createActiveCart();
+
+        $mockService = \Mockery::mock(\App\Services\General\MyfatoraService::class);
+        $mockService->shouldReceive('createInvoice')
+            ->once()
+            ->andReturn([
+                'Data' => [
+                    'InvoiceURL' => 'https://example.com/pay',
+                    'InvoiceId' => 12345,
+                ],
+            ]);
+        $this->app->instance(\App\Services\General\MyfatoraService::class, $mockService);
 
         $response = $this->postJson(self::PREFIX . '/general/checkout', [
             'name' => 'Test User',

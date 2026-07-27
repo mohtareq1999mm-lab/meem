@@ -172,16 +172,40 @@ class PaymentCallbackStressTest extends TestCase
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained();
+            $table->unsignedBigInteger('governorate_id')->nullable();
             $table->string('name');
             $table->string('user_phone');
             $table->string('user_email');
             $table->text('address')->nullable();
+            $table->text('notes')->nullable();
             $table->string('shipping_method')->default('SCHEDULED');
+            $table->string('fulfillment_type', 20)->nullable();
+            $table->string('payment_gateway', 50)->nullable();
             $table->string('status')->default('pending');
+            $table->string('payment_status')->nullable();
+            $table->string('fulfillment_status')->nullable();
+            $table->boolean('coupon_consumed')->default(false);
+            $table->boolean('promotion_consumed')->default(false);
+            $table->timestamp('paid_at')->nullable();
+            $table->timestamp('completed_at')->nullable();
+            $table->timestamp('cancelled_at')->nullable();
             $table->string('payment_method');
-            $table->string('coupon')->nullable();
+            $table->decimal('price', 10, 2)->default(0);
             $table->decimal('total_price', 10, 2)->default(0);
+            $table->decimal('shipping_price', 10, 2)->nullable();
+            $table->string('coupon')->nullable();
+            $table->decimal('coupon_discount', 10, 2)->nullable();
+            $table->string('coupon_discount_type')->nullable();
+            $table->unsignedBigInteger('promotion_id')->nullable();
+            $table->string('promotion_code')->nullable();
+            $table->string('promotion_type')->nullable();
+            $table->decimal('promotion_discount', 10, 2)->nullable();
+            $table->timestamp('expected_delivery_at')->nullable();
+            $table->decimal('fast_shipping_fee', 10, 2)->default(0);
+            $table->unsignedBigInteger('pickup_location_id')->nullable();
+            $table->timestamp('inventory_restored_at')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::create('order_items', function (Blueprint $table) {
@@ -244,6 +268,58 @@ class PaymentCallbackStressTest extends TestCase
             $table->unsignedInteger('order_column')->nullable()->index();
             $table->nullableTimestamps();
         });
+
+        Schema::create('invoice_sequences', function (Blueprint $table) {
+            $table->string('series', 10);
+            $table->year('sequence_year');
+            $table->bigInteger('last_sequence')->unsigned()->default(0);
+            $table->timestamps();
+            $table->primary(['series', 'sequence_year']);
+        });
+
+        Schema::create('invoices', function (Blueprint $table) {
+            $table->id();
+            $table->uuid('uuid')->unique();
+            $table->foreignId('order_id')->constrained('orders')->restrictOnDelete();
+            $table->foreignId('transaction_id')->nullable()->constrained('transactions')->nullOnDelete();
+            $table->foreignId('user_id')->constrained('users')->restrictOnDelete();
+            $table->string('invoice_number', 50);
+            $table->string('invoice_series', 10)->default('INV');
+            $table->bigInteger('sequence_number')->unsigned();
+            $table->year('sequence_year');
+            $table->decimal('subtotal', 10, 3)->default(0);
+            $table->decimal('shipping_price', 10, 3)->default(0);
+            $table->decimal('coupon_discount', 10, 3)->default(0);
+            $table->decimal('promotion_discount', 10, 3)->default(0);
+            $table->decimal('total_discount', 10, 3)->default(0);
+            $table->decimal('total', 10, 3)->default(0);
+            $table->decimal('amount_paid', 10, 3)->default(0);
+            $table->string('currency', 3)->default('EGP');
+            $table->string('payment_method', 30)->nullable();
+            $table->string('payment_gateway', 50)->nullable();
+            $table->string('status', 20)->default('generated');
+            $table->json('data');
+            $table->string('snapshot_hash', 64)->nullable();
+            $table->string('verification_hash', 64)->nullable();
+            $table->timestamp('pdf_generated_at')->nullable();
+            $table->timestamp('pdf_regenerated_at')->nullable();
+            $table->string('pdf_path', 500)->nullable();
+            $table->string('pdf_checksum', 64)->nullable();
+            $table->tinyInteger('generation_attempts')->unsigned()->default(0);
+            $table->text('last_generation_error')->nullable();
+            $table->boolean('is_correction')->default(false);
+            $table->string('correction_reason', 500)->nullable();
+            $table->timestamp('corrected_at')->nullable();
+            $table->timestamp('cancelled_at')->nullable();
+            $table->string('cancellation_reason', 500)->nullable();
+            $table->timestamp('generated_at')->useCurrent();
+            $table->string('generated_by', 50)->nullable()->default('system');
+            $table->timestamps();
+            $table->unique('order_id', 'uq_invoices_order_id');
+            $table->unique('invoice_number', 'uq_invoices_invoice_number');
+            $table->index('user_id', 'idx_invoices_user_id');
+            $table->index('status', 'idx_invoices_status');
+        });
     }
 
     private function createOrderWithPendingTransaction(
@@ -271,6 +347,7 @@ class PaymentCallbackStressTest extends TestCase
             'amount' => 100.00,
             'currency' => 'EGP',
             'invoice_id' => $invoiceId,
+            'gateway_transaction_id' => $invoiceId,
         ]);
 
         return $order->fresh();
@@ -318,11 +395,11 @@ class PaymentCallbackStressTest extends TestCase
         $factoryMock->shouldReceive('make')
             ->once()
             ->with('unknown_gateway')
-            ->andThrow(new \App\Exceptions\UnsupportedGatewayException());
+            ->andThrow(new \App\Exceptions\UnsupportedGatewayException('unknown_gateway'));
 
         $this->app->instance(PaymentGatewayFactory::class, $factoryMock);
 
-        $response = $this->get(self::PREFIX . '/checkout/callback?paymentId=payment-unsupported');
+        $response = $this->get(self::PREFIX . '/checkout/callback?paymentId=INV-UNSUPPORTED');
         $response->assertStatus(500);
     }
 
@@ -493,10 +570,10 @@ class PaymentCallbackStressTest extends TestCase
             $response1 = $this->get(self::PREFIX . '/checkout/callback?paymentId=payment-lock');
             $response1->assertStatus(302);
 
-            $orderAfterFirst = $order->fresh();
-            $this->assertEquals('pending', $orderAfterFirst->status);
-
             DB::rollBack();
+
+            $orderAfterRollback = $order->fresh();
+            $this->assertEquals('pending', $orderAfterRollback->status);
 
             $response2 = $this->get(self::PREFIX . '/checkout/callback?paymentId=payment-lock');
             $response2->assertStatus(302);

@@ -4,12 +4,14 @@ namespace App\Providers;
 
 use App\Events\AdminLoggedIn;
 use App\Events\ContactMessageReceived;
+use App\Events\InvoiceCreated;
 use App\Events\OrderCancelled;
 use App\Events\OrderCreated;
 use App\Events\OrderStatusChanged;
 use App\Events\PaymentFailed;
 use App\Events\PaymentSucceeded;
 use App\Events\UserRolesUpdated;
+use App\Listeners\LogInvoiceCreated;
 use App\Listeners\LogUserRolesUpdated;
 use App\Listeners\GenerateInvoiceListener;
 use App\Listeners\SendAdminLoginNotification;
@@ -86,6 +88,9 @@ class EventServiceProvider extends ServiceProvider
         PaymentSucceeded::class => [
             SendPaymentSucceededNotification::class,
             GenerateInvoiceListener::class,
+        ],
+        InvoiceCreated::class => [
+            LogInvoiceCreated::class,
         ],
     ];
 
