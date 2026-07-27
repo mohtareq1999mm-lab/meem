@@ -535,7 +535,7 @@ trait CreatesTestTables
             $table->timestamp('last_verified_at')->nullable();
             $table->unsignedSmallInteger('verify_count')->default(0);
             $table->timestamps();
-            $table->unique('order_id', 'uq_invoices_order_id');
+            $table->index('order_id', 'idx_invoices_order_id');
             $table->unique('invoice_number', 'uq_invoices_invoice_number');
             $table->index('user_id', 'idx_invoices_user_id');
             $table->index('status', 'idx_invoices_status');

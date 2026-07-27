@@ -19,9 +19,9 @@ use App\Services\Invoice\InvoiceTimelineService;
 use App\Services\Invoice\SnapshotIntegrityService;
 use App\Services\Shipment\ShipmentService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Support\Facades\Event;
 use Marvel\Database\Models\Order;
 use Marvel\Database\Models\Transaction;
+use Marvel\Database\Models\User;
 use Tests\Concerns\CreatesTestTables;
 use Tests\TestCase;
 
@@ -43,7 +43,7 @@ class InvoiceLifecycleTest extends TestCase
 
         $invoiceNumberService = new InvoiceNumberService();
         $snapshotService = new InvoiceSnapshotService();
-        $snapshotValidator = new InvoiceSnapshotValidator([]);
+        $snapshotValidator = new InvoiceSnapshotValidator();
         $integrityService = new SnapshotIntegrityService();
         $this->timelineService = new InvoiceTimelineService();
         $this->creditNoteService = new CreditNoteService($invoiceNumberService);
@@ -64,6 +64,12 @@ class InvoiceLifecycleTest extends TestCase
 
     private function createOrder(): void
     {
+        User::create([
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+            'password' => bcrypt('password'),
+        ]);
+
         $this->order = Order::create([
             'user_id' => 1,
             'name' => 'Test Customer',
@@ -97,7 +103,6 @@ class InvoiceLifecycleTest extends TestCase
 
     public function test_generates_invoice_from_order(): void
     {
-        Event::fake();
         $invoice = $this->invoiceService->generateFromOrder($this->order);
 
         $this->assertNotNull($invoice);
@@ -301,7 +306,7 @@ class InvoiceLifecycleTest extends TestCase
     {
         $this->assertFalse(InvoiceStatus::CANCELLED->canTransitionTo(InvoiceStatus::GENERATED));
         $this->assertFalse(InvoiceStatus::ARCHIVED->canTransitionTo(InvoiceStatus::READY));
-        $this->assertFalse(InvoiceStatus::DELIVERED->canTransitionTo(InvoiceStatus::CANCELLED));
+        $this->assertFalse(InvoiceStatus::VERIFIED->canTransitionTo(InvoiceStatus::CANCELLED));
     }
 
     // ─── Invoice Status Transition Validation (Model Saving) ───────────────

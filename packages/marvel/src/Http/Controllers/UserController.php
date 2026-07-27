@@ -756,8 +756,7 @@ class UserController extends CoreController
             return $this->apiResponse(CHECK_INBOX_FOR_PASSWORD_RESET_EMAIL, 200);
         }
 
-        $plainTextToken = Str::random(6);
-
+        $plainTextToken = random_int(100000, 999999);
         DB::table('password_resets')->updateOrInsert(
             ['email' => $request->email],
             [
