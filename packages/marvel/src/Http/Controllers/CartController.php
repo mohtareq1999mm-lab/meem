@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Marvel\Database\Repositories\CartRepository;
 use App\Services\General\CartInventoryService;
 use Marvel\Database\Models\Cart;
+use Marvel\Database\Models\Product;
 use Marvel\Http\Requests\CartCreateRequest;
 use Marvel\Http\Requests\CartUpdateRequest;
 use Marvel\Http\Resources\CartResource;
@@ -150,17 +151,34 @@ class CartController extends CoreController
 
         $request->validate([
             'items' => 'required|array',
-            'items.*.product_id' => 'required|exists:products,id,deleted_at,NULL',
+            'items.*.product_id' => 'required|integer',
             'items.*.quantity' => 'required|integer|min:1',
-            'items.*.product_variant_id' => 'nullable|exists:product_variants,id,deleted_at,NULL',
+            'items.*.product_variant_id' => 'nullable|integer',
             'items.*.shipping_method' => 'required|string|in:scheduled,fast,SCHEDULED,FAST',
         ]);
 
         $userId = $request->user()->id;
+        $existingIds = Product::whereIn('id', collect($request->items)->pluck('product_id'))
+            ->whereNull('deleted_at')
+            ->pluck('id')
+            ->toArray();
+
+        $validItems = collect($request->items)->filter(
+            fn($item) => in_array($item['product_id'], $existingIds)
+        );
+
+        $skippedIds = collect($request->items)
+            ->reject(fn($item) => in_array($item['product_id'], $existingIds))
+            ->pluck('product_id')
+            ->values();
+
+        if ($validItems->isEmpty()) {
+            return $this->apiResponse(CART_NOT_FOUND, 400, false);
+        }
 
         DB::beginTransaction();
         try {
-            foreach ($request->items as $item) {
+            foreach ($validItems as $item) {
                 $tempRequest = clone $request;
                 $tempRequest->replace(['item' => $item]);
                 $this->repository->storeCart($tempRequest);
@@ -176,8 +194,17 @@ class CartController extends CoreController
             return $this->apiResponse(CART_NOT_FOUND, 400, false);
         }
 
-        return $this->apiResponse(CREATE_CART_SUCCESSFULLY, 201, true, CartResource::make(
+        $response = CartResource::make(
             $cart->load(['items.product', 'items.productVariant.attributeProducts.attributeValue.attribute'])
-        ));
+        );
+
+        if ($skippedIds->isNotEmpty()) {
+            return $this->apiResponse(CREATE_CART_SUCCESSFULLY, 201, true, [
+                'cart' => $response,
+                'skipped_product_ids' => $skippedIds,
+            ]);
+        }
+
+        return $this->apiResponse(CREATE_CART_SUCCESSFULLY, 201, true, $response);
     }
 }
