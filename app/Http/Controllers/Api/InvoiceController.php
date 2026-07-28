@@ -32,6 +32,7 @@ class InvoiceController extends Controller
         $this->middleware('permission:' . Permission::REGENERATE_INVOICE, ['only' => ['regenerate']]);
         $this->middleware('permission:' . Permission::CORRECT_INVOICE, ['only' => ['correct']]);
         $this->middleware('permission:' . Permission::CANCEL_INVOICE, ['only' => ['cancel']]);
+        $this->middleware('permission:' . Permission::ISSUE_DEBIT_NOTE, ['only' => ['issueDebitNote']]);
     }
 
     public function index(Request $request): JsonResponse

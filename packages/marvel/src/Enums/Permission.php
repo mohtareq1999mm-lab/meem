@@ -257,4 +257,11 @@ final class Permission extends Enum
     public const REGENERATE_INVOICE = 'regenerate-invoice';
     public const CORRECT_INVOICE = 'correct-invoice';
     public const CANCEL_INVOICE = 'cancel-invoice';
+    public const ISSUE_DEBIT_NOTE = 'issue-debit-note';
+
+    // 📦 Shipments
+    public const VIEW_SHIPMENTS = 'view-shipments';
+    public const VIEW_SHIPMENT = 'view-shipment';
+    public const CREATE_SHIPMENT = 'create-shipment';
+    public const UPDATE_SHIPMENT = 'update-shipment';
 }

@@ -9,6 +9,7 @@ use App\Http\Requests\Shipment\UpdateShipmentStatusRequest;
 use App\Services\Shipment\ShipmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Marvel\Enums\Permission;
 use Marvel\Traits\ApiResponse;
 
 class ShipmentController extends Controller
@@ -17,7 +18,12 @@ class ShipmentController extends Controller
 
     public function __construct(
         private ShipmentService $shipmentService,
-    ) {}
+    ) {
+        $this->middleware('permission:' . Permission::VIEW_SHIPMENTS, ['only' => ['index']]);
+        $this->middleware('permission:' . Permission::VIEW_SHIPMENT, ['only' => ['show', 'showByUuid']]);
+        $this->middleware('permission:' . Permission::CREATE_SHIPMENT, ['only' => ['store']]);
+        $this->middleware('permission:' . Permission::UPDATE_SHIPMENT, ['only' => ['update', 'updateStatus']]);
+    }
 
     public function index(Request $request): JsonResponse
     {

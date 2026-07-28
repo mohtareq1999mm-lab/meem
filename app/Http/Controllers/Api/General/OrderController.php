@@ -395,6 +395,23 @@ class OrderController extends Controller
         }
 
         $result = $gateway->verifyPayment($paymentId);
+
+        if ($result->success) {
+            if ($request->type === 'mobile') {
+                return $this->apiResponse(CHECKOUT_SUCCESSFUL, 200, true, [
+                    'status' => 'success',
+                    'message' => __(PAYMENT_SUCCESSFUL),
+                    'payment_id' => $paymentId,
+                ]);
+            }
+
+            return redirect(config('app.app_url_frontend') . '/' . app()->getLocale() . '/payment/success?' . http_build_query([
+                'status' => 'success',
+                'message' => __(PAYMENT_SUCCESSFUL),
+                'payment_id' => $paymentId,
+            ]));
+        }
+
         $errorMessage = $result->errorMessage ?? __(PAYMENT_FAILED);
 
         $verifiedInvoiceId = $result->gatewayTransactionId;

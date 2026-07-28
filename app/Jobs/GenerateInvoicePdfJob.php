@@ -3,12 +3,14 @@
 namespace App\Jobs;
 
 use App\Models\Invoice;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class GenerateInvoicePdfJob implements ShouldQueue
 {
@@ -27,11 +29,39 @@ class GenerateInvoicePdfJob implements ShouldQueue
     public function handle(): void
     {
         try {
-            Log::info('PDF generation placeholder for invoice ' . $this->invoice->invoice_number);
+            $data = $this->invoice->data;
+
+            $filename = str_replace('/', '-', $this->invoice->invoice_number) . '.pdf';
+            $relativePath = $filename;
+
+            $disk = Storage::disk('public');
+
+            if (!$disk->exists('invoices')) {
+                $disk->makeDirectory('invoices');
+            }
+
+            $pdf = Pdf::loadView('pdf.invoice', [
+                'invoice' => $this->invoice,
+            ]);
+
+            $pdf->setPaper('A4', 'portrait');
+            $pdf->setOptions([
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => false,
+                'defaultFont' => 'Arial',
+            ]);
+
+            $pdfContent = $pdf->output();
+            $disk->put('invoices/' . $filename, $pdfContent);
+            $pdfChecksum = md5($pdfContent);
 
             $this->invoice->update([
                 'status' => 'ready',
+                'pdf_path' => $filename,
+                'pdf_checksum' => $pdfChecksum,
                 'pdf_generated_at' => now(),
+                'generation_attempts' => $this->invoice->generation_attempts + 1,
+                'last_generation_error' => null,
             ]);
         } catch (\Throwable $e) {
             $this->invoice->update([

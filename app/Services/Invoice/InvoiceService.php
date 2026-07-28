@@ -171,6 +171,16 @@ class InvoiceService
             $this->timelineService->recordCorrected($original, $reason);
             $this->timelineService->recordGenerated($correction);
 
+            DB::afterCommit(function () use ($correction) {
+                InvoiceCreated::dispatch($correction);
+
+                try {
+                    GenerateInvoicePdfJob::dispatch($correction);
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+            });
+
             return $correction;
         });
     }
@@ -180,7 +190,7 @@ class InvoiceService
         return DB::transaction(function () use ($id, $reason, $adminId) {
             $invoice = Invoice::lockForUpdate()->findOrFail($id);
 
-            $allowed = ['generated', 'ready', 'failed', 'corrected'];
+            $allowed = ['generated', 'ready', 'failed', 'corrected', 'verified', 'downloaded', 'printed'];
             if (!in_array($invoice->status, $allowed, true)) {
                 throw new \RuntimeException("Invoice {$invoice->id} cannot be cancelled from status '{$invoice->status}'");
             }

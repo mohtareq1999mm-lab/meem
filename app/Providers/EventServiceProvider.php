@@ -73,9 +73,6 @@ class EventServiceProvider extends ServiceProvider
             RestoreProductInventory::class,
             SendOrderCancelledNotification::class,
         ],
-        \Marvel\Events\OrderCancelled::class => [
-            RestoreProductInventory::class,
-        ],
         OrderCreated::class => [
             SendNewOrderNotification::class,
         ],

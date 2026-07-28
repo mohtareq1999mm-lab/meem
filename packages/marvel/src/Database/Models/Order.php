@@ -35,6 +35,7 @@ class Order extends Model
     protected $table = 'orders';
 
     public $fillable = [
+        'order_number',
         'user_id',
         'governorate_id',
         'name',
@@ -99,6 +100,13 @@ class Order extends Model
         static::addGlobalScope('order', function (Builder $builder) {
             $builder->orderBy('created_at', 'desc');
         });
+
+        static::created(function (self $order) {
+            if (empty($order->order_number)) {
+                $order->order_number = 'ORD-' . str_pad((string) $order->id, 8, '0', STR_PAD_LEFT);
+                $order->saveQuietly();
+            }
+        });
     }
 
     public function user(): BelongsTo
@@ -153,6 +161,10 @@ class Order extends Model
 
     public function getOrderNumberAttribute(): string
     {
+        if (array_key_exists('order_number', $this->attributes) && $this->attributes['order_number'] !== null) {
+            return $this->attributes['order_number'];
+        }
+
         return 'ORD-' . str_pad((string) $this->id, 8, '0', STR_PAD_LEFT);
     }
 
@@ -162,19 +174,13 @@ class Order extends Model
             return $this->attributes['payment_status'];
         }
 
-        if (in_array($this->payment_method, ['cod', 'pay_at_cashier'])) {
-            $latestTransaction = $this->transactions()->latest()->first();
-            if ($latestTransaction) {
-                return match ($latestTransaction->status) {
-                    'paid' => PaymentStatus::SUCCESS,
-                    'failed' => PaymentStatus::FAILED,
-                    default => PaymentStatus::PENDING,
-                };
-            }
-            if (in_array($this->status, ['completed', 'delivered'])) {
-                return PaymentStatus::SUCCESS;
-            }
-            return PaymentStatus::PENDING;
+        $latestTransaction = $this->transactions()->latest()->first();
+        if ($latestTransaction) {
+            return match ($latestTransaction->status) {
+                'paid' => PaymentStatus::SUCCESS,
+                'failed' => PaymentStatus::FAILED,
+                default => PaymentStatus::PENDING,
+            };
         }
 
         return match ($this->status) {
