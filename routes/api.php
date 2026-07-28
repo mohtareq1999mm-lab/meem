@@ -110,14 +110,7 @@ Route::prefix('v1/general')->middleware('api')->group(function () {
     Route::get('orders', [OrderController::class, 'index'])->middleware('auth:sanctum');
 
     //======================== shipments ========================/
-    Route::prefix('shipments')->middleware('auth:sanctum')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Api\ShipmentController::class, 'index']);
-        Route::get('uuid/{uuid}', [\App\Http\Controllers\Api\ShipmentController::class, 'showByUuid']);
-        Route::get('{id}', [\App\Http\Controllers\Api\ShipmentController::class, 'show']);
-        Route::post('/', [\App\Http\Controllers\Api\ShipmentController::class, 'store']);
-        Route::put('{id}/status', [\App\Http\Controllers\Api\ShipmentController::class, 'updateStatus']);
-        Route::put('{id}', [\App\Http\Controllers\Api\ShipmentController::class, 'update']);
-    });
+  
 
     //======================== invoices ========================/
     Route::prefix('invoices')->group(function () {

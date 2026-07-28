@@ -268,6 +268,15 @@ Route::put('/users/{userId}/permissions', [RoleAndPermissionController::class, '
 Route::delete('/users/{userId}/permissions', [RoleAndPermissionController::class, 'removePermission']);
 
 
+Route::prefix('shipments')->middleware('auth:sanctum')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Api\ShipmentController::class, 'index']);
+    Route::get('uuid/{uuid}', [\App\Http\Controllers\Api\ShipmentController::class, 'showByUuid']);
+    Route::get('{id}', [\App\Http\Controllers\Api\ShipmentController::class, 'show']);
+    Route::post('/', [\App\Http\Controllers\Api\ShipmentController::class, 'store']);
+    Route::put('{id}/status', [\App\Http\Controllers\Api\ShipmentController::class, 'updateStatus']);
+    Route::put('{id}', [\App\Http\Controllers\Api\ShipmentController::class, 'update']);
+});
+
 Route::post('content-pages/{content_page}/attach-sections', [ContentPageController::class, 'attachSections']);
 Route::patch('content-pages/{content_page}/toggle-active', [ContentPageController::class, 'toggleActive']);
 Route::apiResource('content-pages', ContentPageController::class);

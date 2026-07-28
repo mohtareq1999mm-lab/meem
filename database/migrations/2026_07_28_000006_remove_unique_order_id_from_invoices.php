@@ -9,22 +9,20 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('invoices', function (Blueprint $table) {
+            $table->dropForeign(['order_id']);
             $table->dropUnique('uq_invoices_order_id');
-        });
-
-        Schema::table('invoices', function (Blueprint $table) {
             $table->index('order_id', 'idx_invoices_order_id');
+            $table->foreign('order_id')->references('id')->on('orders')->restrictOnDelete();
         });
     }
 
     public function down(): void
     {
         Schema::table('invoices', function (Blueprint $table) {
+            $table->dropForeign(['order_id']);
             $table->dropIndex('idx_invoices_order_id');
-        });
-
-        Schema::table('invoices', function (Blueprint $table) {
             $table->unique('order_id', 'uq_invoices_order_id');
+            $table->foreign('order_id')->references('id')->on('orders')->restrictOnDelete();
         });
     }
 };
