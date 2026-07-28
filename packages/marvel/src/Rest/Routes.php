@@ -166,7 +166,7 @@ Route::middleware(['auth:sanctum', "throttle:cart"])->group(function () {
     Route::delete('cart/delete-item/{itemId}', [CartController::class, 'deleteItemFromCart']);
     Route::delete('cart/delete-items', [CartController::class, 'destroy']);
 });
-
+    
 Route::apiResource('pickup-locations', PickupLocationController::class);
 
 

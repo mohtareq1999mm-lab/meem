@@ -80,12 +80,15 @@ Route::prefix('v1/general')->middleware('api')->group(function () {
     Route::any('checkout/callback', [OrderController::class, 'checkoutCallback'])->name('api.checkout.callback');
     Route::any('checkout/error-callback', [OrderController::class, 'checkoutErrorCallback'])->name('api.checkout.errorCallback');
 
+    Route::controller(FastShippingController::class)->group(function () {
+        Route::post('checkout/fast', 'checkout')->middleware('auth:sanctum');
+    });
     Route::get('products', [ProductController::class, 'index']);
     Route::get('products/{slug}', [ProductController::class, 'getProductBySlug']);
 
-  //========================= product reviews =========================//
-        Route::post('products/{id}/reviews',[ProductController::class, 'addProductReview'])->middleware('auth:sanctum');
-        Route::put('products/reviews/{id}', [ProductController::class, 'updateProductReview'])->middleware('auth:sanctum');
+    //========================= product reviews =========================//
+    Route::post('products/{id}/reviews', [ProductController::class, 'addProductReview'])->middleware('auth:sanctum');
+    Route::put('products/reviews/{id}', [ProductController::class, 'updateProductReview'])->middleware('auth:sanctum');
 
     Route::get('flash-sales', [FlashSaleController::class, 'index']);
     Route::get('flash-sales/{slug}', [FlashSaleController::class, 'getFlashSaleBySlug']);
@@ -112,5 +115,5 @@ Route::prefix('v1/general')->middleware('api')->group(function () {
     //======================== shipments ========================/
 
 
-   
+
 });

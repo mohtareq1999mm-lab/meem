@@ -111,7 +111,7 @@ class CartController extends CoreController
         }
 
         $this->repository->revalidatePromotion($cart);
-        $cart->update(['total_price' => $cart->items()->sum('total_price')]);
+        $cart->update(['total_price' => round((float) $cart->items()->sum('total_price'), 2)]);
         return $this->apiResponse(DELETE_CART_ITEM_SUCCESSFULLY, 200, true);
     }
 

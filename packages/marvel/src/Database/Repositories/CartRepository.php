@@ -35,7 +35,7 @@ class CartRepository extends BaseRepository
             ->update([
                 'promotion_id' => null,
                 'discount_amount' => 0,
-                'total_price' => DB::raw('price * quantity'),
+                'total_price' => DB::raw('ROUND(price * quantity, 2)'),
             ]);
 
         if ($affected > 0) {

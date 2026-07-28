@@ -56,7 +56,7 @@ class CartInventoryService
                 'quantity' => $desiredQuantity,
                 'reserved_quantity' => $desiredQuantity,
                 'price' => $price,
-                'total_price' => $price * $desiredQuantity,
+                'total_price' => round($price * $desiredQuantity, 2),
                 'attributes' => $variant ? $this->getVariantAttributes($variant) : ($attributes ?: null),
                 'shipping_method' => $shippingMethod,
                 'promotion_id' => null,

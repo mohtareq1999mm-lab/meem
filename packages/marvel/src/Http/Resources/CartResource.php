@@ -26,7 +26,7 @@ class CartResource extends Resource
         $couponModel = $this->coupon ? Coupon::where('code', $this->coupon)->first() : null;
         $couponObject = $couponModel ? CouponResource::make($couponModel) : null;
 
-        $subtotal = $items ? $items->sum('total_price') : 0;
+        $subtotal = $items ? round((float) $items->sum('total_price'), 2) : 0;
 
         $couponDiscount = 0.0;
         if ($couponModel) {
