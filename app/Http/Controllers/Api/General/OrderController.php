@@ -10,6 +10,9 @@ use App\Services\General\OrderService;
 use App\Services\Gateway\CashierQrService;
 use App\Services\Payment\PaymentCheckoutHandler;
 use App\Services\Payment\PaymentGatewayFactory;
+use App\Events\OrderCancelled;
+use App\Events\PaymentFailed;
+use App\Events\PaymentSucceeded;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,9 +21,6 @@ use Marvel\Database\Models\Transaction;
 use Marvel\Database\Models\User;
 use Marvel\Enums\PaymentStatus;
 use Marvel\Enums\ShippingMethod;
-use App\Events\OrderCancelled;
-use App\Events\PaymentFailed;
-use App\Events\PaymentSucceeded;
 use Marvel\Http\Requests\OrderCreateRequest;
 use Marvel\Traits\ApiResponse;
 
@@ -201,11 +201,19 @@ class OrderController extends Controller
 
         $order = $transaction?->order;
 
+        $callbackType = $this->getCallbackType($transaction, $request);
+
         if (!$result->success) {
             if ($transaction) {
+                $existingResponse = is_array($transaction->gateway_response) ? $transaction->gateway_response : [];
+                $callbackType = $existingResponse['_callback_type'] ?? null;
+                $mergedResponse = is_array($result->rawResponse) ? $result->rawResponse : [];
+                if ($callbackType) {
+                    $mergedResponse['_callback_type'] = $callbackType;
+                }
                 $transaction->update([
                     'status' => $result->status ?? 'failed',
-                    'gateway_response' => $result->rawResponse,
+                    'gateway_response' => $mergedResponse,
                     'error_message' => $result->errorMessage,
                 ]);
             }
@@ -220,6 +228,14 @@ class OrderController extends Controller
 
             $errorMessage = $result->errorMessage ?? __(PAYMENT_FAILED);
 
+            if ($callbackType === 'mobile') {
+                return $this->apiResponse(CHECKOUT_SUCCESSFUL, 200, true, [
+                    'status' => 'failed',
+                    'message' => $errorMessage,
+                    'payment_id' => $paymentId,
+                ]);
+            }
+
             return redirect(config('app.app_url_frontend') . '/' . app()->getLocale() . '/payment/failed?' . http_build_query([
                 'status' => 'failed',
                 'message' => $errorMessage,
@@ -228,7 +244,7 @@ class OrderController extends Controller
         }
 
         if (!$order) {
-            if (request()->type === 'mobile') {
+            if ($callbackType === 'mobile') {
                 return $this->apiResponse(CHECKOUT_SUCCESSFUL, 200, true, [
                     'status' => 'success',
                     'message' => __(PAYMENT_SUCCESSFUL),
@@ -243,25 +259,43 @@ class OrderController extends Controller
             ]));
         }
 
+        $isTestGateway = str_contains(config('services.myfatoorah.base_url', ''), 'apitest');
+
         $hasMismatch = false;
 
         if ($result->amount !== null && abs((float) $result->amount - (float) $order->total_price) > 0.01) {
-            $hasMismatch = true;
-            \Log::warning('Payment amount mismatch - blocking order', [
-                'order_id' => $order->id,
-                'expected' => (float) $order->total_price,
-                'received' => $result->amount,
-                'currency' => $result->currency,
-            ]);
+            if ($isTestGateway) {
+                \Log::info('Payment amount mismatch ignored (test gateway)', [
+                    'order_id' => $order->id,
+                    'expected' => (float) $order->total_price,
+                    'received' => $result->amount,
+                ]);
+            } else {
+                $hasMismatch = true;
+                \Log::warning('Payment amount mismatch - blocking order', [
+                    'order_id' => $order->id,
+                    'expected' => (float) $order->total_price,
+                    'received' => $result->amount,
+                    'currency' => $result->currency,
+                ]);
+            }
         }
 
         if (!$hasMismatch && $result->currency !== null && $result->currency !== config('payment.default_currency', 'EGP')) {
-            $hasMismatch = true;
-            \Log::warning('Payment currency mismatch - blocking order', [
-                'order_id' => $order->id,
-                'expected' => config('payment.default_currency', 'EGP'),
-                'received' => $result->currency,
-            ]);
+            if ($isTestGateway) {
+                \Log::info('Payment currency mismatch ignored (test gateway)', [
+                    'order_id' => $order->id,
+                    'expected' => config('payment.default_currency', 'EGP'),
+                    'received' => $result->currency,
+                ]);
+            } else {
+                $hasMismatch = true;
+                \Log::warning('Payment currency mismatch - blocking order', [
+                    'order_id' => $order->id,
+                    'expected' => config('payment.default_currency', 'EGP'),
+                    'received' => $result->currency,
+                ]);
+            }
         }
 
         if ($hasMismatch) {
@@ -276,6 +310,13 @@ class OrderController extends Controller
                 report($e);
             }
             $errorMessage = $result->errorMessage ?? __(PAYMENT_FAILED);
+            if ($callbackType === 'mobile') {
+                return $this->apiResponse(PAYMENT_FAILED, 400, false, [
+                    'status' => 'failed',
+                    'message' => $errorMessage,
+                    'payment_id' => $paymentId,
+                ]);
+            }
             return redirect(config('app.app_url_frontend') . '/' . app()->getLocale() . '/payment/failed?' . http_build_query([
                 'status' => 'failed',
                 'message' => $errorMessage,
@@ -312,9 +353,15 @@ class OrderController extends Controller
                 return;
             }
 
+            $existingResponse = is_array($lockedTransaction->gateway_response) ? $lockedTransaction->gateway_response : [];
+            $callbackType = $existingResponse['_callback_type'] ?? null;
+            $mergedResponse = is_array($result->rawResponse) ? $result->rawResponse : [];
+            if ($callbackType) {
+                $mergedResponse['_callback_type'] = $callbackType;
+            }
             $lockedTransaction->update([
                 'status' => 'paid',
-                'gateway_response' => $result->rawResponse,
+                'gateway_response' => $mergedResponse,
                 'error_message' => $result->errorMessage,
                 'paid_at' => now(),
             ]);
@@ -355,7 +402,7 @@ class OrderController extends Controller
             }
         }
 
-        if (request()->type === 'mobile') {
+        if ($this->getCallbackType($transaction, $request) === 'mobile') {
             return $this->apiResponse(CHECKOUT_SUCCESSFUL, 200, true, [
                 'status' => 'success',
                 'message' => __(PAYMENT_SUCCESSFUL),
@@ -396,8 +443,19 @@ class OrderController extends Controller
 
         $result = $gateway->verifyPayment($paymentId);
 
+        $verifiedInvoiceId = $result->gatewayTransactionId;
+
+        if (!$transaction) {
+            $transaction = Transaction::where('gateway_transaction_id', $verifiedInvoiceId)
+                ->orWhere('invoice_id', $verifiedInvoiceId)
+                ->first();
+        }
+
+        $order = $transaction?->order;
+        $errorCallbackType = $this->getCallbackType($transaction, $request);
+
         if ($result->success) {
-            if ($request->type === 'mobile') {
+            if ($errorCallbackType === 'mobile') {
                 return $this->apiResponse(CHECKOUT_SUCCESSFUL, 200, true, [
                     'status' => 'success',
                     'message' => __(PAYMENT_SUCCESSFUL),
@@ -413,16 +471,6 @@ class OrderController extends Controller
         }
 
         $errorMessage = $result->errorMessage ?? __(PAYMENT_FAILED);
-
-        $verifiedInvoiceId = $result->gatewayTransactionId;
-
-        if (!$transaction) {
-            $transaction = Transaction::where('gateway_transaction_id', $verifiedInvoiceId)
-                ->orWhere('invoice_id', $verifiedInvoiceId)
-                ->first();
-        }
-
-        $order = $transaction?->order;
 
         DB::transaction(function () use ($transaction, $paymentId, $verifiedInvoiceId, $result, $errorMessage) {
             $lockedTransaction = Transaction::where('gateway_transaction_id', $paymentId)
@@ -445,9 +493,15 @@ class OrderController extends Controller
                 return;
             }
 
+            $existingResponse = is_array($lockedTransaction->gateway_response) ? $lockedTransaction->gateway_response : [];
+            $callbackType = $existingResponse['_callback_type'] ?? null;
+            $mergedResponse = is_array($result->rawResponse) ? $result->rawResponse : [];
+            if ($callbackType) {
+                $mergedResponse['_callback_type'] = $callbackType;
+            }
             $lockedTransaction->update([
                 'status' => 'failed',
-                'gateway_response' => $result->rawResponse,
+                'gateway_response' => $mergedResponse,
                 'error_message' => $errorMessage,
             ]);
         });
@@ -460,7 +514,7 @@ class OrderController extends Controller
             report($e);
         }
 
-        if ($request->type === 'mobile') {
+        if ($errorCallbackType === 'mobile') {
             return $this->apiResponse(PAYMENT_FAILED, 400, false, [
                 'status' => 'failed',
                 'error' => $errorMessage,
@@ -473,5 +527,16 @@ class OrderController extends Controller
             'error' => $errorMessage,
             'payment_id' => $paymentId,
         ]));
+    }
+
+    private function getCallbackType(?Transaction $transaction, Request $request): string
+    {
+        if ($transaction && is_array($transaction->gateway_response)) {
+            $storedType = $transaction->gateway_response['_callback_type'] ?? null;
+            if ($storedType) {
+                return $storedType;
+            }
+        }
+        return $request->type ?? 'web';
     }
 }

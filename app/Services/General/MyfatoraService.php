@@ -39,12 +39,23 @@ class MyfatoraService
         $response = $http->post($this->baseUrl . $url, $data);
 
         if (!$response->successful()) {
+            Log::error('MyFatoorah request failed', [
+                'url' => $this->baseUrl . $url,
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'headers' => $response->headers(),
+            ]);
             return null;
         }
 
         $body = $response->json();
 
         if (!is_array($body) || !($body['IsSuccess'] ?? false)) {
+            Log::warning('MyFatoorah response indicates failure', [
+                'url' => $this->baseUrl . $url,
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
             return null;
         }
 

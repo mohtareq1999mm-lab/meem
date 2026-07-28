@@ -22,7 +22,7 @@ class PaymentCheckoutHandler
         private CartInventoryService $cartInventoryService,
     ) {}
 
-    public function handleOnlinePayment(
+    public function     handleOnlinePayment(
         Request $request,
         Order $order,
         float $amount,
@@ -39,11 +39,6 @@ class PaymentCheckoutHandler
         $callbackUrl ??= route('api.checkout.callback');
         $errorUrl ??= route('api.checkout.errorCallback');
 
-        if ($request->type === 'mobile') {
-            $callbackUrl .= '?type=mobile';
-            $errorUrl .= '?type=mobile';
-        }
-
         $result = $gatewayInstance->createInvoice(
             $order,
             $amount,
@@ -55,6 +50,9 @@ class PaymentCheckoutHandler
             return $this->apiResponse($result->errorMessage ?? ERROR_CREATING_INVOICE, 500, false);
         }
 
+        $rawResponse = is_array($result->rawResponse) ? $result->rawResponse : [];
+        $rawResponse['_callback_type'] = $request->type ?? 'web';
+
         $transaction = Transaction::create([
             'order_id' => $order->id,
             'user_id' => $request->user()->id,
@@ -62,9 +60,9 @@ class PaymentCheckoutHandler
             'payment_method' => $gateway,
             'status' => 'pending',
             'amount' => $amount,
-            'currency' => config('payment.default_currency', 'EGP'),
+            'currency' => config('payment.default_currency', 'KWD'),
             'gateway_transaction_id' => $result->gatewayTransactionId,
-            'gateway_response' => $result->rawResponse,
+            'gateway_response' => $rawResponse,
         ]);
 
         if (!$transaction) {

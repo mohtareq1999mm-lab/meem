@@ -20,13 +20,18 @@ class MyFatoorahGateway implements PaymentGatewayContract
         string $errorUrl,
         array $metadata = []
     ): GatewayResult {
+        $mobile = $order->user_phone ?? '';
+        $mobile = preg_replace('/^\+?20/', '', $mobile);
+        $mobile = preg_replace('/[^0-9]/', '', $mobile);
+        $mobile = substr($mobile, 0, 11);
+
         $data = [
             'InvoiceValue' => $amount,
             'CustomerName' => $order->name ?? 'Customer',
             'NotificationOption' => 'LNK',
             'DisplayCurrencyIso' => 'EGP',
             'MobileCountryCode' => '+20',
-            'CustomerMobile' => $order->user_phone,
+            'CustomerMobile' => $mobile,
             'CustomerEmail' => $order->user_email,
             'language' => app()->getLocale() == 'ar' ? 'ar' : 'en',
             'CallBackUrl' => $callbackUrl,
