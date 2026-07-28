@@ -150,9 +150,9 @@ class CartController extends CoreController
 
         $request->validate([
             'items' => 'required|array',
-            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.product_id' => 'required|exists:products,id,deleted_at,NULL',
             'items.*.quantity' => 'required|integer|min:1',
-            'items.*.product_variant_id' => 'nullable|exists:product_variants,id',
+            'items.*.product_variant_id' => 'nullable|exists:product_variants,id,deleted_at,NULL',
             'items.*.shipping_method' => 'required|string|in:scheduled,fast,SCHEDULED,FAST',
         ]);
 
