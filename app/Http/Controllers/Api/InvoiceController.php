@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Invoice\CorrectInvoiceRequest;
 use App\Http\Requests\Invoice\DebitNoteRequest;
+use App\Http\Resources\Invoice\AdminInvoiceCollection;
+use App\Http\Resources\Invoice\AdminInvoiceResource;
+use App\Http\Resources\Invoice\CustomerInvoiceCollection;
 use App\Http\Resources\Invoice\InvoiceCollection;
 use App\Http\Resources\Invoice\InvoiceResource;
 use App\Models\Invoice;
@@ -65,7 +68,7 @@ class InvoiceController extends Controller
             FETCH_DATA_SUCCESSFULLY,
             200,
             true,
-            new InvoiceCollection($invoices)
+            new AdminInvoiceCollection($invoices)
         );
     }
 
@@ -77,7 +80,7 @@ class InvoiceController extends Controller
             FETCH_DATA_SUCCESSFULLY,
             200,
             true,
-            InvoiceResource::make($invoice)
+            AdminInvoiceResource::make($invoice)
         );
     }
 
@@ -91,7 +94,7 @@ class InvoiceController extends Controller
             FETCH_DATA_SUCCESSFULLY,
             200,
             true,
-            InvoiceResource::make($invoice)
+            AdminInvoiceResource::make($invoice)
         );
     }
 
@@ -109,7 +112,7 @@ class InvoiceController extends Controller
             FETCH_DATA_SUCCESSFULLY,
             200,
             true,
-            new InvoiceCollection($invoices)
+            new CustomerInvoiceCollection($invoices)
         );
     }
 
@@ -232,7 +235,7 @@ class InvoiceController extends Controller
                 'Invoice corrected successfully',
                 200,
                 true,
-                InvoiceResource::make($correction)
+                AdminInvoiceResource::make($correction)
             );
         } catch (\RuntimeException $e) {
             return $this->apiResponse($e->getMessage(), 422, false);
@@ -254,7 +257,7 @@ class InvoiceController extends Controller
                 'Invoice cancelled successfully',
                 200,
                 true,
-                InvoiceResource::make($invoice)
+                AdminInvoiceResource::make($invoice)
             );
         } catch (\RuntimeException $e) {
             return $this->apiResponse($e->getMessage(), 422, false);
