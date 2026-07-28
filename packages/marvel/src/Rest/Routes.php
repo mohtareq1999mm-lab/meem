@@ -166,7 +166,7 @@ Route::middleware(['auth:sanctum', "throttle:cart"])->group(function () {
     Route::delete('cart/delete-item/{itemId}', [CartController::class, 'deleteItemFromCart']);
     Route::delete('cart/delete-items', [CartController::class, 'destroy']);
 });
-    
+
 Route::apiResource('pickup-locations', PickupLocationController::class);
 
 
@@ -278,22 +278,7 @@ Route::prefix('shipments')->middleware('auth:sanctum')->group(function () {
     Route::put('{id}', [\App\Http\Controllers\Api\ShipmentController::class, 'update']);
 });
 
-//======================== invoices ========================/
-    Route::prefix('invoices')->group(function () {
-        Route::get('my-invoices', [InvoiceController::class, 'myInvoices'])->middleware('auth:sanctum');
-        Route::get('verify/{uuid}', [InvoiceController::class, 'verify'])->middleware('throttle:60,1');
-        Route::get('uuid/{uuid}', [InvoiceController::class, 'showByUuid'])->middleware('auth:sanctum');
 
-        Route::middleware(['auth:sanctum'])->group(function () {
-            Route::get('/', [InvoiceController::class, 'index']);
-            Route::get('{uuid}/download', [InvoiceController::class, 'download'])->whereUuid('uuid')->middleware('throttle:30,1');
-            Route::get('{id}', [InvoiceController::class, 'show']);
-            Route::post('{id}/regenerate', [InvoiceController::class, 'regenerate']);
-            Route::post('{id}/correct', [InvoiceController::class, 'correct']);
-            Route::post('{id}/cancel', [InvoiceController::class, 'cancel']);
-            Route::post('{id}/debit-note', [InvoiceController::class, 'issueDebitNote']);
-        });
-    });
 
 Route::post('content-pages/{content_page}/attach-sections', [ContentPageController::class, 'attachSections']);
 Route::patch('content-pages/{content_page}/toggle-active', [ContentPageController::class, 'toggleActive']);
