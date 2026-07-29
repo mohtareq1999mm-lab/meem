@@ -237,6 +237,7 @@ Production Ready
 - RateLimiter::for('cart') registered at RouteServiceProvider.php configured at 20 req/min per user
 - English cart.inventory.* translation keys added
 - Rev 2 (2026-07-29): Bulk-items shipping_method made optional with default; non-existent products skipped gracefully
+- Rev 3 (2026-07-29): Bulk-items per-item error handling — stock failures skip individual items, reported in `failed_items` array
 
 ---
 

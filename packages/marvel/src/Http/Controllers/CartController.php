@@ -4,7 +4,6 @@ namespace Marvel\Http\Controllers;
 
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Marvel\Database\Repositories\CartRepository;
 use App\Services\General\CartInventoryService;
 use Marvel\Database\Models\Cart;
@@ -177,18 +176,19 @@ class CartController extends CoreController
             ->pluck('product_id')
             ->values();
 
-        if ($validItems->isNotEmpty()) {
-            DB::beginTransaction();
+        $failedItems = [];
+
+        foreach ($validItems as $item) {
             try {
-                foreach ($validItems as $item) {
-                    $tempRequest = clone $request;
-                    $tempRequest->replace(['item' => $item]);
-                    $this->repository->storeCart($tempRequest);
-                }
-                DB::commit();
+                $tempRequest = clone $request;
+                $tempRequest->replace(['item' => $item]);
+                $this->repository->storeCart($tempRequest);
             } catch (\Exception $e) {
-                DB::rollBack();
-                return $this->apiResponse($e->getMessage(), 400, false);
+                $failedItems[] = [
+                    'product_id' => $item['product_id'],
+                    'product_variant_id' => $item['product_variant_id'] ?? null,
+                    'reason' => $e->getMessage(),
+                ];
             }
         }
 
@@ -202,6 +202,7 @@ class CartController extends CoreController
         return $this->apiResponse(CREATE_CART_SUCCESSFULLY, 201, true, [
             'cart' => $response,
             'skipped_product_ids' => $skippedIds,
+            'failed_items' => $failedItems,
         ]);
     }
 }

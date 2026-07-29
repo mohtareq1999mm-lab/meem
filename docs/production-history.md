@@ -665,3 +665,38 @@ YES
 
 Notes:
 Change is backward compatible — all existing responses preserve their structure. Only new behavior: invalid product_ids are silently skipped and reported in `skipped_product_ids` instead of returning an error.
+
+---
+
+Date:
+2026-07-29
+
+Feature:
+Cart (Bulk Items)
+
+Revision:
+3
+
+Summary:
+Removed outer DB transaction in pluckItemsToCart — each item now processes independently. When an item fails (e.g., stock exceeded, variant not found), it is skipped and reported in `failed_items` array with the error reason, while other valid items continue to be added. Added `failed_items` to response with per-item product_id, product_variant_id, and reason. Removed unused DB facade import. Added 2 new tests: stock failure skip preserves valid items, all-fail returns null cart with failed_items.
+
+Verified Bugs Fixed:
+- BUG-3 (HIGH): Single item stock failure rolled back entire transaction — all items discarded. Fix: per-item processing with independent error handling.
+
+Documentation Updated:
+YES
+
+Routes Updated:
+NO
+
+Regression Executed:
+YES
+
+Regression Result:
+PASS (CartApiTest bulk tests 6/6, 34 assertions; full suite 61/65 pass, 4 pre-existing failures)
+
+Production Ready:
+YES
+
+Notes:
+Change is backward compatible — all existing responses remain consistent. New `failed_items` field added to response data. Each failed item includes product_id, product_variant_id, and reason string for client-side reporting.

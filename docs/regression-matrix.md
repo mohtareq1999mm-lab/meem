@@ -294,15 +294,14 @@ Cart — `pluckItemsToCart` method (POST /cart/bulk-items)
 
 | Suite | Status | Reason |
 |-------|--------|--------|
-| CartApiTest — bulk tests | PASS (4/4) | Skip non-existent products, mixed valid/invalid items, all-or-none invalid items |
+| CartApiTest — bulk tests | PASS (6/6) | Skip non-existent products, mixed valid/invalid, stock failure skip, all-fail returns empty cart |
 
-**Changes Applied (Revision 2):**
-- `CartController.php`: Changed `items.*.shipping_method` from `required` to `nullable` with default `SCHEDULED` normalization
-- `CartController.php`: Removed `$validItems->isEmpty()` error guard — all-invalid items now returns 201 with null cart + `skipped_product_ids`
-- `CartController.php`: Removed `$cart` null check error — returns 201 with null cart when all items skipped
-- `CartController.php`: Added `use Marvel\Enums\ShippingMethod` import
-- `CartApiTest.php`: Fixed `test_bulk_add_validates_items` → `test_bulk_add_skips_nonexistent_products` (asserts 201 with skipped IDs)
-- `CartApiTest.php`: Added `test_bulk_add_mixed_valid_and_nonexistent_skips_invalid` — verifies valid items added, invalid skipped
+**Changes Applied (Revision 3):**
+- `CartController.php`: Removed outer DB transaction — each item processed independently; failed items caught per-item and reported in `failed_items` array
+- `CartController.php`: Added `failed_items` to response — each entry has `product_id`, `product_variant_id`, `reason`
+- `CartController.php`: Removed unused `use Illuminate\Support\Facades\DB` import
+- `CartApiTest.php`: Updated `test_bulk_add_rolls_back_on_failure` → `test_bulk_add_skips_stock_failures_and_continues` (asserts 201 with failed_items)
+- `CartApiTest.php`: Added `test_bulk_add_skips_all_failures_returns_empty_cart` — all items fail, null cart returned
 
 ---
 
@@ -354,4 +353,4 @@ Coupon Assignments (Admin CRUD)
 - Created `CouponAssignmentApiTest.php`: 30 tests covering auth, CRUD, edge cases, computed fields
 - Created `CouponAssignmentValidationTest.php`: 13 tests covering validation rules
 | AttributeCombinedSuite | PASS (48/48) | 2026-07-19 | All Attribute + Attribute Values tests pass (16 existing + 32 new) after 3 bug fixes |
-| CartBulkItemsSuite | PASS (4/4 new + 60/64 full suite) | 2026-07-29 | 4 pre-existing failures unrelated (gift promotion, finalization, resource structure) |
+| CartBulkItemsSuite | PASS (6/6 new, 61/65 full suite) | 2026-07-29 | 4 pre-existing failures unrelated (gift promotion, finalization, resource structure) |

@@ -393,6 +393,7 @@ class CartApiTest extends TestCase
         $response->assertStatus(201);
         $response->assertJsonPath('success', true);
         $response->assertJsonPath('data.skipped_product_ids', [99999, 88888]);
+        $response->assertJsonPath('data.failed_items', []);
         $this->assertNull($response->json('data.cart'));
 
         $cart = Cart::where('user_id', $this->user->id)->first();
@@ -415,6 +416,7 @@ class CartApiTest extends TestCase
         $response->assertStatus(201);
         $response->assertJsonPath('success', true);
         $response->assertJsonPath('data.skipped_product_ids', [99999, 88888]);
+        $response->assertJsonPath('data.failed_items', []);
 
         $cart = Cart::where('user_id', $this->user->id)->first();
         $this->assertNotNull($cart);
@@ -574,10 +576,10 @@ class CartApiTest extends TestCase
     }
 
     // =========================================================================
-    // Bulk add — transaction rolls back on failure
+    // Bulk add — skips items that fail stock or other checks, continues with valid ones
     // =========================================================================
 
-    public function test_bulk_add_rolls_back_on_failure()
+    public function test_bulk_add_skips_stock_failures_and_continues()
     {
         $this->auth();
 
@@ -598,7 +600,48 @@ class CartApiTest extends TestCase
             ],
         ]);
 
-        $response->assertStatus(400);
+        $response->assertStatus(201);
+        $response->assertJsonPath('success', true);
+        $response->assertJsonPath('data.skipped_product_ids', []);
+
+        $failedItems = $response->json('data.failed_items');
+        $this->assertCount(1, $failedItems);
+        $this->assertEquals($productWithZeroStock->id, $failedItems[0]['product_id']);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertNotNull($cart);
+        $cart->load('items');
+        $this->assertCount(1, $cart->items);
+        $this->assertEquals($this->product->id, $cart->items->first()->product_id);
+    }
+
+    public function test_bulk_add_skips_all_failures_returns_empty_cart()
+    {
+        $this->auth();
+
+        $productWithZeroStock = Product::create([
+            'name' => 'Zero Stock',
+            'slug' => 'zero-stock-' . Str::random(8),
+            'price' => 10.00,
+            'product_type' => ProductType::SIMPLE,
+            'status' => true,
+            'in_stock' => false,
+            'stock_quantity' => 0,
+        ]);
+
+        $response = $this->postJson(self::PREFIX . '/cart/bulk-items', [
+            'items' => [
+                ['product_id' => $productWithZeroStock->id, 'quantity' => 1, 'shipping_method' => 'scheduled'],
+            ],
+        ]);
+
+        $response->assertStatus(201);
+        $response->assertJsonPath('success', true);
+        $response->assertJsonPath('data.skipped_product_ids', []);
+
+        $failedItems = $response->json('data.failed_items');
+        $this->assertCount(1, $failedItems);
+        $this->assertEquals($productWithZeroStock->id, $failedItems[0]['product_id']);
 
         $cart = Cart::where('user_id', $this->user->id)->first();
         $this->assertNull($cart);
