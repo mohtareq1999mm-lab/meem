@@ -45,7 +45,7 @@ class OrderResource extends JsonResource
                     'uuid' => $invoice->uuid,
                     'invoice_number' => $invoice->invoice_number,
                     'status' => $invoice->status,
-                    'total' => (float) $invoice->total,
+                    'total' => $this->roundMoney($invoice->total),
                     'currency' => $invoice->currency,
                     'verification_url' => url('/api/v1/general/invoices/verify/' . $invoice->uuid),
                 ];
