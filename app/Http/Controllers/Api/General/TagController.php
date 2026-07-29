@@ -14,7 +14,7 @@ class TagController extends Controller
 
     public function index(Request $request)
     {
-         $query = Tag::query();
+         $tags = Tag::query();
 
         if ($request->filled('ids')) {
             $ids = is_array($request->ids) ? $request->ids : explode(',', $request->ids);
