@@ -31,7 +31,7 @@ class CartResource extends Resource
         $couponDiscount = 0.0;
         if ($couponModel) {
             $calculation = CouponCalculator::calculate($couponModel, $subtotal);
-            $couponDiscount = $calculation['discountAmount'];
+            $couponDiscount = round((float) $calculation['discountAmount'], 2);
         }
 
         $promotionService = app(PromotionService::class);

@@ -38,6 +38,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        ini_set('serialize_precision', '-1');
+
         Schema::defaultStringLength(191);
         if (!\App::environment('local')) {
             $this->app['request']->server->set('HTTPS', true);

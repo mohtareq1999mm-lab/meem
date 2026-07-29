@@ -24,7 +24,6 @@ class ProductVariantSeeder extends Seeder
         $products = Product::where('product_type', ProductType::VARIABLE)
             ->where('stock_quantity', '>', 0)
             ->inRandomOrder()
-            ->take(15)
             ->with('flash_sales')
             ->get();
 
