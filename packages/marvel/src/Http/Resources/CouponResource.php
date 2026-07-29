@@ -26,8 +26,8 @@ class CouponResource extends Resource
             'borderColor'   => $this->border_color ?? null,
             'borderless'    => (bool) ($this->borderless ?? false),
             'discount'      => $this->discount,
-            'discount_type' => $this->typeByLang(), // percentage أو fixed
-            'max_discount_amount' => $this->max_discount_amount,
+            'discount_type' => $this->typeByLang(),
+            'max_discount_amount' => $this->roundMoney($this->max_discount_amount),
             'start_date'    => $this->start_date,
             'end_date'      => $this->end_date,
             'limiter'       => $this->limiter,
@@ -40,5 +40,13 @@ class CouponResource extends Resource
                 : $this->assignments()->get()->toArray(),
             'created_at'    => $this->created_at?->toIso8601String(),
         ];
+    }
+
+    private function roundMoney($value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        return round((float) $value, 2);
     }
 }

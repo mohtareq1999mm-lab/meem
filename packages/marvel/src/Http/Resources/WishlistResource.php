@@ -10,12 +10,12 @@ class WishlistResource extends Resource
             'id'                     => $this->id,
             'name'                   => $this->getTranslation('name', app()->getLocale()),
             'slug'                   => $this->slug,
-            'price'                 => $this->product_type === 'simple'
-                ? $this->current_price
-                : $this->variations[0]->current_price ?? $this->variations[0]->price ?? null,
-            'current_price'          => $this->current_price,
-            'price_after_discount'   => $this->price_after_discount,
-            'price_after_flash_sale' => $this->price_after_flash_sale,
+            'price'                  => $this->product_type === 'simple'
+                ? $this->roundMoney($this->current_price)
+                : $this->roundMoney($this->variations[0]->current_price ?? $this->variations[0]->price ?? null),
+            'current_price'          => $this->roundMoney($this->current_price),
+            'price_after_discount'   => $this->roundMoney($this->price_after_discount),
+            'price_after_flash_sale' => $this->roundMoney($this->price_after_flash_sale),
             'in_stock'               => $this->in_stock,
             'has_flash_sale'         => $this->has_flash_sale,
             'has_discount'           => $this->has_discount,
@@ -24,8 +24,8 @@ class WishlistResource extends Resource
                 return $this->variations->map(function ($variant) {
                     return [
                         'id' => $variant->id,
-                        'price' => $variant->price,
-                        'current_price' => $variant->current_price,
+                        'price' => $this->roundMoney($variant->price),
+                        'current_price' => $this->roundMoney($variant->current_price),
                         'height' => $variant->height,
                         'width' => $variant->width,
                         'length' => $variant->length,
@@ -40,5 +40,13 @@ class WishlistResource extends Resource
                 });
             }),
         ];
+    }
+
+    private function roundMoney($value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        return round((float) $value, 2);
     }
 }

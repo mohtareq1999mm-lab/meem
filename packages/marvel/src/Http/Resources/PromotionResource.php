@@ -17,7 +17,7 @@ class PromotionResource extends Resource
             'value' => $this->value,
             'discount' => $this->discount ?? $this->value,
             'code' => $this->code,
-            'minimum_order_amount' => $this->minimum_order_amount,
+            'minimum_order_amount' => $this->roundMoney($this->minimum_order_amount),
             'required_quantity' => $this->required_quantity_type,
             'apply_to' => $this->apply_to,
             'products' => $this->whenLoaded('products'),
@@ -32,5 +32,13 @@ class PromotionResource extends Resource
             'is_valid' => $this->isValid(),
             'created_at' => $this->created_at ? $this->created_at->toIso8601String() : null,
         ];
+    }
+
+    private function roundMoney($value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        return round((float) $value, 2);
     }
 }

@@ -20,7 +20,7 @@ class GetSingleRefundResource extends Resource
             'title'               => $this->title,
             'refund_reason'       => $this->refund_reason,
             'description'         => $this->description,
-            'amount'              => $this->amount,
+            'amount'              => $this->roundMoney($this->amount),
             'status'              => $this->status,
             'images'              => $this->images,
             'customer'            => [
@@ -29,6 +29,14 @@ class GetSingleRefundResource extends Resource
             'order'               => $this->getOrderData($this->order),
             'created_at'          => $this->created_at,
         ];
+    }
+
+    private function roundMoney($value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        return round((float) $value, 2);
     }
 
     // TODO When order resource done then use OrderResource Instead of these function
@@ -42,13 +50,13 @@ class GetSingleRefundResource extends Resource
             'billing_address' => $data->billing_address,
             'customer_contact' => $data->customer_contact,
             'customer_name' => $data->customer_name,
-            'amount' => $data->amount,
-            'sales_tax' => $data->sales_tax,
-            'discount' => $data->discount,
-            'delivery_fee' => $data->delivery_fee,
+            'amount' => $this->roundMoney($data->amount),
+            'sales_tax' => $this->roundMoney($data->sales_tax),
+            'discount' => $this->roundMoney($data->discount),
+            'delivery_fee' => $this->roundMoney($data->delivery_fee),
             'order_status' => $data->order_status,
             'products' => $this->getProductData($data->products),
-            'paid_total' => $data->paid_total,
+            'paid_total' => $this->roundMoney($data->paid_total),
             'created_at'       => $this->created_at,
         ];
     }
@@ -69,7 +77,7 @@ class GetSingleRefundResource extends Resource
     {
         return [
             'order_quantity' => $pivot->order_quantity,
-            'subtotal' => $pivot->subtotal,
+            'subtotal' => $this->roundMoney($pivot->subtotal),
         ];
     }
 }

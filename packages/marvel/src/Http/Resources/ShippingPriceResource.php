@@ -12,9 +12,9 @@ class ShippingPriceResource extends JsonResource
         return [
             'id' => $this->id,
             'governorate_id' => $this->governorate_id,
-            'price' => (float) $this->price,
+            'price' => round((float) $this->price, 2),
             'estimated_days' => $this->estimated_days,
-            'free_shipping_over' => $this->free_shipping_over !== null ? (float) $this->free_shipping_over : null,
+            'free_shipping_over' => $this->free_shipping_over !== null ? round((float) $this->free_shipping_over, 2) : null,
             'status' => (bool) $this->status,
             'created_at' => optional($this->created_at)->toIso8601String(),
         ];

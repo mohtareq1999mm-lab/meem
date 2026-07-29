@@ -51,8 +51,8 @@ class InvoiceSnapshotResource extends JsonResource
         return [
             'type' => $fulfillment['type'] ?? null,
             'shipping_method' => $fulfillment['shipping_method'] ?? null,
-            'shipping_price' => (float) ($fulfillment['shipping_price'] ?? 0),
-            'fast_shipping_fee' => (float) ($fulfillment['fast_shipping_fee'] ?? 0),
+            'shipping_price' => round((float) ($fulfillment['shipping_price'] ?? 0), 2),
+            'fast_shipping_fee' => round((float) ($fulfillment['fast_shipping_fee'] ?? 0), 2),
             'expected_delivery_at' => $fulfillment['expected_delivery_at'] ?? null,
         ];
     }
@@ -64,8 +64,8 @@ class InvoiceSnapshotResource extends JsonResource
             'product_sku' => $item['product_sku'] ?? null,
             'attributes' => $item['attributes'] ?? null,
             'quantity' => (int) ($item['quantity'] ?? 0),
-            'unit_price' => (float) ($item['unit_price'] ?? 0),
-            'total_price' => (float) ($item['total_price'] ?? 0),
+            'unit_price' => round((float) ($item['unit_price'] ?? 0), 2),
+            'total_price' => round((float) ($item['total_price'] ?? 0), 2),
             'is_gift' => (bool) ($item['is_gift'] ?? false),
         ], $items);
     }
@@ -73,12 +73,12 @@ class InvoiceSnapshotResource extends JsonResource
     private function formatPricing(array $pricing): array
     {
         return [
-            'subtotal' => (float) ($pricing['subtotal'] ?? 0),
-            'promotion_discount' => (float) ($pricing['promotion_discount'] ?? 0),
-            'coupon_discount' => (float) ($pricing['coupon_discount'] ?? 0),
-            'shipping_price' => (float) ($pricing['shipping_price'] ?? 0),
-            'fast_shipping_fee' => (float) ($pricing['fast_shipping_fee'] ?? 0),
-            'total' => (float) ($pricing['total'] ?? 0),
+            'subtotal' => round((float) ($pricing['subtotal'] ?? 0), 2),
+            'promotion_discount' => round((float) ($pricing['promotion_discount'] ?? 0), 2),
+            'coupon_discount' => round((float) ($pricing['coupon_discount'] ?? 0), 2),
+            'shipping_price' => round((float) ($pricing['shipping_price'] ?? 0), 2),
+            'fast_shipping_fee' => round((float) ($pricing['fast_shipping_fee'] ?? 0), 2),
+            'total' => round((float) ($pricing['total'] ?? 0), 2),
             'currency' => $pricing['currency'] ?? null,
         ];
     }

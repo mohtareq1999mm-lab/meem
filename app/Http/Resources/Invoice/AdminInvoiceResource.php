@@ -15,13 +15,13 @@ class AdminInvoiceResource extends JsonResource
             'order_id' => $this->order_id,
             'invoice_number' => $this->invoice_number,
             'status' => $this->status,
-            'subtotal' => (float) $this->subtotal,
-            'shipping_price' => (float) $this->shipping_price,
-            'coupon_discount' => (float) $this->coupon_discount,
-            'promotion_discount' => (float) $this->promotion_discount,
-            'total_discount' => (float) $this->total_discount,
-            'total' => (float) $this->total,
-            'amount_paid' => (float) $this->amount_paid,
+            'subtotal' => $this->roundMoney($this->subtotal),
+            'shipping_price' => $this->roundMoney($this->shipping_price),
+            'coupon_discount' => $this->roundMoney($this->coupon_discount),
+            'promotion_discount' => $this->roundMoney($this->promotion_discount),
+            'total_discount' => $this->roundMoney($this->total_discount),
+            'total' => $this->roundMoney($this->total),
+            'amount_paid' => $this->roundMoney($this->amount_paid),
             'currency' => $this->currency,
             'payment_method' => $this->payment_method,
             'payment_gateway' => $this->payment_gateway,
@@ -69,12 +69,20 @@ class AdminInvoiceResource extends JsonResource
             ),
             'credit_notes_summary' => $this->when($this->relationLoaded('creditNotes'), fn () => [
                 'count' => $this->creditNotes->count(),
-                'total_amount' => (float) $this->creditNotes->sum('amount'),
+                'total_amount' => $this->roundMoney($this->creditNotes->sum('amount')),
             ]),
             'debit_notes_summary' => $this->when($this->relationLoaded('debitNotes'), fn () => [
                 'count' => $this->debitNotes->count(),
-                'total_amount' => (float) $this->debitNotes->sum('amount'),
+                'total_amount' => $this->roundMoney($this->debitNotes->sum('amount')),
             ]),
         ];
+    }
+
+    private function roundMoney($value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        return round((float) $value, 2);
     }
 }

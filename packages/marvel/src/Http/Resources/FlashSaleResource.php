@@ -30,9 +30,8 @@ class FlashSaleResource extends Resource
             "is_valid" => $this->isValid(),
             "type" => $this->typeByLang(),
             "discount" => $this->discount,
-            "max_discount_amount" => $this->max_discount_amount,
+            "max_discount_amount" => $this->roundMoney($this->max_discount_amount),
             "created_at" => $this->created_at->format('Y-m-d'),
-
 
 
             $this->mergeWhen($this->relationLoaded('products'), function () {
@@ -41,5 +40,13 @@ class FlashSaleResource extends Resource
                 ];
             }),
         ];
+    }
+
+    private function roundMoney($value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        return round((float) $value, 2);
     }
 }

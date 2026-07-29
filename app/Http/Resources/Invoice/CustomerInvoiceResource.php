@@ -13,10 +13,10 @@ class CustomerInvoiceResource extends JsonResource
             'uuid' => $this->uuid,
             'invoice_number' => $this->invoice_number,
             'status' => $this->status,
-            'subtotal' => (float) $this->subtotal,
-            'shipping_price' => (float) $this->shipping_price,
-            'total_discount' => (float) $this->total_discount,
-            'total' => (float) $this->total,
+            'subtotal' => $this->roundMoney($this->subtotal),
+            'shipping_price' => $this->roundMoney($this->shipping_price),
+            'total_discount' => $this->roundMoney($this->total_discount),
+            'total' => $this->roundMoney($this->total),
             'currency' => $this->currency,
             'payment_method' => $this->payment_method,
             'payment_gateway' => $this->payment_gateway,
@@ -32,5 +32,13 @@ class CustomerInvoiceResource extends JsonResource
                 InvoiceSnapshotResource::make($this->resource)
             ),
         ];
+    }
+
+    private function roundMoney($value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        return round((float) $value, 2);
     }
 }
