@@ -14,7 +14,18 @@ class TagController extends Controller
 
     public function index(Request $request)
     {
-        $tags = Tag::query()->get();
+         $query = Tag::query();
+
+        if ($request->filled('ids')) {
+            $ids = is_array($request->ids) ? $request->ids : explode(',', $request->ids);
+            $query->whereIn('id', $ids);
+        }
+
+        if ($request->filled('slugs')) {
+            $slugs = is_array($request->slugs) ? $request->slugs : explode(',', $request->slugs);
+            $query->whereIn('slug', $slugs);
+        }
+
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, TagResource::collection($tags));
     }
 

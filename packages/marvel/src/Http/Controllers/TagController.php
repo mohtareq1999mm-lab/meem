@@ -75,7 +75,20 @@ class TagController extends CoreController
     public function index(Request $request)
     {
         $limit = $request->limit ? $request->limit : 15;
-        $tags = $this->repository->paginate($limit);
+
+        $query = Tag::query();
+
+        if ($request->filled('ids')) {
+            $ids = is_array($request->ids) ? $request->ids : explode(',', $request->ids);
+            $query->whereIn('id', $ids);
+        }
+
+        if ($request->filled('slugs')) {
+            $slugs = is_array($request->slugs) ? $request->slugs : explode(',', $request->slugs);
+            $query->whereIn('slug', $slugs);
+        }
+
+        $tags = $query->paginate($limit);
         $tagData = TagResource::collection($tags)->response()->getData(true);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
             "data" => $tagData['data'] ?? [],
