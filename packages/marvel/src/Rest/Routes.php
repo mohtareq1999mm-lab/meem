@@ -277,7 +277,17 @@ Route::prefix('shipments')->middleware('auth:sanctum')->group(function () {
     Route::put('{id}/status', [\App\Http\Controllers\Api\ShipmentController::class, 'updateStatus']);
     Route::put('{id}', [\App\Http\Controllers\Api\ShipmentController::class, 'update']);
 });
-
+Route::prefix('invoices')->group(function () {
+    Route::middleware(['auth:sanctum'])->group(function () {
+        Route::get('/', [InvoiceController::class, 'index']);
+        Route::get('{uuid}/download', [InvoiceController::class, 'download'])->whereUuid('uuid')->middleware('throttle:30,1');
+        Route::get('{id}', [InvoiceController::class, 'show']);
+        Route::post('{id}/regenerate', [InvoiceController::class, 'regenerate']);
+        Route::post('{id}/correct', [InvoiceController::class, 'correct']);
+        Route::post('{id}/cancel', [InvoiceController::class, 'cancel']);
+        Route::post('{id}/debit-note', [InvoiceController::class, 'issueDebitNote']);
+    });
+});
 
 
 Route::post('content-pages/{content_page}/attach-sections', [ContentPageController::class, 'attachSections']);
