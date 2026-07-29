@@ -16,11 +16,16 @@ The Product module manages the entire product catalog including simple and varia
 | `ProductCollection.php` | Paginated list response |
 | `Product.php` | Model with 59 fillable fields, 25+ relations, SoftDeletes, HasTranslations |
 | `ProductPricingService.php` | Pricing logic: discounts, flash sales, variants |
-| `ProductFilter.php` | Category, banner, flash_sale, slider, status, date_range filters |
+| `ProductFilter.php` | Category, banner, flash_sale, slider, status, date_range, tag, tags filters |
 | `ReviewController.php` | 6 review endpoints (CRUD + toggle-approve) |
 | `ReviewRepository.php` | storeReview, updateReview, toggleApprove |
 | `ReviewCreateRequest.php` | Validation for review create |
 | `ProductImportController.php` | 4 import endpoints (import, status, cancel, download-errors) |
+| `TagController.php` | Full CRUD for tags (with permissions) |
+| `TagRepository.php` | Tag CRUD with image upload support |
+| `TagCreateRequest.php` | Validation for tag create |
+| `TagUpdateRequest.php` | Validation for tag update |
+| `TagResource.php` | Tag response shape (name, slug, image, icon) |
 
 ## Permissions
 
@@ -32,12 +37,21 @@ The Product module manages the entire product catalog including simple and varia
 | `delete-product` | destroy, destroyAll, destroyBulk |
 | `delete-reviews` | review destroy |
 | `approve-reviews` | review toggle-approve |
+| `view-tags` | tag index, show |
+| `create-tags` | tag store |
+| `update-tags` | tag update |
+| `delete-tags` | tag destroy |
 
 ## Routes
 
 | Method | URI | Controller@function | Auth | Purpose |
 |--------|-----|---------------------|------|---------|
 | GET | `/products` | `ProductController@index` | Public | List paginated products |
+| GET | `/tags` | `TagController@index` | auth:sanctum | List tags |
+| POST | `/tags` | `TagController@store` | auth:sanctum | Create tag |
+| GET | `/tags/{id}` | `TagController@show` | auth:sanctum | Show tag |
+| PUT | `/tags/{id}` | `TagController@update` | auth:sanctum | Update tag |
+| DELETE | `/tags/{id}` | `TagController@destroy` | auth:sanctum | Delete tag |
 | POST | `/products` | `ProductController@store` | auth:sanctum | Create product |
 | GET | `/products/{id}` | `ProductController@show` | Public | Show product by ID/slug |
 | PUT | `/products/{id}` | `ProductController@update` | auth:sanctum | Update product |
@@ -72,6 +86,7 @@ The Product module manages the entire product catalog including simple and varia
 | `flash_sale` | string | — | Filter by flash sale slug (e.g. `?flash_sale=flash-01`) |
 | `promotion` | string | — | Filter by promotion slug (e.g. `?promotion=summer-deal`) |
 | `slider` | string | — | Filter by slider slug (e.g. `?slider=hero-banner`) |
+| `tags` | string | — | Filter by tag slug or ID (e.g. `?tags=summer` or `?tags=1,2`). Comma-separated. Supports slug or numeric ID lookup. AND logic. |
 
 ## Additional Endpoints (not CRUD)
 

@@ -290,7 +290,7 @@ class ProductController extends CoreController
             $related_products = $this->repository->fetchRelated($id, $limit);
             $product->setRelation('related_products', $related_products);
 
-            return $product->load('variations', 'categories', 'flash_sales', 'banners', 'sliders', 'brands', 'reviews');
+            return $product->load('variations', 'categories', 'flash_sales', 'banners', 'sliders', 'brands', 'reviews', 'tags');
         } catch (Exception $e) {
             throw new MarvelNotFoundException(NOT_FOUND);
         }

@@ -17,7 +17,10 @@ class CategoryResource extends Resource
     {
         return [
             'id'                   => $this->id,
-            'name'                 => $this->getTranslation('name', app()->getLocale()),
+            'name'                 => request()->routeIs('categories.show') ? [
+                'ar' => $this->getTranslation('name', 'ar'),
+                'en' => $this->getTranslation('name', 'en'),
+            ] : $this->getTranslation('name', app()->getLocale()),
             'slug'                 => $this->slug,
             'parent_id'            => $this->parent_id,
             'level'                => $this->level,

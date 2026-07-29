@@ -10,6 +10,7 @@ use Marvel\Imports\Sheets\ImagesSheetImport;
 use Marvel\Imports\Sheets\ProductsSheetImport;
 use Marvel\Imports\Sheets\ProductVariantsSheetImport;
 use Marvel\Imports\Sheets\SlidersSheetImport;
+use Marvel\Imports\Sheets\TagsSheetImport;
 use Marvel\Services\Import\ProductImportService;
 
 class ProductsImport implements WithMultipleSheets
@@ -31,6 +32,7 @@ class ProductsImport implements WithMultipleSheets
             'brands' => new BrandsSheetImport($this->service),
             'flash_sales' => new FlashSalesSheetImport($this->service),
             'sliders' => new SlidersSheetImport($this->service),
+            'tags' => new TagsSheetImport($this->service),
         ];
     }
 }

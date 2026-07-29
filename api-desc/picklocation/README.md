@@ -62,7 +62,7 @@ CRUD for pickup locations where customers can collect orders. Uses SoftDeletes. 
 | Repository | `packages/marvel/src/Database/Repositories/PickupLocationRepository.php` |
 | Resource | `packages/marvel/src/Http/Resources/PickupLocationResource.php` |
 | Request (Store) | `packages/marvel/src/Http/Requests/StorePickupLocationRequest.php` |
-| Request (Update) | `packages/marvel/src/Http/Requests/UpdatePickupLocationRequest.php` |
+| Request (Update) | `packages/marvel/src/Http/Requests/UpdatePickupLocationRequest.php` — all fields optional (`sometimes`), `working_hours.*.day` uses translatable `ar`/`en` keys |
 | Migrations | `database/migrations/2026_07_11_000003_create_pickup_locations_table.php` |
 | Migration (order snapshot) | `database/migrations/2026_07_11_000004_add_pickup_location_snapshot_to_orders.php` |
 | Routes (Admin) | `packages/marvel/src/Rest/Routes.php` |

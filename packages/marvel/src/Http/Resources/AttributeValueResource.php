@@ -16,7 +16,10 @@ class AttributeValueResource extends Resource
     {
         return [
             'id'                   => $this->id,
-            'value'                => request()->routeIs('attribute-values.index') ? $this->getTranslation('value', app()->getLocale()) : $this->getRawOriginal('value'),
+            'value'                => request()->routeIs('attribute-values.index') ? $this->getTranslation('value', app()->getLocale()) : [
+                'ar' => $this->getTranslation('value', 'ar'),
+                'en' => $this->getTranslation('value', 'en'),
+            ],
             'slug'                 => $this->slug,
             $this->mergeWhen(request()->routeIs('attribute-values.show'), [
                 'attribute' => new AttributeResource($this->whenLoaded('attribute')),

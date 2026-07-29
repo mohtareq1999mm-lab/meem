@@ -216,3 +216,33 @@ public function test_product_is_soft_deleted()
 
 ### TC-PRD-030: Has_flash_sale true but missing flash_sale_id
 - POST with has_flash_sale=1, no flash_sale_id → 422
+
+### TC-PRD-031: Create product with tags
+- POST with valid tags array → 201, tags in response
+
+### TC-PRD-032: Create product with invalid tag IDs
+- POST with tags=[99999] → 422
+
+### TC-PRD-033: Admin show includes tags
+- GET /products/{id} returns tags for admin
+
+### TC-PRD-034: Public product list includes tags
+- GET /general/products returns tags in ProductMiniResource
+
+### TC-PRD-035: Public product by slug includes tags
+- GET /general/products/{slug} returns tags
+
+### TC-PRD-036: Filter products by tags (slug)
+- GET /products?tags=summer returns only tagged products
+
+### TC-PRD-037: Filter products by tags (ID)
+- GET /products?tags=1,2 returns products with both tags (AND)
+
+### TC-PRD-038: Tags filter supports numeric ID
+- GET /general/products?tags=1,2 works
+
+### TC-PRD-039: Tags filter supports slug
+- GET /general/products?tags=summer,winter works
+
+### TC-PRD-040: Update product replaces existing tags
+- PUT /products/{id} with new tags array replaces old associations

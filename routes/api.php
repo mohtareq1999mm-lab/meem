@@ -57,6 +57,7 @@ Route::prefix('v1/general')->middleware('api')->group(function () {
 
     //======================== tags ========================/
     Route::get('tags', [TagController::class, 'index']);
+    Route::get('tags/{slug}', [TagController::class, 'show']);
 
     //======================== promotions ========================/
     Route::get('promotions', [PromotionController::class, 'index']);
@@ -96,14 +97,14 @@ Route::prefix('v1/general')->middleware('api')->group(function () {
     Route::get('flash-sale-products-ending-this-week', [FlashSaleController::class, 'getFlashSaleProductsEndingThisWeek']);
     Route::get('flash-sale-products-ending-today', [FlashSaleController::class, 'getFlashSaleProductsEndingToday']);
 
-    Route::get('settings', [SettingController::class, 'index']);
+    Route::get('settings', [SettingController::class, 'index'])->name('settings.front');
     Route::get('faqs', [FAQController::class, 'index']);
 
     //======================== governorates ========================/
     Route::get('governorates', [GovernorateController::class, 'index']);
 
     Route::get('search', [SearchController::class, 'index']);
-    Route::get('pickup-locations', [PickupLocationController::class, 'index']);
+    Route::get('pickup-locations', [PickupLocationController::class, 'index'])->name('pickup-locations.index');
     Route::get('pickup-locations/{id}', [PickupLocationController::class, 'show']);
     Route::get('fast-shipping/status', [FastShippingController::class, 'status']);
     Route::get('fast-shipping/products', [FastShippingController::class, 'products']);

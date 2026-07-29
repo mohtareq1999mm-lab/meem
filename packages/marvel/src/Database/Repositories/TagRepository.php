@@ -7,28 +7,30 @@ namespace Marvel\Database\Repositories;
 use Marvel\Database\Models\Tag;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Prettus\Repository\Exceptions\RepositoryException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Marvel\Traits\MediaManager;
+
+
 
 
 
 class TagRepository extends BaseRepository
 {
+    use MediaManager;
+
     /**
      * @var array
      */
     protected $fieldSearchable = [
         'name'        => 'like',
-        'type.slug',
-        'language'
+
     ];
 
     protected $dataArray = [
         'name',
         'slug',
-        'type_id',
         'icon',
         'image',
-        'details',
-        'language',
     ];
 
     public function boot()
@@ -52,10 +54,20 @@ class TagRepository extends BaseRepository
     public function updateTag($request, $tag)
     {
         $data = $request->only($this->dataArray);
-        if (!empty($request->slug) &&  $request->slug != $tag['slug']) {
-            $data['slug'] = $this->makeSlug($request);
+        if (isset($data['name'])) {
+            $data['slug'] = $this->makeSlug($request, 'slug', $tag->id);
         }
         $tag->update($data);
+        if ($request->has('image')) {
+            if (!$this->updateSingleImage($request, 'image', $tag, 'tags', 'tags')) {
+                throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
+            }
+        }
+        if ($request->has('icon')) {
+            if (!$this->updateSingleImage($request, 'icon', $tag, 'tags', 'tags')) {
+                throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
+            }
+        }
         return $this->findOrFail($tag->id);
     }
 }

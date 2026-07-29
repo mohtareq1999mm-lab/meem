@@ -39,7 +39,7 @@ class ProductController extends Controller
      * - limit (int): Results per page (max 100).
      * - order (string): Sort direction ('asc'|'desc').
      * - order_price (string): Sort by price ('asc'|'desc').
-     * - category, brand, height, width, length, weight: Filter keys.
+     * - category, brand, tag, tags: Filter keys (tag supports id or slug).
      * - rating, rating_min, rating_max: Rating filters.
      * - productsId (string): Comma-separated product IDs.
      * - categoriesId, brandsId, promotionsId, flashSalesId, bannersId, couponsId, slidersId: Relation ID filters.

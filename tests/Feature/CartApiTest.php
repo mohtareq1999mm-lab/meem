@@ -192,7 +192,7 @@ class CartApiTest extends TestCase
     public function test_update_item_requires_auth()
     {
         $this->putJson(self::PREFIX . '/cart/update-item', [
-            'item' => ['product_id' => $this->product->id, 'quantity' => 5, 'shipping_method' => 'SCHEDULED'],
+            'item' => ['product_id' => $this->product->id, 'quantity' => 5, 'operation' => 'increment', 'shipping_method' => 'SCHEDULED'],
         ])->assertStatus(401);
     }
 
@@ -204,7 +204,7 @@ class CartApiTest extends TestCase
         ]);
 
         $response = $this->putJson(self::PREFIX . '/cart/update-item', [
-            'item' => ['product_id' => $this->product->id, 'quantity' => 5, 'shipping_method' => 'SCHEDULED'],
+            'item' => ['product_id' => $this->product->id, 'quantity' => 3, 'operation' => 'increment', 'shipping_method' => 'SCHEDULED'],
         ]);
 
         $response->assertStatus(200);
@@ -222,7 +222,7 @@ class CartApiTest extends TestCase
         ]);
 
         $response = $this->putJson(self::PREFIX . '/cart/update-item', [
-            'item' => ['product_id' => $this->product->id, 'quantity' => 5, 'shipping_method' => 'SCHEDULED'],
+            'item' => ['product_id' => $this->product->id, 'quantity' => 3, 'operation' => 'increment', 'shipping_method' => 'SCHEDULED'],
         ]);
         $response->assertStatus(200);
 
@@ -831,7 +831,7 @@ class CartApiTest extends TestCase
         ])->assertStatus(201);
 
         $this->putJson(self::PREFIX . '/cart/update-item', [
-            'item' => ['product_id' => $this->product->id, 'quantity' => 5],
+            'item' => ['product_id' => $this->product->id, 'quantity' => 3, 'operation' => 'increment'],
         ])->assertStatus(200);
 
         $cart = Cart::where('user_id', $this->user->id)->first();
@@ -858,7 +858,7 @@ class CartApiTest extends TestCase
         ])->assertStatus(201);
 
         $this->putJson(self::PREFIX . '/cart/update-item', [
-            'item' => ['product_id' => $this->product->id, 'quantity' => 10, 'shipping_method' => 'SCHEDULED'],
+            'item' => ['product_id' => $this->product->id, 'quantity' => 8, 'operation' => 'increment', 'shipping_method' => 'SCHEDULED'],
         ])->assertStatus(200);
 
         $cart = Cart::where('user_id', $this->user->id)->first();
@@ -892,7 +892,7 @@ class CartApiTest extends TestCase
         $this->assertEquals(300.00, (float) $cart->total_price);
 
         $this->putJson(self::PREFIX . '/cart/update-item', [
-            'item' => ['product_id' => $this->product->id, 'quantity' => 5, 'shipping_method' => 'SCHEDULED'],
+            'item' => ['product_id' => $this->product->id, 'quantity' => 2, 'operation' => 'increment', 'shipping_method' => 'SCHEDULED'],
         ])->assertStatus(200);
 
         $cart->refresh();
@@ -986,14 +986,14 @@ class CartApiTest extends TestCase
         $this->assertEquals(3, $this->product->reserved_quantity);
 
         $this->putJson(self::PREFIX . '/cart/update-item', [
-            'item' => ['product_id' => $this->product->id, 'quantity' => 7, 'shipping_method' => 'SCHEDULED'],
+            'item' => ['product_id' => $this->product->id, 'quantity' => 4, 'operation' => 'increment', 'shipping_method' => 'SCHEDULED'],
         ])->assertStatus(200);
 
         $this->product->refresh();
         $this->assertEquals(7, $this->product->reserved_quantity);
 
         $this->putJson(self::PREFIX . '/cart/update-item', [
-            'item' => ['product_id' => $this->product->id, 'quantity' => 2, 'shipping_method' => 'SCHEDULED'],
+            'item' => ['product_id' => $this->product->id, 'quantity' => 5, 'operation' => 'decrement', 'shipping_method' => 'SCHEDULED'],
         ])->assertStatus(200);
 
         $this->product->refresh();
@@ -1068,7 +1068,8 @@ class CartApiTest extends TestCase
             'item' => [
                 'product_id' => $this->product->id,
                 'product_variant_id' => $variant->id,
-                'quantity' => 8,
+                'quantity' => 6,
+                'operation' => 'increment',
             ],
         ])->assertStatus(200);
 
@@ -1417,7 +1418,7 @@ class CartApiTest extends TestCase
     // =========================================================================
 
     /** @test */
-    public function update_item_to_zero_rejected(): void
+    public function decrement_removes_last_item(): void
     {
         $this->auth();
 
@@ -1425,11 +1426,21 @@ class CartApiTest extends TestCase
             'item' => ['product_id' => $this->product->id, 'quantity' => 2, 'shipping_method' => 'scheduled'],
         ])->assertStatus(201);
 
+        $this->product->refresh();
+        $this->assertEquals(2, $this->product->reserved_quantity);
+
         $response = $this->putJson(self::PREFIX . '/cart/update-item', [
-            'item' => ['product_id' => $this->product->id, 'quantity' => 0, 'shipping_method' => 'SCHEDULED'],
+            'item' => ['product_id' => $this->product->id, 'quantity' => 2, 'operation' => 'decrement', 'shipping_method' => 'SCHEDULED'],
         ]);
 
-        $this->assertContains($response->status(), [400, 422]);
+        $response->assertStatus(200);
+
+        $this->product->refresh();
+        $this->assertEquals(0, $this->product->reserved_quantity);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertNotNull($cart);
+        $this->assertEquals(0, $cart->items()->count());
     }
 
     // =========================================================================
@@ -1578,7 +1589,7 @@ class CartApiTest extends TestCase
         $this->auth();
 
         $response = $this->putJson(self::PREFIX . '/cart/update-item', [
-            'item' => ['product_id' => $this->product->id, 'quantity' => 3, 'shipping_method' => 'SCHEDULED'],
+            'item' => ['product_id' => $this->product->id, 'quantity' => 3, 'operation' => 'increment', 'shipping_method' => 'SCHEDULED'],
         ]);
 
         $response->assertStatus(200);
@@ -1589,5 +1600,391 @@ class CartApiTest extends TestCase
 
         $this->assertCount(1, $cart->items);
         $this->assertEquals(3, $cart->items->first()->quantity);
+    }
+
+    // =========================================================================
+    // Delta-based stock validation
+    // =========================================================================
+
+    /** @test */
+    public function delta_new_item_rejected_when_exceeds_stock(): void
+    {
+        $this->auth();
+
+        $response = $this->putJson(self::PREFIX . '/cart/update-item', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 999, 'operation' => 'increment', 'shipping_method' => 'SCHEDULED'],
+        ]);
+
+        $this->assertContains($response->status(), [400, 422]);
+    }
+
+    /** @test */
+    public function delta_increase_succeeds_when_delta_within_available_stock(): void
+    {
+        $this->auth();
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 30, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $this->product->refresh();
+        $this->assertEquals(30, $this->product->reserved_quantity);
+
+        $response = $this->putJson(self::PREFIX . '/cart/update-item', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 15, 'operation' => 'increment', 'shipping_method' => 'SCHEDULED'],
+        ]);
+        $response->assertStatus(200);
+
+        $this->product->refresh();
+        $this->assertEquals(45, $this->product->reserved_quantity);
+    }
+
+    /** @test */
+    public function delta_increase_rejected_when_delta_exceeds_available(): void
+    {
+        $this->auth();
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 30, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $this->product->refresh();
+        $this->assertEquals(30, $this->product->reserved_quantity);
+
+        $response = $this->putJson(self::PREFIX . '/cart/update-item', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 25, 'operation' => 'increment', 'shipping_method' => 'SCHEDULED'],
+        ]);
+
+        $this->assertContains($response->status(), [400, 422]);
+
+        $this->product->refresh();
+        $this->assertEquals(30, $this->product->reserved_quantity, 'Reservation must not change on failure');
+    }
+
+    /** @test */
+    public function delta_decrease_releases_stock(): void
+    {
+        $this->auth();
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 30, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $this->product->refresh();
+        $this->assertEquals(30, $this->product->reserved_quantity);
+
+        $response = $this->putJson(self::PREFIX . '/cart/update-item', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 20, 'operation' => 'decrement', 'shipping_method' => 'SCHEDULED'],
+        ]);
+        $response->assertStatus(200);
+
+        $this->product->refresh();
+        $this->assertEquals(10, $this->product->reserved_quantity);
+    }
+
+    /** @test */
+    public function repeated_increments_accumulate(): void
+    {
+        $this->auth();
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 3, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $this->product->refresh();
+        $this->assertEquals(3, $this->product->reserved_quantity);
+
+        $this->putJson(self::PREFIX . '/cart/update-item', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 4, 'operation' => 'increment', 'shipping_method' => 'SCHEDULED'],
+        ])->assertStatus(200);
+
+        $this->product->refresh();
+        $this->assertEquals(7, $this->product->reserved_quantity);
+
+        $this->putJson(self::PREFIX . '/cart/update-item', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 2, 'operation' => 'increment', 'shipping_method' => 'SCHEDULED'],
+        ])->assertStatus(200);
+
+        $this->product->refresh();
+        $this->assertEquals(9, $this->product->reserved_quantity);
+    }
+
+    /** @test */
+    public function delta_add_mode_increases_correctly(): void
+    {
+        $this->auth();
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 10, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $this->product->refresh();
+        $this->assertEquals(10, $this->product->reserved_quantity);
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 5, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $this->product->refresh();
+        $this->assertEquals(15, $this->product->reserved_quantity);
+    }
+
+    /** @test */
+    public function delta_boundary_available_equals_delta_succeeds(): void
+    {
+        $this->auth();
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 30, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $this->product->refresh();
+        $this->assertEquals(30, $this->product->reserved_quantity);
+
+        $response = $this->putJson(self::PREFIX . '/cart/update-item', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 20, 'operation' => 'increment', 'shipping_method' => 'SCHEDULED'],
+        ]);
+        $response->assertStatus(200);
+
+        $this->product->refresh();
+        $this->assertEquals(50, $this->product->reserved_quantity);
+    }
+
+    /** @test */
+    public function delta_variant_increase_succeeds(): void
+    {
+        $this->auth();
+
+        $variant = \Marvel\Database\Models\ProductVariant::create([
+            'product_id' => $this->product->id,
+            'sku' => 'VAR-DELTA-' . Str::random(6),
+            'price' => 150.00,
+            'stock_quantity' => 20,
+        ]);
+
+        $this->product->update(['product_type' => 'variable']);
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => [
+                'product_id' => $this->product->id,
+                'product_variant_id' => $variant->id,
+                'quantity' => 10,
+                'shipping_method' => 'scheduled',
+            ],
+        ])->assertStatus(201);
+
+        $variant->refresh();
+        $this->assertEquals(10, $variant->reserved_quantity);
+
+        $response = $this->putJson(self::PREFIX . '/cart/update-item', [
+            'item' => [
+                'product_id' => $this->product->id,
+                'product_variant_id' => $variant->id,
+                'quantity' => 5,
+                'operation' => 'increment',
+                'shipping_method' => 'SCHEDULED',
+            ],
+        ]);
+        $response->assertStatus(200);
+
+        $variant->refresh();
+        $this->assertEquals(15, $variant->reserved_quantity);
+    }
+
+    /** @test */
+    public function delta_variant_increase_rejected_when_exceeds(): void
+    {
+        $this->auth();
+
+        $variant = \Marvel\Database\Models\ProductVariant::create([
+            'product_id' => $this->product->id,
+            'sku' => 'VAR-DELTA2-' . Str::random(6),
+            'price' => 150.00,
+            'stock_quantity' => 20,
+        ]);
+
+        $this->product->update(['product_type' => 'variable']);
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => [
+                'product_id' => $this->product->id,
+                'product_variant_id' => $variant->id,
+                'quantity' => 10,
+                'shipping_method' => 'scheduled',
+            ],
+        ])->assertStatus(201);
+
+        $variant->refresh();
+        $this->assertEquals(10, $variant->reserved_quantity);
+
+        $response = $this->putJson(self::PREFIX . '/cart/update-item', [
+            'item' => [
+                'product_id' => $this->product->id,
+                'product_variant_id' => $variant->id,
+                'quantity' => 15,
+                'operation' => 'increment',
+                'shipping_method' => 'SCHEDULED',
+            ],
+        ]);
+
+        $this->assertContains($response->status(), [400, 422]);
+
+        $variant->refresh();
+        $this->assertEquals(10, $variant->reserved_quantity, 'Reservation must not change on failure');
+    }
+
+    /** @test */
+    public function delta_variant_decrease_releases_stock(): void
+    {
+        $this->auth();
+
+        $variant = \Marvel\Database\Models\ProductVariant::create([
+            'product_id' => $this->product->id,
+            'sku' => 'VAR-DELTA3-' . Str::random(6),
+            'price' => 150.00,
+            'stock_quantity' => 20,
+        ]);
+
+        $this->product->update(['product_type' => 'variable']);
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => [
+                'product_id' => $this->product->id,
+                'product_variant_id' => $variant->id,
+                'quantity' => 15,
+                'shipping_method' => 'scheduled',
+            ],
+        ])->assertStatus(201);
+
+        $variant->refresh();
+        $this->assertEquals(15, $variant->reserved_quantity);
+
+        $response = $this->putJson(self::PREFIX . '/cart/update-item', [
+            'item' => [
+                'product_id' => $this->product->id,
+                'product_variant_id' => $variant->id,
+                'quantity' => 10,
+                'operation' => 'decrement',
+                'shipping_method' => 'SCHEDULED',
+            ],
+        ]);
+        $response->assertStatus(200);
+
+        $variant->refresh();
+        $this->assertEquals(5, $variant->reserved_quantity);
+    }
+
+    /** @test */
+    public function delta_concurrent_users_respect_reservations(): void
+    {
+        $this->auth();
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 30, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $this->product->refresh();
+        $this->assertEquals(30, $this->product->reserved_quantity);
+
+        $userB = User::create([
+            'name' => 'User B',
+            'email' => 'userb@example.com',
+            'password' => bcrypt('password'),
+            'type' => 'user',
+            'is_active' => true,
+        ]);
+
+        Sanctum::actingAs($userB);
+
+        $response = $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 25, 'shipping_method' => 'scheduled'],
+        ]);
+
+        $this->assertContains($response->status(), [400, 422]);
+    }
+
+    /** @test */
+    public function repeated_decrements_reduce_quantity(): void
+    {
+        $this->auth();
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 10, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $this->product->refresh();
+        $this->assertEquals(10, $this->product->reserved_quantity);
+
+        $this->putJson(self::PREFIX . '/cart/update-item', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 3, 'operation' => 'decrement', 'shipping_method' => 'SCHEDULED'],
+        ])->assertStatus(200);
+
+        $this->product->refresh();
+        $this->assertEquals(7, $this->product->reserved_quantity);
+
+        $this->putJson(self::PREFIX . '/cart/update-item', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 2, 'operation' => 'decrement', 'shipping_method' => 'SCHEDULED'],
+        ])->assertStatus(200);
+
+        $this->product->refresh();
+        $this->assertEquals(5, $this->product->reserved_quantity);
+    }
+
+    /** @test */
+    public function concurrent_users_increment_respects_available_stock(): void
+    {
+        $this->product->update(['stock_quantity' => 40]);
+
+        $this->auth();
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 30, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $this->product->refresh();
+        $this->assertEquals(30, $this->product->reserved_quantity);
+
+        $userB = User::create([
+            'name' => 'User B',
+            'email' => 'userb-con@example.com',
+            'password' => bcrypt('password'),
+            'type' => 'user',
+            'is_active' => true,
+        ]);
+
+        Sanctum::actingAs($userB);
+
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 5, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $this->product->refresh();
+        $this->assertEquals(35, $this->product->reserved_quantity);
+
+        $response = $this->putJson(self::PREFIX . '/cart/update-item', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 10, 'operation' => 'increment', 'shipping_method' => 'SCHEDULED'],
+        ]);
+
+        $this->assertContains($response->status(), [400, 422]);
+        $this->product->refresh();
+        $this->assertEquals(35, $this->product->reserved_quantity, 'Reservation must not change on failure');
+    }
+
+    /** @test */
+    public function update_requires_operation_field(): void
+    {
+        $this->auth();
+        $this->postJson(self::PREFIX . '/cart', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 2, 'shipping_method' => 'scheduled'],
+        ])->assertStatus(201);
+
+        $response = $this->putJson(self::PREFIX . '/cart/update-item', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 3, 'shipping_method' => 'SCHEDULED'],
+        ]);
+
+        $response->assertStatus(422);
+    }
+
+    /** @test */
+    public function update_rejects_invalid_operation(): void
+    {
+        $this->auth();
+
+        $response = $this->putJson(self::PREFIX . '/cart/update-item', [
+            'item' => ['product_id' => $this->product->id, 'quantity' => 1, 'operation' => 'reset', 'shipping_method' => 'SCHEDULED'],
+        ]);
+
+        $response->assertStatus(422);
     }
 }

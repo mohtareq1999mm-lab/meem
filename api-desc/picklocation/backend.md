@@ -46,6 +46,45 @@ protected $fieldSearchable = ['store_name' => 'like'];
 
 **Scopes:** `active()` (status=true), `inactive()` (status=false), `ordered()` (display_order → id)
 
+## Form Requests
+
+### StorePickupLocationRequest
+
+| Field | Type | Required | Rules |
+|-------|------|----------|-------|
+| `store_name` | string | Yes | max:255 |
+| `address` | string | Yes | |
+| `phone` | string | Yes | max:50 |
+| `email` | string | No | nullable, email, max:255 |
+| `latitude` | string | No | nullable, max:50 |
+| `longitude` | string | No | nullable, max:50 |
+| `working_hours` | array | No | nullable |
+| `working_hours.*.day` | string | With working_hours | |
+| `working_hours.*.open` | string | With working_hours | |
+| `working_hours.*.close` | string | With working_hours | |
+| `status` | bool | No | in:1,0 |
+| `display_order` | int | No | min:0 |
+
+### UpdatePickupLocationRequest
+
+All fields are optional (`sometimes`). Additional behaviors vs Store:
+
+| Field | Type | Rules | Difference from Store |
+|-------|------|-------|----------------------|
+| `store_name` | string | sometimes, max:255 | |
+| `address` | string | sometimes | |
+| `phone` | string | sometimes, max:50 | |
+| `email` | string | nullable, email, max:255 | |
+| `latitude` | string | nullable, max:50 | |
+| `longitude` | string | nullable, max:50 | |
+| `working_hours` | array | nullable | |
+| `working_hours.*.day.ar` | string | required_with:working_hours | Translatable day name (Arabic) |
+| `working_hours.*.day.en` | string | required_with:working_hours | Translatable day name (English) |
+| `working_hours.*.open` | string | required_with:working_hours | |
+| `working_hours.*.close` | string | required_with:working_hours | |
+| `status` | bool | sometimes, in:1,0 | |
+| `display_order` | int | sometimes, integer, min:0 | |
+
 ## Resource - `PickupLocationResource`
 
 | Field | Source |

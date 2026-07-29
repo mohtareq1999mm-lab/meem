@@ -15,10 +15,22 @@ class SettingResource extends Resource
     public function toArray($request)
     {
         return [
-            "site_name" => $this->getTranslation('site_name', app()->getLocale()),
-            "site_desc" => $this->getTranslation('site_desc', app()->getLocale()),
-            "meta_desc" => $this->getTranslation('meta_desc', app()->getLocale()),
-            "site_copy_right" => $this->getTranslation('site_copy_right', app()->getLocale()),
+            "site_name" => request()->routeIs('settings.front') ? $this->getTranslation('site_name', app()->getLocale()) : [
+                'ar' => $this->getTranslation('site_name', 'ar'),
+                'en' => $this->getTranslation('site_name', 'en'),
+            ],
+            "site_desc" => request()->routeIs('settings.front') ? $this->getTranslation('site_desc', app()->getLocale()) : [
+                'ar' => $this->getTranslation('site_desc', 'ar'),
+                'en' => $this->getTranslation('site_desc', 'en'),
+            ],
+            "meta_desc" => request()->routeIs('settings.front') ? $this->getTranslation('meta_desc', app()->getLocale()) : [
+                'ar' => $this->getTranslation('meta_desc', 'ar'),
+                'en' => $this->getTranslation('meta_desc', 'en'),
+            ],
+            "site_copy_right" => request()->routeIs('settings.front') ? $this->getTranslation('site_copy_right', app()->getLocale()) : [
+                'ar' => $this->getTranslation('site_copy_right', 'ar'),
+                'en' => $this->getTranslation('site_copy_right', 'en'),
+            ],
             "logo" => $this->getFirstMediaUrl('logo-setting'),
             "footer_logo" => $this->getFirstMediaUrl('footer_logo-setting'),
             "favicon" => $this->getFirstMediaUrl('favicon-setting'),
@@ -34,6 +46,5 @@ class SettingResource extends Resource
             'minimumOrderAmount' => $this->minimum_order_amount,
             'options' => $this->options ?? null,
         ];
-
     }
 }

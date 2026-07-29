@@ -277,6 +277,10 @@ Route::prefix('shipments')->middleware('auth:sanctum')->group(function () {
     Route::put('{id}/status', [\App\Http\Controllers\Api\ShipmentController::class, 'updateStatus']);
     Route::put('{id}', [\App\Http\Controllers\Api\ShipmentController::class, 'update']);
 });
+
+
+Route::apiResource('tags', TagController::class);
+
 Route::prefix('invoices')->group(function () {
     Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/', [InvoiceController::class, 'index']);
@@ -401,9 +405,6 @@ Route::apiResource('delivery-times', DeliveryTimeController::class, [
 ]);
 Route::apiResource('languages', LanguageController::class, [
     'only' => ['index', 'show']
-]);
-Route::apiResource('tags', TagController::class, [
-    'only' => ['index', 'show'],
 ]);
 Route::apiResource('refund-reasons', RefundReasonController::class, [
     'only' => ['index', 'show'],

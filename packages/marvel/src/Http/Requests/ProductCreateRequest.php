@@ -88,6 +88,8 @@ class ProductCreateRequest extends FormRequest
             'end_date'                     => ['sometimes', 'date', 'after_or_equal:start_date'],
             'brands'                       => ['sometimes', 'array'],
             'brands.*'                     => ['integer', 'exists:brands,id'],
+            'tags'                         => ['nullable', 'array'],
+            'tags.*'                       => ['integer', 'exists:tags,id'],
             'banners'                      => ['sometimes', 'array'],
             'banners.*'                    => ['integer', 'exists:banners,id'],
             'sliders'                      => ['sometimes', 'array'],

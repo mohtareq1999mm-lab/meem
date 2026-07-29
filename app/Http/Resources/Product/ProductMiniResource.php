@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Product;
 
 use App\Traits\HasProductFilters;
+use Marvel\Http\Resources\TagResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class ProductMiniResource extends JsonResource
@@ -29,6 +30,7 @@ class ProductMiniResource extends JsonResource
             'flash_sale_active' => (bool) $this->flash_sale_active,
             'is_fast_shipping_available' =>(bool)$this->is_fast_shipping_available,
             'ratings' => round((float) ($this->reviews_avg_rating ?? 0), 2),
+            'tags' => $this->relationLoaded('tags') ? TagResource::collection($this->tags) : TagResource::collection(collect()),
             'image' => [
                 'thumbnail' => $this->getFirstMediaUrl('products'),
                 'original' => $this->getMediaImages('products'),

@@ -32,10 +32,13 @@
 ✅ Admin create/store with validation
 ✅ Admin show
 ✅ Admin update
-✅ Admin delete (soft delete)
 ✅ Store requires store_name, address, phone
 ✅ Store validates email format
 ✅ Store validates display_order is integer (non-negative)
+✅ Update validates email format
+✅ Update validates display_order is integer (non-negative)
+✅ Update allows partial fields (sometimes)
+✅ Update accepts translatable working_hours.day.ar / day.en (Arabic + English)
 ✅ Unauthenticated access blocked (401)
 ✅ Customer cannot create/update/delete (403)
 ✅ Public list returns only active

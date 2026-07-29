@@ -103,3 +103,31 @@ DELETE product
   → wishlists (CASCADE)
   → questions (CASCADE)
 ```
+
+## Table: `tags`
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | BIGINT PK AI | |
+| name | JSON | Translatable `{ en, ar }` |
+| slug | VARCHAR | Unique |
+| image | JSON | Media library reference |
+| icon | JSON | Media library reference |
+| created_at | TIMESTAMP | |
+| updated_at | TIMESTAMP | |
+
+**Relations:** BelongsToMany `products` via `product_tag` pivot.
+
+### Media
+- Tags use Spatie Media Library via `InteractsWithMedia` trait
+- `image` and `icon` are stored as media collections (`tags` collection)
+- Accessible via `$tag->getFirstMediaUrl('tags')`
+
+## Table: `product_tag` (pivot)
+
+| Column | Type | FK |
+|--------|------|-----|
+| product_id | BIGINT FK | products.id CASCADE |
+| tag_id | BIGINT FK | tags.id CASCADE |
+
+**Primary Key:** (product_id, tag_id)

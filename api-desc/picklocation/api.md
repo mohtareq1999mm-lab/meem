@@ -77,7 +77,25 @@ Returns same structure as list item.
 
 **PUT** `/api/v1/pickup-locations/{id}`
 
-Same fields as store, all optional (`sometimes`).
+All fields are optional (`sometimes`).
+
+| Field | Type | Required | Rules |
+|-------|------|----------|-------|
+| `store_name` | string | No | max:255 |
+| `address` | string | No | |
+| `phone` | string | No | max:50 |
+| `email` | string | No | nullable, email, max:255 |
+| `latitude` | string | No | nullable, max:50 |
+| `longitude` | string | No | nullable, max:50 |
+| `working_hours` | array | No | nullable |
+| `working_hours.*.day.ar` | string | With working_hours | required_with:working_hours |
+| `working_hours.*.day.en` | string | With working_hours | required_with:working_hours |
+| `working_hours.*.open` | string | With working_hours | required_with:working_hours |
+| `working_hours.*.close` | string | With working_hours | required_with:working_hours |
+| `status` | bool | No | in:1,0 |
+| `display_order` | int | No | min:0 |
+
+**Note:** Update uses translatable `day.ar`/`day.en` keys (strings) instead of a flat `day` string used in Create.
 
 ## 5. Admin: Delete Pickup Location
 

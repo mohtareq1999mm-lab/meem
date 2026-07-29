@@ -18,7 +18,10 @@ class CouponResource extends Resource
         return [
             'id'            => $this->id,
             'code'          => $this->code,
-            'name'          => $this->getTranslation('name', app()->getLocale()),
+            'name'          => request()->routeIs('coupons.show') ? [
+                'ar' => $this->getTranslation('name', 'ar'),
+                'en' => $this->getTranslation('name', 'en'),
+            ] : $this->getTranslation('name', app()->getLocale()),
             'image'         => [
                 'desktop' => $this->getFirstMediaUrl('coupons-desktop') ?: null,
                 'mobile'  => $this->getFirstMediaUrl('coupons-mobile') ?: null,

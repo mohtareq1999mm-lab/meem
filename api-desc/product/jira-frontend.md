@@ -28,6 +28,7 @@
 - **Inventory:** Stock quantity, In Stock toggle
 - **Categories:** Multi-select (required)
 - **Brands:** Multi-select
+- **Tags:** Multi-select (optional)
 - **Images:** Upload with preview (required, multiple, jpeg/png/jpg, max 2MB each)
 - **Dimensions:** Height, Width, Length, Weight (optional)
 - **Variants (if variable):** Dynamic variant rows with price, quantity, SKU, attribute values

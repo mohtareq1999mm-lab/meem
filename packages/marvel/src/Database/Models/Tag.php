@@ -3,23 +3,28 @@
 namespace Marvel\Database\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Cviebrock\EloquentSluggable\Sluggable;
-use Illuminate\Database\Eloquent\Builder;
-use Marvel\Traits\TranslationTrait;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\Translatable\HasTranslations;
 
-class Tag extends Model
+class Tag extends Model implements HasMedia
 {
     use Sluggable;
-    use TranslationTrait;
+    use HasTranslations, InteractsWithMedia;
 
 
     protected $table = 'tags';
+    public array $translatable = ['name'];
 
-    public $guarded = [];
+    public $fillable = [
+        'name',
+        'slug',
+        'icon',
+        'image',
+    ];
 
-    protected $appends = ['translated_languages'];
 
     protected $casts = [
         'image' => 'json',
@@ -39,19 +44,10 @@ class Tag extends Model
         ];
     }
 
-    public function scopeWithUniqueSlugConstraints(Builder $query, Model $model): Builder
-    {
-        return $query->where('language', $model->language);
-    }
 
 
-    /**
-     * @return BelongsTo
-     */
-    public function type(): BelongsTo
-    {
-        return $this->belongsTo(Type::class, 'type_id');
-    }
+
+
 
     /**
      * @return BelongsToMany

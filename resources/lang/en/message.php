@@ -122,6 +122,11 @@ return [
     'MESSAGE.NOT_AUTHORIZED' => 'You are not authorized to perform this action',
     'MESSAGE.SOMETHING_WENT_WRONG' => 'Something went wrong',
 
+    // General Errors
+    'ERROR.COULD_NOT_CREATE_THE_RESOURCE' => 'Could not create the resource',
+    'ERROR.COULD_NOT_UPDATE_THE_RESOURCE' => 'Could not update the resource',
+    'ERROR.COULD_NOT_DELETE_THE_RESOURCE' => 'Could not delete the resource',
+
     // Cart
     'MESSAGE.FETCH_DATA_SUCCESSFULLY' => 'Data fetched successfully',
     'MESSAGE.CREATE_CART_SUCCESSFULLY' => 'Cart created successfully',
@@ -170,6 +175,12 @@ return [
     'DASHBOARD.FINANCE_ANALYTICS_FETCHED' => 'Finance analytics fetched successfully.',
     'DASHBOARD.DATABASE_ERROR' => 'A database error occurred. Please check your request and try again.',
     'ERROR.SOMETHING_WENT_WRONG' => 'Something went wrong.',
+
+    // Tags
+    'MESSAGE.TAG_CREATED_SUCCESSFULLY' => 'Tag created successfully',
+    'MESSAGE.TAG_UPDATED_SUCCESSFULLY' => 'Tag updated successfully',
+    'MESSAGE.TAG_DELETED_SUCCESSFULLY' => 'Tag deleted successfully',
+    'ERROR.TAG_NOT_FOUND' => 'Tag not found',
 
     // Settings
     'ERROR.LOGO_UPLOAD_FAILED' => 'Logo upload failed, please check the file format or size.',

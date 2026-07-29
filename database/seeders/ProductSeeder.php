@@ -10,6 +10,7 @@ use Marvel\Database\Models\Category;
 use Marvel\Database\Models\Coupon;
 use Marvel\Database\Models\FlashSale;
 use Marvel\Database\Models\Product;
+use Marvel\Database\Models\Tag;
 use Marvel\Enums\DiscountType;
 use Marvel\Enums\ProductType;
 use Marvel\Services\Pricing\ProductPricingService;
@@ -37,6 +38,8 @@ class ProductSeeder extends Seeder
             });
             $allCategoriesById = Category::all()->keyBy('id');
             $couponIds = Coupon::pluck('id')->toArray();
+            $allTags = Tag::pluck('id')->toArray();
+            $tagsCount = count($allTags);
 
             $skuCategoryMap = [
                 'FAC' => 'Face',
@@ -726,9 +729,16 @@ class ProductSeeder extends Seeder
                         $current = $parent;
                     }
                     $product->categories()->attach(array_unique($catIds));
-                } elseif (!empty($allCategories)) {
+            } elseif (!empty($allCategories)) {
                     $fallback = $allCategories->random();
                     $product->categories()->attach($fallback->id);
+                }
+
+                // tag assignment - attach 1-4 random tags per product
+                if ($tagsCount > 0) {
+                    $tagCount = rand(1, min(4, $tagsCount));
+                    $attachedTags = (array) array_rand(array_flip($allTags), $tagCount);
+                    $product->tags()->attach($attachedTags);
                 }
 
                 // pricing

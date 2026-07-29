@@ -16,8 +16,11 @@
 **Acceptance Criteria:**
 - Data table with search, active/inactive filter
 - Sortable by display order
-- Create/edit form with store details + working hours
+- Create form with all required fields (store_name, address, phone) + optional fields
+- Edit form pre-fills existing data; all fields optional (PATCH-like behavior)
+- Edit form supports translatable `working_hours.*.day.ar` (Arabic) and `working_hours.*.day.en` (English) per time block
 - Map integration for coordinates (optional)
+- Form validation: email format, display_order ≥ 0, working_hours day+open+close required together
 - Delete with confirmation (soft delete)
 
 ### FE-US-002: Checkout Pickup Location Selector
@@ -41,13 +44,16 @@
 | FE-T-002 | Create PickupLocationFormModal | 4 | `PickupLocationFormModal.vue` |
 | FE-T-003 | Create CheckoutLocationSelector | 3 | `PickupLocationSelector.vue` |
 | FE-T-004 | Create API service | 1 | `services/pickupLocationApi.js` |
+| FE-T-005 | Edit form — partial update + translatable day.ar/day.en working hours UI | 3 | `PickupLocationFormModal.vue` |
 
 ## API Routes
 
-| Method | Endpoint | Auth | Permission |
-|--------|----------|------|------------|
-| GET | `/api/v1/pickup-locations` | Required | view-pickup-locations |
-| POST | `/api/v1/pickup-locations` | Required | create-pickup-location |
-| GET/PUT/DELETE | `/api/v1/pickup-locations/{id}` | Required | view/update/delete-pickup-location |
-| GET | `/api/v1/general/pickup-locations` | None | None |
-| GET | `/api/v1/general/pickup-locations/{id}` | None | None |
+| Method | Endpoint | Auth | Permission | Request Body |
+|--------|----------|------|------------|-------------|
+| GET | `/api/v1/pickup-locations` | Required | view-pickup-locations | — |
+| POST | `/api/v1/pickup-locations` | Required | create-pickup-location | `{ store_name, address, phone, email?, latitude?, longitude?, working_hours?, status?, display_order? }` |
+| GET | `/api/v1/pickup-locations/{id}` | Required | view-pickup-locations | — |
+| PUT | `/api/v1/pickup-locations/{id}` | Required | update-pickup-location | All optional: `{ store_name?, address?, phone?, email?, latitude?, longitude?, working_hours?, status?, display_order? }` |
+| DELETE | `/api/v1/pickup-locations/{id}` | Required | delete-pickup-location | — |
+| GET | `/api/v1/general/pickup-locations` | None | None | — |
+| GET | `/api/v1/general/pickup-locations/{id}` | None | None | — |

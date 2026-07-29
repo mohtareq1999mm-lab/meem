@@ -8,12 +8,14 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Marvel\Database\Models\Tag;
 use Marvel\Database\Repositories\TagRepository;
+use Marvel\Enums\Permission;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\TagCreateRequest;
 use Marvel\Http\Requests\TagUpdateRequest;
 use Marvel\Http\Resources\TagResource;
 use Marvel\Traits\ApiResponse;
-use Prettus\Validator\Exceptions\ValidatorException;
+use Marvel\Traits\MediaManager;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
  * @OA\Tag(name="Tags", description="Product tags management - organize products with tags")
@@ -46,11 +48,17 @@ use Prettus\Validator\Exceptions\ValidatorException;
 class TagController extends CoreController
 {
     use ApiResponse;
+    use MediaManager;
+
     public $repository;
 
     public function __construct(TagRepository $repository)
     {
         $this->repository = $repository;
+        $this->middleware("permission:" . Permission::VIEW_TAGS, ["only" => ["index", "show"]]);
+        $this->middleware("permission:" . Permission::CREATE_TAGS, ["only" => ["store"]]);
+        $this->middleware("permission:" . Permission::UPDATE_TAGS, ["only" => ["update"]]);
+        $this->middleware("permission:" . Permission::DELETE_TAGS, ["only" => ["destroy"]]);
     }
     /**
      * @OA\Get(
@@ -66,9 +74,8 @@ class TagController extends CoreController
      */
     public function index(Request $request)
     {
-        $language = $request->language ?? DEFAULT_LANGUAGE;
         $limit = $request->limit ? $request->limit : 15;
-        $tags = $this->repository->where('language', $language)->with(['type'])->paginate($limit);
+        $tags = $this->repository->paginate($limit);
         $tagData = TagResource::collection($tags)->response()->getData(true);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
             "data" => $tagData['data'] ?? [],
@@ -116,7 +123,21 @@ class TagController extends CoreController
         try {
             $validatedData = $request->validated();
             $validatedData['slug'] = $this->repository->makeSlug($request);
-            return $this->repository->create($validatedData);
+            $tag = $this->repository->create([
+                'slug' => $validatedData['slug'],
+                'name' => $validatedData['name'],
+            ]);
+            if ($request->has('image')) {
+                if (!$this->uploadSingleImage($request, 'image', $tag, 'tags', 'tags')) {
+                    throw new HttpException(422, 'Image upload failed, please check the file format or size.');
+                }
+            }
+            if ($request->has('icon')) {
+                if (!$this->uploadSingleImage($request, 'icon', $tag, 'tags', 'tags')) {
+                    throw new HttpException(422, 'Icon upload failed, please check the file format or size.');
+                }
+            }
+            return new TagResource($tag);
         } catch (MarvelException $th) {
             throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE);
         }
@@ -137,18 +158,16 @@ class TagController extends CoreController
      */
     public function show(Request $request, $params)
     {
-
         try {
-            $language = $request->language ?? DEFAULT_LANGUAGE;
             if (is_numeric($params)) {
                 $params = (int) $params;
-                $tag = $this->repository->where('id', $params)->with(['type'])->firstOrFail();
+                $tag = $this->repository->where('id', $params)->firstOrFail();
                 return new TagResource($tag);
             }
-            $tag = $this->repository->where('slug', $params)->where('language', $language)->with(['type'])->firstOrFail();
+            $tag = $this->repository->where('slug', $params)->firstOrFail();
             return new TagResource($tag);
         } catch (MarvelException $th) {
-            throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE);
+            throw new MarvelException(NOT_FOUND);
         }
     }
 
@@ -172,7 +191,7 @@ class TagController extends CoreController
             $request['id'] = $id;
             return $this->tagUpdate($request);
         } catch (MarvelException $th) {
-            throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE);
+            throw new MarvelException(COULD_NOT_UPDATE_THE_RESOURCE);
         }
     }
 
@@ -182,7 +201,7 @@ class TagController extends CoreController
             $tag = $this->repository->findOrFail($request->id);
             return $this->repository->updateTag($request, $tag);
         } catch (MarvelException $th) {
-            throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE);
+            throw new MarvelException(COULD_NOT_UPDATE_THE_RESOURCE);
         }
     }
 
@@ -204,7 +223,7 @@ class TagController extends CoreController
         try {
             return $this->repository->findOrFail($id)->delete();
         } catch (MarvelException $th) {
-            throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE);
+            throw new MarvelException(COULD_NOT_DELETE_THE_RESOURCE);
         }
     }
 }

@@ -36,7 +36,7 @@ public function index(Request $request): JsonResponse
 1. Parse `limit`, `search`, `orderBy`, `orderDir`, `category`, `date_range`, `status` from request
 2. Build query with `with('variations', 'categories', 'flash_sales')`
 3. Apply search on translatable `name`/`description`, `sku`, and variant SKU
-4. Apply `ProductFilter` service for category/banner/promotion/flash_sale/slider/date_range/status filters
+4. Apply `ProductFilter` service for category/banner/promotion/flash_sale/slider/tag/tags/date_range/status filters
 5. Paginate, wrap in `ProductCollection`, return JSON
 
 ### store()
@@ -52,7 +52,7 @@ public function store(ProductCreateRequest $request): JsonResponse
 public function show(Request $request, $id): JsonResponse
 ```
 1. Call `fetchSingleProduct($request, $id)`
-2. Find by ID or slug, load `variations`, `categories`, `flash_sales`, `banners`, `sliders`, `brands`, `reviews`, `related_products`
+2. Find by ID or slug, load `variations`, `categories`, `flash_sales`, `banners`, `sliders`, `brands`, `reviews`, `tags`, `related_products`
 3. Return `200` + `ProductResource` + `FETCH_DATA_SUCCESSFULLY`
 
 ### update()
@@ -149,7 +149,7 @@ All routes require `auth:sanctum` + `create-product|super_admin`.
 2. If new variants provided: delete old variants, then `addVariants()`
 3. Recalculate pricing with existing values as fallback
 4. Update images (delete removed, upload new)
-5. Sync relations
+5. Sync relations (categories, brands, banners, sliders, **tags**, flash_sales)
 6. Return updated product
 
 ## Key Models
@@ -171,6 +171,7 @@ All routes require `auth:sanctum` + `create-product|super_admin`.
 Defined in `Marvel\Enums\Permission`:
 - `view-products`, `create-product`, `update-product`, `delete-product`
 - `view-low-stock-products`, `view-draft-products`
+- `view-tags`, `create-tags`, `update-tags`, `delete-tags` (Tag CRUD)
 
 ## Pricing Service
 

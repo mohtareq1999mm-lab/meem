@@ -144,10 +144,14 @@ class CheckoutConcurrencyStressTest extends TestCase
             'status' => true,
         ]);
 
-        $cart = $this->createActiveCart(2, $product);
+        $cart = Cart::create([
+            'user_id' => $this->user->id,
+            'status' => 'active',
+            'total_price' => $product->price * 2,
+        ]);
 
         $item = DB::transaction(function () use ($inventoryService, $cart, $product) {
-            return $inventoryService->reserveItem($cart, $product, null, 2, 'set');
+            return $inventoryService->incrementItem($cart, $product, null, 2, [], ShippingMethod::SCHEDULED);
         });
 
         $this->assertEquals(2, $product->fresh()->reserved_quantity);
@@ -161,7 +165,7 @@ class CheckoutConcurrencyStressTest extends TestCase
         $this->assertEquals(5, $product->fresh()->stock_quantity);
 
         DB::transaction(function () use ($inventoryService, $cart, $product) {
-            $inventoryService->reserveItem($cart, $product, null, 3, 'set');
+            $inventoryService->incrementItem($cart, $product, null, 1, [], ShippingMethod::SCHEDULED);
         });
 
         $this->assertEquals(3, $product->fresh()->reserved_quantity);
@@ -183,10 +187,14 @@ class CheckoutConcurrencyStressTest extends TestCase
         ]);
 
         $inventoryService = app(CartInventoryService::class);
-        $cart1 = $this->createActiveCart(1, $limitedProduct);
+        $cart1 = Cart::create([
+            'user_id' => $this->user->id,
+            'status' => 'active',
+            'total_price' => $limitedProduct->price,
+        ]);
 
         DB::transaction(function () use ($inventoryService, $cart1, $limitedProduct) {
-            $inventoryService->reserveItem($cart1, $limitedProduct, null, 1, 'set');
+            $inventoryService->incrementItem($cart1, $limitedProduct, null, 1, [], ShippingMethod::SCHEDULED);
         });
 
         $this->assertEquals(1, $limitedProduct->fresh()->reserved_quantity);
@@ -200,7 +208,7 @@ class CheckoutConcurrencyStressTest extends TestCase
         CartItem::create([
             'cart_id' => $cart2->id,
             'product_id' => $limitedProduct->id,
-            'quantity' => 1,
+            'quantity' => 0,
             'price' => 30,
             'total_price' => 30,
             'shipping_method' => ShippingMethod::SCHEDULED,
@@ -208,7 +216,7 @@ class CheckoutConcurrencyStressTest extends TestCase
 
         $this->expectException(\Exception::class);
         DB::transaction(function () use ($inventoryService, $cart2, $limitedProduct) {
-            $inventoryService->reserveItem($cart2, $limitedProduct, null, 1, 'set');
+            $inventoryService->incrementItem($cart2, $limitedProduct, null, 1, [], ShippingMethod::SCHEDULED);
         });
     }
 
@@ -267,18 +275,10 @@ class CheckoutConcurrencyStressTest extends TestCase
                 'status' => 'active',
                 'total_price' => 10 * 3,
             ]);
-            CartItem::create([
-                'cart_id' => $cart->id,
-                'product_id' => $product->id,
-                'quantity' => 3,
-                'price' => 10,
-                'total_price' => 30,
-                'shipping_method' => ShippingMethod::SCHEDULED,
-            ]);
 
             try {
                 DB::transaction(function () use ($inventoryService, $cart, $product) {
-                    $inventoryService->reserveItem($cart, $product, null, 3, 'set');
+                    $inventoryService->incrementItem($cart, $product, null, 3, [], ShippingMethod::SCHEDULED);
                 });
             } catch (\Exception $e) {
                 $errors++;
@@ -305,10 +305,14 @@ class CheckoutConcurrencyStressTest extends TestCase
         ]);
 
         $inventoryService = app(CartInventoryService::class);
-        $cart1 = $this->createActiveCart(1, $limitedProduct);
+        $cart1 = Cart::create([
+            'user_id' => $this->user->id,
+            'status' => 'active',
+            'total_price' => $limitedProduct->price * 2,
+        ]);
 
         DB::transaction(function () use ($inventoryService, $cart1, $limitedProduct) {
-            $inventoryService->reserveItem($cart1, $limitedProduct, null, 2, 'set');
+            $inventoryService->incrementItem($cart1, $limitedProduct, null, 2, [], ShippingMethod::SCHEDULED);
         });
 
         $this->assertEquals(2, $limitedProduct->fresh()->reserved_quantity);
@@ -322,7 +326,7 @@ class CheckoutConcurrencyStressTest extends TestCase
         CartItem::create([
             'cart_id' => $cart2->id,
             'product_id' => $limitedProduct->id,
-            'quantity' => 1,
+            'quantity' => 0,
             'price' => 15,
             'total_price' => 15,
             'shipping_method' => ShippingMethod::SCHEDULED,
@@ -330,7 +334,7 @@ class CheckoutConcurrencyStressTest extends TestCase
 
         $this->expectException(\Exception::class);
         DB::transaction(function () use ($inventoryService, $cart2, $limitedProduct) {
-            $inventoryService->reserveItem($cart2, $limitedProduct, null, 1, 'set');
+            $inventoryService->incrementItem($cart2, $limitedProduct, null, 1, [], ShippingMethod::SCHEDULED);
         });
     }
 
@@ -349,10 +353,14 @@ class CheckoutConcurrencyStressTest extends TestCase
         ]);
 
         $inventoryService = app(CartInventoryService::class);
-        $cart = $this->createActiveCart(3, $product);
+        $cart = Cart::create([
+            'user_id' => $this->user->id,
+            'status' => 'active',
+            'total_price' => $product->price * 3,
+        ]);
 
         $item = DB::transaction(function () use ($inventoryService, $cart, $product) {
-            return $inventoryService->reserveItem($cart, $product, null, 3, 'set');
+            return $inventoryService->incrementItem($cart, $product, null, 3, [], ShippingMethod::SCHEDULED);
         });
 
         $this->assertEquals(3, $product->fresh()->reserved_quantity);
@@ -367,19 +375,11 @@ class CheckoutConcurrencyStressTest extends TestCase
         $cart2 = Cart::create([
             'user_id' => $anotherUser->id,
             'status' => 'active',
-            'total_price' => 20,
-        ]);
-        CartItem::create([
-            'cart_id' => $cart2->id,
-            'product_id' => $product->id,
-            'quantity' => 3,
-            'price' => 20,
-            'total_price' => 60,
-            'shipping_method' => ShippingMethod::SCHEDULED,
+            'total_price' => 20 * 3,
         ]);
 
         DB::transaction(function () use ($inventoryService, $cart2, $product) {
-            $inventoryService->reserveItem($cart2, $product, null, 3, 'set');
+            $inventoryService->incrementItem($cart2, $product, null, 3, [], ShippingMethod::SCHEDULED);
         });
 
         $this->assertEquals(3, $product->fresh()->reserved_quantity);

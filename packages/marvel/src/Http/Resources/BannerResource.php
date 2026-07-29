@@ -16,7 +16,10 @@ class BannerResource extends Resource
     {
         return [
             'id'          => $this->id,
-            'title'       => $this->title,
+            'title'       => request()->routeIs('banners.show') ? [
+                'ar' => $this->getTranslation('title', 'ar'),
+                'en' => $this->getTranslation('title', 'en'),
+            ] : $this->getTranslation('title', app()->getLocale()),
             'slug'        => $this->slug,
             'description' => $this->description,
             'image'       => [

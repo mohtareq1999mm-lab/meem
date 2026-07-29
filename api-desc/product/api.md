@@ -51,7 +51,7 @@ List paginated products with search, filter, sort.
 | `flash_sale` | string | — | Filter by flash sale slug (e.g. `?flash_sale=flash-01`) |
 | `promotion` | string | — | Filter by promotion slug (e.g. `?promotion=summer-deal`) |
 | `slider` | string | — | Filter by slider slug (e.g. `?slider=hero-banner`) |
-| `tags` | string | — | Filter by tag slug (e.g. `?tags=t-shirt,summer`) |
+| `tags` | string | — | Filter by tag slug or ID (e.g. `?tags=summer` or `?tags=1,2`). Comma-separated. AND logic. |
 ### Response 200
 
 ```json
@@ -80,6 +80,9 @@ List paginated products with search, filter, sort.
         "stock_quantity": 100,
         "sold_quantity": 25,
         "image": "https://cdn.example.com/products/1/image.jpg",
+        "tags": [
+          { "id": 1, "name": "summer", "slug": "summer" }
+        ],
         "categories": [
           { "id": 2, "name": "Clothing", "slug": "clothing" }
         ]
@@ -198,6 +201,7 @@ Create a new product.
 | `end_date` | date | No | Discount end (after_or_equal:start_date) |
 | `flash_sale_id` | integer | No | Required if has_flash_sale |
 | `variants` | array | No | Array of variant objects (required if product_type=variable) |
+| `tags` | array | No | Array of tag IDs |
 | `brands` | array | No | Array of brand IDs |
 | `banners` | array | No | Array of banner IDs |
 | `sliders` | array | No | Array of slider IDs |
@@ -265,6 +269,8 @@ Update an existing product.
 Same fields as POST but all are optional (`sometimes`). Only include fields that need updating.
 
 The `name.*` unique validation ignores the current product's own name.
+
+`tags` can be included to update product-tag associations (replaces existing tags).
 
 ### Response 200
 

@@ -162,6 +162,7 @@ All endpoints return:
 | `banner_id` | int | Associated banner ID |
 | `created_at` | ISO 8601 | Creation timestamp |
 | `categories` | array | `[{id, name, slug}]` (when loaded) |
+| `tags` | array | `TagResource` collection `[{id, name, slug, image, icon}]` (when loaded) |
 | `brands` | array | Brand objects (when loaded via `brands`) |
 | `banners` | array | Banner objects (when loaded via `banners`) |
 | `sliders` | array | Slider objects (when loaded via `sliders`) |
@@ -221,6 +222,8 @@ All endpoints return:
 | `banner` | string | — | Filter by banner slug (e.g. `?banner=summer-sale`) |
 | `flash_sale` | string | — | Filter by flash sale slug (e.g. `?flash_sale=flash-01`) |
 | `slider` | string | — | Filter by slider slug (e.g. `?slider=hero-banner`) |
+| `tag` | string\|array | — | Filter by tag slug (e.g. `?tag=gaming`). AND logic — product must have ALL specified tags. Comma-separated or array format. |
+| `tags` | string\|array | — | Filter by tag slug or ID (e.g. `?tags=gaming` or `?tags[]=1&tags[]=2`). Supports both slug and numeric ID lookup. AND logic — product must have ALL specified tags. |
 
 **URL Examples:**
 ```

@@ -98,3 +98,24 @@ Covers: Products CRUD + bulk-delete + destroy-all + import routes + reviews CRUD
 - Review update via API
 - Has_discount true but missing discount_type → 422
 - Has_flash_sale true but missing flash_sale_id → 422
+
+---
+
+## B-007: Document tags in product CRUD
+
+**Priority:** Low
+**Story Points:** 1
+**Labels:** documentation
+**Files:** `api-desc/product/*.md`
+
+**Description:** All product documentation files have been updated to reflect tags support:
+- `api.md`: Added `tags` field to POST request body, PUT notes
+- `frontend.md`: Added Tags section in Key Considerations
+- `backend.md`: Updated ProductFilter, repository, permissions for tags
+- `README.md`: Added TagController/TagRepository/TagResource to Key Files, tag permissions, tag routes, tags filter param
+- `flow.md`: Added tags to sync relations in create/update flows
+- `changelog.md`: Full tags support entry
+- `test-cases.md`: Added tag-related test cases
+- `qa.md`: Added tag coverage items
+- `bug-report.md`: Updated all BUG-PRD statuses to ✅ Fixed
+- `database.md`: Added tags table documentation

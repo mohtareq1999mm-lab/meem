@@ -16,7 +16,10 @@ class BrandResource extends Resource
     {
         return [
             'id' => $this->id,
-            'name' => $this->getTranslation('name', app()->getLocale()),
+            'name' => request()->routeIs('brands.show') ? [
+                'ar' => $this->getTranslation('name', 'ar'),
+                'en' => $this->getTranslation('name', 'en'),
+            ] : $this->getTranslation('name', app()->getLocale()),
             'slug' => $this->slug,
             'image' => [
                 'desktop' => $this->getFirstMediaUrl('brands-desktop'),

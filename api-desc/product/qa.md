@@ -71,14 +71,30 @@
 - ✅ Show response contains all product fields
 - ❌ Show response contains variants when product_type=variable
 - ✅ Response message matches translation keys
+- ✅ List response includes tags array
+- ✅ Show response includes tags array
+- ✅ Tags filter works with slug and numeric ID
 
 ### 6. Soft Delete
 - ✅ Deleted product has `deleted_at` set
 - ❌ Deleted product not visible in index
 - ❌ Show deleted product returns 404
 
+### 7. Tags
+- ✅ Product list response includes tags
+- ✅ Product show response includes tags (admin)
+- ✅ Public product list includes tags
+- ✅ Public product by slug includes tags
+- ✅ Create product with valid tags
+- ❌ Create product with invalid tag IDs → 422
+- ✅ Filter by tags slug
+- ✅ Filter by tags numeric ID
+- ❌ Tags filter AND logic with multiple tags
+- ❌ Update product replaces existing tags
+
 ## Coverage Summary
 - **File:** `tests/Feature/ProductCrudTest.php`
 - **62 tests, all passing** (out of 139 total product+attribute tests)
 - **Covers:** Products CRUD + reviews CRUD + import routes
 - **Gaps:** Discount/flash sale validation details, variant-specific validation, deleted product not in index
+- **Tags coverage:** `tests/Feature/ProductTagTest.php` covers tags in create/list/show/filter

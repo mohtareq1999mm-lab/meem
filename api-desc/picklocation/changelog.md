@@ -12,6 +12,8 @@
 - 4 Spatie permissions for granular access control
 - Full translation support (EN + AR)
 - 58+ test methods covering CRUD, validation, authorization, checkout integration
+- `UpdatePickupLocationRequest` with per-field validation rules (all optional, `sometimes`)
+- Update request supports translatable `working_hours.*.day.ar`/`.en` keys (Arabic + English)
 
 ### Known Issues
 - Pagination meta has duplicate `page`/`current_page` keys in admin list response

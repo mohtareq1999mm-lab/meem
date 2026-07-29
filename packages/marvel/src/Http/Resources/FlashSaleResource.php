@@ -16,7 +16,10 @@ class FlashSaleResource extends Resource
     {
         return [
             "id" => $this->id,
-            "title" => request()->routeIs('flash-sale.index') ? $this->getTranslation("title", app()->getLocale()) : $this->getRawOriginal('title'),
+            "title" => request()->routeIs('flash-sale.index') ? $this->getTranslation("title", app()->getLocale()) : [
+                'ar' => $this->getTranslation('title', 'ar'),
+                'en' => $this->getTranslation('title', 'en'),
+            ],
             "slug" => $this->slug,
             "image" => [
                 'desktop' => $this?->getFirstMediaUrl('flash-sales-desktop'),

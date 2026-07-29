@@ -6,6 +6,7 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
+use Marvel\Enums\CartOperation;
 use Marvel\Enums\ShippingMethod;
 
 class CartUpdateRequest extends FormRequest
@@ -24,6 +25,7 @@ class CartUpdateRequest extends FormRequest
             'item.product_variant_id' => ['sometimes', 'nullable', 'integer', 'exists:product_variants,id'],
             'item.attributes' => ['sometimes', 'array'],
             'item.shipping_method' => ['sometimes', 'string', Rule::in([ShippingMethod::SCHEDULED, ShippingMethod::FAST, 'scheduled', 'fast'])],
+            'item.operation' => ['required', 'string', Rule::in([CartOperation::INCREMENT, CartOperation::DECREMENT])],
         ];
     }
 

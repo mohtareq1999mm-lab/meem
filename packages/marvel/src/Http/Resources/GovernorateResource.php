@@ -12,7 +12,10 @@ class GovernorateResource extends JsonResource
         return [
             'id' => $this->id,
             'country_id' => $this->country_id,
-            'name' =>$this->getTranslation('name', app()->getLocale()),
+            'name' => request()->routeIs('governorates.show') ? [
+                'ar' => $this->getTranslation('name', 'ar'),
+                'en' => $this->getTranslation('name', 'en'),
+            ] : $this->getTranslation('name', app()->getLocale()),
             'status' => (bool) $this->status,
             'is_fast_shipping_enabled' => (bool) $this->is_fast_shipping_enabled,
             'country' =>  CountryResource::make($this->whenLoaded('country')),

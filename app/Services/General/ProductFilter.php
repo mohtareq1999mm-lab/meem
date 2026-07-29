@@ -121,9 +121,15 @@ class ProductFilter
         }
 
         // 5b. Filter by Tag (AND logic — product must have ALL specified tags)
-        if (!empty($filters['tag'])) {
-            $tagValues = is_array($filters['tag']) ? $filters['tag'] : explode(',', $filters['tag']);
-            $tagIds = Tag::whereIn('slug', $tagValues)->pluck('id')->toArray();
+        $tagFilterValues = $filters['tags'] ?? $filters['tag'] ?? null;
+        if (!empty($tagFilterValues)) {
+            $tagValues = is_array($tagFilterValues) ? $tagFilterValues : explode(',', $tagFilterValues);
+            $tagIds = Tag::where(function ($q) use ($tagValues) {
+                foreach ($tagValues as $val) {
+                    $q->orWhere('slug', $val)
+                      ->orWhere('id', is_numeric($val) ? $val : 0);
+                }
+            })->pluck('id')->toArray();
             if (!empty($tagIds)) {
                 foreach ($tagIds as $tagId) {
                     $query->whereHas('tags', fn($q) => $q->where('tags.id', $tagId));
@@ -187,7 +193,7 @@ class ProductFilter
         }
 
         // 8. Dynamic Attribute Filters
-        $reservedFilterKeys = ['brand', 'category', 'promotion', 'flash_sale', 'banner', 'tag', 'slider', 'minprice', 'maxprice', 'price_min', 'price_max', 'search', 'limit', 'rating', 'rating_min', 'rating_max', 'height', 'width', 'length', 'weight', 'categoriesid', 'brandsid', 'promotionsid', 'flashsalesid', 'bannersid', 'slidersid', 'couponsid', 'tagsid'];
+        $reservedFilterKeys = ['brand', 'category', 'promotion', 'flash_sale', 'banner', 'tag', 'tags', 'slider', 'minprice', 'maxprice', 'price_min', 'price_max', 'search', 'limit', 'rating', 'rating_min', 'rating_max', 'height', 'width', 'length', 'weight', 'categoriesid', 'brandsid', 'promotionsid', 'flashsalesid', 'bannersid', 'slidersid', 'couponsid', 'tagsid'];
         $attributeSlugs = Attribute::pluck('slug')->toArray();
 
         foreach ($filters as $key => $value) {

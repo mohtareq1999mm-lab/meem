@@ -39,6 +39,9 @@
         "price": 29.99,
         "current_price": 19.99,
         "image": "https://cdn.example.com/thumb.jpg",
+        "tags": [
+          { "id": 1, "name": "summer", "slug": "summer" }
+        ],
         "in_stock": true,
         "status": "publish",
         "categories": [{ "id": 1, "name": "Category", "slug": "category" }]
@@ -176,3 +179,10 @@
 - `slider`: Filter by slider slug
 - `status`: Filter by product status
 - `date_range`: Filter by date range `YYYY-MM-DD//YYYY-MM-DD`
+
+### 10. Tags
+- Products can have multiple tags (many-to-many via `product_tag` pivot)
+- Tags are managed via `/tags` API (full CRUD)
+- Tags appear in both list (`ProductMiniResource`) and detail (`ProductResource`) responses
+- Filter products by tags using `?tags=slug1,slug2` or `?tags=1,2` (supports slug or ID, AND logic)
+- On create/update, send `tags: [id1, id2]` to associate tags (replaces existing on update)

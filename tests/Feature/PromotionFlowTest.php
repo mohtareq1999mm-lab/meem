@@ -280,7 +280,7 @@ class PromotionFlowTest extends TestCase
         $this->assertNotNull($cartItem->discount_amount);
 
         $inventoryService = app(CartInventoryService::class);
-        $inventoryService->reserveItem($cart, $cartProduct, null, 2, 'set', [], ShippingMethod::SCHEDULED);
+        $inventoryService->incrementItem($cart, $cartProduct, null, 1, [], ShippingMethod::SCHEDULED);
 
         $updatedItem = $cart->items()->where('id', $cartItem->id)->first();
         $this->assertNull($updatedItem->promotion_id);

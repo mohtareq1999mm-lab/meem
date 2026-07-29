@@ -189,17 +189,8 @@ class CartExpirationTest extends TestCase
             'total_price' => $this->product->price,
         ]);
 
-        CartItem::create([
-            'cart_id' => $newCart->id,
-            'product_id' => $this->product->id,
-            'quantity' => 1,
-            'price' => $this->product->price,
-            'total_price' => $this->product->price,
-            'shipping_method' => ShippingMethod::SCHEDULED,
-        ]);
-
         DB::transaction(function () use ($newCart, $service) {
-            $service->reserveItem($newCart, $this->product, null, 1, 'set');
+            $service->incrementItem($newCart, $this->product, null, 1, [], ShippingMethod::SCHEDULED);
         });
 
         $this->assertEquals(1, $this->product->fresh()->reserved_quantity);
@@ -222,17 +213,9 @@ class CartExpirationTest extends TestCase
             'status' => 'active',
             'total_price' => $this->product->price,
         ]);
-        CartItem::create([
-            'cart_id' => $newCart->id,
-            'product_id' => $this->product->id,
-            'quantity' => 1,
-            'price' => $this->product->price,
-            'total_price' => $this->product->price,
-            'shipping_method' => ShippingMethod::SCHEDULED,
-        ]);
 
         DB::transaction(function () use ($newCart, $service) {
-            $service->reserveItem($newCart, $this->product, null, 1, 'set');
+            $service->incrementItem($newCart, $this->product, null, 1, [], ShippingMethod::SCHEDULED);
         });
 
         $this->assertEquals(1, $this->product->fresh()->reserved_quantity);

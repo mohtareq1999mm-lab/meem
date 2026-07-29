@@ -1001,8 +1001,8 @@ class PricingProductionHardenTest extends TestCase
         ]);
 
         $this->expectException(\Exception::class);
-        app(\App\Services\General\CartInventoryService::class)->reserveItem(
-            $cart2, $limitedProduct, null, 1, 'add', [], 'SCHEDULED'
+        app(\App\Services\General\CartInventoryService::class)->incrementItem(
+            $cart2, $limitedProduct, null, 1, [], 'SCHEDULED'
         );
     }
 

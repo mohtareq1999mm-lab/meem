@@ -3,6 +3,7 @@
 
 namespace Marvel\Http\Requests;
 
+use CodeZero\UniqueTranslation\UniqueTranslationRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -28,13 +29,10 @@ class TagCreateRequest extends FormRequest
     public function rules()
     {
         return [
-            'name'     => ['required', 'string'],
-            'slug'     => ['nullable', 'string'],
-            // 'type_id'  => ['required', 'integer'],
+            'name'     => ['array', 'required'],
+            'name.*'   => ['string', 'max:150', 'required', UniqueTranslationRule::for('tags')],
             'icon'     => ['nullable', 'string'],
-            'image'    => ['nullable', 'array'],
-            'details'  => ['nullable', 'string'],
-            'language' => ['nullable', 'string'],
+            'image'    => ['nullable', 'image'],
         ];
     }
 

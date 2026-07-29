@@ -11,7 +11,10 @@ class CountryResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'name' => $this->getTranslation('name', app()->getLocale()),
+            'name' => request()->routeIs('countries.show') ? [
+                'ar' => $this->getTranslation('name', 'ar'),
+                'en' => $this->getTranslation('name', 'en'),
+            ] : $this->getTranslation('name', app()->getLocale()),
             'phone_code' => $this->phone_code,
             'status' => (bool) $this->status,
             'governorates' => GovernorateResource::collection($this->whenLoaded('governorates')),

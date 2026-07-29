@@ -20,6 +20,10 @@
 | TC-PL-014 | Customer access | 403 on CRUD |
 | TC-PL-015 | Soft-deleted show | 404 |
 | TC-PL-016 | Working hours structure | Validates day+open+close |
+| TC-PL-017 | PUT (partial update — single field) | 200, only changed field updates |
+| TC-PL-018 | PUT (invalid email) | 422 |
+| TC-PL-019 | PUT (negative display_order) | 422 |
+| TC-PL-020 | PUT (working_hours.day.ar + day.en) | 200, accepts translatable day names |
 
 ## Manual Test Checklist
 

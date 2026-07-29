@@ -13,6 +13,7 @@ Client                  Routes.php            ProductController           Reposi
   │                         │                       │                         │
   │                         │                       │── apply search ─────────>│
   │                         │                       │── apply filters ────────>│
+  │                         │                       │  (incl. tags filter)    │
   │                         │                       │── paginate(limit) ──────>│
   │                         │                       │                         │
   │                         │                       │<── ProductCollection ────│
@@ -36,6 +37,9 @@ Client                  Routes.php            ProductController      ProductCrea
   │                         │                       │                         │── addVariants() ───>│              │
   │                         │                       │                         │── upload images ───>│              │
   │                         │                       │                         │── sync relations ──>│              │
+  │                         │                       │                         │  (categories, brands,│              │
+  │                         │                       │                         │   banners, sliders, │              │
+  │                         │                       │                         │   tags, flash_sales)│              │
   │                         │                       │                         │── commit ──────────>│              │
   │                         │                       │                         │<── product ────────│              │
   │                         │                       │<── ProductResource ─────│                    │              │
@@ -75,6 +79,9 @@ Client                  Routes.php            ProductController      ProductUpda
   │                         │                       │                         │── addVariants() ───>│              │
   │                         │                       │                         │── update images ───>│              │
   │                         │                       │                         │── sync relations ──>│              │
+  │                         │                       │                         │  (categories, brands,│              │
+  │                         │                       │                         │   banners, sliders, │              │
+  │                         │                       │                         │   tags)             │              │
   │                         │                       │                         │<── product ────────│              │
   │                         │                       │<── ProductResource ─────│                    │              │
   │                         │<── JSON 200 ──────────│                         │                    │              │

@@ -17,6 +17,7 @@ use Marvel\Database\Models\Import;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\ProductVariant;
 use Marvel\Database\Models\Slider;
+use Marvel\Database\Models\Tag;
 use Marvel\Enums\DiscountType;
 use Marvel\Enums\ProductType;
 use Marvel\Exceptions\ImportCancelledException;
@@ -592,6 +593,19 @@ class ProductImportService
         $sliderIds = Slider::whereIn('slug', $sliderSlugs)->pluck('id')->toArray();
         if (!empty($sliderIds)) {
             $product->sliders()->sync($sliderIds);
+        }
+    }
+
+    public function syncTags(string $productSku, array $tagSlugs): void
+    {
+        $product = Product::where('sku', $productSku)->first();
+        if (!$product) {
+            return;
+        }
+
+        $tagIds = Tag::whereIn('slug', $tagSlugs)->pluck('id')->toArray();
+        if (!empty($tagIds)) {
+            $product->tags()->sync($tagIds);
         }
     }
 

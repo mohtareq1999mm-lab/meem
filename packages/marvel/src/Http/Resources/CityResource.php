@@ -12,7 +12,10 @@ class CityResource extends JsonResource
         return [
             'id' => $this->id,
             'governorate_id' => $this->governorate_id,
-            'name' => $this->getTranslation('name', app()->getLocale()),
+            'name' => request()->routeIs('cities.show') ? [
+                'ar' => $this->getTranslation('name', 'ar'),
+                'en' => $this->getTranslation('name', 'en'),
+            ] : $this->getTranslation('name', app()->getLocale()),
             'created_at' => optional($this->created_at)->toIso8601String(),
         ];
     }

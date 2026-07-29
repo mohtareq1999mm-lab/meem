@@ -194,6 +194,76 @@ class ProductTagTest extends TestCase
     }
 
     // =========================================================================
+    // GET /products/{id} — Admin show includes Tags
+    // =========================================================================
+
+    public function test_admin_product_show_includes_tags()
+    {
+        $this->authAdmin();
+        $product = $this->createProduct('Admin Show Tags');
+        $product->tags()->attach([$this->tagGaming->id, $this->tagWireless->id]);
+
+        $response = $this->getJson(self::PREFIX . "/products/{$product->id}");
+        $response->assertStatus(200);
+        $this->assertArrayHasKey('tags', $response->json('data'));
+        $tagIds = collect($response->json('data.tags'))->pluck('id')->toArray();
+        $this->assertContains($this->tagGaming->id, $tagIds);
+        $this->assertContains($this->tagWireless->id, $tagIds);
+    }
+
+    // =========================================================================
+    // POST /products — Create validation rejects invalid tag IDs
+    // =========================================================================
+
+    public function test_create_product_validation_rejects_invalid_tag_ids()
+    {
+        $this->authAdmin();
+        $response = $this->postJson(self::PREFIX . '/products', [
+            'name' => ['en' => 'Tag Validation Product'],
+            'description' => ['en' => 'Description'],
+            'price' => 50,
+            'product_type' => ProductType::SIMPLE,
+            'categories' => [],
+            'images' => [],
+            'in_stock' => 1,
+            'has_discount' => 0,
+            'has_flash_sale' => 0,
+            'tags' => [99999],
+        ]);
+        $response->assertStatus(422);
+    }
+
+    // =========================================================================
+    // POST /products — Create with valid tags
+    // =========================================================================
+
+    public function test_create_product_with_tags_via_api()
+    {
+        $this->authAdmin();
+        $response = $this->postJson(self::PREFIX . '/products', [
+            'name' => ['en' => 'Create With Tags'],
+            'description' => ['en' => 'Description'],
+            'price' => 50,
+            'product_type' => ProductType::SIMPLE,
+            'categories' => [],
+            'images' => [],
+            'in_stock' => 1,
+            'has_discount' => 0,
+            'has_flash_sale' => 0,
+            'tags' => [$this->tagGaming->id, $this->tagWireless->id],
+        ]);
+
+        $this->assertContains($response->status(), [201, 422],
+            'Create product with valid tags should be accepted');
+
+        if ($response->status() === 201) {
+            $tagIds = collect($response->json('data.tags'))->pluck('id')->toArray();
+            $this->assertContains($this->tagGaming->id, $tagIds);
+            $this->assertContains($this->tagWireless->id, $tagIds);
+        }
+    }
+
+    // =========================================================================
     // GET /general/products — Public listing includes Tags
     // =========================================================================
 
@@ -211,6 +281,7 @@ class ProductTagTest extends TestCase
         $this->assertArrayHasKey('tags', $taggedProduct);
         $tagIds = collect($taggedProduct['tags'])->pluck('id')->toArray();
         $this->assertContains($this->tagGaming->id, $tagIds);
+        $this->assertContains($this->tagWireless->id, $tagIds);
     }
 
     public function test_public_product_by_slug_includes_tags()

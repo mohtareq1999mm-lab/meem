@@ -16,6 +16,22 @@ export const pickupLocationApi = {
 }
 ```
 
+### Update Request Body (all optional)
+
+| Field | Type | Example |
+|-------|------|---------|
+| `store_name` | string | `"Downtown Branch"` |
+| `address` | string | `"123 Main St"` |
+| `phone` | string | `"01000000001"` |
+| `email` | string (nullable) | `"branch@example.com"` |
+| `latitude` | string (nullable) | `"30.0444"` |
+| `longitude` | string (nullable) | `"31.2357"` |
+| `working_hours` | array | `[{ "day": { "ar": "الاثنين", "en": "Monday" }, "open": "09:00", "close": "21:00" }]` |
+| `status` | bool | `true` |
+| `display_order` | int | `1` |
+
+**Note:** `working_hours.*.day` uses translatable keys: `day.ar` (Arabic) and `day.en` (English), both strings.
+
 ## Consumption (Public/Checkout)
 
 ```javascript

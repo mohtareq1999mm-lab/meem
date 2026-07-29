@@ -74,6 +74,10 @@ class PermissionSeeder extends Seeder
             'view-notifications',
             'manage-notifications',
 
+             'view-tags',
+            'create-tags',
+            'update-tags',
+            'delete-tags',
             'view-city',
             'create-city',
             'update-city',

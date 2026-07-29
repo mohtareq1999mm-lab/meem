@@ -19,7 +19,71 @@ class CartInventoryService
 {
     private const CART_TTL_DAYS = 3;
 
-    public function reserveItem(Cart $cart, Product $product, ?ProductVariant $variant, int $quantity, string $mode = 'add', array $attributes = [], string $shippingMethod = ShippingMethod::SCHEDULED): CartItem
+    public function incrementItem(Cart $cart, Product $product, ?ProductVariant $variant, int $quantity, array $attributes = [], string $shippingMethod = ShippingMethod::SCHEDULED): CartItem
+    {
+        $productName = is_array($product->name) ? ($product->name[app()->getLocale()] ?? $product->name['en'] ?? '') : $product->name;
+
+        return DB::transaction(function () use ($cart, $product, $variant, $quantity, $attributes, $shippingMethod, $productName) {
+            $cart = Cart::whereKey($cart->id)->lockForUpdate()->firstOrFail();
+            $item = $this->findCartItemForLock($cart, $product->id, $variant?->id, $shippingMethod);
+            $existingQuantity = (int) ($item?->quantity ?? 0);
+            $reservedQuantity = (int) ($item?->reserved_quantity ?? 0);
+            $desiredQuantity = $existingQuantity + $quantity;
+            $delta = $desiredQuantity - $reservedQuantity;
+
+            if ($delta > 0) {
+                $stock = $variant
+                    ? ProductVariant::query()->whereKey($variant->id)->lockForUpdate()->firstOrFail()
+                    : Product::query()->whereKey($product->id)->lockForUpdate()->firstOrFail();
+
+                $availableStock = max(0, (int) ($stock->stock_quantity ?? 0) - (int) ($stock->reserved_quantity ?? 0));
+
+                if ($availableStock < $delta) {
+                    $errorKey = $variant ? 'message.ERROR.VARIANT_STOCK_EXCEEDED' : 'message.ERROR.PRODUCT_STOCK_EXCEEDED';
+                    throw new Exception(__($errorKey, ['product_name' => $productName]));
+                }
+            }
+
+            return $this->reserveItem($cart, $product, $variant, $quantity, 'add', $attributes, $shippingMethod);
+        });
+    }
+
+    public function decrementItem(Cart $cart, Product $product, ?ProductVariant $variant, int $quantity, string $shippingMethod = ShippingMethod::SCHEDULED): ?CartItem
+    {
+        return DB::transaction(function () use ($cart, $product, $variant, $quantity, $shippingMethod) {
+            $cart = Cart::whereKey($cart->id)->lockForUpdate()->firstOrFail();
+            $item = $this->findCartItemForLock($cart, $product->id, $variant?->id, $shippingMethod);
+
+            if (!$item) {
+                throw new Exception(INVALID_ITEM_DATA);
+            }
+
+            $targetQuantity = (int) $item->quantity - $quantity;
+
+            if ($targetQuantity >= 1) {
+                return $this->reserveItem($cart, $product, $variant, $targetQuantity, 'set', $item->attributes ?: [], $shippingMethod);
+            }
+
+            $stock = $variant
+                ? ProductVariant::query()->whereKey($variant->id)->lockForUpdate()->firstOrFail()
+                : Product::query()->whereKey($product->id)->lockForUpdate()->firstOrFail();
+
+            $this->releaseStock($stock, (int) $item->reserved_quantity);
+
+            $item->delete();
+
+            $remaining = CartItem::where('cart_id', $cart->id)->lockForUpdate()->count();
+            if ($remaining === 0) {
+                Cart::whereKey($cart->id)->lockForUpdate()->update(['coupon' => null]);
+            }
+
+            $this->touchCartReservation($cart);
+
+            return null;
+        });
+    }
+
+    protected function reserveItem(Cart $cart, Product $product, ?ProductVariant $variant, int $quantity, string $mode = 'add', array $attributes = [], string $shippingMethod = ShippingMethod::SCHEDULED): CartItem
     {
         return DB::transaction(function () use ($cart, $product, $variant, $quantity, $mode, $attributes, $shippingMethod) {
             $cart = Cart::whereKey($cart->id)->lockForUpdate()->firstOrFail();

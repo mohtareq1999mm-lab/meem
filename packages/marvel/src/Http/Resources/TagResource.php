@@ -17,14 +17,10 @@ class TagResource extends Resource
     {
         return [
             'id'                   => $this->id,
-            'name'                 => $this->name,
-            'language'             => $this->language,
-            'translated_languages' => $this->translated_languages,
+            'name'                 => request()->routeIs('tags.show') ? $this->name : $this->getTranslation('name', app()->getLocale()),
             'slug'                 => $this->slug,
-            'details'              => $this->details,
-            'image'                => $this->image,
-            'icon'                 => $this->icon,
-            'type'                 => getResourceData($this->type, []) // if you need extra data then pass key in array by second parameter
+            'image'                => $this->getFirstMediaUrl('tags')?? null,
+            'icon'                 => $this->getFirstMediaUrl('tags') ?? null,
         ];
     }
 }

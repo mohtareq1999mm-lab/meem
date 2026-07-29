@@ -17,7 +17,7 @@ final class Permission extends Enum
     public const STORE_OWNER = 'store_owner';
     public const STAFF = 'staff';
     public const CUSTOMER = 'customer';
-    
+
 
 
     public const VIEW_SLIDER = 'view-slider';
@@ -43,6 +43,9 @@ final class Permission extends Enum
     public const VIEW_TYPES = 'view-types';
     public const VIEW_TYPE = 'view-type';
     public const VIEW_TAGS = 'view-tags';
+    public const CREATE_TAGS= 'create-tags';
+    public const UPDATE_TAGS= 'update-tags';
+    public const DELETE_TAGS= 'delete-tags';
     public const VIEW_TAG = 'view-tag';
     public const VIEW_AUTHORS = 'view-authors';
     public const VIEW_AUTHOR = 'view-author';

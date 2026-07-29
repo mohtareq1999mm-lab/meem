@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Cart;
 use Marvel\Database\Models\Product;
+use Marvel\Enums\CartOperation;
 use Marvel\Enums\ShippingMethod;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Prettus\Repository\Exceptions\RepositoryException;
@@ -127,16 +128,16 @@ class CartRepository extends BaseRepository
         $variantId = $item['product_variant_id'] ?? null;
         $attributes = $item['attributes'] ?? [];
         $shippingMethod = strtoupper($item['shipping_method'] ?? ShippingMethod::SCHEDULED);
+        $operation = $item['operation'] ?? CartOperation::INCREMENT;
 
-        if ($mode === 'set' && !isset($item['shipping_method'])) {
-            $existingItem = $cart->items()
-                ->where('product_id', $productId)
-                ->when($variantId, fn($q) => $q->where('product_variant_id', $variantId), fn($q) => $q->whereNull('product_variant_id'))
-                ->where('is_gift', false)
-                ->first();
-            if ($existingItem) {
-                $shippingMethod = $existingItem->shipping_method;
-            }
+        $existingItem = $cart->items()
+            ->where('product_id', $productId)
+            ->when($variantId, fn($q) => $q->where('product_variant_id', $variantId), fn($q) => $q->whereNull('product_variant_id'))
+            ->where('is_gift', false)
+            ->first();
+
+        if ($mode === 'set' && !isset($item['shipping_method']) && $existingItem) {
+            $shippingMethod = $existingItem->shipping_method;
         }
 
         if (!$productId || $quantity < 1) {
@@ -150,31 +151,25 @@ class CartRepository extends BaseRepository
             throw new Exception(__('message.MESSAGE.FAST_SHIPPING_PRODUCT_NOT_ELIGIBLE', ['product_name' => $productName]));
         }
 
-        $inventoryService = app(CartInventoryService::class);
-
         if ($variantId) {
             $variant = $product->variations()->whereKey($variantId)->first();
             if (!$variant) {
                 throw new Exception(__('message.ERROR.INVALID_ITEM_DATA', ['product_name' => $productName]));
             }
-
-            if ($variant->available_stock < $quantity) {
-                throw new Exception(__('message.ERROR.VARIANT_STOCK_EXCEEDED', ['product_name' => $productName]));
-            }
-
-            $inventoryService->reserveItem($cart, $product, $variant, $quantity, $mode, $attributes, $shippingMethod);
-            return true;
         }
 
-        if ($product->product_type === 'variable') {
+        if ($product->product_type === 'variable' && !$variantId) {
             throw new Exception(__('message.ERROR.INVALID_ITEM_DATA', ['product_name' => $productName]));
         }
 
-        if ($product->available_stock < $quantity) {
-            throw new Exception(__('message.ERROR.PRODUCT_STOCK_EXCEEDED', ['product_name' => $productName]));
+        $inventoryService = app(CartInventoryService::class);
+
+        if ($operation === CartOperation::INCREMENT) {
+            $inventoryService->incrementItem($cart, $product, $variantId ? $variant : null, $quantity, $attributes, $shippingMethod);
+        } elseif ($operation === CartOperation::DECREMENT) {
+            $inventoryService->decrementItem($cart, $product, $variantId ? $variant : null, $quantity, $shippingMethod);
         }
 
-        $inventoryService->reserveItem($cart, $product, null, $quantity, $mode, $attributes, $shippingMethod);
         return true;
     }
 }
