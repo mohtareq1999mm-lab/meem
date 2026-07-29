@@ -154,57 +154,54 @@ class CartController extends CoreController
             'items.*.product_id' => 'required|integer',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.product_variant_id' => 'nullable|integer',
-            'items.*.shipping_method' => 'required|string|in:scheduled,fast,SCHEDULED,FAST',
+            'items.*.shipping_method' => 'nullable|string|in:scheduled,fast,SCHEDULED,FAST',
         ]);
 
+        $items = collect($request->items)->map(function ($item) {
+            $item['shipping_method'] = strtoupper($item['shipping_method'] ?? 'scheduled');
+            return $item;
+        });
+
         $userId = $request->user()->id;
-        $existingIds = Product::whereIn('id', collect($request->items)->pluck('product_id'))
+        $existingIds = Product::whereIn('id', $items->pluck('product_id'))
             ->whereNull('deleted_at')
             ->pluck('id')
             ->toArray();
 
-        $validItems = collect($request->items)->filter(
+        $validItems = $items->filter(
             fn($item) => in_array($item['product_id'], $existingIds)
         );
 
-        $skippedIds = collect($request->items)
+        $skippedIds = $items
             ->reject(fn($item) => in_array($item['product_id'], $existingIds))
             ->pluck('product_id')
             ->values();
 
-        if ($validItems->isEmpty()) {
-            return $this->apiResponse(CART_NOT_FOUND, 400, false);
-        }
-
-        DB::beginTransaction();
-        try {
-            foreach ($validItems as $item) {
-                $tempRequest = clone $request;
-                $tempRequest->replace(['item' => $item]);
-                $this->repository->storeCart($tempRequest);
+        if ($validItems->isNotEmpty()) {
+            DB::beginTransaction();
+            try {
+                foreach ($validItems as $item) {
+                    $tempRequest = clone $request;
+                    $tempRequest->replace(['item' => $item]);
+                    $this->repository->storeCart($tempRequest);
+                }
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return $this->apiResponse($e->getMessage(), 400, false);
             }
-            DB::commit();
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return $this->apiResponse($e->getMessage(), 400, false);
         }
 
         $cart = Cart::query()->where('user_id', $userId)->first();
-        if (!$cart) {
-            return $this->apiResponse(CART_NOT_FOUND, 400, false);
-        }
+        $response = $cart
+            ? CartResource::make(
+                $cart->load(['items.product', 'items.productVariant.attributeProducts.attributeValue.attribute'])
+              )
+            : null;
 
-        $response = CartResource::make(
-            $cart->load(['items.product', 'items.productVariant.attributeProducts.attributeValue.attribute'])
-        );
-
-        if ($skippedIds->isNotEmpty()) {
-            return $this->apiResponse(CREATE_CART_SUCCESSFULLY, 201, true, [
-                'cart' => $response,
-                'skipped_product_ids' => $skippedIds,
-            ]);
-        }
-
-        return $this->apiResponse(CREATE_CART_SUCCESSFULLY, 201, true, $response);
+        return $this->apiResponse(CREATE_CART_SUCCESSFULLY, 201, true, [
+            'cart' => $response,
+            'skipped_product_ids' => $skippedIds,
+        ]);
     }
 }

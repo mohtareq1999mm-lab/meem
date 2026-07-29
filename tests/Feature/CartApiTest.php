@@ -380,16 +380,48 @@ class CartApiTest extends TestCase
         $this->assertCount(2, $cart->items);
     }
 
-    public function test_bulk_add_validates_items()
+    public function test_bulk_add_skips_nonexistent_products()
     {
         $this->auth();
         $response = $this->postJson(self::PREFIX . '/cart/bulk-items', [
             'items' => [
                 ['product_id' => 99999, 'quantity' => 1, 'shipping_method' => 'scheduled'],
+                ['product_id' => 88888, 'quantity' => 2, 'shipping_method' => 'fast'],
             ],
         ]);
 
-        $response->assertStatus(422);
+        $response->assertStatus(201);
+        $response->assertJsonPath('success', true);
+        $response->assertJsonPath('data.skipped_product_ids', [99999, 88888]);
+        $this->assertNull($response->json('data.cart'));
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertNull($cart);
+    }
+
+    public function test_bulk_add_mixed_valid_and_nonexistent_skips_invalid()
+    {
+        $this->auth();
+        $this->product->update(['is_fast_shipping_available' => true]);
+
+        $response = $this->postJson(self::PREFIX . '/cart/bulk-items', [
+            'items' => [
+                ['product_id' => $this->product->id, 'quantity' => 2, 'shipping_method' => 'scheduled'],
+                ['product_id' => 99999, 'quantity' => 5],
+                ['product_id' => 88888, 'quantity' => 3, 'shipping_method' => 'fast'],
+            ],
+        ]);
+
+        $response->assertStatus(201);
+        $response->assertJsonPath('success', true);
+        $response->assertJsonPath('data.skipped_product_ids', [99999, 88888]);
+
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertNotNull($cart);
+        $cart->load('items');
+        $this->assertCount(1, $cart->items);
+        $this->assertEquals($this->product->id, $cart->items->first()->product_id);
+        $this->assertEquals(2, $cart->items->first()->quantity);
     }
 
     // =========================================================================

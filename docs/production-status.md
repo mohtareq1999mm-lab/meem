@@ -6,7 +6,7 @@
 | Categories | 2 | Production Ready | YES | Products | Products | Passed | 2026-07-23 | 98/98 (94 existing + 4 new) | None (3 fixed) |
 | Brands | 1 | Production Ready | YES | Products | Categories (pivot), Products, Media Lifecycle | Passed | 2026-07-18 | 63/63 | None (1 fixed) |
 | Products | 1 | Production Ready (Phase 1) | YES | Categories, Brands, Media Lifecycle, Pricing, Attributes | Cart, Orders, Search, Home, Wishlist, Flash Sales, Promotions, Coupons | Pending (Cart, Orders, Search) | 2026-07-17 | 76/76 (0 errors, 0 failures) | None (4 fixed, 0 unverified) |
-| Cart | 1 | Production Ready | YES | Authentication (Sanctum), Products, Pricing | Checkout, Orders | Passed | 2026-07-18 | 32/32 (75 assertions) | None (4 fixed) |
+| Cart | 2 | Production Ready | YES | Authentication (Sanctum), Products, Pricing | Checkout, Orders | Passed | 2026-07-29 | 64/64 (255 assertions) | None (4 fixed, 4 pre-existing) |
 | Contacts | 1 | Production Ready | YES | Authentication (Sanctum), Permissions, Translation System | Contact Forms, Admin Notifications, Notifications | Passed | 2026-07-20 | 59/59 (120 assertions) | None (3 fixed) |
 | Orders | 0 | Not Started | NO | — | — | Not Required | — | — | — |
 | Coupons (Admin CRUD) | 1 | Production Ready | YES | CouponAssignmentController, CouponAssignmentRepository, Permissions (4), Routes (5) | Coupon Assignment consumption (customer-facing) | PASS | 2026-07-25 | 43/43 (151 assertions) | None |

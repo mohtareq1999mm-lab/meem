@@ -282,6 +282,30 @@ Categories
 
 ---
 
+## Cart (Bulk Items)
+
+**Changed Feature:**
+Cart — `pluckItemsToCart` method (POST /cart/bulk-items)
+
+**Affected Features:**
+- Cart — bulk item addition behavior changed
+
+**Regression:**
+
+| Suite | Status | Reason |
+|-------|--------|--------|
+| CartApiTest — bulk tests | PASS (4/4) | Skip non-existent products, mixed valid/invalid items, all-or-none invalid items |
+
+**Changes Applied (Revision 2):**
+- `CartController.php`: Changed `items.*.shipping_method` from `required` to `nullable` with default `SCHEDULED` normalization
+- `CartController.php`: Removed `$validItems->isEmpty()` error guard — all-invalid items now returns 201 with null cart + `skipped_product_ids`
+- `CartController.php`: Removed `$cart` null check error — returns 201 with null cart when all items skipped
+- `CartController.php`: Added `use Marvel\Enums\ShippingMethod` import
+- `CartApiTest.php`: Fixed `test_bulk_add_validates_items` → `test_bulk_add_skips_nonexistent_products` (asserts 201 with skipped IDs)
+- `CartApiTest.php`: Added `test_bulk_add_mixed_valid_and_nonexistent_skips_invalid` — verifies valid items added, invalid skipped
+
+---
+
 ## Full Suite Status
 
 | Suite | Status | Date | Notes |
@@ -330,3 +354,4 @@ Coupon Assignments (Admin CRUD)
 - Created `CouponAssignmentApiTest.php`: 30 tests covering auth, CRUD, edge cases, computed fields
 - Created `CouponAssignmentValidationTest.php`: 13 tests covering validation rules
 | AttributeCombinedSuite | PASS (48/48) | 2026-07-19 | All Attribute + Attribute Values tests pass (16 existing + 32 new) after 3 bug fixes |
+| CartBulkItemsSuite | PASS (4/4 new + 60/64 full suite) | 2026-07-29 | 4 pre-existing failures unrelated (gift promotion, finalization, resource structure) |
