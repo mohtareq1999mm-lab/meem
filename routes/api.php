@@ -111,6 +111,7 @@ Route::prefix('v1/general')->middleware('api')->group(function () {
     Route::get('fast-shipping/orders', [FastShippingController::class, 'orders'])->middleware('auth:sanctum');
 
     Route::get('orders', [OrderController::class, 'index'])->middleware('auth:sanctum');
+    Route::get('orders/invoice/{uuid}', [OrderController::class, 'invoice'])->middleware('auth:sanctum');
 
     //======================== shipments ========================/
 

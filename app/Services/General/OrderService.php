@@ -87,6 +87,7 @@ class OrderService
             'orderItems.productVariant.attributeProducts.attributeValue',
             'transactions',
             'pickupLocation',
+            'latestInvoice',
         ];
     }
 

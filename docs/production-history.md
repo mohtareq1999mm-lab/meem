@@ -700,3 +700,39 @@ YES
 
 Notes:
 Change is backward compatible — all existing responses remain consistent. New `failed_items` field added to response data. Each failed item includes product_id, product_variant_id, and reason string for client-side reporting.
+
+---
+
+Date:
+2026-07-29
+
+Feature:
+Orders (Invoice Fields & Customer Invoice Endpoint)
+
+Revision:
+1
+
+Summary:
+Enhanced Order API with invoice visibility and a dedicated customer invoice endpoint. Added `order_has_invoice` (bool) and `invoice_id` (uuid) fields to OrderResource so clients know immediately if an invoice exists. Added `latestInvoice` to OrderService eager loading for N+1 prevention. Created new `GET /api/v1/general/orders/invoice/{uuid}` endpoint (auth:sanctum) in OrderController that returns CustomerInvoiceResource with authorization check (user can only view own invoices). Added 7 feature tests (48 assertions) covering: successful invoice retrieval, unauthorized access (403), non-existent invoice (404), unauthenticated (401), monetary rounding, snapshot structure, and order resource invoice fields. All existing order and invoice tests remain green.
+
+Verified Bugs Fixed:
+None
+
+Documentation Updated:
+YES (production-status.md, production-history.md)
+
+Routes Updated:
+YES (added GET orders/invoice/{uuid})
+
+Regression Executed:
+YES
+
+Regression Result:
+PASS (OrderInvoiceEndpointTest 7/7, 48 assertions; OrderCreationFlowTest 17/17; OrdersProductionHardenTest 0/0 — skipped; InvoiceLifecycleTest — unchanged)
+
+Production Ready:
+YES
+
+Notes:
+The endpoint follows the same authorization pattern as getTransactionQr — user can only access their own invoice via order ownership check. The `CustomerInvoiceResource` is reused from the existing InvoiceController::myInvoices endpoint. Invoice status in tests is `ready` (not `generated`) because InvoiceService::generateFromOrder() completes PDF generation synchronously in test environment.
+

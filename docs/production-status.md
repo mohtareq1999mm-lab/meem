@@ -8,7 +8,7 @@
 | Products | 1 | Production Ready (Phase 1) | YES | Categories, Brands, Media Lifecycle, Pricing, Attributes | Cart, Orders, Search, Home, Wishlist, Flash Sales, Promotions, Coupons | Pending (Cart, Orders, Search) | 2026-07-17 | 76/76 (0 errors, 0 failures) | None (4 fixed, 0 unverified) |
 | Cart | 3 | Production Ready | YES | Authentication (Sanctum), Products, Pricing | Checkout, Orders | Passed | 2026-07-29 | 65/65 (269 assertions) | None (5 fixed, 4 pre-existing) |
 | Contacts | 1 | Production Ready | YES | Authentication (Sanctum), Permissions, Translation System | Contact Forms, Admin Notifications, Notifications | Passed | 2026-07-20 | 59/59 (120 assertions) | None (3 fixed) |
-| Orders | 0 | Not Started | NO | — | — | Not Required | — | — | — |
+| Orders (Invoice Fields & Endpoint) | 1 | Production Ready | YES | Order Model, Invoice System, Authentication (Sanctum) | Customer Order Details, Invoice Viewing | Passed | 2026-07-29 | 7/7 (48 assertions) | None |
 | Coupons (Admin CRUD) | 1 | Production Ready | YES | CouponAssignmentController, CouponAssignmentRepository, Permissions (4), Routes (5) | Coupon Assignment consumption (customer-facing) | PASS | 2026-07-25 | 43/43 (151 assertions) | None |
 | Flash Sales | 4 | Production Ready | YES | Products, Pricing, Permissions | Cart, Products, Orders | Passed | 2026-07-19 | 87 (38 flash sale + 49 pricing/order) | None (7 fixed, 1 dead code removed) |
 | Attributes + Values | 1 | Production Ready | YES | Products | Products (variants, filtering, pricing), Import/Export, Cart | Passed | 2026-07-19 | 48/48 attribute (0 new failures) + 32/32 new | None (4 fixed) |

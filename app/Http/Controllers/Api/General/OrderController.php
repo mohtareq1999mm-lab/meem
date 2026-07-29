@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api\General;
 
 use App\DTOs\GatewayResult;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Invoice\CustomerInvoiceResource;
 use App\Http\Resources\Order\OrderCollection;
+use App\Models\Invoice;
 use App\Services\General\CartInventoryService;
 use App\Services\General\OrderService;
 use App\Services\Gateway\CashierQrService;
@@ -527,6 +529,22 @@ class OrderController extends Controller
             'error' => $errorMessage,
             'payment_id' => $paymentId,
         ]));
+    }
+
+    public function invoice(Request $request, string $uuid): JsonResponse
+    {
+        $invoice = Invoice::where('uuid', $uuid)->firstOrFail();
+
+        if ($invoice->order->user_id !== $request->user()->id) {
+            throw new \Illuminate\Auth\Access\AuthorizationException(NOT_AUTHORIZED);
+        }
+
+        return $this->apiResponse(
+            FETCH_DATA_SUCCESSFULLY,
+            200,
+            true,
+            CustomerInvoiceResource::make($invoice)
+        );
     }
 
     private function getCallbackType(?Transaction $transaction, Request $request): string

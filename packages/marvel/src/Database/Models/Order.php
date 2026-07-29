@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Marvel\Enums\PaymentStatus;
 
@@ -132,6 +133,16 @@ class Order extends Model
     public function children(): HasMany
     {
         return $this->hasMany(Order::class, 'parent_id');
+    }
+
+    public function latestInvoice(): HasOne
+    {
+        return $this->hasOne(\App\Models\Invoice::class, 'order_id')->latestOfMany();
+    }
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(\App\Models\Invoice::class, 'order_id');
     }
 
     public function scopeForUser(Builder $query, int $userId): Builder

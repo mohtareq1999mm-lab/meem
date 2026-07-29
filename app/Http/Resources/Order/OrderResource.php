@@ -54,7 +54,8 @@ class OrderResource extends JsonResource
             'order_items' => OrderItemResource::collection($this->whenLoaded('orderItems')),
             // 'pickup_location_id' => $this->pickup_location_id,
             'payment_gateway' => $this->payment_gateway,
-            // 'transactions' => OrderTransactionResource::collection($this->whenLoaded('transactions')),
+            'order_has_invoice' => $this->latestInvoice !== null,
+            'invoice_id' => $this->latestInvoice?->uuid,
         ];
     }
 
