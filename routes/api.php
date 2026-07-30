@@ -3,7 +3,9 @@
 use App\Http\Controllers\Api\General\BannerController;
 use App\Http\Controllers\Api\General\BrandController;
 use App\Http\Controllers\Api\General\CategoryController;
+use App\Http\Controllers\Api\General\CityController;
 use App\Http\Controllers\Api\General\ContentPageController;
+use App\Http\Controllers\Api\General\CountryController;
 use App\Http\Controllers\Api\General\CouponController;
 use App\Http\Controllers\Api\General\FAQController;
 use App\Http\Controllers\Api\General\FastShippingController;
@@ -19,6 +21,7 @@ use App\Http\Controllers\Api\General\SearchController;
 use App\Http\Controllers\Api\General\SettingController;
 use App\Http\Controllers\Api\General\SliderController;
 use App\Http\Controllers\Api\General\TagController;
+use App\Http\Controllers\Api\ShipmentController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -102,6 +105,15 @@ Route::prefix('v1/general')->middleware('api')->group(function () {
 
     //======================== governorates ========================/
     Route::get('governorates', [GovernorateController::class, 'index']);
+    Route::get('governorates/{id}', [GovernorateController::class, 'show']);
+
+    //======================== countries ========================/
+    Route::get('countries', [CountryController::class, 'index']);
+    Route::get('countries/{id}', [CountryController::class, 'show']);
+
+    //======================== cities ========================/
+    Route::get('cities', [CityController::class, 'index']);
+    Route::get('cities/{id}', [CityController::class, 'show']);
 
     Route::get('search', [SearchController::class, 'index']);
     Route::get('pickup-locations', [PickupLocationController::class, 'index'])->name('pickup-locations.index');
@@ -115,8 +127,10 @@ Route::prefix('v1/general')->middleware('api')->group(function () {
     Route::get('orders/invoice/{uuid}', [OrderController::class, 'invoice'])->middleware('auth:sanctum');
 
     //======================== shipments ========================/
+    Route::get('shipments/track/{trackingNumber}', [ShipmentController::class, 'trackShipment'])->name('shipments.track');
+    Route::get('shipments/{id}', [ShipmentController::class, 'show'])->middleware('auth:sanctum');
 
-//======================== invoices ========================/
+    //======================== invoices ========================/
     Route::prefix('invoices')->group(function () {
         Route::get('my-invoices', [InvoiceController::class, 'myInvoices'])->middleware('auth:sanctum');
         Route::get('verify/{uuid}', [InvoiceController::class, 'verify'])->middleware('throttle:60,1');

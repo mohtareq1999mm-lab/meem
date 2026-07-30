@@ -21,4 +21,13 @@ class GovernorateController extends Controller
         $governorates = $this->governorateRepository->allActive();
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, GovernorateResource::collection($governorates));
     }
+
+    public function show(int $id): JsonResponse
+    {
+        $governorate = $this->governorateRepository->findById($id, ['country', 'shippingPrice']);
+        if (!$governorate) {
+            return $this->apiResponse(NOT_FOUND, 404, false);
+        }
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, GovernorateResource::make($governorate));
+    }
 }

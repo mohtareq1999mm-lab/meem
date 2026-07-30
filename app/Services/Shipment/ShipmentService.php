@@ -39,6 +39,11 @@ class ShipmentService
         });
     }
 
+    public function findByTrackingNumber(string $trackingNumber): ?Shipment
+    {
+        return Shipment::with(['order'])->where('tracking_number', $trackingNumber)->first();
+    }
+
     public function updateStatus(int $id, string $newStatus, ?string $notes = null): Shipment
     {
         return DB::transaction(function () use ($id, $newStatus, $notes) {

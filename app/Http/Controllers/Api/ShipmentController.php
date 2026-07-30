@@ -51,6 +51,17 @@ class ShipmentController extends Controller
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ShipmentResource::make($shipment));
     }
 
+    public function trackShipment(string $trackingNumber): JsonResponse
+    {
+        $shipment = $this->shipmentService->findByTrackingNumber($trackingNumber);
+
+        if (!$shipment) {
+            return $this->apiResponse(NOT_FOUND, 404, false);
+        }
+
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ShipmentResource::make($shipment));
+    }
+
     public function store(CreateShipmentRequest $request): JsonResponse
     {
         $shipment = $this->shipmentService->create($request->validated());
