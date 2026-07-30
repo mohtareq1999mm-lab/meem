@@ -98,7 +98,7 @@ class FaqTranslationTest extends TestCase
         ]);
 
         app()->setLocale('en');
-        $response = $this->getJson(self::PREFIX . '/faqs');
+        $response = $this->withHeaders(['lang' => 'en'])->getJson(self::PREFIX . '/faqs');
         $response->assertOk();
         $this->assertEquals('English Title', $response->json('data.data.0.faq_title'));
     }
@@ -111,8 +111,7 @@ class FaqTranslationTest extends TestCase
             'faq_description' => ['en' => 'English desc', 'ar' => 'وصف عربي'],
         ]);
 
-        app()->setLocale('ar');
-        $response = $this->getJson(self::PREFIX . '/faqs');
+        $response = $this->withHeaders(['lang' => 'ar'])->getJson(self::PREFIX . '/faqs');
         $response->assertOk();
         $this->assertEquals('عنوان عربي', $response->json('data.data.0.faq_title'));
     }

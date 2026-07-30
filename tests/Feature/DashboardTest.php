@@ -788,8 +788,7 @@ class DashboardTest extends TestCase
         $user = $this->createSuperAdminUser();
         Sanctum::actingAs($user);
 
-        app()->setLocale('ar');
-        $response = $this->getJson(self::PREFIX . '/dashboard/reconciliation');
+        $response = $this->withHeaders(['lang' => 'ar'])->getJson(self::PREFIX . '/dashboard/reconciliation');
 
         $response->assertOk();
         $this->assertStringNotContainsString('DASHBOARD.RECONCILIATION_FETCHED', $response->json('message'));

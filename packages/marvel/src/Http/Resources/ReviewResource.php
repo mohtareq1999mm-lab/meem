@@ -23,7 +23,7 @@ class ReviewResource extends JsonResource
                                     return $media->getUrl();
                                 }) : [],
 
-            $this->mergeWhen(auth()->user()->hasPermissionTo('approve-reviews'),[
+            $this->mergeWhen(auth()->user()?->hasPermissionTo('approve-reviews'),[
                 'is_approved' => (bool) $this->approved,
             ])
         ];

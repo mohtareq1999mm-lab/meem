@@ -555,12 +555,10 @@ class SliderApiTest extends TestCase
 
         $sliderId = $response->json('data.id');
 
-        app()->setLocale('ar');
-        $response = $this->getJson(self::PREFIX . '/sliders');
+        $response = $this->withHeaders(['lang' => 'ar'])->getJson(self::PREFIX . '/sliders');
         $response->assertJsonPath('data.data.0.title', 'تخفيضات الصيف');
 
-        app()->setLocale('en');
-        $response = $this->getJson(self::PREFIX . '/sliders');
+        $response = $this->withHeaders(['lang' => 'en'])->getJson(self::PREFIX . '/sliders');
         $response->assertJsonPath('data.data.0.title', 'Summer Sale');
     }
 

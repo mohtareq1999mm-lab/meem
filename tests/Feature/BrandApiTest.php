@@ -522,12 +522,10 @@ class BrandApiTest extends TestCase
 
         $brandId = $response->json('data.id');
 
-        app()->setLocale('ar');
-        $response = $this->getJson(self::PREFIX . '/brands');
+        $response = $this->withHeaders(['lang' => 'ar'])->getJson(self::PREFIX . '/brands');
         $response->assertJsonPath('data.data.0.name', 'نايك');
 
-        app()->setLocale('en');
-        $response = $this->getJson(self::PREFIX . '/brands');
+        $response = $this->withHeaders(['lang' => 'en'])->getJson(self::PREFIX . '/brands');
         $response->assertJsonPath('data.data.0.name', 'Nike');
     }
 

@@ -10,14 +10,8 @@ class PickupLocationResource extends Resource
     {
         return [
             'id' => $this->id,
-            'store_name' => request()->routeIs('pickup-locations.index') || request()->routeIs('pickup-locations.index') ? $this->store_name : [
-                'ar' => $this->getTranslation('store_name', 'ar'),
-                'en' => $this->getTranslation('store_name', 'en'),
-            ],
-            'address' => request()->routeIs('pickup-locations.index') || request()->routeIs('pickup-locations.index') ? $this->address : [
-                'ar' => $this->getTranslation('address', 'ar'),
-                'en' => $this->getTranslation('address', 'en'),
-            ],
+            'store_name' => $this->store_name,
+            'address' => $this->address,
             'phone' => $this->phone,
             'email' => $this->email,
             'latitude' => $this->latitude,

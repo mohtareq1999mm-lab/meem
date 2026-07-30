@@ -122,7 +122,7 @@ class BannerApiTest extends TestCase
     public function test_guest_gets_401_for_change_status()
     {
         $banner = Banner::create(['title' => ['en' => 'Test'], 'slug' => 'test', 'status' => false]);
-        $response = $this->postJson(self::PREFIX . '/banner/change-status', [
+        $response = $this->putJson(self::PREFIX . '/banner/change-status', [
             'id' => $banner->id,
         ]);
         $response->assertStatus(401);
@@ -195,7 +195,7 @@ class BannerApiTest extends TestCase
 
         $banner = Banner::create(['title' => ['en' => 'Test'], 'slug' => 'test', 'status' => false]);
 
-        $response = $this->postJson(self::PREFIX . '/banner/change-status', [
+        $response = $this->putJson(self::PREFIX . '/banner/change-status', [
             'id' => $banner->id,
         ]);
         $response->assertStatus(403);
@@ -405,7 +405,7 @@ class BannerApiTest extends TestCase
     }
 
     // =========================================================================
-    // POST /api/v1/banner/change-status — Toggle Status
+    // PUT /api/v1/banner/change-status — Toggle Status
     // =========================================================================
 
     public function test_authenticated_admin_can_toggle_banner_status()
@@ -414,7 +414,7 @@ class BannerApiTest extends TestCase
 
         $banner = Banner::create(['title' => ['en' => 'Summer Sale'], 'slug' => 'summer-sale', 'status' => false]);
 
-        $response = $this->postJson(self::PREFIX . '/banner/change-status', [
+        $response = $this->putJson(self::PREFIX . '/banner/change-status', [
             'id' => $banner->id,
         ]);
 
@@ -427,7 +427,7 @@ class BannerApiTest extends TestCase
     {
         Sanctum::actingAs($this->adminUser, ['*']);
 
-        $response = $this->postJson(self::PREFIX . '/banner/change-status', []);
+        $response = $this->putJson(self::PREFIX . '/banner/change-status', []);
         $response->assertStatus(422);
     }
 
@@ -435,7 +435,7 @@ class BannerApiTest extends TestCase
     {
         Sanctum::actingAs($this->adminUser, ['*']);
 
-        $response = $this->postJson(self::PREFIX . '/banner/change-status', [
+        $response = $this->putJson(self::PREFIX . '/banner/change-status', [
             'id' => 9999,
         ]);
         $response->assertStatus(422);
@@ -536,12 +536,10 @@ class BannerApiTest extends TestCase
 
         $response->assertOk();
 
-        app()->setLocale('ar');
-        $response = $this->getJson(self::PREFIX . '/banners');
+        $response = $this->withHeaders(['lang' => 'ar'])->getJson(self::PREFIX . '/banners');
         $response->assertJsonPath('data.data.0.title', 'تخفيضات الصيف');
 
-        app()->setLocale('en');
-        $response = $this->getJson(self::PREFIX . '/banners');
+        $response = $this->withHeaders(['lang' => 'en'])->getJson(self::PREFIX . '/banners');
         $response->assertJsonPath('data.data.0.title', 'Summer Sale');
     }
 

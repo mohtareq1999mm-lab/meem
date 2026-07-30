@@ -17,7 +17,7 @@ class RoleResource extends JsonResource
         return [
             "id" => $this->id,
             "name" => $this->name,
-            "display_name" => $this->getTranslation('display_name', app()->getLocale()),
+            "display_name" => $this->getRawOriginal('display_name'),
             "guard_name" => $this->guard_name,
             "created_at" => $this->created_at,
             "updated_at" => $this->updated_at,

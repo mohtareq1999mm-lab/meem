@@ -52,6 +52,10 @@ return [
     'ERROR.WRONG_REFUND' => 'استرداد غير صحيح',
     'ERROR.CSV_NOT_FOUND' => 'ملف CSV غير موجود',
     'ERROR.ALREADY_GIVEN_REVIEW_FOR_THIS_PRODUCT' => 'تم تقديم مراجعة لهذا المنتج مسبقا',
+    'MESSAGE.REVIEW_CREATED_SUCCESSFULLY' => 'تم إنشاء التقييم بنجاح',
+    'MESSAGE.REVIEW_UPDATED_SUCCESSFULLY' => 'تم تحديث التقييم بنجاح',
+    'MESSAGE.REVIEW_DELETED_SUCCESSFULLY' => 'تم حذف التقييم بنجاح',
+
     'ERROR.USER_NOT_FOUND' => 'المستخدم غير موجود',
     'ERROR.TOKEN_NOT_FOUND' => 'الرمز غير موجود',
     'ERROR.NOT_AVAILABLE_FOR_BOOKING' => 'غير متاح للحجز',
@@ -225,9 +229,17 @@ return [
     'MESSAGE.PAYMENT_SUCCESSFUL' => 'تم الدفع بنجاح',
     'MESSAGE.BRANDS_REORDERED_SUCCESSFULLY' => 'تمت إعادة ترتيب العلامات التجارية بنجاح',
     'MESSAGE.FLASH_SALE_REORDERED_SUCCESSFULLY' => 'تمت إعادة ترتيب التخفيضات بنجاح',
+    'MESSAGE.COUNTRY_CREATED_SUCCESSFULLY' => 'تم إنشاء الدولة بنجاح',
+    'MESSAGE.COUNTRY_UPDATED_SUCCESSFULLY' => 'تم تحديث الدولة بنجاح',
+    'MESSAGE.COUNTRY_DELETED_SUCCESSFULLY' => 'تم حذف الدولة بنجاح',
+    'ERROR.COUNTRY_NOT_FOUND' => 'الدولة غير موجودة',
+    'MESSAGE.GOVERNORATES_FETCHED_SUCCESSFULLY' => 'تم جلب المحافظات بنجاح',
     'MESSAGE.GOVERNORATE_CREATED_SUCCESSFULLY' => 'تم إنشاء المحافظة بنجاح',
     'MESSAGE.GOVERNORATE_UPDATED_SUCCESSFULLY' => 'تم تحديث المحافظة بنجاح',
     'MESSAGE.GOVERNORATE_DELETED_SUCCESSFULLY' => 'تم حذف المحافظة بنجاح',
+    'MESSAGE.CITY_CREATED_SUCCESSFULLY' => 'تم إنشاء المدينة بنجاح',
+    'MESSAGE.CITY_UPDATED_SUCCESSFULLY' => 'تم تحديث المدينة بنجاح',
+    'MESSAGE.CITY_DELETED_SUCCESSFULLY' => 'تم حذف المدينة بنجاح',
     'MESSAGE.BULK_STATUS_UPDATED_SUCCESSFULLY' => 'تم تحديث الحالة الجماعية بنجاح',
     'INVALID_CREDENTIALS' => 'بيانات الاعتماد غير صحيحة',
     'MESSAGE.FAST_SHIPPING_NOT_AVAILABLE' => 'الشحن السريع غير متاح حالياً',
@@ -295,4 +307,11 @@ return [
     'ERROR.FAVICON_UPLOAD_FAILED' => 'فشل رفع أيقونة الموقع، يرجى التحقق من تنسيق الملف أو حجمه.',
 
     'gone' => 'لم يعد هذا المورد متاحًا.',
+
+    // Shipments
+    'MESSAGE.SHIPMENT_CREATED_SUCCESSFULLY' => 'تم إنشاء الشحنة بنجاح',
+    'MESSAGE.SHIPMENT_UPDATED_SUCCESSFULLY' => 'تم تحديث الشحنة بنجاح',
+    'MESSAGE.SHIPMENT_STATUS_UPDATED' => 'تم تحديث حالة الشحنة',
+    'MESSAGE.SHIPMENT_NOT_FOUND' => 'الشحنة غير موجودة',
+    'ERROR.SHIPMENT_INVALID_TRANSITION' => 'لا يمكن نقل الشحنة إلى الحالة المطلوبة',
 ];

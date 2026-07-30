@@ -24,7 +24,15 @@ trait CreatesTestTables
         Schema::create('countries', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('phone_code')->nullable();
             $table->boolean('status')->default(true);
+            $table->timestamps();
+        });
+
+        Schema::create('cities', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('governorate_id')->constrained('governorates')->cascadeOnDelete();
+            $table->string('name');
             $table->timestamps();
         });
 

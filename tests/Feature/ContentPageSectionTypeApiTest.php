@@ -973,12 +973,10 @@ class ContentPageSectionTypeApiTest extends TestCase
         ]);
         $response->assertStatus(201);
 
-        app()->setLocale('ar');
-        $response = $this->getJson(self::PREFIX . '/content-pages/' . $response->json('data.id'));
+        $response = $this->withHeaders(['lang' => 'ar'])->getJson(self::PREFIX . '/content-pages/' . $response->json('data.id'));
         $response->assertJsonPath('data.title', 'صفحة عربية');
 
-        app()->setLocale('en');
-        $response = $this->getJson(self::PREFIX . '/content-pages/' . $response->json('data.id'));
+        $response = $this->withHeaders(['lang' => 'en'])->getJson(self::PREFIX . '/content-pages/' . $response->json('data.id'));
         $response->assertJsonPath('data.title', 'English Page');
     }
 
@@ -994,12 +992,10 @@ class ContentPageSectionTypeApiTest extends TestCase
         ]);
         $response->assertOk();
 
-        app()->setLocale('ar');
-        $response = $this->getJson(self::PREFIX . '/sections/' . $response->json('data.id'));
+        $response = $this->withHeaders(['lang' => 'ar'])->getJson(self::PREFIX . '/sections/' . $response->json('data.id'));
         $response->assertJsonPath('data.title', 'عنوان عربي');
 
-        app()->setLocale('en');
-        $response = $this->getJson(self::PREFIX . '/sections/' . $response->json('data.id'));
+        $response = $this->withHeaders(['lang' => 'en'])->getJson(self::PREFIX . '/sections/' . $response->json('data.id'));
         $response->assertJsonPath('data.title', 'English Title');
     }
 

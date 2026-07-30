@@ -60,8 +60,9 @@ class CategoryTranslationTest extends TestCase
 
         $response->assertOk();
         $nameValue = $response->json('data.name');
-        $this->assertIsString($nameValue);
-        $this->assertEquals('English Name', $nameValue);
+        $this->assertIsArray($nameValue);
+        $this->assertEquals('English Name', $nameValue['en']);
+        $this->assertEquals('اسم عربي', $nameValue['ar']);
     }
 
     public function test_show_returns_details_in_current_locale(): void
@@ -74,14 +75,10 @@ class CategoryTranslationTest extends TestCase
             'details' => ['en' => 'English details', 'ar' => 'تفاصيل بالعربية'],
         ]);
 
-        app()->setLocale('ar');
-
-        $response = $this->getJson(self::PREFIX . '/categories/' . $category->id);
+        $response = $this->withHeaders(['lang' => 'ar'])->getJson(self::PREFIX . '/categories/' . $category->id);
 
         $response->assertOk();
         $response->assertJsonPath('data.details', 'تفاصيل بالعربية');
-
-        app()->setLocale('en');
     }
 
     private function createSuperAdminUser(): User

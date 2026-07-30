@@ -124,6 +124,26 @@ return [
     'MESSAGE.NOT_AUTHORIZED' => 'You are not authorized to perform this action',
     'MESSAGE.SOMETHING_WENT_WRONG' => 'Something went wrong',
 
+    // Geography
+    'MESSAGE.COUNTRY_CREATED_SUCCESSFULLY' => 'Country created successfully',
+    'MESSAGE.COUNTRY_UPDATED_SUCCESSFULLY' => 'Country updated successfully',
+    'MESSAGE.COUNTRY_DELETED_SUCCESSFULLY' => 'Country deleted successfully',
+    'ERROR.COUNTRY_NOT_FOUND' => 'Country not found',
+    'MESSAGE.GOVERNORATES_FETCHED_SUCCESSFULLY' => 'Governorates fetched successfully',
+    'MESSAGE.GOVERNORATE_CREATED_SUCCESSFULLY' => 'Governorate created successfully',
+    'MESSAGE.GOVERNORATE_UPDATED_SUCCESSFULLY' => 'Governorate updated successfully',
+    'MESSAGE.GOVERNORATE_DELETED_SUCCESSFULLY' => 'Governorate deleted successfully',
+    'MESSAGE.CITY_CREATED_SUCCESSFULLY' => 'City created successfully',
+    'MESSAGE.CITY_UPDATED_SUCCESSFULLY' => 'City updated successfully',
+    'MESSAGE.CITY_DELETED_SUCCESSFULLY' => 'City deleted successfully',
+    'MESSAGE.BULK_STATUS_UPDATED_SUCCESSFULLY' => 'Bulk status updated successfully',
+
+    // Reviews
+    'MESSAGE.REVIEW_CREATED_SUCCESSFULLY' => 'Review created successfully',
+    'MESSAGE.REVIEW_UPDATED_SUCCESSFULLY' => 'Review updated successfully',
+    'MESSAGE.REVIEW_DELETED_SUCCESSFULLY' => 'Review deleted successfully',
+    'ERROR.ALREADY_GIVEN_REVIEW_FOR_THIS_PRODUCT' => 'You have already submitted a review for this product',
+
     // General Errors
     'ERROR.NOT_FOUND' => 'Not found',
     'ERROR.COULD_NOT_CREATE_THE_RESOURCE' => 'Could not create the resource',
@@ -197,4 +217,11 @@ return [
     'MESSAGE.CHECK_INBOX_FOR_PASSWORD_RESET_EMAIL' => 'Check your inbox for password reset email',
 
     'gone' => 'This resource is no longer available.',
+
+    // Shipments
+    'MESSAGE.SHIPMENT_CREATED_SUCCESSFULLY' => 'Shipment created successfully',
+    'MESSAGE.SHIPMENT_UPDATED_SUCCESSFULLY' => 'Shipment updated successfully',
+    'MESSAGE.SHIPMENT_STATUS_UPDATED' => 'Shipment status updated',
+    'MESSAGE.SHIPMENT_NOT_FOUND' => 'Shipment not found',
+    'ERROR.SHIPMENT_INVALID_TRANSITION' => 'Shipment cannot transition to the requested status',
 ];

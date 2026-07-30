@@ -15,11 +15,28 @@ class BulkStatusRequest extends FormRequest
 
     public function rules(): array
     {
+        $table = $this->resolveTable();
+
         return [
             'ids' => ['required', 'array', 'min:1'],
-            'ids.*' => ['integer', 'min:1', 'distinct', 'exists:countries,id'],
+            'ids.*' => ['integer', 'min:1', 'distinct', "exists:{$table},id"],
             'status' => ['required', 'in:0,1'],
         ];
+    }
+
+    private function resolveTable(): string
+    {
+        $path = $this->path();
+
+        if (str_contains($path, 'governorates')) {
+            return 'governorates';
+        }
+
+        if (str_contains($path, 'shipping-prices')) {
+            return 'shipping_prices';
+        }
+
+        return 'countries';
     }
     public function failedValidation(Validator $validator)
     {

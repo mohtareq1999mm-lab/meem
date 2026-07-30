@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Shipment\CreateShipmentRequest;
 use App\Http\Requests\Shipment\UpdateShipmentRequest;
 use App\Http\Requests\Shipment\UpdateShipmentStatusRequest;
+use App\Http\Resources\Shipment\ShipmentResource;
+use App\Models\Shipment;
 use App\Services\Shipment\ShipmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -32,28 +34,28 @@ class ShipmentController extends Controller
             (int) $request->get('limit', 15),
         );
 
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $shipments);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ShipmentResource::collection($shipments));
     }
 
     public function show(int $id): JsonResponse
     {
         $shipment = $this->shipmentService->find($id);
 
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $shipment);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ShipmentResource::make($shipment));
     }
 
     public function showByUuid(string $uuid): JsonResponse
     {
         $shipment = $this->shipmentService->findByUuid($uuid);
 
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $shipment);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ShipmentResource::make($shipment));
     }
 
     public function store(CreateShipmentRequest $request): JsonResponse
     {
         $shipment = $this->shipmentService->create($request->validated());
 
-        return $this->apiResponse('Shipment created successfully', 201, true, $shipment);
+        return $this->apiResponse('SHIPMENT_CREATED_SUCCESSFULLY', 201, true, ShipmentResource::make($shipment));
     }
 
     public function updateStatus(UpdateShipmentStatusRequest $request, int $id): JsonResponse
@@ -65,7 +67,7 @@ class ShipmentController extends Controller
                 $request->validated('notes'),
             );
 
-            return $this->apiResponse('Shipment status updated', 200, true, $shipment);
+            return $this->apiResponse('SHIPMENT_STATUS_UPDATED', 200, true, ShipmentResource::make($shipment));
         } catch (\RuntimeException $e) {
             return $this->apiResponse($e->getMessage(), 422, false);
         }
@@ -75,6 +77,6 @@ class ShipmentController extends Controller
     {
         $shipment = $this->shipmentService->update($id, $request->validated());
 
-        return $this->apiResponse('Shipment updated successfully', 200, true, $shipment);
+        return $this->apiResponse('SHIPMENT_UPDATED_SUCCESSFULLY', 200, true, ShipmentResource::make($shipment));
     }
 }
