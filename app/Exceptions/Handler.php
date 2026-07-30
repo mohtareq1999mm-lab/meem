@@ -190,7 +190,7 @@ class Handler extends ExceptionHandler
             } else {
                 $statusCode = 500;
             }
-            $message = $exceptionMessage;
+            $message = $this->translateNotice($exceptionMessage);
         }
         // Handle other exceptions
         else {

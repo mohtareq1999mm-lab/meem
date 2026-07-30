@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use App\Contracts\FrontendWebhookDispatcher;
 use App\Mail\Transport\ResendTransport;
+use App\Services\FrontendWebhookService;
+use App\ValueObjects\WebhookSignature;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
@@ -17,6 +20,14 @@ class AppServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->singleton(\App\Contexts\ChannelContext::class);
+
+        $this->app->bind(FrontendWebhookDispatcher::class, FrontendWebhookService::class);
+
+        $this->app->bind(WebhookSignature::class, function ($app) {
+            return new WebhookSignature(
+                secret: config('frontend.secret', ''),
+            );
+        });
 
         $this->app->bind(
             \App\Services\Invoice\InvoiceSnapshotValidator::class,

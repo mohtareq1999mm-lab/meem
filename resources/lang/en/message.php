@@ -111,6 +111,8 @@ return [
 
     // Notifications
     'MESSAGE.NOTIFICATIONS_FETCHED' => 'Notifications fetched successfully.',
+    'NOTIFICATION.CONTACT_NEW_TITLE' => 'New Contact Message',
+    'NOTIFICATION.CONTACT_NEW_MESSAGE' => 'New Contact Us message received from :name.',
     'MESSAGE.UNREAD_NOTIFICATIONS_FETCHED' => 'Unread notifications fetched successfully.',
     'MESSAGE.NOTIFICATION_MARKED_READ' => 'Notification marked as read successfully.',
     'MESSAGE.ALL_NOTIFICATIONS_MARKED_READ' => 'All notifications marked as read successfully.',
@@ -123,6 +125,7 @@ return [
     'MESSAGE.SOMETHING_WENT_WRONG' => 'Something went wrong',
 
     // General Errors
+    'ERROR.NOT_FOUND' => 'Not found',
     'ERROR.COULD_NOT_CREATE_THE_RESOURCE' => 'Could not create the resource',
     'ERROR.COULD_NOT_UPDATE_THE_RESOURCE' => 'Could not update the resource',
     'ERROR.COULD_NOT_DELETE_THE_RESOURCE' => 'Could not delete the resource',

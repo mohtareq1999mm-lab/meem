@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Events\AdminLoggedIn;
 use App\Events\ContactMessageReceived;
+use App\Events\FrontendCacheInvalidation;
 use App\Events\InvoiceCreated;
 use App\Events\OrderCancelled;
 use App\Events\OrderCreated;
@@ -11,6 +12,7 @@ use App\Events\OrderStatusChanged;
 use App\Events\PaymentFailed;
 use App\Events\PaymentSucceeded;
 use App\Events\UserRolesUpdated;
+use App\Listeners\DispatchFrontendCacheInvalidation;
 use App\Listeners\LogInvoiceCreated;
 use App\Listeners\LogUserRolesUpdated;
 use App\Listeners\GenerateInvoiceListener;
@@ -88,6 +90,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         InvoiceCreated::class => [
             LogInvoiceCreated::class,
+        ],
+        FrontendCacheInvalidation::class => [
+            DispatchFrontendCacheInvalidation::class,
         ],
     ];
 

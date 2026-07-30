@@ -13,7 +13,12 @@ return new class extends Migration
             $table->string('order_number', 20)->nullable()->after('id');
         });
 
-        DB::statement("UPDATE orders SET order_number = CONCAT('ORD-', LPAD(id, 8, '0')) WHERE order_number IS NULL");
+        $driver = DB::connection()->getDriverName();
+        if ($driver === 'sqlite') {
+            DB::statement("UPDATE orders SET order_number = printf('ORD-%08d', id) WHERE order_number IS NULL");
+        } else {
+            DB::statement("UPDATE orders SET order_number = CONCAT('ORD-', LPAD(id, 8, '0')) WHERE order_number IS NULL");
+        }
     }
 
     public function down(): void

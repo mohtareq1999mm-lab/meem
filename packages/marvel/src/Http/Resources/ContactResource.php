@@ -16,6 +16,7 @@ class ContactResource extends Resource
     {
         return [
             'id' => $this->id,
+            'name' => $this->name,
             'email' => $this->email,
             'subject' => $this->subject,
             'message' => $this->message,

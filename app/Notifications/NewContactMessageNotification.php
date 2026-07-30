@@ -24,8 +24,8 @@ class NewContactMessageNotification extends Notification implements ShouldQueue
     public function toDatabase($notifiable): array
     {
         return [
-            'title' => 'New Contact Message',
-            'message' => "New Contact Us message received from {$this->contact->name}.",
+            'title' => __('NOTIFICATION.CONTACT_NEW_TITLE'),
+            'message' => __('NOTIFICATION.CONTACT_NEW_MESSAGE', ['name' => $this->contact->name]),
             'icon' => 'mail',
             'resource_type' => 'contact',
             'resource_id' => $this->contact->id,
