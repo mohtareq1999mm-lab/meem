@@ -11,7 +11,7 @@ class GenerateInvoiceListener implements ShouldQueue
 {
     public $afterCommit = true;
 
-    public $queue = 'high';
+    public $queue = 'meem-high';
 
     public $tries = 5;
 

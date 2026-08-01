@@ -12,6 +12,7 @@ use Marvel\Events\FlashSaleProcessed;
 
 class FlashSaleProductProcess implements ShouldQueue
 {
+    public $queue = 'meem-medium';
     public function handle(FlashSaleProcessed $event)
     {
         $flash_sales_action = $event->action;

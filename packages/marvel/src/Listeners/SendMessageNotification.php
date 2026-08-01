@@ -14,6 +14,7 @@ use Marvel\Notifications\MessageReminder;
 
 class SendMessageNotification implements ShouldQueue
 {
+    public $queue = 'meem-medium';
     use InteractsWithQueue;
 
     /**

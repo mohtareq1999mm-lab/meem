@@ -15,7 +15,7 @@ class OneTimePasswordNotification extends SpatieNotification implements ShouldQu
     public function __construct(OneTimePassword $oneTimePassword)
     {
         parent::__construct($oneTimePassword);
-        $this->onQueue('high');
+        $this->onQueue('meem-high');
     }
 
     public function toMail(object $notifiable)

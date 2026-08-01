@@ -7,7 +7,8 @@ use Marvel\Events\ProductReviewRejected;
 use Marvel\Notifications\ProductRejectedNotification;
 
 class ProductReviewRejectedListener implements ShouldQueue
-{   
+{
+    public $queue = 'meem-medium';
     /**
      * Handle the event.
      *

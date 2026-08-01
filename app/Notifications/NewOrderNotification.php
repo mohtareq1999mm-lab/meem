@@ -9,6 +9,7 @@ use Illuminate\Notifications\Notification;
 
 class NewOrderNotification extends Notification implements ShouldQueue
 {
+    public $queue = 'meem-medium';
     use Queueable;
 
     public function __construct(

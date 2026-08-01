@@ -12,6 +12,7 @@ use Marvel\Traits\SmsTrait;
 
 class SendReviewNotification implements ShouldQueue
 {
+    public $queue = 'meem-medium';
     use SmsTrait;
 
     /**

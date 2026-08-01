@@ -12,6 +12,7 @@ use Marvel\Traits\UsersTrait;
 
 class ShopMaintenanceListener implements ShouldQueue
 {
+    public $queue = 'meem-medium';
     use UsersTrait;
 
     /**

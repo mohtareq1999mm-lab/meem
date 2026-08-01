@@ -10,6 +10,7 @@ use Marvel\Traits\SmsTrait;
 
 class SendRefundUpdateNotification implements ShouldQueue
 {
+    public $queue = 'meem-medium';
     use SmsTrait, OrderSmsTrait;
 
     /**

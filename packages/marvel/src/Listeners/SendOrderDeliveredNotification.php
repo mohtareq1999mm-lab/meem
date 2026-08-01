@@ -13,6 +13,7 @@ use Marvel\Traits\SmsTrait;
 
 class SendOrderDeliveredNotification implements ShouldQueue
 {
+    public $queue = 'meem-medium';
     use SmsTrait, OrderSmsTrait;
 
     /**

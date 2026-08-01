@@ -85,16 +85,43 @@ services:
         value: /etc/ssl/certs/ca-certificates.crt
       
       # =======================================================================
-      # Cache & Session (File-based for simplicity)
+      # Redis (shared instance - meem-* queue prefix isolates this project)
+      # =======================================================================
+      - key: REDIS_CLIENT
+        value: predis
+
+      - key: REDIS_HOST
+        sync: false  # Set in Render dashboard (managed Redis / external host)
+
+      - key: REDIS_PORT
+        value: "6379"
+
+      - key: REDIS_PASSWORD
+        sync: false  # Set in Render dashboard (secret)
+
+      - key: REDIS_DB
+        value: "0"
+
+      - key: REDIS_CACHE_DB
+        value: "1"
+
+      - key: CACHE_PREFIX
+        value: meem_cache
+
+      - key: REDIS_PREFIX
+        value: meem_
+
+      # =======================================================================
+      # Cache & Session (Redis)
       # =======================================================================
       - key: CACHE_DRIVER
-        value: file
-      
+        value: redis
+
       - key: SESSION_DRIVER
-        value: file
-      
+        value: redis
+
       - key: QUEUE_CONNECTION
-        value: sync  # Use 'database' if you need queues
+        value: redis  # Queued jobs processed by Supervisor workers (meem-high/meem-medium/meem-imports)
       
       # =======================================================================
       # Migration Control

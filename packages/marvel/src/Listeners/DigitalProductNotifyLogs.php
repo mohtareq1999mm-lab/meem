@@ -22,6 +22,7 @@ use Marvel\Exceptions\MarvelException;
 
 class DigitalProductNotifyLogsListener implements ShouldQueue
 {
+    public $queue = 'meem-medium';
 
     use UsersTrait;
 

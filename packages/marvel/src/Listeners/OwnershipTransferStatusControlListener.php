@@ -15,6 +15,7 @@ use Marvel\Traits\UsersTrait;
 
 class OwnershipTransferStatusControlListener implements ShouldQueue
 {
+    public $queue = 'meem-medium';
     use UsersTrait;
 
     /**

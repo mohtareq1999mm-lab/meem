@@ -9,6 +9,7 @@ use Marvel\Database\Models\ProductVariant;
 
 class ProductInventoryRestore implements ShouldQueue
 {
+    public $queue = 'meem-high';
     public function handle($event)
     {
         try {

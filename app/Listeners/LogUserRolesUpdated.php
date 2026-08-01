@@ -8,6 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 
 class LogUserRolesUpdated implements ShouldQueue
 {
+    public $queue = 'meem-medium';
     public function __construct()
     {
         //

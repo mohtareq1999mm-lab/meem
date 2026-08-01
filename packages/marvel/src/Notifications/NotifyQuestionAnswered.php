@@ -12,6 +12,7 @@ use Marvel\Database\Models\Question;
 
 class NotifyQuestionAnswered extends Notification implements ShouldQueue
 {
+    public $queue = 'meem-medium';
     use Queueable;
 
     public $question;

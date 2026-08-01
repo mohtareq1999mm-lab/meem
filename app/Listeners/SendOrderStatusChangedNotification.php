@@ -8,7 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 
 class SendOrderStatusChangedNotification implements ShouldQueue
 {
-    public $queue = 'medium';
+    public $queue = 'meem-medium';
 
     public function handle(OrderStatusChanged $event): void
     {

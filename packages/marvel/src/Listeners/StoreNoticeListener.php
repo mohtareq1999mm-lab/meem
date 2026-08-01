@@ -12,6 +12,7 @@ use Marvel\Notifications\StoreNoticeNotification;
 
 class StoreNoticeListener implements ShouldQueue
 {
+    public $queue = 'meem-medium';
     /**
      * Create the event listener.
      *

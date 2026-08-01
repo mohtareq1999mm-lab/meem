@@ -11,6 +11,7 @@ use Marvel\Database\Models\Order;
 
 class PaymentSuccessfulNotification extends Notification implements ShouldQueue
 {
+    public $queue = 'meem-medium';
     use Queueable;
 
     protected $order;

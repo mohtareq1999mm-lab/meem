@@ -11,6 +11,7 @@ use Marvel\Enums\Permission;
 
 class StoreNoticeNotification extends Notification implements ShouldQueue
 {
+    public $queue = 'meem-medium';
     use Queueable;
 
     protected $storeNotice;

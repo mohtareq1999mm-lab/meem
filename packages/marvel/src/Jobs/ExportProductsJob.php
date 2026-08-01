@@ -22,7 +22,7 @@ class ExportProductsJob implements ShouldQueue
     public function __construct(array $filters = [])
     {
         $this->filters = $filters;
-        $this->onQueue('default');
+        $this->onQueue('meem-imports');
     }
 
     public function handle(): void

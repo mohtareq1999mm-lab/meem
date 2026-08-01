@@ -13,7 +13,7 @@ class RestoreProductInventory implements ShouldQueue
 {
     public $afterCommit = true;
 
-    public $queue = 'medium';
+    public $queue = 'meem-medium';
 
     public function handle($event)
     {

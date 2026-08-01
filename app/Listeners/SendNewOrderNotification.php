@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Notification;
 
 class SendNewOrderNotification implements ShouldQueue
 {
-    public $queue = 'medium';
+    public $queue = 'meem-medium';
 
     public function handle(OrderCreated $event): void
     {

@@ -10,6 +10,7 @@ use Marvel\Database\Models\Product;
 
 class ProductApprovedNotification extends Notification implements ShouldQueue
 {
+    public $queue = 'meem-medium';
     use Queueable;
 
     public $product;

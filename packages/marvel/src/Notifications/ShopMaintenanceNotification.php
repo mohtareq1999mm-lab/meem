@@ -10,6 +10,7 @@ use Illuminate\Support\Carbon;
 
 class ShopMaintenanceNotification extends Notification implements ShouldQueue
 {
+    public $queue = 'meem-medium';
     use Queueable;
 
     public $shop;

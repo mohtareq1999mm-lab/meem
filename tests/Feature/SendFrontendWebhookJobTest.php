@@ -18,7 +18,7 @@ class SendFrontendWebhookJobTest extends TestCase
     {
         parent::setUp();
 
-        Config::set('frontend.queue', 'high');
+        Config::set('frontend.queue', 'meem-high');
     }
 
     /** @test */
@@ -32,7 +32,7 @@ class SendFrontendWebhookJobTest extends TestCase
 
         SendFrontendWebhookJob::dispatch($payload);
 
-        Queue::assertPushedOn('high', SendFrontendWebhookJob::class);
+        Queue::assertPushedOn('meem-high', SendFrontendWebhookJob::class);
     }
 
     /** @test */

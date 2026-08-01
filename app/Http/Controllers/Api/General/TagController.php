@@ -15,9 +15,11 @@ class TagController extends Controller
     public function index(Request $request)
     {
         $tags = Tag::query();
+        $order = $request->input("order", "desc");
+        $limit = $request->input("limit",15);
 
-        if ($request->filled('ids')) {
-            $ids = is_array($request->ids) ? $request->ids : explode(',', $request->ids);
+        if ($request->filled('tagsIds')) {
+            $ids = is_array($request->tagsIds) ? $request->tagsIds : explode(',', $request->tagsIds);
             $tags->whereIn('id', $ids);
         }
 
@@ -25,7 +27,7 @@ class TagController extends Controller
             $slugs = is_array($request->slugs) ? $request->slugs : explode(',', $request->slugs);
             $tags->whereIn('slug', $slugs);
         }
-        $tags = $tags->get();
+        $tags = $tags->orderBy('id', $order)->paginate($limit);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, TagResource::collection($tags));
     }
 

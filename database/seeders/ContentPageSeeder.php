@@ -87,6 +87,21 @@ class ContentPageSeeder extends Seeder
                     ],
                 ]
             ],
+            // 2 — tags offers
+            [
+                'type' => 'tags',
+                'title' => ['en' => 'Tags', 'ar' => 'العلامات'],
+                'endpoint' => 'tags',
+                'order' => 2,
+                'setting' => [
+                    'front' => ['autoplay' => true, 'slider_speed' => 5000],
+                    'back' => [
+                        "limit" => 10,
+                        "tagsId" => [1,2,3,4,5,6,7,8,9,10],
+                        "order" => "desc",
+                    ],
+                ]
+            ],
             // 3 — Browse categories grid
             [
                 'type' => 'categories',

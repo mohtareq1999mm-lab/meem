@@ -12,6 +12,7 @@ use Marvel\Traits\SmsTrait;
 
 class OrderCancelledNotification extends Notification implements ShouldQueue
 {
+    public $queue = 'meem-medium';
     use Queueable, SmsTrait;
 
     protected $order;

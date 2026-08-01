@@ -18,6 +18,7 @@ use Marvel\Traits\UsersTrait;
 
 class StoredMessagedNotifyLogsListener implements ShouldQueue
 {
+    public $queue = 'meem-medium';
 
     use UsersTrait;
 

@@ -12,6 +12,7 @@ use Marvel\Database\Models\Refund;
 
 class RefundUpdate extends Notification implements ShouldQueue
 {
+    public $queue = 'meem-medium';
 
     use Queueable;
 

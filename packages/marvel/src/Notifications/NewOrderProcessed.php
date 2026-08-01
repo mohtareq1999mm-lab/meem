@@ -10,6 +10,7 @@ use Marvel\Database\Models\Order;
 
 class NewOrderProcessed extends Notification implements ShouldQueue
 {
+    public $queue = 'meem-medium';
     use Queueable;
 
     protected $order;

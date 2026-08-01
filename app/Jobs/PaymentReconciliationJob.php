@@ -19,9 +19,13 @@ class PaymentReconciliationJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public int $tries = 1;
+
+    public int $timeout = 900;
+
     public function __construct()
     {
-        $this->onQueue('low');
+        $this->onQueue('meem-medium');
     }
 
     public function handle(PaymentGatewayFactory $gatewayFactory): void
@@ -88,6 +92,14 @@ class PaymentReconciliationJob implements ShouldQueue
             'mismatches_found' => $mismatches,
             'gateway_failures' => $gatewayFailures,
             'skipped' => $skipped,
+        ]);
+    }
+
+    public function failed(\Throwable $e): void
+    {
+        Log::error('PaymentReconciliationJob failed.', [
+            'error' => $e->getMessage(),
+            'attempts' => $this->attempts(),
         ]);
     }
 

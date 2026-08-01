@@ -12,6 +12,7 @@ use Marvel\Traits\UsersTrait;
 
 class TransferredShopOwnershipNotification implements ShouldQueue
 {
+    public $queue = 'meem-medium';
     use UsersTrait;
     /**
      * Create the event listener.

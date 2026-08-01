@@ -12,6 +12,7 @@ use Marvel\Database\Models\User;
 
 class TransferredShopOwnership extends Notification implements ShouldQueue
 {
+    public $queue = 'meem-medium';
     use Queueable;
 
     public $shop;

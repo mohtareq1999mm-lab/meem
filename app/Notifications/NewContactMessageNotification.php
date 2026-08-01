@@ -10,6 +10,7 @@ use Illuminate\Notifications\Notification;
 
 class NewContactMessageNotification extends Notification implements ShouldQueue
 {
+    public $queue = 'meem-medium';
     use Queueable;
 
     public function __construct(

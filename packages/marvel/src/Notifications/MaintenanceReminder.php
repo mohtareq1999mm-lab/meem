@@ -10,6 +10,7 @@ use Illuminate\Support\Carbon;
 
 class MaintenanceReminder extends Notification implements ShouldQueue
 {
+    public $queue = 'meem-medium';
     use Queueable;
 
     public $settings;
