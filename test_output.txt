@@ -1,2 +1,0 @@
-FINDSTR: Cannot open R:/
-FINDSTR: Cannot open [0-9]*)
