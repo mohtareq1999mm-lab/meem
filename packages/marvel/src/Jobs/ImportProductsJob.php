@@ -30,7 +30,7 @@ class ImportProductsJob implements ShouldQueue
     public function __construct(int $importId)
     {
         $this->importId = $importId;
-        $this->onQueue('meem-imports');
+        $this->onQueue('meem-high');
     }
 
     protected function removeSignalFile(string $type): void

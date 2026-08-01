@@ -121,7 +121,7 @@ services:
         value: redis
 
       - key: QUEUE_CONNECTION
-        value: redis  # Queued jobs processed by Supervisor workers (meem-high/meem-medium/meem-imports)
+        value: redis  # Queued jobs processed by Supervisor workers (meem-high/meem-medium)
       
       # =======================================================================
       # Migration Control
