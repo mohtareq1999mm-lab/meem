@@ -12,7 +12,6 @@ use Marvel\Database\Models\Review;
 
 class NewReviewCreated extends Notification implements ShouldQueue
 {
-    public $queue = 'meem-medium';
     use Queueable;
 
     public $review;
@@ -25,6 +24,8 @@ class NewReviewCreated extends Notification implements ShouldQueue
      */
     public function __construct(Review $review)
     {
+        $this->onQueue('meem-medium');
+
         $this->review = $review;
     }
 

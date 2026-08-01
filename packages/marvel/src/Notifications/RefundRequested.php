@@ -12,8 +12,6 @@ use Marvel\Database\Models\Refund;
 
 class RefundRequested extends Notification implements ShouldQueue
 {
-    public $queue = 'meem-medium';
-
     use Queueable;
 
     protected $refund;
@@ -26,6 +24,8 @@ class RefundRequested extends Notification implements ShouldQueue
      */
     public function __construct(Refund $refund, $receiver = 'admin')
     {
+        $this->onQueue('meem-medium');
+
         $this->refund = $refund;
         $this->receiver = $receiver;
     }

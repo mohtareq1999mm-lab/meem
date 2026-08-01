@@ -11,7 +11,6 @@ use Marvel\Database\Models\Order;
 
 class PaymentFailedNotification extends Notification implements ShouldQueue
 {
-    public $queue = 'meem-medium';
     use Queueable;
 
     protected $order;
@@ -23,6 +22,8 @@ class PaymentFailedNotification extends Notification implements ShouldQueue
      */
     public function __construct(Order $order)
     {
+        $this->onQueue('meem-medium');
+
         $this->order = $order;
     }
 

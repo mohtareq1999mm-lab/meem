@@ -11,7 +11,6 @@ use Marvel\Traits\SmsTrait;
 
 class OrderDeliveredNotification extends Notification implements ShouldQueue
 {
-    public $queue = 'meem-medium';
     use Queueable, SmsTrait;
 
     protected $order;
@@ -23,6 +22,8 @@ class OrderDeliveredNotification extends Notification implements ShouldQueue
      */
     public function __construct(Order $order)
     {
+        $this->onQueue('meem-medium');
+
         $this->order = $order;
     }
 

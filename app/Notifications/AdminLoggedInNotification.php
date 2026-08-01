@@ -9,14 +9,15 @@ use Illuminate\Notifications\Notification;
 
 class AdminLoggedInNotification extends Notification implements ShouldQueue
 {
-    public $queue = 'meem-medium';
     use Queueable;
 
     public function __construct(
         public $admin,
         public string $ip,
         public string $userAgent,
-    ) {}
+    ) {
+        $this->onQueue('meem-medium');
+    }
 
     public function via($notifiable): array
     {

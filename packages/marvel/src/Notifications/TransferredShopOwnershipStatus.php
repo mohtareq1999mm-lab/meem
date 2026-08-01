@@ -12,7 +12,6 @@ use Marvel\Database\Models\User;
 
 class TransferredShopOwnershipStatus extends Notification implements ShouldQueue
 {
-    public $queue = 'meem-medium';
     use Queueable;
 
     public $shop;
@@ -35,6 +34,8 @@ class TransferredShopOwnershipStatus extends Notification implements ShouldQueue
      */
     public function __construct($shop, $previousOwner, $newOwner, $optional = null)
     {
+        $this->onQueue('meem-medium');
+
         $this->shop = $shop;
         $this->previousOwner = $previousOwner;
         $this->newOwner = $newOwner;

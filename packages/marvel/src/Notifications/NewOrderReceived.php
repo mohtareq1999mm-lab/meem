@@ -11,7 +11,6 @@ use Marvel\Database\Models\Order;
 
 class NewOrderReceived extends Notification implements ShouldQueue
 {
-    public $queue = 'meem-medium';
     use Queueable;
 
     protected $order;
@@ -24,6 +23,8 @@ class NewOrderReceived extends Notification implements ShouldQueue
      */
     public function __construct(Order $order, string $receiver = 'storeOwner')
     {
+        $this->onQueue('meem-medium');
+
         $this->order = $order;
         $this->receiver = $receiver;
     }

@@ -11,7 +11,6 @@ use Marvel\Database\Models\Participant;
 
 class MessageReminder extends Notification implements ShouldQueue
 {
-    public $queue = 'meem-medium';
     use Queueable;
 
     public $participant;
@@ -24,6 +23,8 @@ class MessageReminder extends Notification implements ShouldQueue
      */
     public function __construct($participant)
     {
+        $this->onQueue('meem-medium');
+
         $this->participant = $participant;
     }
 

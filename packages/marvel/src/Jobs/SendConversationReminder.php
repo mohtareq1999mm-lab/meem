@@ -17,8 +17,6 @@ class SendConversationReminder implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $queue = 'meem-medium';
-
     protected $participant;
 
     /**
@@ -29,6 +27,8 @@ class SendConversationReminder implements ShouldQueue
      */
     public function __construct(Participant $participant)
     {
+        $this->onQueue('meem-medium');
+
         $this->participant = $participant;
     }
 

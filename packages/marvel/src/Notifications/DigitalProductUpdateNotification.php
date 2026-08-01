@@ -12,7 +12,6 @@ use Marvel\Database\Models\User;
 
 class DigitalProductUpdateNotification extends Notification implements ShouldQueue
 {
-    public $queue = 'meem-medium';
     use Queueable;
 
     protected $user;
@@ -28,6 +27,8 @@ class DigitalProductUpdateNotification extends Notification implements ShouldQue
      */
     public function __construct(User $user, Product $product, $optional_message = null)
     {
+        $this->onQueue('meem-medium');
+
         $this->user = $user;
         $this->product = $product;
         $this->optional_message = $optional_message;

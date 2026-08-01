@@ -12,7 +12,6 @@ use Marvel\Database\Models\Question;
 
 class NotifyQuestionAnswered extends Notification implements ShouldQueue
 {
-    public $queue = 'meem-medium';
     use Queueable;
 
     public $question;
@@ -25,6 +24,8 @@ class NotifyQuestionAnswered extends Notification implements ShouldQueue
      */
     public function __construct(Question $question)
     {
+        $this->onQueue('meem-medium');
+
         $this->question = $question;
     }
 

@@ -13,7 +13,6 @@ use Dompdf\Options;
 
 class OrderPlacedSuccessfully extends Notification implements ShouldQueue
 {
-    public $queue = 'meem-medium';
     use Queueable;
 
     protected array $invoiceData;
@@ -25,6 +24,8 @@ class OrderPlacedSuccessfully extends Notification implements ShouldQueue
      */
     public function __construct(array $invoiceData)
     {
+        $this->onQueue('meem-medium');
+
         $this->invoiceData = $invoiceData;
     }
 

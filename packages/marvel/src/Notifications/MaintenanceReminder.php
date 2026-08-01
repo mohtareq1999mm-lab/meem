@@ -10,7 +10,6 @@ use Illuminate\Support\Carbon;
 
 class MaintenanceReminder extends Notification implements ShouldQueue
 {
-    public $queue = 'meem-medium';
     use Queueable;
 
     public $settings;
@@ -23,6 +22,8 @@ class MaintenanceReminder extends Notification implements ShouldQueue
      */
     public function __construct($settings)
     {
+        $this->onQueue('meem-medium');
+
         $this->settings = $settings;
     }
 

@@ -9,12 +9,13 @@ use Illuminate\Notifications\Notification;
 
 class NewOrderNotification extends Notification implements ShouldQueue
 {
-    public $queue = 'meem-medium';
     use Queueable;
 
     public function __construct(
         public $order,
-    ) {}
+    ) {
+        $this->onQueue('meem-medium');
+    }
 
     public function via($notifiable): array
     {
