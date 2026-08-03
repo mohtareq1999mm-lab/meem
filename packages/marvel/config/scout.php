@@ -41,7 +41,10 @@ return [
     |
     */
 
-    'queue' => env('SCOUT_QUEUE', true),
+    'queue' => [
+        'connection' => env('QUEUE_CONNECTION', 'redis'),
+        'queue' => env('SCOUT_QUEUE_NAME', 'meem-high'),
+    ],
 
     /*
     |--------------------------------------------------------------------------

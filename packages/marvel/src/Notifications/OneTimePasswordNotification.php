@@ -18,6 +18,16 @@ class OneTimePasswordNotification extends SpatieNotification implements ShouldQu
         $this->onQueue('meem-high');
     }
 
+    public function backoff(): array
+    {
+        return [300, 900, 1800, 3600];
+    }
+
+    public function retryUntil(): \DateTimeInterface
+    {
+        return now()->endOfDay()->addMinutes(15);
+    }
+
     public function toMail(object $notifiable)
     {
         return (new MailMessage)

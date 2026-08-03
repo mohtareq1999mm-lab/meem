@@ -16,7 +16,7 @@ class AdminLoggedInNotification extends Notification implements ShouldQueue
         public string $ip,
         public string $userAgent,
     ) {
-        $this->onQueue('meem-medium');
+        $this->onQueue('meem-high');
     }
 
     public function via($notifiable): array

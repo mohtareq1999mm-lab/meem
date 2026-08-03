@@ -5,6 +5,7 @@ namespace Marvel\Database\Models;
 // DISABLED: Email verification not needed
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Notifications\VerifyEmailNotification;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
@@ -130,6 +131,11 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
     public function getEmailVerifiedAttribute(): bool
     {
         return $this->hasVerifiedEmail();
+    }
+
+    public function sendEmailVerificationNotification()
+    {
+        $this->notify(new VerifyEmailNotification());
     }
 
 
