@@ -12,8 +12,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
-use Laravel\Socialite\Facades\Socialite;
 use Marvel\Console\MarvelVerification;
 use Marvel\Database\Models\User;
 use Marvel\Database\Models\Wallet;
@@ -951,55 +949,6 @@ class UserController extends CoreController
      *     @OA\Response(response=422, description="Invalid provider or token")
      * )
      */
-
-
-    public function redirectToProvider(Request $request)
-    {
-        $provider = $request->provider;
-        $this->validateProvider($provider);
-        $url = Socialite::driver($provider)->stateless()->redirect();
-        return $this->apiResponse(SOCIAL_LOGIN_URL_GENERATED, 200, true, ['url' => $url->getTargetUrl()]);}
-    public function callbackProvider(Request $request)
-    {
-        $provider = $request->provider;
-
-        try {
-            $user = Socialite::driver($provider)->stateless()->user();
-            $userExist = User::where('email', $user->email)->exists();
-
-            $userCreated = User::firstOrCreate(
-                [
-                    'email' => $user->getEmail()
-                ],
-                [
-                    'email_verified_at' => now(),
-                    'name' => $user->getName(),
-                    'password' => Hash::make(Str::random(16)),
-                    'type' => 'user',
-                ]
-            );
-
-            $userCreated->providers()->updateOrCreate(
-                [
-                    'provider' => $provider,
-                    'provider_user_id' => $user->getId(),
-                ]
-            );
-            $data = [
-                "token" => $userCreated->createToken('auth_token')->plainTextToken,
-            ];
-            return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true, $data);
-        } catch (\Exception $e) {
-            throw new MarvelException(INVALID_CREDENTIALS);
-        }
-    }
-
-    protected function validateProvider($provider)
-    {
-        if (!in_array($provider, ['facebook', 'google'])) {
-            throw new MarvelException(PLEASE_LOGIN_USING_FACEBOOK_OR_GOOGLE);
-        }
-    }
 
 
     protected function getOtpGateway()

@@ -50,6 +50,27 @@ trait CreatesTestTables
             $table->softDeletes();
         });
 
+        Schema::create('providers', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->string('provider');
+            $table->string('provider_user_id');
+            $table->timestamps();
+            $table->unique(['provider', 'provider_user_id']);
+        });
+
+        Schema::create('social_login_codes', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->string('code', 64)->unique();
+            $table->timestamp('expires_at');
+            $table->boolean('used')->default(false);
+            $table->timestamp('used_at')->nullable();
+            $table->timestamps();
+            $table->index('expires_at');
+        });
+
+
         Schema::create('products', function (Blueprint $table) {
             $table->id();
             $table->string('name');

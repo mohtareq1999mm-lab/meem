@@ -315,4 +315,8 @@ return [
     'MESSAGE.SHIPMENT_NOT_FOUND' => 'الشحنة غير موجودة',
     'ERROR.SHIPMENT_INVALID_TRANSITION' => 'لا يمكن نقل الشحنة إلى الحالة المطلوبة',
     'SOCIAL_LOGIN_URL_GENERATED' => 'تم إنشاء رابط تسجيل الدخول الاجتماعي بنجاح',
+
+    // Social Login
+    'MESSAGE.SOCIAL_LOGIN_SUCCESSFUL' => 'تم تسجيل الدخول بنجاح.',
+    'ERROR.INVALID_SOCIAL_LOGIN_CODE' => 'رمز التخويل غير صالح أو منتهي الصلاحية.',
 ];

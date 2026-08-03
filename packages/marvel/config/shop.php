@@ -40,6 +40,18 @@ return [
 
     'default_currency' => env('DEFAULT_CURRENCY', 'USD'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Social Login configuration
+    |--------------------------------------------------------------------------
+    | frontend_url is the SPA base URL that receives the one-time authorization
+    | code after the OAuth provider redirects back to the callback.
+    */
+    'social_login' => [
+        'frontend_url' => env('SOCIAL_LOGIN_FRONTEND_URL', env('SHOP_URL')),
+        'code_ttl_minutes' => (int) env('SOCIAL_LOGIN_CODE_TTL_MINUTES', 200),
+    ],
+
     'active_payment_gateway' => env('ACTIVE_PAYMENT_GATEWAY', 'stripe'),
 
     'razorpay' => [

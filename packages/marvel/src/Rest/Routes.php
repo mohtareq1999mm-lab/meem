@@ -74,6 +74,7 @@ use Marvel\Http\Controllers\NotificationController;
 use Marvel\Http\Controllers\PickupLocationController;
 use Marvel\Http\Controllers\ProductExportController;
 use Marvel\Http\Controllers\ShippingPriceController;
+use Marvel\Http\Controllers\SocialController;
 
 // use Illuminate\Support\Facades\Auth;
 
@@ -95,8 +96,10 @@ Route::middleware(['throttle:auth'])->group(function () {
     Route::post('/register', [UserController::class, 'register']);
     Route::post('/token', [UserController::class, 'token']);
     Route::post('/admin-login', [UserController::class, 'adminToken']);
-    Route::get('/social/redirect', [UserController::class, 'redirectToProvider']);
-    Route::get('/social/{provider}/callback', [UserController::class, 'callbackProvider']);
+    Route::get('/social/redirect', [SocialController::class, 'redirectFromQuery']);
+    Route::post('/social/exchange', [SocialController::class, 'exchange']);
+    Route::get('/social/{provider}', [SocialController::class, 'redirect']);
+    Route::get('/social/{provider}/callback', [SocialController::class, 'callback']);
 });
 
 

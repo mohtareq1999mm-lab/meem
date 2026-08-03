@@ -225,4 +225,8 @@ return [
     'MESSAGE.SHIPMENT_NOT_FOUND' => 'Shipment not found',
     'ERROR.SHIPMENT_INVALID_TRANSITION' => 'Shipment cannot transition to the requested status',
     'SOCIAL_LOGIN_URL_GENERATED' => 'Social login URL generated successfully',
+
+    // Social Login
+    'MESSAGE.SOCIAL_LOGIN_SUCCESSFUL' => 'Login successful.',
+    'ERROR.INVALID_SOCIAL_LOGIN_CODE' => 'Invalid or expired authorization code.',
 ];
