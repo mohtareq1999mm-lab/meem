@@ -314,4 +314,5 @@ return [
     'MESSAGE.SHIPMENT_STATUS_UPDATED' => 'تم تحديث حالة الشحنة',
     'MESSAGE.SHIPMENT_NOT_FOUND' => 'الشحنة غير موجودة',
     'ERROR.SHIPMENT_INVALID_TRANSITION' => 'لا يمكن نقل الشحنة إلى الحالة المطلوبة',
+    'SOCIAL_LOGIN_URL_GENERATED' => 'تم إنشاء رابط تسجيل الدخول الاجتماعي بنجاح',
 ];

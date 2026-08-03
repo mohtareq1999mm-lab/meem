@@ -957,8 +957,8 @@ class UserController extends CoreController
     {
         $provider = $request->provider;
         $this->validateProvider($provider);
-        return Socialite::driver($provider)->stateless()->redirect();
-    }
+        $url = Socialite::driver($provider)->stateless()->redirect();
+        return $this->apiResponse(SOCIAL_LOGIN_URL_GENERATED, 200, true, ['url' => $url->getTargetUrl()]);}
     public function callbackProvider(Request $request)
     {
         $provider = $request->provider;
