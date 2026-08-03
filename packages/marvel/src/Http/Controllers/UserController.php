@@ -974,7 +974,7 @@ class UserController extends CoreController
                 [
                     'email_verified_at' => now(),
                     'name' => $user->getName(),
-                    'password' => Hash::make('password'),
+                    'password' => Hash::make(Str::random(16)),
                     'type' => 'user',
                 ]
             );
