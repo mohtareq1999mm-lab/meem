@@ -964,7 +964,7 @@ class UserController extends CoreController
         $provider = $request->provider;
 
         try {
-            $user = Socialite::driver($provider)->user();
+            $user = Socialite::driver($provider)->stateless()->user();
             $userExist = User::where('email', $user->email)->exists();
 
             $userCreated = User::firstOrCreate(
