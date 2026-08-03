@@ -893,4 +893,3 @@ Route::get('/enum-types', function () {
         200
     );
 });
-Route::apiResource('became-seller', BecameSellerController::class);
