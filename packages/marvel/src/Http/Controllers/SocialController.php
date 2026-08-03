@@ -91,6 +91,8 @@ class SocialController extends CoreController
             Log::error('Social login callback failed', [
                 'provider' => $provider,
                 'error' => $e->getMessage(),
+                'exception' => get_class($e),
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return redirect()->away($this->frontendUrl() . '/auth?error=social_login_failed');
