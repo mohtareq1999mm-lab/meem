@@ -561,7 +561,7 @@ class UserController extends CoreController
                 $data['otp_id'] = $otpResponse['otp_id'] ?? null;
             }
         }
-        return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true, $data);
+        return $this->apiResponse(OTP_SENT_SUCCESSFULLY, 200, true, $data);
     }
     public function verifyLoginOtp(Request $request)
     {
@@ -1040,7 +1040,7 @@ class UserController extends CoreController
         $phoneNumber = $request->phone_number;
         try {
             if (empty($phoneNumber)) {
-                return ['message' => config('shop.app_notice_domain') . 'ERROR.EMPTY_MOBILE_NUMBER', 'success' => false];
+                return ['message' => 'ERROR.EMPTY_MOBILE_NUMBER', 'success' => false];
             }
 
             $otpGateway = $this->getOtpGateway();
