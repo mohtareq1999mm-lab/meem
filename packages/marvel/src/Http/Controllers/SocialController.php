@@ -20,20 +20,26 @@ class SocialController extends CoreController
     /**
      * Redirect the browser to the OAuth provider (Google / Facebook).
      */
-    public function redirect(string $provider): RedirectResponse
+    public function redirect(string $provider): JsonResponse
     {
         $this->validateProvider($provider);
 
-        return Socialite::driver($provider)
+        $url = Socialite::driver($provider)
             ->stateless()
             ->redirectUrl($this->callbackUrl($provider))
-            ->redirect();
+            ->redirect()
+            ->getTargetUrl();
+
+        return response()->json([
+            'success' => true,
+            'url' => $url,
+        ], 200);
     }
 
     /**
      * Backwards-compatible alias: GET /api/v1/social/redirect?provider=google
      */
-    public function redirectFromQuery(Request $request): RedirectResponse
+    public function redirectFromQuery(Request $request): JsonResponse
     {
         return $this->redirect((string) $request->query('provider'));
     }

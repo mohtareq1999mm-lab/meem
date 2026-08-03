@@ -65,7 +65,7 @@ class SocialLoginFlowTest extends TestCase
     // GET /api/v1/social/{provider}
     // ========================================================================
 
-    public function test_redirect_bounces_user_to_provider(): void
+    public function test_redirect_returns_provider_url(): void
     {
         $provider = Mockery::mock(GoogleProvider::class);
         $provider->shouldReceive('stateless')->andReturnSelf();
@@ -77,7 +77,9 @@ class SocialLoginFlowTest extends TestCase
 
         $response = $this->get(self::PREFIX . '/social/google');
 
-        $response->assertRedirect('https://accounts.google.com/o/oauth2/auth');
+        $response->assertOk();
+        $response->assertJsonPath('success', true);
+        $response->assertJsonPath('url', 'https://accounts.google.com/o/oauth2/auth');
     }
 
     // ========================================================================
