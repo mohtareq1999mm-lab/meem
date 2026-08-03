@@ -96,7 +96,7 @@ Route::middleware(['throttle:auth'])->group(function () {
     Route::post('/token', [UserController::class, 'token']);
     Route::post('/admin-login', [UserController::class, 'adminToken']);
     Route::get('/social/redirect', [UserController::class, 'redirectToProvider']);
-    Route::get('/social/callback', [UserController::class, 'callbackProvider']);
+    Route::get('/social/{provider}/callback', [UserController::class, 'callbackProvider']);
 });
 
 
