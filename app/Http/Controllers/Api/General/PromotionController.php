@@ -2,15 +2,17 @@
 
 namespace App\Http\Controllers\Api\General;
 
+use App\Enums\FrontendResource;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Promotion\PromotionResource;
 use App\Services\General\PromotionDataService;
+use App\Traits\HasCache;
 use Illuminate\Http\Request;
 use Marvel\Traits\ApiResponse;
 
 class  PromotionController extends Controller
 {
-     use ApiResponse;
+    use ApiResponse, HasCache;
     private PromotionDataService $promotionService;
 
     public function __construct(PromotionDataService $promotionService)
@@ -31,7 +33,8 @@ class  PromotionController extends Controller
             return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, PromotionResource::make($promotion));
         }
         $promotions = $this->promotionService->paginatePromotion($request);
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, PromotionResource::collection($promotions));
+        $promotionsCache = $this->remember(FrontendResource::PROMOTIONS->value, md5($request->fullUrl()), $promotions);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, PromotionResource::collection($promotionsCache));
     }
     public function getPromotionBySlug($slug)
     {
@@ -39,7 +42,7 @@ class  PromotionController extends Controller
         if (!$PromotionWithProducts) {
             return $this->apiResponse(NOT_FOUND, 404, false);
         }
-        
+
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, PromotionResource::make($PromotionWithProducts));
     }
 }

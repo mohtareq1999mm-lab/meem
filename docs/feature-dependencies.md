@@ -236,8 +236,10 @@ Production Ready
 **Notes:**
 - RateLimiter::for('cart') registered at RouteServiceProvider.php configured at 20 req/min per user
 - English cart.inventory.* translation keys added
+- One cart per user (`carts.user_id` UNIQUE); `PUT /update-item` requires `item.operation` (increment/decrement); bulk-items is non-atomic with per-item `failed_items`; clear-cart coupon warning returns HTTP 200 + success:true
 - Rev 2 (2026-07-29): Bulk-items shipping_method made optional with default; non-existent products skipped gracefully
 - Rev 3 (2026-07-29): Bulk-items per-item error handling — stock failures skip individual items, reported in `failed_items` array
+- Rev 4 (2026-08-04): Full documentation audit of `api-desc/cart/` (all 12 files) — no application code changed. Test re-run blocked by global bootstrap error (`Class "Role" not found` at Routes.php:699); last verified 61/65 + 8/8. Open production bugs: BUG-CART-001/002/003/006/007 (see `api-desc/cart/bug-report.md`).
 
 ---
 

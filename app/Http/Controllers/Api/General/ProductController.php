@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Api\General;
 
+use App\Enums\FrontendResource;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Product\ProductMiniResource;
 use App\Http\Resources\Product\ProductResource;
 use App\Http\Resources\Product\ReviewResource;
 use App\Services\General\ProductEngine\ProductStrategyResolver;
 use App\Services\General\ProductService;
+use App\Traits\HasCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -19,7 +21,7 @@ use Marvel\Traits\ApiResponse;
 
 class ProductController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse, HasCache;
 
     private ProductService $productService;
     protected ProductStrategyResolver $productStrategyResolver;
@@ -77,6 +79,10 @@ class ProductController extends Controller
             $responseData['filters'] = $filters;
             $responseData['categories'] = $this->getCollectionCategories($productIds);
 
+            if ($this->shouldCache($request)) {
+                $responseData = $this->remember(FrontendResource::PRODUCTS->value . '_' . $type, md5($request->fullUrl()), $responseData);
+            }
+
             return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $responseData);
         }
 
@@ -101,7 +107,22 @@ class ProductController extends Controller
         $responseData['filters'] = $filters;
         $responseData['categories'] = $this->getCollectionCategories($productIds);
 
+        if ($this->shouldCache($request)) {
+            $responseData = $this->remember(FrontendResource::PRODUCTS->value, md5($request->fullUrl()), $responseData);
+        }
+
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $responseData);
+    }
+
+    /**
+     * Determine whether the request should read from and write to the cache.
+     *
+     * Requests that contain a "search" parameter bypass the cache entirely so
+     * that search results always reflect up-to-date data.
+     */
+    private function shouldCache(Request $request): bool
+    {
+        return !$request->has('search');
     }
 
     /**

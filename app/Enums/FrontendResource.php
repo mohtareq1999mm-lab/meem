@@ -9,6 +9,7 @@ enum FrontendResource: string
     case PRODUCTS = 'products';
     case CATEGORIES = 'categories';
     case BRANDS = 'brands';
+    case BRANDS_PRODUCTS = 'brands_products';
     case FLASH_SALES = 'flash_sales';
     case PROMOTIONS = 'promotions';
     case SETTINGS = 'settings';
@@ -21,7 +22,10 @@ enum FrontendResource: string
     case PICKUP_LOCATIONS = 'pickup_locations';
     case FAST_SHIPPING_SETTINGS = 'fast_shipping_settings';
     case SECTIONS = 'sections';
-
+    case GOVERNORATES = 'governorates';
+    case COUNTRIES = 'countries';
+    case CITIES = 'cities';
+    case ORDERS = 'orders';
     public static function values(): array
     {
         return array_map(fn (self $case) => $case->value, self::cases());

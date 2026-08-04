@@ -2,18 +2,20 @@
 
 namespace App\Http\Controllers\Api\General;
 
+use App\Enums\FrontendResource;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\FlashSale\FlashSaleResource;
 use App\Http\Resources\Product\ProductMiniResource;
 use App\Services\General\FlashSaleService;
 use App\Services\General\ProductService;
+use App\Traits\HasCache;
 use Illuminate\Http\Request;
 use Marvel\Http\Resources\product\ProductCollection;
 use Marvel\Traits\ApiResponse;
 
 class FlashSaleController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse, HasCache;
 
     private FlashSaleService $flashSaleService;
 
@@ -28,8 +30,9 @@ class FlashSaleController extends Controller
             return $this->getFlashSaleBySlug($slug);
         }
         $flashSales = $this->flashSaleService->paginateFlashSales($request);
+        $flashCache = $this->remember(FrontendResource::FLASH_SALES->value, md5($request->fullUrl()), $flashSales);
 
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, FlashSaleResource::collection($flashSales));
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, FlashSaleResource::collection($flashCache));
     }
 
     public function getFlashSaleBySlug($slug)

@@ -406,4 +406,6 @@ return [
     // Social Login
     'MESSAGE.SOCIAL_LOGIN_URL_GENERATED' => 'Social login URL generated successfully',
     'MESSAGE.OTP_SENT_SUCCESSFULLY' => 'OTP sent successfully',
+
+    'too_many_requests' => 'Too many requests. Please try again later.',
 ];

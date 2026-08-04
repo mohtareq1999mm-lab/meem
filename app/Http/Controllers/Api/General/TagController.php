@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\General;
 
 use App\Http\Controllers\Controller;
+use App\Traits\HasCache;
 use Illuminate\Http\Request;
 use Marvel\Database\Models\Tag;
 use Marvel\Http\Resources\TagResource;
@@ -10,7 +11,7 @@ use Marvel\Traits\ApiResponse;
 
 class TagController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse, HasCache;
 
     public function index(Request $request)
     {
@@ -28,7 +29,9 @@ class TagController extends Controller
             $tags->whereIn('slug', $slugs);
         }
         $tags = $tags->orderBy('id', $order)->paginate($limit);
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, TagResource::collection($tags));
+        $tagsCache = $this->remember('tags', md5($request->fullUrl()), $tags);
+
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, TagResource::collection($tagsCache));
     }
 
     public function show(Request $request, string $slug)

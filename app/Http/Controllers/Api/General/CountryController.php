@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Api\General;
 
+use App\Enums\FrontendResource;
 use App\Http\Controllers\Controller;
+use App\Traits\HasCache;
 use Illuminate\Http\JsonResponse;
 use Marvel\Database\Repositories\CountryRepository;
 use Marvel\Http\Resources\CountryResource;
@@ -10,7 +12,7 @@ use Marvel\Traits\ApiResponse;
 
 class CountryController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse, HasCache;
 
     public function __construct(
         private CountryRepository $countryRepository
@@ -19,7 +21,8 @@ class CountryController extends Controller
     public function index(): JsonResponse
     {
         $countries = $this->countryRepository->allActive();
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, CountryResource::collection($countries));
+        $countriesCache = $this->remember(FrontendResource::COUNTRIES->value, md5(request()->fullUrl()), $countries);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, CountryResource::collection($countriesCache));
     }
 
     public function show(int $id): JsonResponse

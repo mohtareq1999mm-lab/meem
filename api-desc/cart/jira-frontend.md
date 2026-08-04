@@ -1,5 +1,7 @@
 # Cart Module — Frontend Jira Tasks
 
+> API contract reference: `api.md` + `frontend.md` in this folder (Revision 4, 2026-08-04).
+
 ## Task 1: Shopping Cart Page — Full Cart View
 
 **Priority:** High
@@ -9,16 +11,17 @@
 **Description:** Build the main shopping cart page displaying all items grouped by shipping method, with totals, coupon input, and checkout CTA.
 
 **API Endpoints:**
-- `GET /api/v1/cart`
-- `PUT /api/v1/cart/update-item`
+- `GET /api/v1/cart` (paginated envelope — cart object is at `data.data[0]`; uses `limit`, not `per_page`)
+- `PUT /api/v1/cart/update-item` (⚠️ body requires `item.operation`: `increment`|`decrement`)
 - `DELETE /api/v1/cart/delete-item/{itemId}`
 - `DELETE /api/v1/cart/delete-items`
 
 **Acceptance Criteria:**
 - [ ] Cart loads on mount with loading skeleton
 - [ ] Items displayed in two sections: "Standard Delivery" (SCHEDULED) and "Express Delivery" (FAST)
+- [ ] Gift items (`is_gift: true`, price 0) shown with "FREE" badge
 - [ ] Each item shows: product thumbnail, name, price, quantity selector, delete button
-- [ ] Quantity selector: +/- buttons with debounced PUT on change
+- [ ] Quantity selector: +/- buttons with debounced PUT (`operation: increment` / `operation: decrement`) on change
 - [ ] Delete button: confirm dialog then DELETE request
 - [ ] Cart summary section: subtotal, coupon discount, total after coupon
 - [ ] Coupon code input field with "Apply" button
@@ -85,16 +88,24 @@
 **Component:** Frontend — Cart Item Controls
 **Story Points:** 3
 
-**Description:** Implement quantity update with debounce to avoid excessive API calls when user types/uses +/- buttons.
+**Description:** Implement quantity update with debounce to avoid excessive API calls when user uses +/- buttons.
 
 **API Endpoint:**
 - `PUT /api/v1/cart/update-item`
 
+**Request Body:**
+```json
+{ "item": { "product_id": 10, "quantity": 1, "operation": "increment" } }
+```
+- ⚠️ `operation` is **required** — `increment` adds the quantity, `decrement` subtracts it. `shipping_method` may be omitted (backend preserves the existing item's method).
+
 **Acceptance Criteria:**
+- [ ] "+" sends `operation: "increment"`, "−" sends `operation: "decrement"`
 - [ ] +/- buttons immediately update UI (optimistic)
-- [ ] Auto-debounce (300ms) before sending PUT request
+- [ ] Auto-debounce (300ms) before sending PUT request (stay under 20 req/min)
 - [ ] Disable +/- buttons during API call
 - [ ] On stock error: revert to previous quantity with error toast
+- [ ] When a decrement would remove the last quantity, the item line is removed (backend behavior)
 - [ ] **Loading state:** Quantity input shows loading indicator
 - [ ] **Error state (stock exceeded):** Revert quantity, show "Only X in stock"
 - [ ] **Error state (network):** Revert to previous value with toast
@@ -142,6 +153,7 @@
 - [ ] "Clear Cart" opens confirmation modal
 - [ ] Modal shows product name or "all items" text
 - [ ] If coupon applied on clear cart: modal shows warning + extra confirm checkbox
+- [ ] ⚠️ When clearing with a coupon without `confirm`, the API returns **HTTP 200 with `success: true`** and a coupon-warning message — detect it by message/coupon presence, NOT by HTTP status, then re-send with `{"confirm": true}`
 - [ ] "Confirm" button submits delete
 - [ ] "Cancel" closes modal
 - [ ] **Loading state:** Spinner on confirm button
@@ -200,11 +212,13 @@
 **Description:** When using bulk add (e.g., "Buy Again" or wishlist-to-cart), show warning for skipped products.
 
 **API Endpoint:**
-- `POST /api/v1/cart/bulk-items`
+- `POST /api/v1/cart/bulk-items` (returns HTTP 201)
 
 **Acceptance Criteria:**
 - [ ] If `skipped_product_ids` is non-empty, show a warning banner
 - [ ] Banner text: "X products could not be added because they are no longer available"
+- [ ] If `failed_items` is non-empty, show per-item errors (product + reason)
+- [ ] If `cart` is null (all items failed), show a clear failure message
 - [ ] "View details" expandable list shows skipped product names
 - [ ] Banner dismissible
 - [ ] Do not block the cart page — warning only

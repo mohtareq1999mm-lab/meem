@@ -2,16 +2,18 @@
 
 namespace App\Http\Controllers\Api\General;
 
+use App\Enums\FrontendResource;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Brand\BrandProductResource;
 use App\Http\Resources\Brand\BrandResource;
 use App\Services\General\BrandService;
+use App\Traits\HasCache;
 use Illuminate\Http\Request;
 use Marvel\Traits\ApiResponse;
 
 class BrandController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse, HasCache;
     private BrandService $brandService;
 
     public function __construct(BrandService $brandService)
@@ -25,7 +27,8 @@ class BrandController extends Controller
             return $this->getBrandBySlug($slug);
         }
         $brands =  $this->brandService->getBrands($request);
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true,  BrandResource::collection($brands));
+        $brandCache = $this->remember(FrontendResource::BRANDS->value, md5($request->fullUrl()), $brands);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true,  BrandResource::collection($brandCache));
     }
 
     public function getBrandBySlug($slug)
@@ -40,7 +43,8 @@ class BrandController extends Controller
     public function getBrandsProductsByQtySet(Request $request)
     {
         $brandWithProducts =  $this->brandService->getBrandsProductsByQtySet($request);
+        $brandWithProductsCache = $this->remember(FrontendResource::BRANDS_PRODUCTS->value, md5($request->fullUrl()), $brandWithProducts);
 
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, BrandProductResource::collection($brandWithProducts));
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, BrandProductResource::collection($brandWithProductsCache));
     }
 }

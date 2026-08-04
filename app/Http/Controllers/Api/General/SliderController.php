@@ -2,15 +2,17 @@
 
 namespace App\Http\Controllers\Api\General;
 
+use App\Enums\FrontendResource;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Slider\SliderResource;
 use App\Services\General\SliderService;
+use App\Traits\HasCache;
 use Illuminate\Http\Request;
 use Marvel\Traits\ApiResponse;
 
 class SliderController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse , HasCache;
     private SliderService $sliderService;
 
     public function __construct(SliderService $sliderService)
@@ -24,7 +26,8 @@ class SliderController extends Controller
             return $this->getSliderBySlug($slug);
         }
         $sliders = $this->sliderService->getSliders($request);
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, SliderResource::collection($sliders));
+        $slidersCache = $this->remember(FrontendResource::SLIDERS->value, md5($request->fullUrl()), $sliders);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, SliderResource::collection($slidersCache));
     }
 
     public function getSliderBySlug($slug)

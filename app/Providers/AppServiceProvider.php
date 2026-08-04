@@ -9,6 +9,9 @@ use App\ValueObjects\WebhookSignature;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -60,6 +63,55 @@ class AppServiceProvider extends ServiceProvider
             $apiKey = $config['key'] ?? config('services.resend.key');
 
             return new ResendTransport(\Resend::client($apiKey));
+        });
+
+        RateLimiter::for('login', function (Request $request) {
+            return Limit::perMinute(5)
+                ->by($request->ip())
+                ->response(function (Request $request, array $headers) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => __('message.too_many_requests'),
+                        'data' => null,
+                    ], 429, $headers);
+                });
+        });
+
+
+        RateLimiter::for('public-api', function (Request $request) {
+            return Limit::perMinute(120)
+                ->by($request->ip())
+                ->response(function (Request $request, array $headers) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => __('message.too_many_requests'),
+                        'data' => null,
+                    ], 429, $headers);
+                });
+        });
+
+        RateLimiter::for('authenticated', function (Request $request) {
+            return Limit::perMinute(300)
+                ->by($request->user()->id)
+                ->response(function (Request $request, array $headers) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => __('message.too_many_requests'),
+                        'data' => null,
+                    ], 429, $headers);
+                });
+        });
+
+        RateLimiter::for('admin', function (Request $request) {
+            return Limit::perMinute(600)
+                ->by($request->user()->id)
+                ->response(function (Request $request, array $headers) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => __('message.too_many_requests'),
+                        'data' => null,
+                    ], 429, $headers);
+                });
         });
     }
 }

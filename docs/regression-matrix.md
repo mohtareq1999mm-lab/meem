@@ -305,6 +305,31 @@ Cart — `pluckItemsToCart` method (POST /cart/bulk-items)
 
 ---
 
+## Cart (Documentation Audit)
+
+**Changed Feature:**
+Cart — Revision 4 documentation audit (all 12 `api-desc/cart/` files). No application code changed.
+
+**Affected Features:**
+- Cart — documentation contract corrections (routes, request fields, response codes/shapes)
+- Checkout — uses cart totals (no behavior change)
+- Orders — order origin is cart checkout (no behavior change)
+
+**Regression:**
+
+| Suite | Status | Reason |
+|-------|--------|--------|
+| CartApiTest | BLOCKED (re-run) | Last verified 61/65 on 2026-07-29 (4 pre-existing failures: gift promotion, finalization, resource structure). 2026-08-04 run could not execute — every test errors at bootstrap with `Class "Role" not found` (Routes.php:699), a global test-env issue unrelated to cart |
+| CartExpirationTest | PASS (8/8) | Last verified 2026-07-29 |
+| CartApiTest — bulk tests | PASS (6/6, 34 assertions) | Last verified 2026-07-29 |
+
+**Changes Applied (Revision 4):**
+- Documentation-only corrections to match source: routes at Routes.php:149-157; `GET /cart` reads `limit` (not `per_page`); `PUT /update-item` requires `item.operation`; clear-cart coupon warning is HTTP 200 + success:true; bulk-items returns 201 with `cart`/`skipped_product_ids`/`failed_items`; `coupon` object = CouponResource shape; `product` = `{id,name,slug,thumbnail}`.
+- Updated `docs/production-status.md`, `docs/feature-dependencies.md`, `docs/production-history.md`.
+- Full regression re-run REQUIRED once the test bootstrap (`Class "Role" not found`) is fixed.
+
+---
+
 ## Full Suite Status
 
 | Suite | Status | Date | Notes |

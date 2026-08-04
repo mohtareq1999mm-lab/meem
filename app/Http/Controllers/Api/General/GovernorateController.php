@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Api\General;
 
+use App\Enums\FrontendResource;
 use App\Http\Controllers\Controller;
+use App\Traits\HasCache;
 use Illuminate\Http\JsonResponse;
 use Marvel\Database\Repositories\GovernorateRepository;
 use Marvel\Http\Resources\GovernorateResource;
@@ -10,7 +12,7 @@ use Marvel\Traits\ApiResponse;
 
 class GovernorateController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse , HasCache;
 
     public function __construct(
         private GovernorateRepository $governorateRepository
@@ -19,7 +21,8 @@ class GovernorateController extends Controller
     public function index(): JsonResponse
     {
         $governorates = $this->governorateRepository->allActive();
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, GovernorateResource::collection($governorates));
+        $governorateCahce = $this->remember(FrontendResource::GOVERNORATES->value, md5(request()->fullUrl()), $governorates);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, GovernorateResource::collection($governorateCahce));
     }
 
     public function show(int $id): JsonResponse

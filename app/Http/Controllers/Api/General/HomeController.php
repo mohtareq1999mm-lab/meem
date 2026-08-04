@@ -2,14 +2,16 @@
 
 namespace App\Http\Controllers\Api\General;
 
+use App\Enums\FrontendResource;
 use App\Http\Controllers\Controller;
 use App\Services\General\HomeService;
+use App\Traits\HasCache;
 use Illuminate\Http\Request;
 use Marvel\Traits\ApiResponse;
 
 class HomeController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse, HasCache;
 
     private HomeService $homeService;
 
@@ -36,8 +38,9 @@ class HomeController extends Controller
         $level = $level > 0 ? $level : null;
 
         $data = $this->homeService->getNavData($level);
+        $dataCache = $this->remember(FrontendResource::CATEGORIES->value, md5($request->fullUrl()), $data);
 
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $data);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $dataCache);
     }
 
     /**

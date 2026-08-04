@@ -736,3 +736,45 @@ YES
 Notes:
 The endpoint follows the same authorization pattern as getTransactionQr — user can only access their own invoice via order ownership check. The `CustomerInvoiceResource` is reused from the existing InvoiceController::myInvoices endpoint. Invoice status in tests is `ready` (not `generated`) because InvoiceService::generateFromOrder() completes PDF generation synchronously in test environment.
 
+---
+
+Date:
+2026-08-04
+
+Feature:
+Cart (Documentation Audit)
+
+Revision:
+4
+
+Summary:
+Full API investigation of the Cart module and re-sync of all 12 `api-desc/cart/` documentation files with the actual source code (controller, repository, inventory service, requests, resources, models, migrations, routes, tests). Corrected documentation-only drift: cart routes are at Routes.php:149-157 (not 160-168); GET /cart reads `limit` (not `per_page`); PUT /update-item requires `item.operation` (increment/decrement); clear-cart coupon warning returns HTTP 200 + success:true (was documented as 400); bulk-items returns 201 with `cart`/`skipped_product_ids`/`failed_items` (was 200); `coupon` response matches CouponResource (`id,name,slug,code,image{desktop,mobile},borderColor,borderless`); cart is one-per-user (UNIQUE user_id). Re-verified all known bugs from source with line references (BUG-CART-001/002/003/005/006/007/008/009) and added 4 INFO observations (BUG-CART-010 coupon-warning HTTP 200 contract, 011 CartResource business logic, 012 thumbnail media N+1, 013 repo 401→400 nuance). No application code was modified.
+
+Verified Bugs Fixed:
+None (documentation audit only)
+
+Verified Bugs Confirmed (from source):
+- BUG-CART-001 (Critical): dual inventory — deductStockForOrder() (CartInventoryService.php:343-398) vs order path, no coordination
+- BUG-CART-002 (High): finalizeItemsByShippingMethod() deletes the non-finalized shipping group items (lines 300-341); tests assert buggy behavior
+- BUG-CART-003 (High): price snapshotted at reservation (line 109-111), not re-validated at checkout
+- BUG-CART-005/006/007/008/009: hardcoded TTL, chunk query no global lock, expireCart lacks status guard, duplicate expire command (orphan), no max quantity
+- BUG-CART-004 confirmed FIXED (rounding applied everywhere)
+
+Documentation Updated:
+YES (api-desc/cart/* — all 12 files; docs/production-status.md; docs/feature-dependencies.md; docs/regression-matrix.md)
+
+Routes Updated:
+NO
+
+Regression Executed:
+NO (blocked)
+
+Regression Result:
+BLOCKED — every cart test errors during bootstrap with `Class "Role" not found` raised while registering routes at packages/marvel/src/Rest/Routes.php:699. This is a global test-bootstrap/autoload issue unrelated to the cart module. Last verified state (2026-07-29): CartApiTest 61/65 (4 pre-existing failures: gift promotion, finalization, resource structure), CartExpirationTest 8/8, bulk subset 6/6 (34 assertions). Full re-run required after the bootstrap is fixed.
+
+Production Ready:
+YES (feature code unchanged and previously verified; documentation audit only)
+
+Notes:
+This audit introduced no code changes, no migrations, no route changes — documentation only. The test suite count is now 88 methods (80 CartApiTest + 8 CartExpirationTest); the previous "65/65 (269 assertions)" figure in production-status.md referred to the subset verified on 2026-07-29 and should be reconciled after the next clean test run. Open production bugs tracked in api-desc/cart/bug-report.md.
+

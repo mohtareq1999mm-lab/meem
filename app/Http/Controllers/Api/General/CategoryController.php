@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Api\General;
 
+use App\Enums\FrontendResource;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Category\CategoryHomeResource;
 use App\Http\Resources\Category\CategoryWithChildResource;
 use App\Services\General\CategoryService;
+use App\Traits\HasCache;
 use Marvel\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
@@ -13,7 +15,7 @@ use const Dom\NO_DATA_ALLOWED_ERR;
 
 class CategoryController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse , HasCache;
     private CategoryService $categoryService;
 
     public function __construct(CategoryService $categoryService)
@@ -27,7 +29,8 @@ class CategoryController extends Controller
             return $this->getCategoryBySlug($slug);
         }
         $categories = $this->categoryService->paginate($request);
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, CategoryHomeResource::collection($categories));
+        $categoriesCache = $this->remember(FrontendResource::CATEGORIES->value, md5($request->fullUrl()), $categories);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, CategoryHomeResource::collection($categoriesCache));
     }
 
     public function getCategoryBySlug($slug)

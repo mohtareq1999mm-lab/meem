@@ -2,15 +2,17 @@
 
 namespace App\Http\Controllers\Api\General;
 
+use App\Enums\FrontendResource;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Coupons\CouponResource;
 use App\Services\General\CouponService;
+use App\Traits\HasCache;
 use Marvel\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
 class CouponController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse, HasCache;
     protected $couponService;
     public function __construct(CouponService $couponService)
     {
@@ -20,7 +22,8 @@ class CouponController extends Controller
     public function index(Request $request)
     {
         $coupons = $this->couponService->getCoupons($request);
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, CouponResource::collection($coupons));
+        $couponsCache = $this->remember(FrontendResource::COUPONS->value, md5($request->fullUrl()), $coupons);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, CouponResource::collection($couponsCache));
     }
 
     public function applyCoupon(Request $request)

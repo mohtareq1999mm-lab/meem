@@ -2,6 +2,8 @@
 
 Status: Frozen
 
+AI agents must read this document before modifying any pricing-related code.
+
 ## Metadata
 - Decision ID: ADR-001
 - Architecture Area: Runtime Pricing

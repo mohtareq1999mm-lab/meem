@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\General;
 
 use App\DTOs\GatewayResult;
+use App\Enums\FrontendResource;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Invoice\CustomerInvoiceResource;
 use App\Http\Resources\Order\OrderCollection;
@@ -15,6 +16,7 @@ use App\Services\Payment\PaymentGatewayFactory;
 use App\Events\OrderCancelled;
 use App\Events\PaymentFailed;
 use App\Events\PaymentSucceeded;
+use App\Traits\HasCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -28,7 +30,7 @@ use Marvel\Traits\ApiResponse;
 
 class OrderController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse , HasCache;
     protected $orderService;
     protected $cartInventoryService;
 
@@ -46,6 +48,7 @@ class OrderController extends Controller
     public function index(Request $request): JsonResponse
     {
         $orders = $this->orderService->paginateForUser($request);
+        $ordersCache = $this->remember(FrontendResource::ORDERS->value, md5($request->fullUrl()), $orders);
 
         return $this->apiResponse(
             FETCH_DATA_SUCCESSFULLY,
@@ -70,12 +73,12 @@ class OrderController extends Controller
     {
         $orderDataUser = $request->validated();
         $orderDataUser['user_id'] = $request->user()->id;
-        
+
         $cart = $this->cartInventoryService->getActiveCartForUser($request->user());
         if (!$cart) {
             return $this->apiResponse(CART_NOT_FOUND, 400, false);
         }
-        
+
         try {
             $this->cartInventoryService->ensureCartReservation($cart);
         } catch (\Throwable $e) {
@@ -419,7 +422,7 @@ class OrderController extends Controller
             'payment_id' => $paymentId,
             'order_id' => $order->id,
         ]));
-        
+
     }
 
     public function checkoutErrorCallback(Request $request)

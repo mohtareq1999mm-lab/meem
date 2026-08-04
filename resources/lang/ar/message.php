@@ -320,4 +320,5 @@ return [
     'MESSAGE.SOCIAL_LOGIN_SUCCESSFUL' => 'تم تسجيل الدخول بنجاح.',
     'ERROR.INVALID_SOCIAL_LOGIN_CODE' => 'رمز التخويل غير صالح أو منتهي الصلاحية.',
     'MESSAGE.OTP_SENT_SUCCESSFULLY  ' => 'تم إرسال رمز التحقق بنجاح',
+    'too_many_requests' => 'طلبات كثيرة جدًا. يرجى المحاولة لاحقًا.',
 ];

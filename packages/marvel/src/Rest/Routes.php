@@ -4,28 +4,21 @@ use App\Http\Controllers\Api\General\DashboardController;
 use App\Http\Controllers\Api\InvoiceController;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
-use Marvel\Enums\Role;
 use Marvel\Http\Controllers\AbusiveReportController;
 use Marvel\Http\Controllers\ActivityLogController;
 use Marvel\Http\Controllers\AddressController;
-use Marvel\Http\Controllers\AiController;
 use Marvel\Http\Controllers\AnalyticsController;
-use Marvel\Http\Controllers\AttachmentController;
 use Marvel\Http\Controllers\AttributeController;
 use Marvel\Http\Controllers\AttributeValueController;
 use Marvel\Http\Controllers\AuthorController;
 use Marvel\Http\Controllers\BannerController;
-use Marvel\Http\Controllers\BecameSellerController;
 use Marvel\Http\Controllers\BrandController;
 use Marvel\Http\Controllers\ContactController;
 use Marvel\Http\Controllers\CartController;
 use Marvel\Http\Controllers\CategoryController;
-use Marvel\Http\Controllers\CheckoutController;
 use Marvel\Http\Controllers\CityController;
-use Marvel\Http\Controllers\ConversationController;
 use Marvel\Http\Controllers\CouponAssignmentController;
 use Marvel\Http\Controllers\CouponController;
-use Marvel\Http\Controllers\CmsPageController;
 use Marvel\Http\Controllers\DeliveryTimeController;
 use Marvel\Http\Controllers\DownloadController;
 use Marvel\Http\Controllers\FaqsController;
@@ -33,10 +26,7 @@ use Marvel\Http\Controllers\FeedbackController;
 use Marvel\Http\Controllers\FlashSaleController;
 use Marvel\Http\Controllers\FlashSaleVendorRequestController;
 use Marvel\Http\Controllers\ManufacturerController;
-use Marvel\Http\Controllers\MessageController;
 use Marvel\Http\Controllers\Order\OrderController;
-use Marvel\Http\Controllers\PaymentIntentController;
-use Marvel\Http\Controllers\PaymentMethodController;
 use Marvel\Http\Controllers\ProductController;
 use Marvel\Http\Controllers\ProductImportController;
 use Marvel\Http\Controllers\PromotionController;
@@ -55,7 +45,6 @@ use Marvel\Http\Controllers\TagController;
 use Marvel\Http\Controllers\TaxController;
 use Marvel\Http\Controllers\TypeController;
 use Marvel\Http\Controllers\UserController;
-use Marvel\Http\Controllers\WebHookController;
 use Marvel\Http\Controllers\WishlistController;
 use Marvel\Http\Controllers\WithdrawController;
 use Marvel\Http\Controllers\LanguageController;
@@ -65,14 +54,12 @@ use Marvel\Http\Controllers\RefundPolicyController;
 use Marvel\Http\Controllers\RefundReasonController;
 use Marvel\Http\Controllers\StoreNoticeController;
 use Marvel\Http\Controllers\TermsAndConditionsController;
-use Marvel\Http\Controllers\ComponentDataController;
 use Marvel\Http\Controllers\ContentPageController;
 use Marvel\Http\Controllers\CountryController;
 use Marvel\Http\Controllers\FastShippingController;
 use Marvel\Http\Controllers\GovernorateController;
 use Marvel\Http\Controllers\NotificationController;
 use Marvel\Http\Controllers\PickupLocationController;
-use Marvel\Http\Controllers\ProductExportController;
 use Marvel\Http\Controllers\ShippingPriceController;
 use Marvel\Http\Controllers\SocialController;
 
@@ -86,13 +73,13 @@ use Marvel\Http\Controllers\SocialController;
 
 Broadcast::routes(['middleware' => ['auth:sanctum']]);
 
-Route::get('/email/verify/{id}/{hash}', [UserController::class, 'verifyEmail'])->name('verification.verify');
 
 /**
  * Authentication Routes - Rate Limited (10/min per IP)
  * Protects against brute force and credential stuffing
+ * 
  */
-Route::middleware(['throttle:auth'])->group(function () {
+Route::middleware(['throttle:auth','throttle:login'])->group(function () {
     Route::post('/register', [UserController::class, 'register']);
     Route::post('/token', [UserController::class, 'token']);
     Route::post('/admin-login', [UserController::class, 'adminToken']);
