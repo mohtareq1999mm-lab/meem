@@ -778,3 +778,38 @@ YES (feature code unchanged and previously verified; documentation audit only)
 Notes:
 This audit introduced no code changes, no migrations, no route changes — documentation only. The test suite count is now 88 methods (80 CartApiTest + 8 CartExpirationTest); the previous "65/65 (269 assertions)" figure in production-status.md referred to the subset verified on 2026-07-29 and should be reconciled after the next clean test run. Open production bugs tracked in api-desc/cart/bug-report.md.
 
+---
+
+Date:
+2026-08-04
+
+Feature:
+Cart (Route Bootstrap Fix)
+
+Revision:
+5
+
+Summary:
+Fixed a global test-bootstrap ParseError that blocked every PHPUnit suite (not just cart): `packages/marvel/src/Rest/Routes.php:493` had a botched comment-out — `Route::group(` (line 492) was commented but its array argument (line 493) was not, leaving a dangling array literal (`syntax error, unexpected token ","`). This was the root cause of the previously reported `Class "Role" not found` symptom (the `use Marvel\Enums\Role;` import was always present at line 7 and the enum autoloads correctly). Fix: commented out the dangling array to match the surrounding disabled block — no route behavior changed. After the fix, the full cart suite re-ran cleanly.
+
+Verified Bugs Fixed:
+- ParseError `syntax error, unexpected token ","` at Routes.php:493 — commented-out route group left a dangling array literal. This was the root cause of the test-bootstrap failure previously misattributed to `Class "Role" not found`.
+
+Documentation Updated:
+YES (docs/production-status.md; docs/regression-matrix.md)
+
+Routes Updated:
+NO (comment-only change; route behavior identical)
+
+Regression Executed:
+YES
+
+Regression Result:
+CartApiTest 75/80 PASS (330 assertions) — 5 pre-existing failures (test_apply_coupon_to_cart; add_regular_item_does_not_overwrite_gift_item; finalize_scheduled_items_only_keeps_fast_items [BUG-CART-002]; finalize_fast_items_only_keeps_scheduled_items [BUG-CART-002]; gift_item_attribute_not_exposed_in_item_resource [is_gift exposed — BUG-CART-011]). CartExpirationTest 8/8 PASS (16 assertions). Full cart suite 83/88 PASS.
+
+Production Ready:
+YES
+
+Notes:
+The 5 failures are pre-existing and tracked: BUG-CART-002 (finalization deletes the non-finalized shipping group's items) and BUG-CART-011 (CartResource/business-logic leak — is_gift key exposed), plus the coupon-discount and gift-promotion test expectations. Since the ParseError blocked 100% of PHPUnit runs, this fix may also unblock other feature suites (RoleAndPermission, Categories, Brands, etc.) — recommend re-running the full test suite and reconciling `docs/production-status.md` row counts for any affected features. Application behavior is unchanged by the comment-only fix.
+

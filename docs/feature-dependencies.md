@@ -240,6 +240,7 @@ Production Ready
 - Rev 2 (2026-07-29): Bulk-items shipping_method made optional with default; non-existent products skipped gracefully
 - Rev 3 (2026-07-29): Bulk-items per-item error handling — stock failures skip individual items, reported in `failed_items` array
 - Rev 4 (2026-08-04): Full documentation audit of `api-desc/cart/` (all 12 files) — no application code changed. Test re-run blocked by global bootstrap error (`Class "Role" not found` at Routes.php:699); last verified 61/65 + 8/8. Open production bugs: BUG-CART-001/002/003/006/007 (see `api-desc/cart/bug-report.md`).
+- Rev 5 (2026-08-04): Fixed global test-bootstrap ParseError at `Routes.php:493` (botched comment-out left a dangling array literal) — root cause of the `Class "Role" not found` symptom. Comment-only fix; route behavior unchanged. Full cart suite re-ran: CartApiTest 75/80 + CartExpirationTest 8/8 (83/88 PASS, 5 pre-existing failures: coupon apply, gift promotion, finalization x2, is_gift exposure).
 
 ---
 

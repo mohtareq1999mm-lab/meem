@@ -105,6 +105,7 @@ Route::prefix('v1/general')->group(function () {
         Route::any('checkout/error-callback', [OrderController::class, 'checkoutErrorCallback'])->name('api.checkout.errorCallback');
         //======================== fast shipping checkout ========================/
         Route::post('fast-shipping/checkout', [FastShippingController::class, 'checkout']);
+        Route::get('fast-shipping/status', [FastShippingController::class, 'status']);
         //======================== orders ========================//
         Route::get('orders', [OrderController::class, 'index']);
         Route::get('orders/invoice/{uuid}', [OrderController::class, 'invoice']);

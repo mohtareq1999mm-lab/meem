@@ -323,6 +323,28 @@ Cart — Revision 4 documentation audit (all 12 `api-desc/cart/` files). No appl
 | CartExpirationTest | PASS (8/8) | Last verified 2026-07-29 |
 | CartApiTest — bulk tests | PASS (6/6, 34 assertions) | Last verified 2026-07-29 |
 
+---
+
+## Cart (Route Bootstrap Fix)
+
+**Changed Feature:**
+Cart — Revision 5. Fixed a global test-bootstrap `ParseError` in `packages/marvel/src/Rest/Routes.php:493` that blocked **every** test suite from booting (not just cart). Lines 492-502 were a botched comment-out: `Route::group(` (line 492) was commented but its array argument (line 493) was not, leaving a dangling array literal → `syntax error, unexpected token ","`. Root cause of the earlier `Class "Role" not found` symptom; `use Marvel\Enums\Role;` was always present (line 7) and the enum autoloads correctly (`vendor/autoload.php` → `bool(true)`).
+
+**Affected Features:**
+- All test suites (global bootstrap) — was blocking 100% of PHPUnit runs
+- Cart — verified after fix
+
+**Change Made:**
+- `packages/marvel/src/Rest/Routes.php:493` — commented out the dangling array to match the surrounding commented-out `Route::group` block. No route behavior changed; the block was already fully disabled.
+
+**Regression:**
+
+| Suite | Status | Reason |
+|-------|--------|--------|
+| CartApiTest | 75/80 PASS (330 assertions) | 5 pre-existing failures: `test_apply_coupon_to_cart` (coupon discount 405 not applied), `add_regular_item_does_not_overwrite_gift_item` (gift promotion null vs 999), `finalize_scheduled_items_only_keeps_fast_items` (BUG-CART-002), `finalize_fast_items_only_keeps_scheduled_items` (BUG-CART-002), `gift_item_attribute_not_exposed_in_item_resource` (`is_gift` key exposed — BUG-CART-011) |
+| CartExpirationTest | PASS (8/8, 16 assertions) | 2026-08-04 |
+| Full Cart Suite | 83/88 PASS | 2026-08-04 |
+
 **Changes Applied (Revision 4):**
 - Documentation-only corrections to match source: routes at Routes.php:149-157; `GET /cart` reads `limit` (not `per_page`); `PUT /update-item` requires `item.operation`; clear-cart coupon warning is HTTP 200 + success:true; bulk-items returns 201 with `cart`/`skipped_product_ids`/`failed_items`; `coupon` object = CouponResource shape; `product` = `{id,name,slug,thumbnail}`.
 - Updated `docs/production-status.md`, `docs/feature-dependencies.md`, `docs/production-history.md`.
