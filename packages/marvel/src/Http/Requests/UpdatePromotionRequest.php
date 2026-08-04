@@ -23,8 +23,8 @@ class UpdatePromotionRequest extends FormRequest
             "name" => "sometimes|array",
             'name.*' => ['required_with:name', UniqueTranslationRule::for('promotions', 'name')->ignore($this->route('promotion'))],
 
-            "image-desktop" => "sometimes|image|mimes:jpeg,png,jpg,webp",
-            "image-mobile"  => "sometimes|image|mimes:jpeg,png,jpg,webp",
+            "image-desktop" => "sometimes|image|mimes:jpeg,png,jpg,webp,gif",
+            "image-mobile"  => "sometimes|image|mimes:jpeg,png,jpg,webp,gif",
 
             'type'        => ['sometimes', Rule::in(PromotionType::getValues())],
             'type_amount' => ['sometimes', Rule::in(PromotionMountType::getValues())],
