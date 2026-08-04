@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\General\DashboardController;
 use App\Http\Controllers\Api\InvoiceController;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
+use Marvel\Enums\Role;
 use Marvel\Http\Controllers\AbusiveReportController;
 use Marvel\Http\Controllers\ActivityLogController;
 use Marvel\Http\Controllers\AddressController;
@@ -77,7 +78,7 @@ Broadcast::routes(['middleware' => ['auth:sanctum']]);
 /**
  * Authentication Routes - Rate Limited (10/min per IP)
  * Protects against brute force and credential stuffing
- * 
+ *
  */
 Route::middleware(['throttle:auth','throttle:login'])->group(function () {
     Route::post('/register', [UserController::class, 'register']);
@@ -489,7 +490,7 @@ Route::get('featured-categories', [CategoryController::class, 'fetchFeaturedCate
  */
 
 // Route::group(
-//     ['middleware' => ['role:' . Role::SUPER_ADMIN . "|" . Role::EDITOR, 'auth:sanctum', 'email.verified']],
+    ['middleware' => ['role:' . Role::SUPER_ADMIN . "|" . Role::EDITOR, 'auth:sanctum', 'email.verified']],
 //     function () {
 //         Route::post('cms-pages', [CmsPageController::class, 'store']);
 //         Route::put('cms-pages/{id}', [CmsPageController::class, 'update']);
