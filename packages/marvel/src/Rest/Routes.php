@@ -490,7 +490,7 @@ Route::get('featured-categories', [CategoryController::class, 'fetchFeaturedCate
  */
 
 // Route::group(
-    ['middleware' => ['role:' . Role::SUPER_ADMIN . "|" . Role::EDITOR, 'auth:sanctum', 'email.verified']],
+//     ['middleware' => ['role:' . Role::SUPER_ADMIN . "|" . Role::EDITOR, 'auth:sanctum', 'email.verified']],
 //     function () {
 //         Route::post('cms-pages', [CmsPageController::class, 'store']);
 //         Route::put('cms-pages/{id}', [CmsPageController::class, 'update']);
@@ -536,8 +536,8 @@ Route::get('featured-categories', [CategoryController::class, 'fetchFeaturedCate
     // Route::post('messages/seen/{conversation_id}', [MessageController::class, 'seen']);
     // Route::get('my-questions', [QuestionController::class, 'myQuestions']);
     // Route::get('my-reports', [AbusiveReportController::class, 'myReports']);
-    Route::post('wishlists/toggle', [WishlistController::class, 'toggle']);
-    Route::apiResource('wishlists', WishlistController::class, [
+    Route::post('wishlists/toggle', [WishlistController::class , 'toggle']);
+    Route::apiResource('wishlists', WishlistController::class , [
         'only' => ['index', 'store', 'destroy'],
     ]);
     Route::get('wishlists/in_wishlist/{product_id}', [WishlistController::class, 'in_wishlist']);
@@ -753,7 +753,7 @@ Route::group([
     'middleware' => [
         'auth:sanctum',
         'verified',
-        // 'role:' . Role::SUPER_ADMIN,
+        'role:' . Role::SUPER_ADMIN,
     ]
 ], function () {
     // Route::get('messages/get-conversations/{shop_id}', [ConversationController::class, 'getConversationByShopId']);
