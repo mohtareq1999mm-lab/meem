@@ -813,3 +813,48 @@ YES
 Notes:
 The 5 failures are pre-existing and tracked: BUG-CART-002 (finalization deletes the non-finalized shipping group's items) and BUG-CART-011 (CartResource/business-logic leak — is_gift key exposed), plus the coupon-discount and gift-promotion test expectations. Since the ParseError blocked 100% of PHPUnit runs, this fix may also unblock other feature suites (RoleAndPermission, Categories, Brands, etc.) — recommend re-running the full test suite and reconciling `docs/production-status.md` row counts for any affected features. Application behavior is unchanged by the comment-only fix.
 
+---
+
+Date:
+2026-08-04
+
+Feature:
+Wishlist
+
+Revision:
+2
+
+Summary:
+Full API investigation and hardening of the Wishlist module (frontend API). Created the `api-desc/front/wishlist/` documentation set (11 files: README, api, backend, database, flow, frontend, bug-report, qa, jira, changelog, test-cases). Fixed 7 verified production bugs: (001 CRITICAL) no auth middleware on any wishlist route — wrapped `toggle`/`apiResource`/`my-wishlists` in `auth:sanctum`; (002 CRITICAL) `index()` leaked all users' wishlists — scoped to `$request->user()->id`; (003 HIGH) variant removal broken — `destroy()` merged `variant_id` but `delete()` read `product_variant_id`; (004 HIGH) `show`/`update` routes 500'd — restricted apiResource to `only(['index','store','destroy'])`; (005 HIGH) Prettus `findOneWhere(['product_variant_id' => null])` generates `= NULL` which never matches — added `findUserWishlistItem()` with explicit `whereNull`/`where`; (006 HIGH) `Rule::requiredIf` + `sometimes` silently bypassed variant validation — removed `sometimes`; (007 MEDIUM) `myWishlists` returned raw paginator — now `ProductResource::collection($paginator)`. Created `tests/Feature/WishlistApiTest.php` — 36 tests / 106 assertions, all passing.
+
+Verified Bugs Fixed:
+- BUG-WISH-001 (CRITICAL): wishlist routes had no `auth:sanctum` — unauthenticated access + 500s from null user lookups
+- BUG-WISH-002 (CRITICAL): GET /wishlists returned every user's product IDs — no user scoping
+- BUG-WISH-003 (HIGH): `product_variant_id` mismatch between destroy/delete — variant items could not be removed
+- BUG-WISH-004 (HIGH): apiResource registered show/update with no controller methods — 500
+- BUG-WISH-005 (HIGH): Prettus `findOneWhere` produced `product_variant_id = NULL` — never matches in SQL, broke duplicate detection and toggling for simple products
+- BUG-WISH-006 (HIGH): `sometimes` + `Rule::requiredIf` bypassed validation — variable products added without variant
+- BUG-WISH-007 (MEDIUM): `myWishlists` raw paginator instead of ProductResource collection
+
+Remaining Technical Debt:
+- BUG-WISH-008 (MEDIUM): no unique index on `(user_id, product_id, product_variant_id)` — app-layer guard only; nullable variant breaks plain unique index (recommend generated sentinel column)
+- BUG-WISH-009 (INFO): `in_wishlist` is product-level — ignores `product_variant_id` (by design)
+
+Documentation Updated:
+YES (api-desc/front/wishlist/* — 11 files; docs/production-status.md; docs/feature-dependencies.md; docs/regression-matrix.md; docs/production-history.md)
+
+Routes Updated:
+YES (wishlist routes wrapped in auth:sanctum group; apiResource restricted to index/store/destroy)
+
+Regression Executed:
+YES
+
+Regression Result:
+PASS (WishlistApiTest 36/36, 106 assertions) — ProductSuite and ProductPricingServiceTest NOT re-run (myWishlists and pricing-accessor consumption changed; recommended)
+
+Production Ready:
+YES
+
+Notes:
+Test setup conditionally creates the `wishlists` table and the `attribute_product` (singular) pivot — required because `ProductVariant::attributeProducts()` joins the singular table name. The 5 pre-existing CartApiTest failures are unrelated and unchanged. `GET /wishlists` `data` is a flat array (no pagination meta) — documented contract, tests assert it. `GET /my-wishlists` returns the standard `{data, meta, links}` paginated shape. LSP diagnostics on Marvel package files are pre-existing false positives (editor cannot resolve the package autoload) — all modified files pass `php -l`.
+

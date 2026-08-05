@@ -47,19 +47,14 @@ class WishlistRepository extends BaseRepository
      */
     public function storeWishlist($request)
     {
-        try {
-            $user_id = $request->user()->id;
-            $wishlist = $this->findOneWhere((['user_id' => $user_id, 'product_id' => $request['product_id'] , 'product_variant_id' => $request['product_variant_id']]));
-            if (empty($wishlist)) {
-                $request['user_id'] = $user_id;
-                $wishlistInput = $request->only($this->dataArray);
-                return $this->create($wishlistInput);
-            }else {
-                throw new HttpException(400, ALREADY_ADDED_TO_WISHLIST_FOR_THIS_PRODUCT);
-            }
-        } catch (\Exception $e) {
-            throw new HttpException(400, ALREADY_ADDED_TO_WISHLIST_FOR_THIS_PRODUCT);
+        $user_id = $request->user()->id;
+        $wishlist = $this->findUserWishlistItem($user_id, $request['product_id'], $request['product_variant_id'] ?? null);
+        if (empty($wishlist)) {
+            $request['user_id'] = $user_id;
+            $wishlistInput = $request->only($this->dataArray);
+            return $this->create($wishlistInput);
         }
+        throw new HttpException(400, ALREADY_ADDED_TO_WISHLIST_FOR_THIS_PRODUCT);
     }
 
     /**
@@ -68,20 +63,40 @@ class WishlistRepository extends BaseRepository
      */
     public function toggleWishlist($request)
     {
-        try {
-            $user_id = $request->user()->id;
-            $wishlist = $this->findOneWhere((['user_id' => $user_id, 'product_id' => $request['product_id'], 'product_variant_id' => $request['product_variant_id']]));
-            if (empty($wishlist)) {
-                $request['user_id'] = $user_id;
-                $wishlistInput = $request->only($this->dataArray);
-                $this->create($wishlistInput);
-                return true;
-            } else {
-                $this->delete($wishlist->id);
-                return false;
-            }
-        } catch (\Exception $e) {
-            throw new MarvelException(SOMETHING_WENT_WRONG);
+        $user_id = $request->user()->id;
+        $wishlist = $this->findUserWishlistItem($user_id, $request['product_id'], $request['product_variant_id'] ?? null);
+        if (empty($wishlist)) {
+            $request['user_id'] = $user_id;
+            $wishlistInput = $request->only($this->dataArray);
+            $this->create($wishlistInput);
+            return true;
         }
+        $this->delete($wishlist->id);
+        return false;
+    }
+
+    /**
+     * Find a single wishlist row for the given user, product and (optional) variant.
+     * Uses an explicit `whereNull` for simple products because `findOneWhere`
+     * produces `WHERE product_variant_id = NULL`, which never matches in MySQL.
+     *
+     * @param int   $user_id
+     * @param mixed $product_id
+     * @param mixed $product_variant_id
+     * @return mixed
+     */
+    private function findUserWishlistItem(int $user_id, $product_id, $product_variant_id)
+    {
+        $query = Wishlist::query()
+            ->where('user_id', $user_id)
+            ->where('product_id', $product_id);
+
+        if (!empty($product_variant_id)) {
+            $query->where('product_variant_id', $product_variant_id);
+        } else {
+            $query->whereNull('product_variant_id');
+        }
+
+        return $query->first();
     }
 }

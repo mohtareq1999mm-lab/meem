@@ -36,7 +36,6 @@ class WishlistCreateRequest extends FormRequest
 
                     return $product && $product->variations()->exists();
                 }),
-                'sometimes',
                 'integer',
                 'exists:product_variants,id',
             ],

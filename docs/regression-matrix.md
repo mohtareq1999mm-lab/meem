@@ -352,10 +352,40 @@ Cart — Revision 5. Fixed a global test-bootstrap `ParseError` in `packages/mar
 
 ---
 
+## Wishlist
+
+**Changed Feature:**
+Wishlist
+
+**Affected Features:**
+- Authentication — all wishlist routes now behind `auth:sanctum`
+- Products — `ProductController::myWishlists` returns ProductResource collection
+- ProductPricing — WishlistResource consumes pricing accessors (no direct service calls)
+- Home / Product listing — `in_wishlist` field consumed by frontend
+
+**Regression:**
+
+| Suite | Status | Reason |
+|-------|--------|--------|
+| WishlistApiTest | PASS (36/36, 106 assertions) | New suite — 2026-08-04 |
+| ProductSuite | NOT RUN | ProductController::myWishlists changed — re-run recommended |
+| ProductPricingServiceTest | NOT RUN | Pricing accessors consumed by WishlistResource — re-run recommended |
+
+**Changes Applied (Revision 2):**
+- `Routes.php`: Wrapped `wishlists/toggle`, `wishlists` apiResource, `my-wishlists` in `auth:sanctum` group; restricted apiResource to `only(['index', 'store', 'destroy'])` — BUG-WISH-001/004
+- `WishlistController.php`: `index()` scoped to `$request->user()->id` (BUG-WISH-002); `destroy()`/`delete()` aligned on `product_variant_id` (BUG-WISH-003); `store()` returns translated 400 on duplicate
+- `WishlistRepository.php`: Added `findUserWishlistItem()` with explicit `whereNull`/`where` clauses replacing Prettus `findOneWhere` `= NULL` (BUG-WISH-005)
+- `WishlistCreateRequest.php`: Removed `sometimes` from `product_variant_id` rules — fixes `requiredIf` bypass (BUG-WISH-006)
+- `ProductController.php`: `myWishlists()` returns `ProductResource::collection($paginator)` (BUG-WISH-007)
+- Created `tests/Feature/WishlistApiTest.php` (36 tests / 106 assertions)
+
+---
+
 ## Full Suite Status
 
 | Suite | Status | Date | Notes |
 |-------|--------|------|-------|
+| WishlistApiTest | PASS (36/36, 106 assertions) | 2026-08-04 | New suite — auth, scoping, CRUD, toggle, in_wishlist, my-wishlists, validation, 405 guards |
 | RoleAndPermissionTest | PASS (32/32) | 2026-07-20 | Rev 2: 8 production bugs fixed — routes, display_name, missing fields, delete cascade, login |
 | FlashSaleReorderTest | PASS (3/3) | 2026-07-17 | Regression test for route ordering bug |
 | FlashSaleApproveRequestTest | PASS (4/4) | 2026-07-17 | Regression test for auth/response bugs |

@@ -963,7 +963,7 @@ class ProductController extends CoreController
     public function myWishlists(Request $request)
     {
         $limit = $request->limit ? $request->limit : 10;
-        return $this->fetchWishlists($request)->paginate($limit);
+        return ProductResource::collection($this->fetchWishlists($request)->paginate($limit));
     }
 
 

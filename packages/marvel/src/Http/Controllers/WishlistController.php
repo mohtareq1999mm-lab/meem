@@ -54,7 +54,7 @@ class WishlistController extends CoreController
     public function index(Request $request)
     {
         $limit = $request->limit ? $request->limit : 15;
-        $wishlist = $this->repository->get();
+        $wishlist = $this->repository->where('user_id', $request->user()->id)->get();
 
         $productIds = $wishlist->pluck('product_id');
         $variantIds = $wishlist->pluck('product_variant_id')->filter();
@@ -95,6 +95,8 @@ class WishlistController extends CoreController
             return $this->apiResponse(ADDED_TO_WISHLIST_SUCCESSFULLY, 200, true, $wishlist);
         } catch (MarvelException $th) {
             throw new MarvelException(SOMETHING_WENT_WRONG);
+        } catch (HttpException $th) {
+            return $this->apiResponse(ALREADY_ADDED_TO_WISHLIST_FOR_THIS_PRODUCT, $th->getStatusCode(), false);
         }
     }
 
@@ -143,44 +145,36 @@ class WishlistController extends CoreController
      */
     public function destroy(Request $request, $id)
     {
-        try {
-            $request->merge(['id' => $id]);
-            if ( $request->query('variant_id')) {
-                $request->merge(['variant_id' => $request->query('variant_id')]);
-            }
-            $deletedWishlist = $this->delete($request);
-            return $this->apiResponse(REMOVED_FROM_WISHLIST_SUCCESSFULLY, 200, true, $deletedWishlist);
-        } catch (MarvelException $th) {
-            throw new MarvelException(SOMETHING_WENT_WRONG);
+        $request->merge(['id' => $id]);
+        if ($request->query('product_variant_id')) {
+            $request->merge(['product_variant_id' => $request->query('product_variant_id')]);
         }
+        $deletedWishlist = $this->delete($request);
+        return $this->apiResponse(REMOVED_FROM_WISHLIST_SUCCESSFULLY, 200, true, $deletedWishlist);
     }
 
     public function delete(Request $request)
     {
-        try {
-            if (!$request->user()) {
-                throw new AuthorizationException(NOT_AUTHORIZED);
-            }
-            $product = Product::where('id', $request->id)->first();
-            if (!$product) {
-                throw new MarvelException(NOT_FOUND);
-            }
-            $wishlist = $this->repository
-                ->where('product_id', $product->id)
-                ->where('user_id', auth()->id())
-                ->when($request->product_variant_id, function ($query) use ($request) {
-                    $query->where('product_variant_id', $request->variant_id);
-                }, function ($query) {
-                    $query->whereNull('product_variant_id');
-                })
-                ->first();
-            if (!empty($wishlist)) {
-                return $wishlist->delete();
-            }
-            throw new MarvelException(SOMETHING_WENT_WRONG);
-        } catch (MarvelException $th) {
-            throw new MarvelException(SOMETHING_WENT_WRONG);
+        if (!$request->user()) {
+            throw new AuthorizationException(NOT_AUTHORIZED);
         }
+        $product = Product::where('id', $request->id)->first();
+        if (!$product) {
+            throw new MarvelException(NOT_FOUND);
+        }
+        $wishlist = $this->repository
+            ->where('product_id', $product->id)
+            ->where('user_id', auth()->id())
+            ->when($request->product_variant_id, function ($query) use ($request) {
+                $query->where('product_variant_id', $request->product_variant_id);
+            }, function ($query) {
+                $query->whereNull('product_variant_id');
+            })
+            ->first();
+        if (!empty($wishlist)) {
+            return $wishlist->delete();
+        }
+        throw new MarvelException(NOT_FOUND);
     }
 
     /**
@@ -193,9 +187,8 @@ class WishlistController extends CoreController
     {
         $request->merge(['product_id' => $product_id]);
 
-        return response()->json([
-            'data' => $this->inWishlist($request),
-        ]);
+        $data =  $this->inWishlist($request);
+        return $this->apiResponse(null, 200, true,$data);
     }
 
     public function inWishlist(Request $request)

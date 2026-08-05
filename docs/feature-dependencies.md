@@ -244,6 +244,43 @@ Production Ready
 
 ---
 
+## Wishlist
+
+**Purpose:**
+Manage user wishlists — add, list, toggle, remove (including per-variant entries), guest-safe in-wishlist check, and a paginated my-wishlists endpoint.
+
+**Dependency Confidence:**
+Dependencies partially verified from source code.
+
+**Depends On:**
+- Authentication — Sanctum; all wishlist routes except `in_wishlist` behind `auth:sanctum` (Verified)
+- Products — `wishlists.product_id` FK to products (Verified)
+- Product Variants — `wishlists.product_variant_id` nullable FK (Verified)
+- Pricing — WishlistResource reads Product accessors (`current_price`, `price_after_discount`, `price_after_flash_sale`) backed by `ProductPricingService` (Frozen ADR) (Verified)
+- Translation System — `MESSAGE.ADDED_TO_WISHLIST_SUCCESSFULLY`, `MESSAGE.REMOVED_FROM_WISHLIST_SUCCESSFULLY`, `ERROR.ALREADY_ADDED_TO_WISHLIST_FOR_THIS_PRODUCT` (Verified)
+
+**Used By:**
+- Product detail page — wishlist heart + `in_wishlist` check (Not verified)
+- Home / product listing — heart icon from `in_wishlist` field (Not verified)
+- Dedicated wishlist UI — `GET /my-wishlists` paginated list (Not verified)
+
+**Regression Required When Changed:**
+- Wishlist (WishlistApiTest)
+- Products (ProductController myWishlists)
+- ProductPricing (pricing accessors consumed by WishlistResource)
+
+**Blocking Dependencies:**
+None
+
+**Current Status:**
+Production Ready
+
+**Notes:**
+- Rev 1 (2026-08-04): Full investigation + hardening of `api-desc/front/wishlist/` (11 files). Fixed 7 bugs: missing `auth:sanctum` on all wishlist routes (BUG-WISH-001), `index()` user-scoping data leak (BUG-WISH-002), variant removal `variant_id`/`product_variant_id` mismatch (BUG-WISH-003), unregistered `show`/`update` routes 500 → restricted apiResource (BUG-WISH-004), Prettus `= NULL` predicate never matching (BUG-WISH-005), `requiredIf` + `sometimes` validation bypass (BUG-WISH-006), `myWishlists` raw paginator → ProductResource collection (BUG-WISH-007). Open: no unique DB constraint on `(user_id, product_id, product_variant_id)` (BUG-WISH-008); `in_wishlist` is product-level, ignores variant by design (BUG-WISH-009).
+- New test suite `tests/Feature/WishlistApiTest.php` — 36 tests / 106 assertions, all passing. Setup conditionally creates `wishlists` + `attribute_product` tables (pivot uses singular table name).
+
+---
+
 ## Orders
 
 **Purpose:**
