@@ -198,7 +198,7 @@ class WishlistApiTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonPath('success', true)
             ->assertJsonPath('status', 200)
-            ->assertJsonCount(0, 'data');
+            ->assertJsonCount(0, 'data.data');
     }
 
     public function test_index_returns_only_current_users_wishlist()
@@ -208,7 +208,7 @@ class WishlistApiTest extends TestCase
         $this->auth();
         $response = $this->getJson(self::PREFIX . '/wishlists');
         $response->assertStatus(200)
-            ->assertJsonCount(0, 'data');
+            ->assertJsonCount(0, 'data.data');
     }
 
     public function test_index_returns_wishlist_products()
@@ -219,8 +219,9 @@ class WishlistApiTest extends TestCase
         $response = $this->getJson(self::PREFIX . '/wishlists');
         $response->assertStatus(200)
             ->assertJsonPath('success', true)
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.id', $this->product->id);
+            ->assertJsonCount(1, 'data.data')
+            ->assertJsonPath('data.data.0.id', $this->product->id);
+        $this->assertIsArray($response->json('data.data.0.images'));
     }
 
     public function test_index_is_paginated()
@@ -241,7 +242,7 @@ class WishlistApiTest extends TestCase
         $this->auth();
         $response = $this->getJson(self::PREFIX . '/wishlists?limit=2');
         $response->assertStatus(200)
-            ->assertJsonCount(2, 'data');
+            ->assertJsonCount(2, 'data.data');
 
         $this->assertSame(5, Wishlist::where('user_id', $this->user->id)->count());
     }

@@ -19,7 +19,7 @@ class WishlistResource extends Resource
             'in_stock'               => $this->in_stock,
             'has_flash_sale'         => $this->has_flash_sale,
             'has_discount'           => $this->has_discount,
-            "images"                 => $this->getFirstMediaUrl('products'),
+            "images"                 => $this->getmedia('products') ? $this->getmediaImages('products') : [],
             "variants"                => $this->whenLoaded('variations', function () {
                 return $this->variations->map(function ($variant) {
                     return [
@@ -40,6 +40,13 @@ class WishlistResource extends Resource
                 });
             }),
         ];
+    }
+
+    private function getmediaImages($collection)
+    {
+        return $this->getmedia($collection)->map(function ($media) {
+            return $media->getUrl();
+        });
     }
 
     private function roundMoney($value): ?float

@@ -66,7 +66,8 @@ class WishlistController extends CoreController
                 'variations.attributeProducts.attributeValue.attribute',
             ])
             ->paginate($limit);
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, WishlistResource::collection([
+            $data = WishlistResource::collection($products)->response()->getData(true);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
             "data" => $data['data'] ?? [],
             "page" => $data['meta']['current_page'] ?? 0,
             "current_page" => $data['meta']['current_page'] ?? 0,
@@ -80,7 +81,7 @@ class WishlistController extends CoreController
             "prev_page_url" => $data['links']['prev'] ?? "",
             "last_page_url" => $data['links']['last'] ?? "",
             "first_page_url" => $data['links']['first'] ?? "",
-        ]));
+        ]);
     }
 
     /**
