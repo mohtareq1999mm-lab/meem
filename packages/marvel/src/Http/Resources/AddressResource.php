@@ -18,7 +18,6 @@ class AddressResource extends Resource
         return [
             "id"=> $this->id,
             "title"=> $this->title,
-            "default"=> (bool)$this->default,
             "address"=> $this->address,
             "location"=> $this->location ?? [],
             "customer_id"=> $this->customer_id,
