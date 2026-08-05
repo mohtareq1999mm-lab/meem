@@ -198,7 +198,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('assignments/{assignment}', [CouponAssignmentController::class, 'update']);
         Route::delete('assignments/{assignment}', [CouponAssignmentController::class, 'destroy']);
     });
-    Route::post('wishlists/toggle', [WishlistController::class, 'toggle']);
+    Route::patch('wishlists/toggle', [WishlistController::class, 'toggle']);
     Route::apiResource('wishlists', WishlistController::class)->only(['index', 'store', 'destroy']);
     Route::get('wishlists/in_wishlist/{product_id}', [WishlistController::class, 'in_wishlist']);
     Route::apiResource('coupons', CouponController::class);
