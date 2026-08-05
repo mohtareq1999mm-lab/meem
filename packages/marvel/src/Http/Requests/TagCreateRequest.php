@@ -31,6 +31,8 @@ class TagCreateRequest extends FormRequest
         return [
             'name'     => ['array', 'required'],
             'name.*'   => ['string', 'max:150', 'required', UniqueTranslationRule::for('tags')],
+            'products' => ['nullable', 'array'],
+            'products.*' => ['integer', 'exists:products,id'],
             'icon'     => ['nullable', 'string'],
             'image'    => ['nullable', 'image'],
         ];

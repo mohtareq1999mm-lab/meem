@@ -28,7 +28,6 @@ class AddressRequestUpdate extends FormRequest
     {
         return [
             'title' => ['sometimes', 'string', 'max:255'],
-            'type' => ['sometimes', 'string', 'max:255'],
             'default' => ['sometimes','in:0,1'],
             'address' => ['sometimes', 'array'],
             'address.zip' => ['sometimes', 'string'],

@@ -7,7 +7,7 @@ The Tag module manages product tags — simple labels for organizing and filteri
 - **Admin API** (`/api/v1/tags`) — Full CRUD, protected by permissions
 - Translatable names (en/ar via `HasTranslations`)
 - Image and icon uploads via `MediaManager`
-- Many-to-many product association via `product_tag` pivot
+- Many-to-many product association via `product_tag` pivot (syncable via `products` on create/update)
 
 ## Key Files
 

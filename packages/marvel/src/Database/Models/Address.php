@@ -11,7 +11,6 @@ class Address extends Model
 
     public $fillable = [
         'title',
-        'type',
         'default',
         'address',
         'customer_id',

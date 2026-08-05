@@ -67,7 +67,6 @@ curl -X GET "http://example.com/api/v1/tags?language=en" \
 
 **Business Rules**:
 - Filters by language (`$request->language ?? DEFAULT_LANGUAGE`)
-- Eager-loads `type` relationship
 - Returns custom pagination structure (not default Laravel pagination)
 
 ---
@@ -83,6 +82,7 @@ Create a new tag.
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | name | object | required | Translatable name (e.g., `{"en": "Organic", "ar": "عضوي"}`) |
+| products | array | optional | Product IDs to attach via `product_tag` relation |
 | image | file | sometimes | Tag image (jpeg,png,jpg,gif,svg) |
 | icon | file | sometimes | Tag icon (jpeg,png,jpg,gif,svg) |
 
@@ -92,6 +92,8 @@ Create a new tag.
 |-------|-------|
 | name | required, array |
 | name.* | required, string, max:150, unique_translation:tags |
+| products | nullable, array |
+| products.* | integer, exists:products,id |
 | image | nullable, image |
 | icon | nullable, string |
 
@@ -101,7 +103,8 @@ Create a new tag.
   "name": {
     "en": "Organic",
     "ar": "عضوي"
-  }
+  },
+  "products": [1, 2, 3]
 }
 ```
 
@@ -110,11 +113,25 @@ Create a new tag.
 **Response 201**:
 ```json
 {
-  "id": 1,
-  "name": "Organic",
-  "slug": "organic",
-  "image": null,
-  "icon": null
+  "status": 201,
+  "message": "Tag created successfully",
+  "success": true,
+  "data": {
+    "id": 1,
+    "name": "Organic",
+    "slug": "organic",
+    "image": null,
+    "icon": null,
+    "products": [
+      {
+        "id": 1,
+        "name": "Product A",
+        "slug": "product-a",
+        "status": true,
+        "image": { "thumbnail": null }
+      }
+    ]
+  }
 }
 ```
 
@@ -123,7 +140,8 @@ Create a new tag.
 {
   "message": "The given data was invalid.",
   "errors": {
-    "name.en": ["The name en has already been taken."]
+    "name.en": ["The name en has already been taken."],
+    "products.0": ["The selected products.0 is invalid."]
   }
 }
 ```
@@ -134,14 +152,16 @@ curl -X POST "http://example.com/api/v1/tags" \
   -H "Authorization: Bearer {token}" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json" \
-  -d '{"name": {"en": "Organic", "ar": "عضوي"}}'
+  -d '{"name": {"en": "Organic", "ar": "عضوي"}, "products": [1, 2, 3]}'
 ```
 
 **Business Rules**:
 - Slug is auto-generated from the name via `makeSlug()` (uses `globalSlugify`)
 - If name is a translatable array, the English (`en`) value is used for slug generation
+- If `products` is provided, the `product_tag` pivot is synced (`sync()`) — replaces any existing product associations
 - Image is uploaded to `tags` collection on `tags` disk via `MediaManager::uploadSingleImage()`
 - Icon is uploaded to `tags` collection on `tags` disk via `MediaManager::uploadSingleImage()`
+- Response wraps the tag in the standard `{ status, message, success, data }` envelope
 
 ---
 
@@ -160,11 +180,25 @@ Get a single tag by ID.
 **Response 200**:
 ```json
 {
-  "id": 1,
-  "name": "Organic",
-  "slug": "organic",
-  "image": null,
-  "icon": null
+  "status": 200,
+  "message": "Data fetched successfully",
+  "success": true,
+  "data": {
+    "id": 1,
+    "name": "Organic",
+    "slug": "organic",
+    "image": null,
+    "icon": null,
+    "products": [
+      {
+        "id": 1,
+        "name": "Product A",
+        "slug": "product-a",
+        "status": true,
+        "image": { "thumbnail": null }
+      }
+    ]
+  }
 }
 ```
 
@@ -187,8 +221,8 @@ curl -X GET "http://example.com/api/v1/tags/1" \
 **Business Rules**:
 - Accepts numeric ID. If numeric, looks up by `id`.
 - If `$params` is non-numeric (string/slug), looks up by `slug` + `language`.
-- Eager-loads `type` relationship.
-- Returns `TagResource` directly (not wrapped in `apiResponse`).
+- Eager-loads `products` relationship (exposed in the response).
+- Returns the tag wrapped in `apiResponse` (`{ status, message, success, data }`).
 
 ---
 
@@ -209,6 +243,7 @@ Update an existing tag.
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | name | object | sometimes | Translatable name |
+| products | array | optional | Product IDs — syncs `product_tag` relation (replaces existing) |
 | image | file | sometimes | New tag image (replaces existing) |
 | icon | string | sometimes | New icon string |
 
@@ -218,6 +253,8 @@ Update an existing tag.
 |-------|-------|
 | name | sometimes, array |
 | name.* | sometimes, string, max:150, unique_translation:tags ->ignore($id) |
+| products | nullable, array |
+| products.* | integer, exists:products,id |
 | image | nullable, image |
 | icon | nullable, string |
 
@@ -227,18 +264,33 @@ Update an existing tag.
   "name": {
     "en": "Organic Premium",
     "ar": "عضوي ممتاز"
-  }
+  },
+  "products": [2, 3]
 }
 ```
 
 **Response 200**:
 ```json
 {
-  "id": 1,
-  "name": "Organic Premium",
-  "slug": "organic-premium",
-  "image": null,
-  "icon": null
+  "status": 200,
+  "message": "Tag updated successfully",
+  "success": true,
+  "data": {
+    "id": 1,
+    "name": "Organic Premium",
+    "slug": "organic-premium",
+    "image": null,
+    "icon": null,
+    "products": [
+      {
+        "id": 2,
+        "name": "Product B",
+        "slug": "product-b",
+        "status": true,
+        "image": { "thumbnail": null }
+      }
+    ]
+  }
 }
 ```
 
@@ -253,14 +305,16 @@ curl -X PUT "http://example.com/api/v1/tags/1" \
   -H "Authorization: Bearer {token}" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json" \
-  -d '{"name": {"en": "Organic Premium"}}'
+  -d '{"name": {"en": "Organic Premium"}, "products": [2, 3]}'
 ```
 
 **Business Rules**:
 - Slug is auto-regenerated from English name if name is changed
 - Uniqueness check ignores the current tag's own name
+- If `products` is provided, the `product_tag` pivot is synced (`sync()`) — replaces all existing product associations
+- Sending `products: []` clears all product associations
 - Existing images are replaced (old collection is cleared via `updateSingleImage`)
-- Returns updated tag from `TagRepository::updateTag()`
+- Returns the updated tag wrapped in `apiResponse` (`{ status, message, success, data }`)
 
 ---
 
@@ -278,7 +332,12 @@ Delete a tag.
 
 **Response 200**:
 ```json
-true
+{
+  "status": 200,
+  "message": "Tag deleted successfully",
+  "success": true,
+  "data": true
+}
 ```
 
 **Response 404**:
@@ -297,4 +356,4 @@ curl -X DELETE "http://example.com/api/v1/tags/1" \
 - Uses hard delete (no soft deletes on `tags` table)
 - Pivot records in `product_tag` table are cascade-deleted
 - Media files are NOT cleaned up on delete
-- Returns raw boolean (`true`) on success
+- Returns `{ status, message, success, data: true }` wrapped via `apiResponse`

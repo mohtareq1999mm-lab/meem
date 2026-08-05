@@ -371,7 +371,6 @@ class CreateMarvelTables extends Migration
         Schema::create('address', function (Blueprint $table) {
             $table->id();
             $table->string('title');
-            $table->string('type');
             $table->boolean('default')->default(false);
             $table->json('address');
             $table->json('location')->nullable();

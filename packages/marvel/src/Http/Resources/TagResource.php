@@ -21,6 +21,17 @@ class TagResource extends Resource
             'slug'                 => $this->slug,
             'image'                => $this->getFirstMediaUrl('tags')?? null,
             'icon'                 => $this->getFirstMediaUrl('tags') ?? null,
+            $this->mergeWhen($this->relationLoaded('products'), [
+                'products' => $this->products->map(fn ($product) => [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'slug' => $product->slug,
+                    'status' => $product->status,
+                    'image' => [
+                        'thumbnail' => $product->getFirstMediaUrl('products'),
+                    ],
+                ]),
+            ]),
         ];
     }
 }

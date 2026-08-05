@@ -1,5 +1,19 @@
 # Tag Module — Changelog
 
+## [1.1.0] — 2026-08-05
+
+### Added
+- `products` field in `TagCreateRequest` and `TagUpdateRequest` — accepts product IDs (`products.*` => `integer|exists:products,id`)
+- Product relation sync on create and update — `$tag->products()->sync($products)` (mirrors Brand pattern)
+- `products` relation exposed in `TagResource` when loaded (id, name, slug, status, image.thumbnail)
+- `TagCrudTest` — 13 tests / 52 assertions covering the standard response envelope, product sync, and authorization
+
+### Changed
+- `TagController::store()` — response now wrapped in `apiResponse(TAG_CREATED_SUCCESSFULLY, 201, true, ...)` (was bare `TagResource`)
+- `TagController::show()` — eager-loads `products`, response wrapped in `apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ...)` (was bare `TagResource`)
+- `TagController::tagUpdate()` — response wrapped in `apiResponse(TAG_UPDATED_SUCCESSFULLY, 200, true, ...)` (was raw model)
+- `TagController::destroy()` — response now `apiResponse(TAG_DELETED_SUCCESSFULLY, 200, true, true)` (was raw boolean)
+
 ## [1.0.0] — 2026-07-29
 
 ### Added

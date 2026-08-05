@@ -4,11 +4,31 @@
 
 ## Test Files
 
-No test files currently exist for the Tag module.
+### TagCrudTest.php (`tests/Feature/TagCrudTest.php`) — 13 tests / 52 assertions
+
+| # | Test Name | Type | Description |
+|---|-----------|------|-------------|
+| 1 | `test_index_returns_standard_response_wrapper` | Feature | GET /tags returns `{success, message, status, data}` envelope |
+| 2 | `test_store_returns_201_with_standard_wrapper` | Feature | POST /tags returns 201 with `apiResponse` wrapper + slug |
+| 3 | `test_store_syncs_products_relation` | Feature | POST with `products` syncs `product_tag` pivot |
+| 4 | `test_store_rejects_invalid_product_ids` | Validation | POST with non-existent product id → 422 |
+| 5 | `test_show_by_id_returns_wrapper_with_products` | Feature | GET /tags/{id} returns wrapper + eager-loaded products |
+| 6 | `test_show_by_slug_returns_wrapper` | Feature | GET /tags/{slug} returns wrapper |
+| 7 | `test_update_returns_200_with_wrapper` | Feature | PUT /tags/{id} returns 200 + wrapper |
+| 8 | `test_update_syncs_products_relation` | Feature | PUT with `products` replaces pivot associations |
+| 9 | `test_update_with_empty_products_clears_relation` | Feature | PUT with `products: []` clears associations |
+| 10 | `test_update_rejects_invalid_product_ids` | Validation | PUT with non-existent product id → 422 |
+| 11 | `test_destroy_returns_200_with_wrapper_and_true` | Feature | DELETE returns `{..., data: true}` + cascade cleanup |
+| 12 | `test_guest_cannot_access_tags_crud` | Auth | No token → 401 on all endpoints |
+| 13 | `test_user_without_permission_cannot_create` | Auth | Customer role → 403 on POST |
+
+### ProductTagTest.php (`tests/Feature/ProductTagTest.php`) — 23 tests / 62 assertions (product→tag direction, unchanged)
+
+Covers tag attachment/detachment from the product side, public tag listing, tag filtering, and pivot integrity.
 
 ---
 
-## Recommended Test Suite
+## Recommended Additional Test Suite
 
 ### TagCrudTest.php
 
@@ -83,9 +103,10 @@ No test files currently exist for the Tag module.
 
 ## Missing Coverage
 
-- [ ] No tests exist at all
+- [ ] Arabic-locale assertions for tag response messages
 - [ ] Slug auto-generation edge cases
 - [ ] Concurrent tag operations
 - [ ] Pagination boundary tests
 - [ ] Image upload validation (file type, size)
 - [ ] Large dataset performance
+- [ ] Soft-delete / restore behavior (tags use hard delete by design)

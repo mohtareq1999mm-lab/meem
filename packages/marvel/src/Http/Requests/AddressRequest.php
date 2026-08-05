@@ -28,7 +28,6 @@ class AddressRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string', 'max:255'],
-            'type' => ['required', 'string', 'max:255'],
             'default' => ['required','in:0,1'],
             'address' => ['required', 'array'],
             'address.zip' => ['required', 'string'],

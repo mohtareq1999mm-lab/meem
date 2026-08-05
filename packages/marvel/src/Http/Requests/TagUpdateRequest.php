@@ -31,6 +31,8 @@ class TagUpdateRequest extends FormRequest
         return [
             'name'     => ['array', 'sometimes'],
             'name.*'   => ['string', 'max:150', 'sometimes', UniqueTranslationRule::for('tags', 'name')->ignore($this->route('tag'))],
+            'products' => ['nullable', 'array'],
+            'products.*' => ['integer', 'exists:products,id'],
             'icon'     => ['nullable', 'string'],
             'image'    => ['nullable', 'image'],
         ];

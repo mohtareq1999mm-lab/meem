@@ -63,17 +63,24 @@
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | name | object | required | Translatable name: `{"en": "Organic", "ar": "عضوي"}` |
+| products | array | no | Product IDs to attach via `product_tag` relation |
 | image | file | no | Tag image file |
 | icon | file | no | Tag icon file |
 
-**Response:**
+**Response (201):**
 ```json
 {
-  "id": 1,
-  "name": "Organic",
-  "slug": "organic",
-  "image": null,
-  "icon": null
+  "status": 201,
+  "message": "Tag created successfully",
+  "success": true,
+  "data": {
+    "id": 1,
+    "name": "Organic",
+    "slug": "organic",
+    "image": null,
+    "icon": null,
+    "products": []
+  }
 }
 ```
 
@@ -88,11 +95,25 @@
 **Response:**
 ```json
 {
-  "id": 1,
-  "name": "Organic",
-  "slug": "organic",
-  "image": null,
-  "icon": null
+  "status": 200,
+  "message": "Data fetched successfully",
+  "success": true,
+  "data": {
+    "id": 1,
+    "name": "Organic",
+    "slug": "organic",
+    "image": null,
+    "icon": null,
+    "products": [
+      {
+        "id": 1,
+        "name": "Product A",
+        "slug": "product-a",
+        "status": true,
+        "image": { "thumbnail": null }
+      }
+    ]
+  }
 }
 ```
 
@@ -109,10 +130,26 @@
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | name | object | no | Updated translatable name |
+| products | array | no | Product IDs — replaces `product_tag` associations (empty array clears) |
 | image | file | no | New image (replaces existing) |
 | icon | string | no | New icon string |
 
-**Response:** Same as show.
+**Response (200):**
+```json
+{
+  "status": 200,
+  "message": "Tag updated successfully",
+  "success": true,
+  "data": {
+    "id": 1,
+    "name": "Organic Premium",
+    "slug": "organic-premium",
+    "image": null,
+    "icon": null,
+    "products": []
+  }
+}
+```
 
 ---
 
@@ -122,7 +159,15 @@
 
 **Authentication:** `auth:sanctum`, permission: `delete-tags`
 
-**Response:** `true`
+**Response (200):**
+```json
+{
+  "status": 200,
+  "message": "Tag deleted successfully",
+  "success": true,
+  "data": true
+}
+```
 
 ---
 
@@ -162,4 +207,7 @@
 | Non-array name | 422 validation error, inline message |
 | Large image upload | Server enforces file type and size validation |
 | Delete tag linked to products | Pivot cascade deletes, products remain unaffected |
+| Product IDs invalid on create/update | 422 validation error on `products.*` |
+| Update with `products: []` | Clears all product associations for the tag |
+| Update without `products` | Product associations left untouched |
 | Rapid create/delete cycle | Standard CRUD, no rate limiting on tags |

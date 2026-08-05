@@ -140,6 +140,10 @@ class TagController extends CoreController
                 'slug' => $validatedData['slug'],
                 'name' => $validatedData['name'],
             ]);
+            if ($request->has('products')) {
+                $products = array_filter(array_map('intval', (array) $request->products), fn ($id) => $id > 0);
+                $tag->products()->sync($products);
+            }
             if ($request->has('image')) {
                 if (!$this->uploadSingleImage($request, 'image', $tag, 'tags', 'tags')) {
                     throw new HttpException(422, 'Image upload failed, please check the file format or size.');
@@ -150,7 +154,8 @@ class TagController extends CoreController
                     throw new HttpException(422, 'Icon upload failed, please check the file format or size.');
                 }
             }
-            return new TagResource($tag);
+            $tag->load('products');
+            return $this->apiResponse(TAG_CREATED_SUCCESSFULLY, 201, true, new TagResource($tag));
         } catch (MarvelException $th) {
             throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE);
         }
@@ -174,11 +179,11 @@ class TagController extends CoreController
         try {
             if (is_numeric($params)) {
                 $params = (int) $params;
-                $tag = $this->repository->where('id', $params)->firstOrFail();
-                return new TagResource($tag);
+                $tag = $this->repository->with('products')->where('id', $params)->firstOrFail();
+                return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, new TagResource($tag));
             }
-            $tag = $this->repository->where('slug', $params)->firstOrFail();
-            return new TagResource($tag);
+            $tag = $this->repository->with('products')->where('slug', $params)->firstOrFail();
+            return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, new TagResource($tag));
         } catch (MarvelException $th) {
             throw new MarvelException(NOT_FOUND);
         }
@@ -212,7 +217,9 @@ class TagController extends CoreController
     {
         try {
             $tag = $this->repository->findOrFail($request->id);
-            return $this->repository->updateTag($request, $tag);
+            $updatedTag = $this->repository->updateTag($request, $tag);
+            $updatedTag->load('products');
+            return $this->apiResponse(TAG_UPDATED_SUCCESSFULLY, 200, true, new TagResource($updatedTag));
         } catch (MarvelException $th) {
             throw new MarvelException(COULD_NOT_UPDATE_THE_RESOURCE);
         }
@@ -234,7 +241,8 @@ class TagController extends CoreController
     public function destroy($id)
     {
         try {
-            return $this->repository->findOrFail($id)->delete();
+            $this->repository->findOrFail($id)->delete();
+            return $this->apiResponse(TAG_DELETED_SUCCESSFULLY, 200, true, true);
         } catch (MarvelException $th) {
             throw new MarvelException(COULD_NOT_DELETE_THE_RESOURCE);
         }

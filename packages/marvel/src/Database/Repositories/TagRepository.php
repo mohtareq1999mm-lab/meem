@@ -58,6 +58,10 @@ class TagRepository extends BaseRepository
             $data['slug'] = $this->makeSlug($request, 'slug', $tag->id);
         }
         $tag->update($data);
+        if ($request->has('products')) {
+            $products = array_filter(array_map('intval', (array) $request->products), fn ($id) => $id > 0);
+            $tag->products()->sync($products);
+        }
         if ($request->has('image')) {
             if (!$this->updateSingleImage($request, 'image', $tag, 'tags', 'tags')) {
                 throw new HttpException(422, 'Logo upload failed, please check the file format or size.');

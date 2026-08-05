@@ -60,17 +60,18 @@ POST /tags
     → $validatedData = $request->validated()
     → Generate slug via makeSlug($request)
     → $this->repository->create(['slug' => $slug, 'name' => $validatedData['name']])
+    → If products provided: $tag->products()->sync($products) (validated IDs)
     → If image: uploadSingleImage($request, 'image', $tag, 'tags', 'tags')
     → If icon: uploadSingleImage($request, 'icon', $tag, 'tags', 'tags')
-    → return new TagResource($tag)
+    → $tag->load('products')
+    → return apiResponse(TAG_CREATED_SUCCESSFULLY, 201, true, TagResource::make($tag))
     → On MarvelException: throw MarvelException(COULD_NOT_CREATE_THE_RESOURCE)
 
 GET /tags/{id or slug}
   → TagController@show(Request, $params)
-    → $language = $request->language ?? DEFAULT_LANGUAGE
-    → If numeric: find by id with ['type']
-    → If non-numeric: find by slug + language with ['type']
-    → return new TagResource($tag)
+    → If numeric: find by id with ['products']
+    → If non-numeric: find by slug with ['products']
+    → return apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, TagResource::make($tag))
     → On MarvelException: throw MarvelException(NOT_FOUND)
 
 PUT /tags/{id}
@@ -82,14 +83,18 @@ PUT /tags/{id}
         → $data = $request->only(['name', 'slug', 'icon', 'image'])
         → If name changed: regenerate slug via makeSlug() with update ID
         → $tag->update($data)
+        → If products provided: $tag->products()->sync($products)
         → If image: updateSingleImage() [clears + uploads]
         → If icon: updateSingleImage() [clears + uploads]
         → return $this->findOrFail($tag->id)
+      → $updatedTag->load('products')
+      → return apiResponse(TAG_UPDATED_SUCCESSFULLY, 200, true, TagResource::make($updatedTag))
     → On MarvelException: throw MarvelException(COULD_NOT_UPDATE_THE_RESOURCE)
 
 DELETE /tags/{id}
   → TagController@destroy($id)
     → $this->repository->findOrFail($id)->delete()
+    → return apiResponse(TAG_DELETED_SUCCESSFULLY, 200, true, true)
     → On ModelNotFoundException: MarvelException(NOT_FOUND)
     → On MarvelException: throw MarvelException(COULD_NOT_DELETE_THE_RESOURCE)
 ```
@@ -103,7 +108,7 @@ DELETE /tags/{id}
 |--------|-------------|
 | `model()` | Returns `Tag::class` |
 | `boot()` | Pushes `RequestCriteria` for search/filter |
-| `updateTag($request, $tag)` | Updates tag data, regenerates slug on name change, handles image/icon updates |
+| `updateTag($request, $tag)` | Updates tag data, regenerates slug on name change, syncs `products` relation, handles image/icon updates |
 
 **Field searchable:** `name => 'like'`
 **Data array:** `name, slug, icon, image`
@@ -113,9 +118,10 @@ DELETE /tags/{id}
 1. $data = $request->only(['name', 'slug', 'icon', 'image'])
 2. If name provided: regenerate slug via makeSlug($request, 'slug', $tag->id)
 3. $tag->update($data)
-4. If image: updateSingleImage() [clears + uploads to 'tags' collection]
-5. If icon: updateSingleImage() [clears + uploads to 'tags' collection]
-6. Return $this->findOrFail($tag->id)
+4. If products provided: $tag->products()->sync($products) — replaces product_tag pivot rows
+5. If image: updateSingleImage() [clears + uploads to 'tags' collection]
+6. If icon: updateSingleImage() [clears + uploads to 'tags' collection]
+7. Return $this->findOrFail($tag->id)
 
 On error:
   - HttpException(422): "Logo upload failed, please check the file format or size."
@@ -159,13 +165,14 @@ Uses `cviebrock/eloquent-sluggable` package. Since `name` is translatable (store
   "name": "translated string",
   "slug": "string",
   "image": "json|null",
-  "icon": "string|null"
+  "icon": "string|null",
+  "products": "array (only when relation loaded — id, name, slug, status, image.thumbnail)"
 }
 ```
 
 - Image is stored as a JSON object (not media library collection like categories)
+- `products` is exposed only when the relation is eager-loaded (show endpoint, and store/update responses after `$tag->load('products')`)
 - No `type` relationship data is included in the resource output (though eager-loaded)
-- No `products_count` or other aggregated fields
 
 ## Request Validation
 
@@ -177,6 +184,8 @@ Uses `cviebrock/eloquent-sluggable` package. Since `name` is translatable (store
 |-------|-------|
 | `name` | `required`, `array` |
 | `name.*` | `required`, `string`, `max:150`, `UniqueTranslationRule::for('tags')` |
+| `products` | `nullable`, `array` |
+| `products.*` | `integer`, `exists:products,id` |
 | `icon` | `nullable`, `string` |
 | `image` | `nullable`, `image` |
 
@@ -188,6 +197,8 @@ Uses `cviebrock/eloquent-sluggable` package. Since `name` is translatable (store
 |-------|-------|
 | `name` | `sometimes`, `array` |
 | `name.*` | `sometimes`, `string`, `max:150`, `UniqueTranslationRule::for('tags', 'name')->ignore($id)` |
+| `products` | `nullable`, `array` |
+| `products.*` | `integer`, `exists:products,id` |
 | `icon` | `nullable`, `string` |
 | `image` | `nullable`, `image` |
 
@@ -264,10 +275,10 @@ define('TAG_NOT_FOUND', APP_NOTICE_DOMAIN . 'ERROR.TAG_NOT_FOUND');
 | Key | Context |
 |-----|---------|
 | `MESSAGE.FETCH_DATA_SUCCESSFULLY` | GET response |
-| `MESSAGE.TAG_CREATED_SUCCESSFULLY` | POST response (defined but not currently used) |
-| `MESSAGE.TAG_UPDATED_SUCCESSFULLY` | PUT response (defined but not currently used) |
-| `MESSAGE.TAG_DELETED_SUCCESSFULLY` | DELETE response (defined but not currently used) |
-| `ERROR.TAG_NOT_FOUND` | 404 error (defined but not currently used) |
+| `MESSAGE.TAG_CREATED_SUCCESSFULLY` | POST response (201) |
+| `MESSAGE.TAG_UPDATED_SUCCESSFULLY` | PUT response |
+| `MESSAGE.TAG_DELETED_SUCCESSFULLY` | DELETE response |
+| `ERROR.TAG_NOT_FOUND` | 404 error |
 | `ERROR.COULD_NOT_CREATE_THE_RESOURCE` | POST/PUT/DELETE error fallback |
 | `ERROR.COULD_NOT_UPDATE_THE_RESOURCE` | PUT error |
 | `ERROR.COULD_NOT_DELETE_THE_RESOURCE` | DELETE error |
@@ -279,10 +290,8 @@ define('TAG_NOT_FOUND', APP_NOTICE_DOMAIN . 'ERROR.TAG_NOT_FOUND');
 2. **No type relationship in resource** — `type` is eager-loaded but never exposed in TagResource output.
 3. **No observer** — No activity logging for tag CRUD operations.
 4. **No public endpoints** — No `/general/tags` public API exists.
-5. **No tests** — No test files exist for the Tag module.
-6. **Media on delete** — Media files are not cleaned up when a tag is deleted.
-7. **Destroy returns raw boolean** — `destroy()` returns `true`/`false` directly instead of a JSON response.
-8. **Store returns bare resource** — `store()` returns `new TagResource($tag)` directly, not wrapped in `apiResponse()`.
+5. **Media on delete** — Media files are not cleaned up when a tag is deleted.
+6. **Destroy response** — `destroy()` now returns `{ status, message, success, data: true }` via `apiResponse` (previously raw boolean).
 
 ## Dependencies
 

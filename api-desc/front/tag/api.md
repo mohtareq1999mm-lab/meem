@@ -26,13 +26,6 @@ List all product tags.
       "details": "Fresh organic products",
       "image": null,
       "icon": "organic-icon",
-      "language": "en",
-      "translated_languages": ["en", "ar"],
-      "type": {
-        "id": 1,
-        "name": "Product Type",
-        "slug": "product-type"
-      }
     }
   ]
 }
@@ -65,13 +58,6 @@ Get a single tag by slug.
     "details": "Fresh organic products",
     "image": null,
     "icon": "organic-icon",
-    "language": "en",
-    "translated_languages": ["en", "ar"],
-    "type": {
-      "id": 1,
-      "name": "Product Type",
-      "slug": "product-type"
-    }
   }
 }
 ```
