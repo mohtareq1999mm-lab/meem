@@ -198,6 +198,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('assignments/{assignment}', [CouponAssignmentController::class, 'update']);
         Route::delete('assignments/{assignment}', [CouponAssignmentController::class, 'destroy']);
     });
+    Route::post('wishlists/toggle', [WishlistController::class, 'toggle']);
+    Route::apiResource('wishlists', WishlistController::class)->only(['index', 'store', 'destroy']);
+    Route::get('wishlists/in_wishlist/{product_id}', [WishlistController::class, 'in_wishlist']);
     Route::apiResource('coupons', CouponController::class);
     Route::apiResource('promotions', PromotionController::class);
     Route::apiResource('shipping-prices', ShippingPriceController::class);
@@ -365,23 +368,6 @@ Route::get('check-card-payment', function () {
 });
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-Route::middleware(['auth:sanctum'])->group(function () {
-    Route::post('wishlists/toggle', [WishlistController::class, 'toggle']);
-    Route::apiResource('wishlists', WishlistController::class)->only(['index', 'store', 'destroy']);
-    Route::get('wishlists/in_wishlist/{product_id}', [WishlistController::class, 'in_wishlist']);
-});
 
 
 Route::get('/enum-types', function () {
