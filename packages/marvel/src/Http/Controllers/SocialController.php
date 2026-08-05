@@ -19,14 +19,19 @@ class SocialController extends CoreController
 {
     /**
      * Redirect the browser to the OAuth provider (Google / Facebook).
+     *
+     * Accepts an optional `type` query parameter (`web` | `mobile`, default `web`).
+     * The type is carried through the OAuth flow via the `state` parameter so the
+     * callback knows whether to redirect (web) or return a JSON response (mobile).
      */
-    public function redirect(string $provider): JsonResponse
+    public function redirect(Request $request, string $provider): JsonResponse
     {
         $this->validateProvider($provider);
 
         $url = Socialite::driver($provider)
             ->stateless()
             ->redirectUrl($this->callbackUrl($provider))
+            ->with(['state' => $this->clientType($request)])
             ->redirect()
             ->getTargetUrl();
 
@@ -41,18 +46,21 @@ class SocialController extends CoreController
      */
     public function redirectFromQuery(Request $request): JsonResponse
     {
-        return $this->redirect((string) $request->query('provider'));
+        return $this->redirect($request, (string) $request->query('provider'));
     }
 
     /**
      * Handle the OAuth provider callback.
      *
-     * On success it issues a single-use authorization code and redirects the
-     * browser to the frontend. The API token is never placed in the URL.
+     * On success it issues a single-use authorization code. For web clients the
+     * browser is redirected to the frontend; for mobile clients a JSON response
+     * with the code is returned instead. The API token is never placed in the URL.
      */
-    public function callback(string $provider): RedirectResponse
+    public function callback(Request $request, string $provider): RedirectResponse|JsonResponse
     {
         $this->validateProvider($provider);
+
+        $type = $this->clientType($request);
 
         try {
             $socialUser = Socialite::driver($provider)
@@ -86,14 +94,29 @@ class SocialController extends CoreController
                 'used' => false,
             ]);
 
+            if ($type === 'mobile') {
+                return response()->json([
+                    'success' => true,
+                    'code' => $authorizationCode->code,
+                ], 200);
+            }
+
             return redirect()->away($this->frontendUrl() . '/?code=' . $authorizationCode->code);
         } catch (\Throwable $e) {
             Log::error('Social login callback failed', [
                 'provider' => $provider,
+                'type' => $type,
                 'error' => $e->getMessage(),
                 'exception' => get_class($e),
                 'trace' => $e->getTraceAsString(),
             ]);
+
+            if ($type === 'mobile') {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('message.' . SOCIAL_LOGIN_FAILED),
+                ], 400);
+            }
 
             return redirect()->away($this->frontendUrl() . '/auth?error=social_login_failed');
         }
@@ -144,6 +167,20 @@ class SocialController extends CoreController
         if (!in_array($provider, ['facebook', 'google'], true)) {
             throw new MarvelException(PLEASE_LOGIN_USING_FACEBOOK_OR_GOOGLE);
         }
+    }
+
+    /**
+     * Resolve the client type (web|mobile). Defaults to web.
+     *
+     * On the redirect request the type is sent as `type`; on the callback it is
+     * echoed back by the OAuth provider as `state`. Both are optional and any
+     * unknown value falls back to `web` so existing clients are unaffected.
+     */
+    protected function clientType(Request $request): string
+    {
+        $type = strtolower((string) $request->query('type', $request->query('state', 'web')));
+
+        return in_array($type, ['web', 'mobile'], true) ? $type : 'web';
     }
 
     protected function callbackUrl(string $provider): string

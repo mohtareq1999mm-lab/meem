@@ -229,6 +229,7 @@ return [
     // Social Login
     'MESSAGE.SOCIAL_LOGIN_SUCCESSFUL' => 'Login successful.',
     'ERROR.INVALID_SOCIAL_LOGIN_CODE' => 'Invalid or expired authorization code.',
+    'ERROR.SOCIAL_LOGIN_FAILED' => 'Social login failed, please try again.',
     'ERROR.USER_NOT_VERIFIED' => 'User not verified',
     'ERROR.PLEASE_LOGIN_USING_FACEBOOK_OR_GOOGLE' => 'Please login using Facebook or Google',
 

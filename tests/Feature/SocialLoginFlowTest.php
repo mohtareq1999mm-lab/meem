@@ -70,6 +70,7 @@ class SocialLoginFlowTest extends TestCase
         $provider = Mockery::mock(GoogleProvider::class);
         $provider->shouldReceive('stateless')->andReturnSelf();
         $provider->shouldReceive('redirectUrl')->andReturnSelf();
+        $provider->shouldReceive('with')->with(['state' => 'web'])->andReturnSelf();
         $provider->shouldReceive('redirect')
             ->andReturn(new RedirectResponse('https://accounts.google.com/o/oauth2/auth'));
 
@@ -80,6 +81,48 @@ class SocialLoginFlowTest extends TestCase
         $response->assertOk();
         $response->assertJsonPath('success', true);
         $response->assertJsonPath('url', 'https://accounts.google.com/o/oauth2/auth');
+    }
+
+    public function test_redirect_without_type_defaults_to_web_state(): void
+    {
+        $provider = Mockery::mock(GoogleProvider::class);
+        $provider->shouldReceive('stateless')->andReturnSelf();
+        $provider->shouldReceive('redirectUrl')->andReturnSelf();
+        $provider->shouldReceive('with')->with(['state' => 'web'])->andReturnSelf();
+        $provider->shouldReceive('redirect')
+            ->andReturn(new RedirectResponse('https://accounts.google.com/o/oauth2/auth'));
+
+        Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
+
+        $this->get(self::PREFIX . '/social/redirect?provider=google')->assertOk();
+    }
+
+    public function test_redirect_with_type_mobile_passes_mobile_state(): void
+    {
+        $provider = Mockery::mock(GoogleProvider::class);
+        $provider->shouldReceive('stateless')->andReturnSelf();
+        $provider->shouldReceive('redirectUrl')->andReturnSelf();
+        $provider->shouldReceive('with')->with(['state' => 'mobile'])->andReturnSelf();
+        $provider->shouldReceive('redirect')
+            ->andReturn(new RedirectResponse('https://accounts.google.com/o/oauth2/auth'));
+
+        Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
+
+        $this->get(self::PREFIX . '/social/google?type=mobile')->assertOk();
+    }
+
+    public function test_redirect_with_invalid_type_defaults_to_web_state(): void
+    {
+        $provider = Mockery::mock(GoogleProvider::class);
+        $provider->shouldReceive('stateless')->andReturnSelf();
+        $provider->shouldReceive('redirectUrl')->andReturnSelf();
+        $provider->shouldReceive('with')->with(['state' => 'web'])->andReturnSelf();
+        $provider->shouldReceive('redirect')
+            ->andReturn(new RedirectResponse('https://accounts.google.com/o/oauth2/auth'));
+
+        Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
+
+        $this->get(self::PREFIX . '/social/google?type=desktop')->assertOk();
     }
 
     // ========================================================================
@@ -148,6 +191,58 @@ class SocialLoginFlowTest extends TestCase
         $response->assertRedirect(self::FRONTEND_URL . '/auth?error=social_login_failed');
         $this->assertDatabaseCount('social_login_codes', 0);
     }
+
+    public function test_callback_mobile_returns_json_code_instead_of_redirect(): void
+    {
+        $this->mockGoogleProvider($this->socialiteUser());
+
+        $response = $this->get(self::PREFIX . '/social/google/callback?state=mobile');
+
+        $response->assertOk();
+        $response->assertJsonPath('success', true);
+
+        $code = $response->json('code');
+        $this->assertNotEmpty($code);
+
+        $this->assertDatabaseHas('social_login_codes', ['code' => $code, 'used' => false]);
+        $this->assertDatabaseHas('users', ['email' => 'user@gmail.com']);
+    }
+
+    public function test_callback_mobile_returns_json_error_when_provider_fails(): void
+    {
+        $provider = Mockery::mock(GoogleProvider::class);
+        $provider->shouldReceive('stateless')->andReturnSelf();
+        $provider->shouldReceive('redirectUrl')->andReturnSelf();
+        $provider->shouldReceive('user')->andThrow(new \Exception('access_denied'));
+
+        Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
+
+        $response = $this->get(self::PREFIX . '/social/google/callback?state=mobile');
+
+        $response->assertStatus(400);
+        $response->assertJsonPath('success', false);
+        $response->assertJsonPath('message', 'Social login failed, please try again.');
+        $this->assertDatabaseCount('social_login_codes', 0);
+    }
+
+    public function test_callback_mobile_returns_arabic_error_message(): void
+    {
+        $provider = Mockery::mock(GoogleProvider::class);
+        $provider->shouldReceive('stateless')->andReturnSelf();
+        $provider->shouldReceive('redirectUrl')->andReturnSelf();
+        $provider->shouldReceive('user')->andThrow(new \Exception('access_denied'));
+
+        Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
+
+        $response = $this->withHeaders(['lang' => 'ar'])
+            ->get(self::PREFIX . '/social/google/callback?state=mobile');
+
+        $response->assertStatus(400);
+        $response->assertJsonPath('success', false);
+        $response->assertJsonPath('message', 'فشل تسجيل الدخول الاجتماعي، يرجى المحاولة مرة أخرى.');
+        $this->assertDatabaseCount('social_login_codes', 0);
+    }
+
 
     // ========================================================================
     // POST /api/v1/social/exchange

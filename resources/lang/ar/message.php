@@ -319,6 +319,7 @@ return [
     // Social Login
     'MESSAGE.SOCIAL_LOGIN_SUCCESSFUL' => 'تم تسجيل الدخول بنجاح.',
     'ERROR.INVALID_SOCIAL_LOGIN_CODE' => 'رمز التخويل غير صالح أو منتهي الصلاحية.',
+    'ERROR.SOCIAL_LOGIN_FAILED' => 'فشل تسجيل الدخول الاجتماعي، يرجى المحاولة مرة أخرى.',
     'MESSAGE.OTP_SENT_SUCCESSFULLY  ' => 'تم إرسال رمز التحقق بنجاح',
     'too_many_requests' => 'طلبات كثيرة جدًا. يرجى المحاولة لاحقًا.',
 ];

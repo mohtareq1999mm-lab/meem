@@ -858,3 +858,38 @@ YES
 Notes:
 Test setup conditionally creates the `wishlists` table and the `attribute_product` (singular) pivot — required because `ProductVariant::attributeProducts()` joins the singular table name. The 5 pre-existing CartApiTest failures are unrelated and unchanged. `GET /wishlists` `data` is a flat array (no pagination meta) — documented contract, tests assert it. `GET /my-wishlists` returns the standard `{data, meta, links}` paginated shape. LSP diagnostics on Marvel package files are pre-existing false positives (editor cannot resolve the package autoload) — all modified files pass `php -l`.
 
+---
+
+Date:
+2026-08-05
+
+Feature:
+Social Login (Client Type: web/mobile)
+
+Revision:
+1
+
+Summary:
+Extended Google/Facebook social login so mobile clients receive a JSON response instead of the frontend redirect. Added an optional `type` query parameter to the social login redirect and callback endpoints (`GET /api/v1/social/{provider}`, `GET /social/redirect?provider=...`, `GET /api/v1/social/{provider}/callback`). `type` accepts `web` or `mobile`, defaults to `web`, and unknown values fall back to `web`. The type travels through the OAuth `state` parameter (passed via Socialite `with(['state' => $type])`; echoed back by the provider on the callback). Web behavior is unchanged (redirect to frontend with single-use `code`). Mobile success returns JSON `{success: true, code: "<code>"}` (200); mobile failure returns JSON `{success: false, message: "Social login failed, please try again."}` (400). Added `SOCIAL_LOGIN_FAILED` constant and `ERROR.SOCIAL_LOGIN_FAILED` translation key in both English and Arabic. All 15 SocialLoginFlowTest tests pass (56 assertions).
+
+Verified Bugs Fixed:
+- B1 (MEDIUM, fixed during development): mobile error response exposed the raw translation key `ERROR.SOCIAL_LOGIN_FAILED` instead of the localized message — the codebase resolves these constants with the `message.` namespace prefix (`__('message.' . SOCIAL_LOGIN_FAILED)`), matching the existing `exchange()` pattern.
+
+Documentation Updated:
+YES (docs/production-history.md)
+
+Routes Updated:
+NO (route URLs and signatures unchanged — controller methods now accept `Request $request` before the `{provider}` param, which Laravel injects automatically)
+
+Regression Executed:
+YES
+
+Regression Result:
+PASS (SocialLoginFlowTest 15/15, 56 assertions, 0 errors, 0 failures)
+
+Production Ready:
+YES
+
+Notes:
+`type` is optional, defaults to `web`, and the web flow is byte-for-byte backward compatible. No schema changes, no migrations, no API contract changes for existing clients. The `state` mechanism is safe because `stateless()` disables Socialite's own CSRF state while `with(['state' => ...])` still appends the custom value to the authorization URL and the provider echoes it back. LSP diagnostics on Marvel package files are pre-existing false positives — all modified files pass `php -l`.
+
