@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Api\General;
 
+use App\Enums\FrontendResource;
 use App\Http\Controllers\Controller;
 use App\Services\Dashboard\DashboardService;
+use App\Traits\HasCache;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -11,6 +13,7 @@ use Throwable;
 
 class DashboardController extends Controller
 {
+    use HasCache;
     public function __construct(
         protected DashboardService $dashboardService
     ) {}
@@ -19,12 +22,14 @@ class DashboardController extends Controller
     {
         try {
             $data = $this->dashboardService->getOverview($request);
+            $dataCache = $this->remember(FrontendResource::DASHBOARD->value, md5($request->fullUrl()), $data);
 
-            return response()->json([
+            $data =  response()->json([
                 'success' => true,
                 'message' => __('message.DASHBOARD.OVERVIEW_FETCHED'),
-                'data'    => $data,
+                'data'    => $dataCache,
             ]);
+            return $data;
         } catch (Throwable $e) {
             return $this->errorResponse($e);
         }
@@ -34,12 +39,14 @@ class DashboardController extends Controller
     {
         try {
             $data = $this->dashboardService->getRevenueOverview($request);
+            $dataCache = $this->remember(FrontendResource::DASHBOARD->value, md5($request->fullUrl()), $data);
 
-            return response()->json([
+            $data =  response()->json([
                 'success' => true,
                 'message' => __('message.DASHBOARD.REVENUE_FETCHED'),
-                'data'    => $data,
+                'data'    => $dataCache,
             ]);
+            return $data;
         } catch (Throwable $e) {
             return $this->errorResponse($e);
         }
@@ -49,12 +56,14 @@ class DashboardController extends Controller
     {
         try {
             $data = $this->dashboardService->getOrderStatusOverview($request);
+            $dataCache = $this->remember(FrontendResource::DASHBOARD->value, md5($request->fullUrl()), $data);
 
-            return response()->json([
+            $data =  response()->json([
                 'success' => true,
                 'message' => __('message.DASHBOARD.ORDER_STATS_FETCHED'),
-                'data'    => $data,
+                'data'    => $dataCache,
             ]);
+            return $data;
         } catch (Throwable $e) {
             return $this->errorResponse($e);
         }
@@ -65,12 +74,14 @@ class DashboardController extends Controller
         try {
             $limit = min((int) ($request->limit ?? 10), 50);
             $orders = $this->dashboardService->getRecentOrders($request, $limit);
+            $dataCache = $this->remember(FrontendResource::DASHBOARD->value, md5($request->fullUrl()), $orders);
 
-            return response()->json([
+            $data = response()->json([
                 'success' => true,
                 'message' => __('message.DASHBOARD.RECENT_ORDERS_FETCHED'),
-                'data'    => $orders,
+                'data'    => $dataCache,
             ]);
+            return $data;
         } catch (Throwable $e) {
             return $this->errorResponse($e);
         }
@@ -81,12 +92,14 @@ class DashboardController extends Controller
         try {
             $limit = min((int) ($request->limit ?? 10), 50);
             $products = $this->dashboardService->getTopSellingProducts($request, $limit);
+            $dataCache = $this->remember(FrontendResource::DASHBOARD->value, md5($request->fullUrl()), $products);
 
-            return response()->json([
+            $data = response()->json([
                 'success' => true,
                 'message' => __('message.DASHBOARD.TOP_PRODUCTS_FETCHED'),
-                'data'    => $products,
+                'data'    => $dataCache,
             ]);
+            return $data;
         } catch (Throwable $e) {
             return $this->errorResponse($e);
         }
@@ -96,12 +109,14 @@ class DashboardController extends Controller
     {
         try {
             $data = $this->dashboardService->getCategoryStats($request);
+            $dataCache = $this->remember(FrontendResource::DASHBOARD->value, md5($request->fullUrl()), $data);
 
-            return response()->json([
+            $data = response()->json([
                 'success' => true,
                 'message' => __('message.DASHBOARD.CATEGORY_STATS_FETCHED'),
-                'data'    => $data,
+                'data'    => $dataCache,
             ]);
+            return $data;
         } catch (Throwable $e) {
             return $this->errorResponse($e);
         }
@@ -112,12 +127,14 @@ class DashboardController extends Controller
         try {
             $limit = min((int) ($request->limit ?? 10), 50);
             $products = $this->dashboardService->getLowStockProducts($request, $limit);
+            $dataCache = $this->remember(FrontendResource::DASHBOARD->value, md5($request->fullUrl()), $products);
 
-            return response()->json([
+            $data = response()->json([
                 'success' => true,
                 'message' => __('message.DASHBOARD.LOW_STOCK_FETCHED'),
-                'data'    => $products,
+                'data'    => $dataCache,
             ]);
+            return $data;
         } catch (Throwable $e) {
             return $this->errorResponse($e);
         }
@@ -131,12 +148,14 @@ class DashboardController extends Controller
     {
         try {
             $data = $this->dashboardService->getSalesAnalytics($request);
+            $dataCache = $this->remember(FrontendResource::DASHBOARD->value, md5($request->fullUrl()), $data);
 
-            return response()->json([
+            $data = response()->json([
                 'success' => true,
                 'message' => __('message.DASHBOARD.SALES_ANALYTICS_FETCHED'),
-                'data'    => $data,
+                'data'    => $dataCache,
             ]);
+            return $data;
         } catch (Throwable $e) {
             return $this->errorResponse($e);
         }
@@ -146,12 +165,14 @@ class DashboardController extends Controller
     {
         try {
             $data = $this->dashboardService->getCustomerAnalytics($request);
+            $dataCache = $this->remember(FrontendResource::DASHBOARD->value, md5($request->fullUrl()), $data);
 
-            return response()->json([
+            $data = response()->json([
                 'success' => true,
                 'message' => __('message.DASHBOARD.CUSTOMER_ANALYTICS_FETCHED'),
-                'data'    => $data,
+                'data'    => $dataCache,
             ]);
+            return $data;
         } catch (Throwable $e) {
             return $this->errorResponse($e);
         }
@@ -161,12 +182,14 @@ class DashboardController extends Controller
     {
         try {
             $data = $this->dashboardService->getProductAnalytics($request);
+            $dataCache = $this->remember(FrontendResource::DASHBOARD->value, md5($request->fullUrl()), $data);
 
-            return response()->json([
+            $data = response()->json([
                 'success' => true,
                 'message' => __('message.DASHBOARD.PRODUCT_ANALYTICS_FETCHED'),
-                'data'    => $data,
+                'data'    => $dataCache,
             ]);
+            return $data;
         } catch (Throwable $e) {
             return $this->errorResponse($e);
         }
@@ -176,12 +199,14 @@ class DashboardController extends Controller
     {
         try {
             $data = $this->dashboardService->getOrderAnalytics($request);
+            $dataCache = $this->remember(FrontendResource::DASHBOARD->value, md5($request->fullUrl()), $data);
 
-            return response()->json([
+            $data = response()->json([
                 'success' => true,
                 'message' => __('message.DASHBOARD.ORDER_ANALYTICS_FETCHED'),
-                'data'    => $data,
+                'data'    => $dataCache,
             ]);
+            return $data;
         } catch (Throwable $e) {
             return $this->errorResponse($e);
         }
@@ -191,12 +216,14 @@ class DashboardController extends Controller
     {
         try {
             $data = $this->dashboardService->getCategoryAnalytics($request);
+            $dataCache = $this->remember(FrontendResource::DASHBOARD->value, md5($request->fullUrl()), $data);
 
-            return response()->json([
+            $data = response()->json([
                 'success' => true,
                 'message' => __('message.DASHBOARD.CATEGORY_ANALYTICS_FETCHED'),
-                'data'    => $data,
+                'data'    => $dataCache,
             ]);
+            return $data;
         } catch (Throwable $e) {
             return $this->errorResponse($e);
         }
@@ -206,12 +233,14 @@ class DashboardController extends Controller
     {
         try {
             $data = $this->dashboardService->getCouponAnalytics($request);
+            $dataCache = $this->remember(FrontendResource::DASHBOARD->value, md5($request->fullUrl()), $data);
 
-            return response()->json([
+            $data = response()->json([
                 'success' => true,
                 'message' => __('message.DASHBOARD.COUPON_ANALYTICS_FETCHED'),
-                'data'    => $data,
+                'data'    => $dataCache,
             ]);
+            return $data;
         } catch (Throwable $e) {
             return $this->errorResponse($e);
         }
@@ -221,12 +250,15 @@ class DashboardController extends Controller
     {
         try {
             $data = $this->dashboardService->getCartAnalytics($request);
+            $dataCache = $this->remember(FrontendResource::DASHBOARD->value, md5($request->fullUrl()), $data);
 
-            return response()->json([
+            $data = response()->json([
+
                 'success' => true,
                 'message' => __('message.DASHBOARD.CART_ANALYTICS_FETCHED'),
-                'data'    => $data,
+                'data'    => $dataCache,
             ]);
+            return $data;
         } catch (Throwable $e) {
             return $this->errorResponse($e);
         }
@@ -236,12 +268,14 @@ class DashboardController extends Controller
     {
         try {
             $data = $this->dashboardService->getReconciliationSummary();
+            $dataCache = $this->remember(FrontendResource::DASHBOARD->value, md5('reconciliation'), $data);
 
-            return response()->json([
+            $data = response()->json([
                 'success' => true,
                 'message' => __('message.DASHBOARD.RECONCILIATION_FETCHED'),
-                'data'    => $data,
+                'data'    => $dataCache,
             ]);
+            return $data;
         } catch (Throwable $e) {
             return $this->errorResponse($e);
         }
@@ -251,12 +285,14 @@ class DashboardController extends Controller
     {
         try {
             $data = $this->dashboardService->getFinanceAnalytics($request);
+            $dataCache = $this->remember(FrontendResource::DASHBOARD->value, md5($request->fullUrl()), $data);
 
-            return response()->json([
+            $data = response()->json([
                 'success' => true,
                 'message' => __('message.DASHBOARD.FINANCE_ANALYTICS_FETCHED'),
-                'data'    => $data,
+                'data'    => $dataCache,
             ]);
+            return $data;
         } catch (Throwable $e) {
             return $this->errorResponse($e);
         }
@@ -269,9 +305,11 @@ class DashboardController extends Controller
             $message = __('message.DASHBOARD.DATABASE_ERROR');
         }
 
-        return response()->json([
+        $data = response()->json([
             'success' => false,
             'message' => $message,
         ], 409);
+        return $data;
+
     }
 }

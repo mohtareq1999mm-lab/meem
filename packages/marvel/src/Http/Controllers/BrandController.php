@@ -2,6 +2,8 @@
 
 namespace Marvel\Http\Controllers;
 
+use App\Enums\FrontendResource;
+use App\Traits\HasCache;
 use Illuminate\Http\Request;
 use Marvel\Database\Repositories\BrandRepository;
 use Marvel\Enums\Permission;
@@ -14,7 +16,7 @@ use Marvel\Traits\ApiResponse;
 
 class BrandController extends CoreController
 {
-    use ApiResponse;
+    use ApiResponse, HasCache;
 
     public $repository;
 
@@ -55,20 +57,21 @@ class BrandController extends CoreController
 
         $brands = $brandsQuery->ordered()->paginate($limit);
         $data = BrandResource::collection($brands)->response()->getData(true);
+        $dataCache = $this->remember(FrontendResource::BRANDS->value, md5($request->fullUrl()), $data);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
-            "data" => $data['data'] ?? [],
-            "page" => $data['meta']['current_page'] ?? 0,
-            "current_page" => $data['meta']['current_page'] ?? 0,
-            "from" => $data['meta']['from'] ?? 0,
-            "to" => $data['meta']['to'] ?? 0,
-            "last_page" => $data['meta']['last_page'] ?? 0,
-            "path" => $data['meta']['path'] ?? "",
-            "per_page" => $data['meta']['per_page'] ?? 0,
-            "total" => $data['meta']['total'] ?? 0,
-            "next_page_url" => $data['links']['next'] ?? "",
-            "prev_page_url" => $data['links']['prev'] ?? "",
-            "last_page_url" => $data['links']['last'] ?? "",
-            "first_page_url" => $data['links']['first'] ?? "",
+            "data" => $dataCache['data'] ?? [],
+            "page" => $dataCache['meta']['current_page'] ?? 0,
+            "current_page" => $dataCache['meta']['current_page'] ?? 0,
+            "from" => $dataCache['meta']['from'] ?? 0,
+            "to" => $dataCache['meta']['to'] ?? 0,
+            "last_page" => $dataCache['meta']['last_page'] ?? 0,
+            "path" => $dataCache['meta']['path'] ?? "",
+            "per_page" => $dataCache['meta']['per_page'] ?? 0,
+            "total" => $dataCache['meta']['total'] ?? 0,
+            "next_page_url" => $dataCache['links']['next'] ?? "",
+            "prev_page_url" => $dataCache['links']['prev'] ?? "",
+            "last_page_url" => $dataCache['links']['last'] ?? "",
+            "first_page_url" => $dataCache['links']['first'] ?? "",
         ]);
     }
 
@@ -77,6 +80,7 @@ class BrandController extends CoreController
         try {
             $brand = $this->repository->saveBrand($request);
             $brand->load('products');
+            $this->flushTag(frontendResource::BRANDS->value);
             return $this->apiResponse(BRAND_CREATED_SUCCESSFULLY, 201, true, BrandResource::make($brand));
         } catch (\Exception $th) {
             throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE);
@@ -104,6 +108,7 @@ class BrandController extends CoreController
             $request->merge(['id' => $id]);
             $brand = $this->brandUpdate($request);
             $brand->load('products');
+            $this->flushTag(frontendResource::BRANDS->value);
             return $this->apiResponse(BRAND_UPDATED_SUCCESSFULLY, 200, true, BrandResource::make($brand));
         } catch (\Exception $e) {
             throw new MarvelException(NOT_FOUND);
@@ -120,6 +125,7 @@ class BrandController extends CoreController
     {
         try {
             $this->repository->findOrFail($id)->delete();
+            $this->flushTag(frontendResource::BRANDS->value);
             return $this->apiResponse(BRAND_DELETED_SUCCESSFULLY, 200, true);
         } catch (\Exception $e) {
             throw new MarvelException(NOT_FOUND);
@@ -129,7 +135,7 @@ class BrandController extends CoreController
     public function reorder(BrandsReorderRequest $request)
     {
         $this->repository->reorder($request->brands);
-
+        $this->flushTag(frontendResource::BRANDS->value);
         return $this->apiResponse(BRANDS_REORDERED_SUCCESSFULLY, 200, true);
     }
 }

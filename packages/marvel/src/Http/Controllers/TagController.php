@@ -3,6 +3,8 @@
 
 namespace Marvel\Http\Controllers;
 
+use App\Enums\FrontendResource;
+use App\Traits\HasCache;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -47,7 +49,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  */
 class TagController extends CoreController
 {
-    use ApiResponse;
+    use ApiResponse , HasCache;
     use MediaManager;
 
     public $repository;
@@ -60,18 +62,7 @@ class TagController extends CoreController
         $this->middleware("permission:" . Permission::UPDATE_TAGS, ["only" => ["update"]]);
         $this->middleware("permission:" . Permission::DELETE_TAGS, ["only" => ["destroy"]]);
     }
-    /**
-     * @OA\Get(
-     *     path="/tags",
-     *     operationId="listTags",
-     *     tags={"Tags"},
-     *     summary="List all product tags",
-     *     description="Retrieve a paginated list of product tags.",
-     *     @OA\Parameter(name="language", in="query", description="Language code", required=false, @OA\Schema(type="string", default="en", example="en")),
-     *     @OA\Parameter(name="limit", in="query", description="Items per page", required=false, @OA\Schema(type="integer", default=15, example=15)),
-     *     @OA\Response(response=200, description="Tags retrieved successfully", @OA\JsonContent(ref="#/components/schemas/PaginatedTags"))
-     * )
-     */
+
     public function index(Request $request)
     {
         $limit = $request->limit ? $request->limit : 15;
@@ -90,47 +81,25 @@ class TagController extends CoreController
 
         $tags = $query->paginate($limit);
         $tagData = TagResource::collection($tags)->response()->getData(true);
+        $tagDataCache = $this->remember(FrontendResource::TAGS->value, md5($request->fullUrl()), $tagData);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
-            "data" => $tagData['data'] ?? [],
-            "page" => $tagData['meta']['current_page'] ?? 0,
-            "current_page" => $tagData['meta']['current_page'] ?? 0,
-            "from" => $tagData['meta']['from'] ?? 0,
-            "to" => $tagData['meta']['to'] ?? 0,
-            "last_page" => $tagData['meta']['last_page'] ?? 0,
-            "path" => $tagData['meta']['path'] ?? "",
-            "per_page" => $tagData['meta']['per_page'] ?? 0,
-            "total" => $tagData['meta']['total'] ?? 0,
-            "next_page_url" => $tagData['links']['next'] ?? "",
-            "prev_page_url" => $tagData['links']['prev'] ?? "",
-            "last_page_url" => $tagData['links']['last'] ?? "",
-            "first_page_url" => $tagData['links']['first'] ?? "",
+            "data" => $tagDataCache['data'] ?? [],
+            "page" => $tagDataCache['meta']['current_page'] ?? 0,
+            "current_page" => $tagDataCache['meta']['current_page'] ?? 0,
+            "from" => $tagDataCache['meta']['from'] ?? 0,
+            "to" => $tagDataCache['meta']['to'] ?? 0,
+            "last_page" => $tagDataCache['meta']['last_page'] ?? 0,
+            "path" => $tagDataCache['meta']['path'] ?? "",
+            "per_page" => $tagDataCache['meta']['per_page'] ?? 0,
+            "total" => $tagDataCache['meta']['total'] ?? 0,
+            "next_page_url" => $tagDataCache['links']['next'] ?? "",
+            "prev_page_url" => $tagDataCache['links']['prev'] ?? "",
+            "last_page_url" => $tagDataCache['links']['last'] ?? "",
+            "first_page_url" => $tagDataCache['links']['first'] ?? "",
         ]);
     }
 
-    /**
-     * @OA\Post(
-     *     path="/tags",
-     *     operationId="createTag",
-     *     tags={"Tags"},
-     *     summary="Create a new tag",
-     *     description="Create a new tag. Requires admin permissions.",
-     *     security={{"sanctum": {}}},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"name", "type_id"},
-     *             @OA\Property(property="name", type="string", example="Organic"),
-     *             @OA\Property(property="type_id", type="integer", example=1),
-     *             @OA\Property(property="details", type="string", example="Organic products"),
-     *             @OA\Property(property="icon", type="string", example="OrganicIcon")
-     *         )
-     *     ),
-     *     @OA\Response(response=201, description="Tag created successfully", @OA\JsonContent(ref="#/components/schemas/Tag")),
-     *     @OA\Response(response=401, description="Unauthenticated"),
-     *     @OA\Response(response=403, description="Forbidden"),
-     *     @OA\Response(response=422, description="Validation error")
-     * )
-     */
+
     public function store(TagCreateRequest $request)
     {
         try {
@@ -155,25 +124,14 @@ class TagController extends CoreController
                 }
             }
             $tag->load('products');
+            $this->flushTag(FrontendResource::TAGS->value);
             return $this->apiResponse(TAG_CREATED_SUCCESSFULLY, 201, true, new TagResource($tag));
         } catch (MarvelException $th) {
             throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE);
         }
     }
 
-    /**
-     * @OA\Get(
-     *     path="/tags/{slug}",
-     *     operationId="getTag",
-     *     tags={"Tags"},
-     *     summary="Get a single product tag",
-     *     description="Retrieve detailed information about a tag by slug or ID.",
-     *     @OA\Parameter(name="slug", in="path", description="Tag slug or ID", required=true, @OA\Schema(type="string", example="organic")),
-     *     @OA\Parameter(name="language", in="query", description="Language code", required=false, @OA\Schema(type="string", default="en")),
-     *     @OA\Response(response=200, description="Tag retrieved successfully", @OA\JsonContent(ref="#/components/schemas/Tag")),
-     *     @OA\Response(response=404, description="Tag not found")
-     * )
-     */
+
     public function show(Request $request, $params)
     {
         try {
@@ -189,20 +147,7 @@ class TagController extends CoreController
         }
     }
 
-    /**
-     * @OA\Put(
-     *     path="/tags/{id}",
-     *     operationId="updateTag",
-     *     tags={"Tags"},
-     *     summary="Update a tag",
-     *     description="Update tag details. Requires admin permissions.",
-     *     security={{"sanctum": {}}},
-     *     @OA\Parameter(name="id", in="path", description="Tag ID", required=true, @OA\Schema(type="integer", example=1)),
-     *     @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/Tag")),
-     *     @OA\Response(response=200, description="Tag updated successfully", @OA\JsonContent(ref="#/components/schemas/Tag")),
-     *     @OA\Response(response=404, description="Tag not found")
-     * )
-     */
+
     public function update(TagUpdateRequest $request, $id)
     {
         try {
@@ -219,29 +164,19 @@ class TagController extends CoreController
             $tag = $this->repository->findOrFail($request->id);
             $updatedTag = $this->repository->updateTag($request, $tag);
             $updatedTag->load('products');
+            $this->flushTag(FrontendResource::TAGS->value);
             return $this->apiResponse(TAG_UPDATED_SUCCESSFULLY, 200, true, new TagResource($updatedTag));
         } catch (MarvelException $th) {
             throw new MarvelException(COULD_NOT_UPDATE_THE_RESOURCE);
         }
     }
 
-    /**
-     * @OA\Delete(
-     *     path="/tags/{id}",
-     *     operationId="deleteTag",
-     *     tags={"Tags"},
-     *     summary="Delete a tag",
-     *     description="Delete a product tag. Requires admin permissions.",
-     *     security={{"sanctum": {}}},
-     *     @OA\Parameter(name="id", in="path", description="Tag ID to delete", required=true, @OA\Schema(type="integer", example=1)),
-     *     @OA\Response(response=200, description="Tag deleted successfully", @OA\JsonContent(type="boolean", example=true)),
-     *     @OA\Response(response=404, description="Tag not found")
-     * )
-     */
+
     public function destroy($id)
     {
         try {
             $this->repository->findOrFail($id)->delete();
+            $this->flushTag(FrontendResource::TAGS->value);
             return $this->apiResponse(TAG_DELETED_SUCCESSFULLY, 200, true, true);
         } catch (MarvelException $th) {
             throw new MarvelException(COULD_NOT_DELETE_THE_RESOURCE);

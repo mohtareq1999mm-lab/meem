@@ -2,6 +2,8 @@
 
 namespace Marvel\Http\Controllers;
 
+use App\Enums\FrontendResource;
+use App\Traits\HasCache;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
@@ -42,7 +44,7 @@ use Marvel\Database\Repositories\ProductRepository;
  */
 class FlashSaleController extends CoreController
 {
-    use ApiResponse;
+    use ApiResponse , HasCache;
     public $repository;
 
     public $productRepository;
@@ -57,47 +59,27 @@ class FlashSaleController extends CoreController
         $this->middleware("permission:" . Permission::DELETE_FlASH_SALE, ["only" => ["destroy"]]);
     }
 
-    /**
-     * @OA\Get(
-     *     path="/flash-sale",
-     *     operationId="getFlashSales",
-     *     tags={"Flash Sales"},
-     *     summary="List Flash Sales",
-     *     description="Retrieve a paginated list of flash sales.",
-     *     @OA\Parameter(name="limit", in="query", required=false, @OA\Schema(type="integer", default=10)),
-     *     @OA\Parameter(name="language", in="query", required=false, @OA\Schema(type="string", default="en")),
-     *     @OA\Parameter(name="request_from", in="query", required=false, @OA\Schema(type="string", enum={"vendor"})),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Flash sales retrieved successfully",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/FlashSale")),
-     *             @OA\Property(property="total", type="integer")
-     *         )
-     *     )
-     * )
-     */
     public function index(Request $request)
     {
         try {
             $limit = $request->per_page ?? $request->limit ?? 10;
             $flashSales =  $this->fetchFlashSales($request)->paginate($limit)->withQueryString();
             $flashSaleData = FlashSaleResource::collection($flashSales)->response()->getData(true);
+            $flashSaleDataCache = $this->remember(FrontendResource::FLASH_SALES->value, md5($request->fullUrl()), $flashSaleData);
             return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
-                "data" => $flashSaleData['data'] ?? [],
-                "page" => $flashSaleData['meta']['current_page'] ?? 0,
-                "current_page" => $flashSaleData['meta']['current_page'] ?? 0,
-                "from" => $flashSaleData['meta']['from'] ?? 0,
-                "to" => $flashSaleData['meta']['to'] ?? 0,
-                "last_page" => $flashSaleData['meta']['last_page'] ?? 0,
-                "path" => $flashSaleData['meta']['path'] ?? "",
-                "per_page" => $flashSaleData['meta']['per_page'] ?? 0,
-                "total" => $flashSaleData['meta']['total'] ?? 0,
-                "next_page_url" => $flashSaleData['links']['next'] ?? "",
-                "prev_page_url" => $flashSaleData['links']['prev'] ?? "",
-                "last_page_url" => $flashSaleData['links']['last'] ?? "",
-                "first_page_url" => $flashSaleData['links']['first'] ?? "",
+                "data" => $flashSaleDataCache['data'] ?? [],
+                "page" => $flashSaleDataCache['meta']['current_page'] ?? 0,
+                "current_page" => $flashSaleDataCache['meta']['current_page'] ?? 0,
+                "from" => $flashSaleDataCache['meta']['from'] ?? 0,
+                "to" => $flashSaleDataCache['meta']['to'] ?? 0,
+                "last_page" => $flashSaleDataCache['meta']['last_page'] ?? 0,
+                "path" => $flashSaleDataCache['meta']['path'] ?? "",
+                "per_page" => $flashSaleDataCache['meta']['per_page'] ?? 0,
+                "total" => $flashSaleDataCache['meta']['total'] ?? 0,
+                "next_page_url" => $flashSaleDataCache['links']['next'] ?? "",
+                "prev_page_url" => $flashSaleDataCache['links']['prev'] ?? "",
+                "last_page_url" => $flashSaleDataCache['links']['last'] ?? "",
+                "first_page_url" => $flashSaleDataCache['links']['first'] ?? "",
             ]);
         } catch (MarvelException $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
@@ -139,29 +121,14 @@ class FlashSaleController extends CoreController
         try {
             $flashSale =  $this->repository->storeFlashSale($request);
             $flashSale->load('products');
+            $this->flushTag(FrontendResource::FLASH_SALES->value);
             return $this->apiResponse(CREATE_FLASH_SALE_SUCCESSFULLY, 200, true, FlashSaleResource::make($flashSale));
         } catch (MarvelException $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
     }
 
-    /**
-     * @OA\Get(
-     *     path="/flash-sale/{slug}",
-     *     operationId="getFlashSaleBySlug",
-     *     tags={"Flash Sales"},
-     *     summary="Get Single Flash Sale",
-     *     description="Retrieve details of a flash sale by its slug.",
-     *     @OA\Parameter(name="slug", in="path", required=true, @OA\Schema(type="string")),
-     *     @OA\Parameter(name="language", in="query", required=false, @OA\Schema(type="string", default="en")),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Flash sale details retrieved successfully",
-     *         @OA\JsonContent(ref="#/components/schemas/FlashSale")
-     *     ),
-     *     @OA\Response(response=404, description="Flash sale not found")
-     * )
-     */
+
     public function show(Request $request, $params)
     {
         try {
@@ -189,48 +156,28 @@ class FlashSaleController extends CoreController
     }
 
 
-    /**
-     * Update the specified flash sale
-     *
-     * @param UpdateFlashSaleRequest $request
-     * @param int $id
-     * @return JsonResponse
-     */
+
     public function update(UpdateFlashSaleRequest $request, $id)
     {
         try {
             $request->merge(['id' => $id]);
             $flashSale =  $this->updateFlashSale($request);
             $flashSale->load('products');
+            $this->flushTag(FrontendResource::FLASH_SALES->value);
             return $this->apiResponse(UPDATE_FLASH_SALE_SUCCESSFULLY, 200, true, FlashSaleResource::make($flashSale));
         } catch (MarvelException $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
     }
 
-    /**
-     * updateFlashSale
-     *
-     * @param Request $request
-     * @return void
-     */
+
     public function updateFlashSale(Request $request)
     {
-        // $flash_sale_id = $this->repository->findOrFail($request['id']);
-        // return $this->repository->updateFlashSale($request, $flash_sale_id);
-
         $id = $request->id;
-
         return $this->repository->updateFlashSale($request, $id);
     }
 
-    /**
-     * Remove the specified flash sale
-     *
-     * @param int $id
-     * @param Request $request
-     * @return JsonResponse
-     */
+
     public function reorder(Request $request)
     {
         try {
@@ -251,6 +198,7 @@ class FlashSaleController extends CoreController
         try {
             $request->merge(['id' => $id]);
             $this->deleteFlashSale($request);
+            $this->flushTag(FrontendResource::FLASH_SALES->value);
             return $this->apiResponse(DELETE_FLASH_SALE_SUCCESSFULLY, 200, true);
         } catch (MarvelException $e) {
             return $this->apiResponse(NOT_FOUND, 404, false);

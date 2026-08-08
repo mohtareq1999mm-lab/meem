@@ -7,6 +7,7 @@ namespace App\Enums;
 enum FrontendResource: string
 {
     case PRODUCTS = 'products';
+    case ATTRIBUTES = 'attributes';
     case CATEGORIES = 'categories';
     case BRANDS = 'brands';
     case BRANDS_PRODUCTS = 'brands_products';
@@ -26,6 +27,7 @@ enum FrontendResource: string
     case COUNTRIES = 'countries';
     case CITIES = 'cities';
     case ORDERS = 'orders';
+    case DASHBOARD = 'dashboard';
     public static function values(): array
     {
         return array_map(fn (self $case) => $case->value, self::cases());

@@ -2,22 +2,18 @@
 
 namespace Marvel\Http\Controllers;
 
+use App\Enums\FrontendResource;
+use App\Traits\HasCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Marvel\Database\Repositories\FastShippingRepository;
 use Marvel\Enums\Permission;
 use Marvel\Traits\ApiResponse;
-use OpenApi\Annotations as OA;
 
-/**
- * @OA\Tag(
- *     name="Fast Shipping",
- *     description="Fast shipping configuration and management"
- * )
- */
+
 class FastShippingController extends CoreController
 {
-    use ApiResponse;
+    use ApiResponse , HasCache;
 
     public function __construct(private readonly FastShippingRepository $repository)
     {
@@ -25,51 +21,14 @@ class FastShippingController extends CoreController
         $this->middleware("permission:" . Permission::UPDATE_FAST_SHIPPING, ["only" => ["updateSettings"]]);
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/fast-shipping/settings",
-     *     tags={"Fast Shipping"},
-     *     summary="Get fast shipping settings",
-     *     security={{"sanctum": {}}},
-     *     @OA\Response(
-     *         response=200,
-     *         description="OK",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="enabled", type="boolean", example=true),
-     *             @OA\Property(property="duration_minutes", type="integer", example=120),
-     *             @OA\Property(property="fee", type="number", format="float", example=30),
-     *             @OA\Property(property="start_hour", type="string", example="08:00"),
-     *             @OA\Property(property="end_hour", type="string", example="22:00")
-     *         )
-     *     )
-     * )
-     */
+
     public function getSettings(): JsonResponse
     {
         $settings = $this->repository->getSettings();
-
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $settings);
+        $settingsCache = $this->remember(FrontendResource::FAST_SHIPPING_SETTINGS->value, md5(request()->fullUrl()), $settings);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $settingsCache);
     }
 
-    /**
-     * @OA\Put(
-     *     path="/api/fast-shipping/settings",
-     *     tags={"Fast Shipping"},
-     *     summary="Update fast shipping settings",
-     *     security={{"sanctum": {}}},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             @OA\Property(property="enabled", type="boolean"),
-     *             @OA\Property(property="duration_minutes", type="integer"),
-     *             @OA\Property(property="fee", type="number", format="float"),
-     *             @OA\Property(property="start_hour", type="string"),
-     *             @OA\Property(property="end_hour", type="string")
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Settings updated successfully")
-     * )
-     */
     public function updateSettings(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -81,7 +40,7 @@ class FastShippingController extends CoreController
         ]);
 
         $this->repository->updateSettings($validated);
-
+        $this->flushTag(FrontendResource::FAST_SHIPPING_SETTINGS->value);
         return $this->apiResponse('Fast shipping settings updated successfully', 200, true);
     }
 }

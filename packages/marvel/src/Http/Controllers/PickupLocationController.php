@@ -2,6 +2,8 @@
 
 namespace Marvel\Http\Controllers;
 
+use App\Enums\FrontendResource;
+use App\Traits\HasCache;
 use Exception;
 use Illuminate\Http\Request;
 use Marvel\Enums\Permission;
@@ -14,7 +16,7 @@ use Marvel\Traits\ApiResponse;
 
 class PickupLocationController extends CoreController
 {
-    use ApiResponse;
+    use ApiResponse, HasCache;
 
     public $repository;
 
@@ -49,21 +51,21 @@ class PickupLocationController extends CoreController
 
         $pickupLocations = $query->paginate($limit);
         $data = PickupLocationResource::collection($pickupLocations)->response()->getData(true);
-
+        $dataCache = $this->remember(FrontendResource::PICKUP_LOCATIONS->value, md5($request->fullUrl()), $data);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
-            'data' => $data['data'] ?? [],
-            'page' => $data['meta']['current_page'] ?? 0,
-            'current_page' => $data['meta']['current_page'] ?? 0,
-            'from' => $data['meta']['from'] ?? 0,
-            'to' => $data['meta']['to'] ?? 0,
-            'last_page' => $data['meta']['last_page'] ?? 0,
-            'path' => $data['meta']['path'] ?? '',
-            'per_page' => $data['meta']['per_page'] ?? 0,
-            'total' => $data['meta']['total'] ?? 0,
-            'next_page_url' => $data['links']['next'] ?? '',
-            'prev_page_url' => $data['links']['prev'] ?? '',
-            'last_page_url' => $data['links']['last'] ?? '',
-            'first_page_url' => $data['links']['first'] ?? '',
+            'data' => $dataCache['data'] ?? [],
+            'page' => $dataCache['meta']['current_page'] ?? 0,
+            'current_page' => $dataCache['meta']['current_page'] ?? 0,
+            'from' => $dataCache['meta']['from'] ?? 0,
+            'to' => $dataCache['meta']['to'] ?? 0,
+            'last_page' => $dataCache['meta']['last_page'] ?? 0,
+            'path' => $dataCache['meta']['path'] ?? '',
+            'per_page' => $dataCache['meta']['per_page'] ?? 0,
+            'total' => $dataCache['meta']['total'] ?? 0,
+            'next_page_url' => $dataCache['links']['next'] ?? '',
+            'prev_page_url' => $dataCache['links']['prev'] ?? '',
+            'last_page_url' => $dataCache['links']['last'] ?? '',
+            'first_page_url' => $dataCache['links']['first'] ?? '',
         ]);
     }
 

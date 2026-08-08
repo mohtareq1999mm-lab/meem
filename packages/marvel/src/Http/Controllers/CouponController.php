@@ -2,6 +2,8 @@
 
 namespace Marvel\Http\Controllers;
 
+use App\Enums\FrontendResource;
+use App\Traits\HasCache;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -40,7 +42,7 @@ use Throwable;
  */
 class CouponController extends CoreController
 {
-    use ApiResponse;
+    use ApiResponse , HasCache;
     public $repository;
 
     public function __construct(CouponRepository $repository)
@@ -81,20 +83,21 @@ class CouponController extends CoreController
         $query = $this->fetchCoupons($request);
         $coupons = $query->paginate($limit)->withQueryString();
         $couponData = CouponResource::collection($coupons)->response()->getData(true);
+        $couponCache = $this->remember(FrontendResource::COUPONS->value,md5($request->fullUrl()),$couponData);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
-            "data" => $couponData['data'] ?? [],
-            "page" => $couponData['meta']['current_page'] ?? 0,
-            "current_page" => $couponData['meta']['current_page'] ?? 0,
-            "from" => $couponData['meta']['from'] ?? 0,
-            "to" => $couponData['meta']['to'] ?? 0,
-            "last_page" => $couponData['meta']['last_page'] ?? 0,
-            "path" => $couponData['meta']['path'] ?? "",
-            "per_page" => $couponData['meta']['per_page'] ?? 0,
-            "total" => $couponData['meta']['total'] ?? 0,
-            "next_page_url" => $couponData['links']['next'] ?? "",
-            "prev_page_url" => $couponData['links']['prev'] ?? "",
-            "last_page_url" => $couponData['links']['last'] ?? "",
-            "first_page_url" => $couponData['links']['first'] ?? "",
+            "data" => $couponCache['data'] ?? [],
+            "page" => $couponCache['meta']['current_page'] ?? 0,
+            "current_page" => $couponCache['meta']['current_page'] ?? 0,
+            "from" => $couponCache['meta']['from'] ?? 0,
+            "to" => $couponCache['meta']['to'] ?? 0,
+            "last_page" => $couponCache['meta']['last_page'] ?? 0,
+            "path" => $couponCache['meta']['path'] ?? "",
+            "per_page" => $couponCache['meta']['per_page'] ?? 0,
+            "total" => $couponCache['meta']['total'] ?? 0,
+            "next_page_url" => $couponCache['links']['next'] ?? "",
+            "prev_page_url" => $couponCache['links']['prev'] ?? "",
+            "last_page_url" => $couponCache['links']['last'] ?? "",
+            "first_page_url" => $couponCache['links']['first'] ?? "",
         ]);
     }
     public function fetchCoupons(Request $request)
@@ -124,25 +127,14 @@ class CouponController extends CoreController
     {
         try {
             $coupon =  $this->repository->storeCoupon($request);
+            $this->forget(FrontendResource::COUPONS->value);
             return $this->apiResponse(CREATED_COUPON_SUCCESSFULLY, 201, true, CouponResource::make($coupon));
         } catch (MarvelException $e) {
             return $this->apiResponse(COULD_NOT_CREATE_THE_RESOURCE, 400, false);
         }
     }
 
-    /**
-     * @OA\Get(
-     *     path="/coupons/{slug_or_id}",
-     *     operationId="getCouponBySlugOrId",
-     *     tags={"Coupons"},
-     *     summary="Get single coupon",
-     *     description="Retrieve details of a coupon by its code/slug or incremental ID.",
-     *     @OA\Parameter(name="slug_or_id", in="path", required=true, description="Coupon code or ID", @OA\Schema(type="string")),
-     *     @OA\Parameter(name="language", in="query", description="Language code", @OA\Schema(type="string", default="en")),
-     *     @OA\Response(response=200, description="Coupon found", @OA\JsonContent(ref="#/components/schemas/Coupon")),
-     *     @OA\Response(response=404, description="Coupon not found")
-     * )
-     */
+
     public function show(Request $request, $id)
     {
         try {
@@ -153,25 +145,7 @@ class CouponController extends CoreController
             return $this->apiResponse(NOT_FOUND, 404, false);
         }
     }
-    /**
-     * @OA\Post(
-     *     path="/coupons/verify",
-     *     operationId="verifyCoupon",
-     *     tags={"Coupons"},
-     *     summary="Verify coupon code",
-     *     description="Check if a coupon code is valid for the current sub_total.",
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"code", "sub_total"},
-     *             @OA\Property(property="code", type="string", example="SUMMER24"),
-     *             @OA\Property(property="sub_total", type="number", example=100.00)
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Coupon verification result"),
-     *     @OA\Response(response=404, description="Coupon not found or invalid")
-     * )
-     */
+
     // public function verify(Request $request)
     // {
     //     $request->validate([
@@ -185,52 +159,24 @@ class CouponController extends CoreController
     //     }
     // }
 
-    /**
-     * @OA\Put(
-     *     path="/coupons/{id}",
-     *     operationId="updateCoupon",
-     *     tags={"Coupons"},
-     *     summary="Update coupon",
-     *     description="Update details of an existing coupon. Accessible by Staff, Owners, or Admins.",
-     *     security={{"sanctum": {}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\RequestBody(
-     *         @OA\JsonContent(
-     *             @OA\Property(property="description", type="string"),
-     *             @OA\Property(property="amount", type="number"),
-     *             @OA\Property(property="expire_at", type="string", format="date-time")
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Coupon updated", @OA\JsonContent(ref="#/components/schemas/Coupon")),
-     *     @OA\Response(response=404, description="Coupon not found")
-     * )
-     */
+
     public function update(UpdateCouponRequest $request, $id)
     {
         try {
             $coupon = $this->repository->updateCoupon($id, $request);
+            $this->forget(FrontendResource::COUPONS->value);
             return $this->apiResponse(UPDATED_COUPON_SUCCESSFULLY, 200, true, CouponResource::make($coupon));
         } catch (MarvelException $th) {
             return $this->apiResponse(COULD_NOT_UPDATE_THE_RESOURCE, 400, false);
         }
     }
 
-    /**
-     * @OA\Delete(
-     *     path="/coupons/{id}",
-     *     operationId="deleteCoupon",
-     *     tags={"Coupons"},
-     *     summary="Delete coupon",
-     *     security={{"sanctum": {}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\Response(response=200, description="Coupon deleted successfully"),
-     *     @OA\Response(response=404, description="Coupon not found")
-     * )
-     */
+
     public function destroy($id)
     {
         try {
             $this->repository->findOrFail($id)->delete();
+            $this->forget(FrontendResource::COUPONS->value);
             return $this->apiResponse(DELETED_COUPON_SUCCESSFULLY, 200, true);
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
@@ -251,27 +197,7 @@ class CouponController extends CoreController
         }
     }
 
-    /**
-     * @OA\Post(
-     *     path="/approve-coupon",
-     *     operationId="approveCoupon",
-     *     tags={"Content Moderation"},
-     *     summary="Approve Vendor Coupon",
-     *     description="Approve a vendor-created coupon for public use. Requires SUPER_ADMIN permission.",
-     *     security={{"sanctum": {}}},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"id"},
-     *             @OA\Property(property="id", type="integer", example=5, description="Coupon ID to approve")
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Coupon approved successfully"),
-     *     @OA\Response(response=401, description="Unauthenticated"),
-     *     @OA\Response(response=403, description="Forbidden - requires SUPER_ADMIN"),
-     *     @OA\Response(response=404, description="Coupon not found")
-     * )
-     */
+
     public function approveCoupon(Request $request)
     {
         try {
@@ -283,27 +209,7 @@ class CouponController extends CoreController
         }
     }
 
-    /**
-     * @OA\Post(
-     *     path="/disapprove-coupon",
-     *     operationId="disapproveCoupon",
-     *     tags={"Content Moderation"},
-     *     summary="Disapprove Vendor Coupon",
-     *     description="Reject/disapprove a vendor coupon. Requires SUPER_ADMIN permission.",
-     *     security={{"sanctum": {}}},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"id"},
-     *             @OA\Property(property="id", type="integer", example=5, description="Coupon ID to disapprove")
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Coupon disapproved successfully"),
-     *     @OA\Response(response=401, description="Unauthenticated"),
-     *     @OA\Response(response=403, description="Forbidden - requires SUPER_ADMIN"),
-     *     @OA\Response(response=404, description="Coupon not found")
-     * )
-     */
+
     public function disApproveCoupon(Request $request)
     {
         try {

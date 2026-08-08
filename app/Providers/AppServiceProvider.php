@@ -103,7 +103,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('admin', function (Request $request) {
-            return Limit::perMinute(600)
+            return Limit::perMinute(400)
                 ->by($request->user()->id)
                 ->response(function (Request $request, array $headers) {
                     return response()->json([

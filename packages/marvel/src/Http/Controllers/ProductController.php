@@ -2,6 +2,8 @@
 
 namespace Marvel\Http\Controllers;
 
+use App\Enums\FrontendResource;
+use App\Traits\HasCache;
 use Exception;
 use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -93,7 +95,8 @@ use const Dom\NOT_FOUND_ERR;
  */
 class ProductController extends CoreController
 {
-    use ApiResponse;
+    use ApiResponse, HasCache;
+
     public $repository;
 
     public $settings;
@@ -105,24 +108,23 @@ class ProductController extends CoreController
         $this->middleware("permission:" . Permission::VIEW_PRODUCTS, ["only" => ["index", "show"]]);
         $this->middleware("permission:" . Permission::CREATE_PRODUCT, ["only" => ["store"]]);
         $this->middleware("permission:" . Permission::UPDATE_PRODUCT, ["only" => ["update"]]);
-        $this->middleware("permission:" . Permission::DELETE_PRODUCT, ["only" => ["destroy" , 'destroyAll', 'destroyBulk']]);
+        $this->middleware("permission:" . Permission::DELETE_PRODUCT, ["only" => ["destroy", 'destroyAll', 'destroyBulk']]);
     }
-
 
 
     /**
      * Display a paginated listing of products.
      *
-     * @param  Request $request
+     * @param Request $request
      * @return JsonResponse
      */
     public function index(Request $request)
     {
         $limit = $request->limit ? $request->limit : 15;
-        $term = trim((string) $request->get('search', ''));
-        $sort = trim((string) $request->get('sort', ''));
-        $orderBy = trim((string) $request->get('orderBy', 'created_at'));
-        $orderDir = trim((string) $request->get('orderDir', 'desc'));
+        $term = trim((string)$request->get('search', ''));
+        $sort = trim((string)$request->get('sort', ''));
+        $orderBy = trim((string)$request->get('orderBy', 'created_at'));
+        $orderDir = trim((string)$request->get('orderDir', 'desc'));
 
         $products = $this->fetchProducts($request)->with(['variations', 'categories', 'flash_sales']);
 
@@ -146,7 +148,8 @@ class ProductController extends CoreController
         }
 
         $products = $products->paginate($limit)->withQueryString();
-        $data = new ProductCollection($products);
+        $productsCache = $this->remember(FrontendResource::PRODUCTS->value, md5($request->fullUrl()), $products);
+        $data = new ProductCollection($productsCache);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $data);
     }
 
@@ -182,7 +185,7 @@ class ProductController extends CoreController
     /**
      * fetchProducts
      *
-     * @param  mixed $request
+     * @param mixed $request
      * @return object
      */
     private function fetchProducts(Request $request)
@@ -194,28 +197,28 @@ class ProductController extends CoreController
         }
 
         if ($request->has('category')) {
-            $categorySlug = trim((string) $request->category);
+            $categorySlug = trim((string)$request->category);
             $products_query->whereHas('categories', function (Builder $q) use ($categorySlug) {
                 $q->where('slug', $categorySlug);
             });
         }
 
         if ($request->has('banner')) {
-            $bannerSlug = trim((string) $request->banner);
+            $bannerSlug = trim((string)$request->banner);
             $products_query->whereHas('banners', function (Builder $q) use ($bannerSlug) {
                 $q->where('slug', $bannerSlug);
             });
         }
 
         if ($request->has('flash_sale')) {
-            $flashSaleSlug = trim((string) $request->flash_sale);
+            $flashSaleSlug = trim((string)$request->flash_sale);
             $products_query->whereHas('flash_sales', function (Builder $q) use ($flashSaleSlug) {
                 $q->where('slug', $flashSaleSlug);
             });
         }
 
         if ($request->has('slider')) {
-            $sliderSlug = trim((string) $request->slider);
+            $sliderSlug = trim((string)$request->slider);
             $products_query->whereHas('sliders', function (Builder $q) use ($sliderSlug) {
                 $q->where('slug', $sliderSlug);
             });
@@ -226,18 +229,12 @@ class ProductController extends CoreController
 
 
 
-    /**
-     * Store a newly created product via REST API.
-     *
-     * @param  ProductCreateRequest $request
-     * @return JsonResponse
-     */
     public function store(ProductCreateRequest $request)
     {
         $product = $this->ProductStore($request);
+        $this->flushTag(FrontendResource::PRODUCTS->value);
         return $this->apiResponse(CREATE_PRODUCT_SUCCESSFULLY, 201, true, ProductResource::make($product));
     }
-
 
 
     /**
@@ -256,12 +253,11 @@ class ProductController extends CoreController
     }
 
 
-
     /**
      * Display the specified product.
      *
-     * @param  Request $request
-     * @param  int $id
+     * @param Request $request
+     * @param int $id
      * @return JsonResponse
      */
     public function show(Request $request, $id)
@@ -273,7 +269,6 @@ class ProductController extends CoreController
             throw new MarvelException(NOT_FOUND);
         }
     }
-
 
 
     /**
@@ -299,15 +294,16 @@ class ProductController extends CoreController
     /**
      * Update the specified product via REST API.
      *
-     * @param  ProductUpdateRequest $request
-     * @param  int $id
+     * @param ProductUpdateRequest $request
+     * @param int $id
      * @return JsonResponse
      */
     public function update(ProductUpdateRequest $request, $id)
     {
         try {
             $request->merge(['id' => $id]);
-            $product =  $this->updateProduct($request);
+            $product = $this->updateProduct($request);
+            $this->flushTag(FrontendResource::PRODUCTS->value);
             return $this->apiResponse(UPDATE_PRODUCT_SUCCESSFULLY, 200, true, ProductResource::make($product));
         } catch (MarvelException $e) {
             throw new MarvelException(COULD_NOT_UPDATE_THE_RESOURCE);
@@ -318,7 +314,7 @@ class ProductController extends CoreController
     /**
      * updateProduct
      *
-     * @param  Request $request
+     * @param Request $request
      * @return array
      */
     private function updateProduct(ProductUpdateRequest $request)
@@ -332,12 +328,11 @@ class ProductController extends CoreController
     }
 
 
-
     /**
      * Remove the specified product from storage via REST API.
      *
-     * @param  Request $request
-     * @param  int $id
+     * @param Request $request
+     * @param int $id
      * @return JsonResponse
      */
     public function destroy(Request $request, $id)
@@ -347,12 +342,12 @@ class ProductController extends CoreController
     }
 
 
-
     private function destroyProduct(Request $request)
     {
         try {
             $product = $this->repository->findOrFail($request->id);
             $product->delete();
+            $this->flushTag(FrontendResource::PRODUCTS->value);
             return $this->apiResponse(DELETE_PRODUCT_SUCCESSFULLY, 200, true);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             throw new MarvelException(NOT_FOUND);
@@ -366,13 +361,11 @@ class ProductController extends CoreController
     {
         try {
             $count = Product::count();
-
             Product::chunk(100, function ($products) {
                 foreach ($products as $product) {
                     $this->deleteProduct($product);
                 }
             });
-
             return $this->apiResponse(PRODUCTS_DELETED_SUCCESSFULLY, 200, true, [
                 'deleted_count' => $count,
             ]);
@@ -387,7 +380,7 @@ class ProductController extends CoreController
      *
      * Soft delete specific products by IDs.
      *
-     * @param  BulkDeleteProductsRequest $request
+     * @param BulkDeleteProductsRequest $request
      * @return JsonResponse
      */
     public function destroyBulk(BulkDeleteProductsRequest $request): JsonResponse
@@ -401,6 +394,7 @@ class ProductController extends CoreController
                 }
             });
 
+            $this->flushTag(FrontendResource::PRODUCTS->value);
             return $this->apiResponse(PRODUCTS_DELETED_SUCCESSFULLY, 200, true, [
                 'deleted_ids' => $ids,
             ]);
@@ -412,16 +406,11 @@ class ProductController extends CoreController
 
     private function deleteProduct(Product $product): void
     {
-
         $product->delete();
+        $this->flushTag(FrontendResource::PRODUCTS->value);
+
     }
 
-    /**
-     * relatedProducts
-     *
-     * @param  Request $request
-     * @return void
-     */
     public function relatedProducts(Request $request)
     {
         $limit = isset($request->limit) ? $request->limit : 10;
@@ -429,15 +418,6 @@ class ProductController extends CoreController
         return $this->repository->fetchRelated($slug, $limit);
     }
 
-
-
-    /**
-     * exportProducts
-     *
-     * @param  Request $request
-     * @param  mixed $shop_id
-     * @return void
-     */
     public function exportProducts(Request $request, $shop_id)
     {
         $user = $request->user();
@@ -519,12 +499,11 @@ class ProductController extends CoreController
     }
 
 
-
     /**
      * exportVariableOptions
      *
-     * @param  Request $request
-     * @param  mixed $shop_id
+     * @param Request $request
+     * @param mixed $shop_id
      * @return void
      */
     public function exportVariableOptions(Request $request, $shop_id)
@@ -582,12 +561,10 @@ class ProductController extends CoreController
     }
 
 
-
-
     /**
      * importProducts
      *
-     * @param  Request $request
+     * @param Request $request
      * @return bool
      */
     public function importProducts(Request $request)
@@ -653,11 +630,10 @@ class ProductController extends CoreController
     }
 
 
-
     /**
      * importVariationOptions
      *
-     * @param  Request $request
+     * @param Request $request
      * @return bool
      */
     public function importVariationOptions(Request $request)
@@ -704,11 +680,10 @@ class ProductController extends CoreController
     }
 
 
-
     /**
      * fetchDigitalFilesForProduct
      *
-     * @param  Request $request
+     * @param Request $request
      * @return void
      */
     public function fetchDigitalFilesForProduct(Request $request)
@@ -723,11 +698,10 @@ class ProductController extends CoreController
     }
 
 
-
     /**
      * fetchDigitalFilesForVariation
      *
-     * @param  Request $request
+     * @param Request $request
      * @return void
      */
     public function fetchDigitalFilesForVariation(Request $request)
@@ -740,7 +714,6 @@ class ProductController extends CoreController
             }
         }
     }
-
 
 
     /**
@@ -785,7 +758,6 @@ class ProductController extends CoreController
     {
         return $this->repository->getBestSellingProducts($request);
     }
-
 
 
     /**
@@ -881,7 +853,6 @@ class ProductController extends CoreController
     }
 
 
-
     /**
      * @OA\Get(
      *     path="/products/calculate-rental-price",
@@ -953,11 +924,10 @@ class ProductController extends CoreController
     }
 
 
-
     /**
      * myWishlists
      *
-     * @param  Request $request
+     * @param Request $request
      * @return void
      */
     public function myWishlists(Request $request)
@@ -967,11 +937,10 @@ class ProductController extends CoreController
     }
 
 
-
     /**
      * fetchWishlists
      *
-     * @param  Request $request
+     * @param Request $request
      * @return object
      */
     private function fetchWishlists(Request $request)
@@ -1014,7 +983,7 @@ class ProductController extends CoreController
     /**
      * fetchDraftedProducts
      *
-     * @param  Request $request
+     * @param Request $request
      * @return mixed
      */
     private function fetchDraftedProducts(Request $request)
@@ -1081,7 +1050,7 @@ class ProductController extends CoreController
     /**
      * productStock
      *
-     * @param  Request $request
+     * @param Request $request
      * @return mixed
      */
     private function fetchProductStock(Request $request)

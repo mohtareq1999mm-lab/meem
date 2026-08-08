@@ -2,6 +2,8 @@
 
 namespace Marvel\Http\Controllers;
 
+use App\Enums\FrontendResource;
+use App\Traits\HasCache;
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
@@ -31,7 +33,7 @@ use Prettus\Validator\Exceptions\ValidatorException;
  */
 class FaqsController extends CoreController
 {
-    use ApiResponse;
+    use ApiResponse , HasCache;
     public $repository;
 
     public function __construct(FaqsRepository $repository)
@@ -58,75 +60,37 @@ class FaqsController extends CoreController
         $faqs = $this->repository->paginate($limit);
         $faqs->withQueryString();
         $faqData = FaqResource::collection($faqs)->response()->getData(true);
+        $faqDataCache = $this->remember(FrontendResource::FAQS->value, md5($request->fullUrl()), $faqData);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
-            "data" => $faqData['data'] ?? [],
-            "page" => $faqData['meta']['current_page'] ?? 0,
-            "current_page" => $faqData['meta']['current_page'] ?? 0,
-            "from" => $faqData['meta']['from'] ?? 0,
-            "to" => $faqData['meta']['to'] ?? 0,
-            "last_page" => $faqData['meta']['last_page'] ?? 0,
-            "path" => $faqData['meta']['path'] ?? "",
-            "per_page" => $faqData['meta']['per_page'] ?? 0,
-            "total" => $faqData['meta']['total'] ?? 0,
-            "next_page_url" => $faqData['links']['next'] ?? "",
-            "prev_page_url" => $faqData['links']['prev'] ?? "",
-            "last_page_url" => $faqData['links']['last'] ?? "",
-            "first_page_url" => $faqData['links']['first'] ?? "",
+            "data" => $faqDataCache['data'] ?? [],
+            "page" => $faqDataCache['meta']['current_page'] ?? 0,
+            "current_page" => $faqDataCache['meta']['current_page'] ?? 0,
+            "from" => $faqDataCache['meta']['from'] ?? 0,
+            "to" => $faqDataCache['meta']['to'] ?? 0,
+            "last_page" => $faqDataCache['meta']['last_page'] ?? 0,
+            "path" => $faqDataCache['meta']['path'] ?? "",
+            "per_page" => $faqDataCache['meta']['per_page'] ?? 0,
+            "total" => $faqDataCache['meta']['total'] ?? 0,
+            "next_page_url" => $faqDataCache['links']['next'] ?? "",
+            "prev_page_url" => $faqDataCache['links']['prev'] ?? "",
+            "last_page_url" => $faqDataCache['links']['last'] ?? "",
+            "first_page_url" => $faqDataCache['links']['first'] ?? "",
         ]);
     }
 
-    /**
-     * @OA\Post(
-     *     path="/faqs",
-     *     operationId="storeFaq",
-     *     tags={"FAQs"},
-     *     summary="Create a new FAQ",
-     *     description="Add a new FAQ. Accessible by Staff for their shop, Store Owners, and Super Admins.",
-     *     security={{"sanctum": {}}},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"faq_title", "faq_description"},
-     *             @OA\Property(property="faq_title", type="string", example="How to return a product?"),
-     *             @OA\Property(property="faq_description", type="string", example="You can return any product within 30 days..."),
-     *             @OA\Property(property="shop_id", type="integer", example=1),
-     *             @OA\Property(property="language", type="string", example="en")
-     *         )
-     *     ),
-     *     @OA\Response(response=201, description="FAQ created", @OA\JsonContent(ref="#/components/schemas/Faq")),
-     *     @OA\Response(response=401, description="Unauthenticated"),
-     *     @OA\Response(response=403, description="Forbidden"),
-     *     @OA\Response(response=422, description="Validation error")
-     * )
-     */
+
     public function store(CreateFaqsRequest $request)
     {
         try {
             $faq = $this->repository->storeFaqs($request);
+            $this->flushTag(FrontendResource::FAQS->value);
             return $this->apiResponse(FAQ_CREATED_SUCCESSFULLY, 201, true, FaqResource::make($faq));
         } catch (MarvelException $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
     }
 
-    /**
-     * @OA\Get(
-     *     path="/faqs/{id}",
-     *     operationId="getFaqById",
-     *     tags={"FAQs"},
-     *     summary="Get single FAQ",
-     *     description="Retrieve details of a specific FAQ by ID.",
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         required=true,
-     *         description="FAQ ID",
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(response=200, description="FAQ found", @OA\JsonContent(ref="#/components/schemas/Faq")),
-     *     @OA\Response(response=404, description="FAQ not found")
-     * )
-     */
+
     public function show($id)
     {
         try {
@@ -137,53 +101,20 @@ class FaqsController extends CoreController
         }
     }
 
-    /**
-     * @OA\Put(
-     *     path="/faqs/{id}",
-     *     operationId="updateFaq",
-     *     tags={"FAQs"},
-     *     summary="Update FAQ",
-     *     description="Update details of an existing FAQ. Accessible by staff of the shop, Store Owners, or Super Admins.",
-     *     security={{"sanctum": {}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         required=true,
-     *         description="FAQ ID",
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             @OA\Property(property="faq_title", type="string"),
-     *             @OA\Property(property="faq_description", type="string"),
-     *             @OA\Property(property="language", type="string")
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="FAQ updated", @OA\JsonContent(ref="#/components/schemas/Faq")),
-     *     @OA\Response(response=401, description="Unauthenticated"),
-     *     @OA\Response(response=403, description="Forbidden"),
-     *     @OA\Response(response=404, description="FAQ not found")
-     * )
-     */
+
     public function update(UpdateFaqsRequest $request, $id)
     {
         try {
             $request->merge(['id' => $id]);
-
             $faq = $this->updateFaqs($request);
+            $this->flushTag(FrontendResource::FAQS->value);
             return $this->apiResponse(FAQ_UPDATED_SUCCESSFULLY, 200, true, FaqResource::make($faq));
         } catch (MarvelException $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
     }
 
-    /**
-     * updateFaqs
-     *
-     * @param UpdateFaqsRequest $request
-     * @return void
-     */
+
     public function updateFaqs(UpdateFaqsRequest $request)
     {
         $faqs = $this->repository->findOrFail($request['id']);
@@ -191,24 +122,7 @@ class FaqsController extends CoreController
         return $faqsUpdate;
     }
 
-    /**
-     * @OA\Delete(
-     *     path="/faqs/{id}",
-     *     operationId="deleteFaq",
-     *     tags={"FAQs"},
-     *     summary="Delete FAQ",
-     *     description="Remove an FAQ from the system. Accessible by authorized Staff, Owners or Admins.",
-     *     security={{"sanctum": {}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(response=200, description="FAQ deleted successfully"),
-     *     @OA\Response(response=404, description="FAQ not found")
-     * )
-     */
+
     public function reorder(Request $request)
     {
         try {
@@ -236,6 +150,7 @@ class FaqsController extends CoreController
             $user = $request->user();
             if ($user && ($user->hasPermissionTo(Permission::DELETE_FAQ))) {
                 $this->repository->findOrFail($id)->delete();
+                $this->flushTag(FrontendResource::FAQS->value);
                 return $this->apiResponse(FAQ_DELETED_SUCCESSFULLY, 200, true);
             }
             throw new AuthorizationException(NOT_AUTHORIZED);

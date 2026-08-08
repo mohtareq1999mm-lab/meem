@@ -2,51 +2,25 @@
 
 namespace Marvel\Http\Controllers;
 
-use Exception;
+use App\Enums\FrontendResource;
+use App\Traits\HasCache;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
 use Marvel\Enums\Permission;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\AttributeCreateRequest;
 use Marvel\Http\Requests\AttributeUpdateRequest;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Marvel\Database\Repositories\AttributeRepository;
 use Marvel\Http\Resources\AttributeResource;
 use Marvel\Traits\ApiResponse;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
-/**
- * @OA\Tag(name="Attributes", description="Product attributes management [STORE_OWNER, SUPER_ADMIN]")
- *
- * @OA\Schema(
- *     schema="Attribute",
- *     type="object",
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="name", type="string", example="Size"),
- *     @OA\Property(property="slug", type="string", example="size"),
- *     @OA\Property(property="shop_id", type="integer", example=10),
- *     @OA\Property(property="language", type="string", example="en"),
- *     @OA\Property(property="values", type="array", @OA\Items(ref="#/components/schemas/AttributeValue")),
- *     @OA\Property(property="created_at", type="string", format="date-time"),
- *     @OA\Property(property="updated_at", type="string", format="date-time")
- * )
- *
- * @OA\Schema(
- *     schema="AttributeValue",
- *     type="object",
- *     @OA\Property(property="id", type="integer", example=5),
- *     @OA\Property(property="attribute_id", type="integer", example=1),
- *     @OA\Property(property="value", type="string", example="XL"),
- *     @OA\Property(property="meta", type="string", nullable=true)
- * )
- */
+
 class AttributeController extends CoreController
 {
-    use ApiResponse;
+    use ApiResponse, HasCache;
+
     public $repository;
 
     public function __construct(AttributeRepository $repository)
@@ -59,23 +33,6 @@ class AttributeController extends CoreController
     }
 
 
-    /**
-     * @OA\Get(
-     *     path="/attributes",
-     *     operationId="getAttributes",
-     *     tags={"Attributes"},
-     *     summary="List Attributes",
-     *     description="List attributes. customizable by Shop.",
-     *     security={{"sanctum": {}}},
-     *     @OA\Parameter(name="shop_id", in="query", description="Filter by Shop ID", @OA\Schema(type="integer")),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Attributes retrieved",
-     *         @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/Attribute"))
-     *     ),
-     *     @OA\Response(response=401, description="Unauthenticated")
-     * )
-     */
     public function index(Request $request)
     {
         $limit = $request->limit ?? 15;
@@ -90,71 +47,37 @@ class AttributeController extends CoreController
 
         $attributes = $attributes->with('values')->paginate($limit)->withQueryString();
         $attributeData = AttributeResource::collection($attributes)->response()->getData(true);
+        $attributeDataCache = $this->remember(FrontendResource::ATTRIBUTES->value, md5($request->fullUrl()), $attributeData);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
-            "data" => $attributeData['data'] ?? [],
-            "page" => $attributeData['meta']['current_page'] ?? 0,
-            "current_page" => $attributeData['meta']['current_page'] ?? 0,
-            "from" => $attributeData['meta']['from'] ?? 0,
-            "to" => $attributeData['meta']['to'] ?? 0,
-            "last_page" => $attributeData['meta']['last_page'] ?? 0,
-            "path" => $attributeData['meta']['path'] ?? "",
-            "per_page" => $attributeData['meta']['per_page'] ?? 0,
-            "total" => $attributeData['meta']['total'] ?? 0,
-            "next_page_url" => $attributeData['links']['next'] ?? "",
-            "prev_page_url" => $attributeData['links']['prev'] ?? "",
-            "last_page_url" => $attributeData['links']['last'] ?? "",
-            "first_page_url" => $attributeData['links']['first'] ?? "",
+            "data" => $attributeDataCache['data'] ?? [],
+            "page" => $attributeDataCache['meta']['current_page'] ?? 0,
+            "current_page" => $attributeDataCache['meta']['current_page'] ?? 0,
+            "from" => $attributeDataCache['meta']['from'] ?? 0,
+            "to" => $attributeDataCache['meta']['to'] ?? 0,
+            "last_page" => $attributeDataCache['meta']['last_page'] ?? 0,
+            "path" => $attributeDataCache['meta']['path'] ?? "",
+            "per_page" => $attributeDataCache['meta']['per_page'] ?? 0,
+            "total" => $attributeDataCache['meta']['total'] ?? 0,
+            "next_page_url" => $attributeDataCache['links']['next'] ?? "",
+            "prev_page_url" => $attributeDataCache['links']['prev'] ?? "",
+            "last_page_url" => $attributeDataCache['links']['last'] ?? "",
+            "first_page_url" => $attributeDataCache['links']['first'] ?? "",
         ]);
     }
 
-    /**
-     * @OA\Post(
-     *     path="/attributes",
-     *     operationId="createAttribute",
-     *     tags={"Attributes"},
-     *     summary="Create Attribute",
-     *     description="Create a new attribute. Requires STORE_OWNER permission for the shop.",
-     *     security={{"sanctum": {}}},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"name", "shop_id"},
-     *             @OA\Property(property="name", type="string", example="Color"),
-     *             @OA\Property(property="shop_id", type="integer", example=10),
-     *             @OA\Property(property="language", type="string", example="en"),
-     *             @OA\Property(property="values", type="array", @OA\Items(type="object", @OA\Property(property="value", type="string"), @OA\Property(property="meta", type="string")))
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Attribute created", @OA\JsonContent(ref="#/components/schemas/Attribute")),
-     *     @OA\Response(response=401, description="Unauthenticated"),
-     *     @OA\Response(response=403, description="Forbidden")
-     * )
-     */
+
     public function store(AttributeCreateRequest $request)
     {
         try {
-            // if ($this->repository->hasPermission($request->user(), $request->shop_id)) {
-            // }
+
             $attribute = $this->repository->storeAttribute($request);
+            $this->flushTag(FrontendResource::ATTRIBUTES->value);
             return $this->apiResponse(ATTRIBUTE_CREATED_SUCCESSFULLY, 201, true, AttributeResource::make($attribute));
         } catch (MarvelException $e) {
             throw new AuthorizationException(NOT_AUTHORIZED);
         }
     }
 
-    /**
-     * @OA\Get(
-     *     path="/attributes/{id}",
-     *     operationId="getAttribute",
-     *     tags={"Attributes"},
-     *     summary="Get Attribute",
-     *     description="Get attribute details by ID or Slug",
-     *     security={{"sanctum": {}}},
-     *     @OA\Parameter(name="id", in="path", required=true, description="Attribute ID or Slug", @OA\Schema(type="string")),
-     *     @OA\Response(response=200, description="Attribute details", @OA\JsonContent(ref="#/components/schemas/Attribute")),
-     *     @OA\Response(response=404, description="Attribute not found")
-     * )
-     */
     public function show(Request $request, $params)
     {
 
@@ -173,33 +96,13 @@ class AttributeController extends CoreController
         }
     }
 
-    /**
-     * @OA\Put(
-     *     path="/attributes/{id}",
-     *     operationId="updateAttribute",
-     *     tags={"Attributes"},
-     *     summary="Update Attribute",
-     *     description="Update existing attribute. Requires permission.",
-     *     security={{"sanctum": {}}},
-     *     @OA\Parameter(name="id", in="path", required=true, description="Attribute ID", @OA\Schema(type="integer")),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             @OA\Property(property="name", type="string", example="Updated Size"),
-     *             @OA\Property(property="shop_id", type="integer"),
-     *             @OA\Property(property="values", type="array", @OA\Items(type="object"))
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Attribute updated", @OA\JsonContent(ref="#/components/schemas/Attribute")),
-     *     @OA\Response(response=401, description="Unauthenticated"),
-     *     @OA\Response(response=403, description="Forbidden")
-     * )
-     */
+
     public function update(AttributeUpdateRequest $request, $id)
     {
         try {
             $request->merge(['id' => $id]);
-            $attributeUpdates =  $this->updateAttribute($request);
+            $attributeUpdates = $this->updateAttribute($request);
+            $this->flushTag(FrontendResource::ATTRIBUTES->value);
             return $this->apiResponse(ATTRIBUTE_UPDATED_SUCCESSFULLY, 200, true, AttributeResource::make($attributeUpdates));
         } catch (MarvelException $e) {
             throw new MarvelException(COULD_NOT_UPDATE_THE_RESOURCE);
@@ -208,9 +111,6 @@ class AttributeController extends CoreController
 
     private function updateAttribute(AttributeUpdateRequest $request)
     {
-
-        // if ($this->repository->hasPermission($request->user(), $request->shop_id)) {
-        // }
         try {
             $attribute = $this->repository->with('values')->findOrFail($request->id);
             return $this->repository->updateAttribute($request, $attribute);
@@ -219,24 +119,12 @@ class AttributeController extends CoreController
         }
     }
 
-    /**
-     * @OA\Delete(
-     *     path="/attributes/{id}",
-     *     operationId="deleteAttribute",
-     *     tags={"Attributes"},
-     *     summary="Delete Attribute",
-     *     description="Delete an attribute. Requires permission.",
-     *     security={{"sanctum": {}}},
-     *     @OA\Parameter(name="id", in="path", required=true, description="Attribute ID", @OA\Schema(type="integer")),
-     *     @OA\Response(response=200, description="Attribute deleted"),
-     *     @OA\Response(response=401, description="Unauthenticated"),
-     *     @OA\Response(response=403, description="Forbidden")
-     * )
-     */
+
     public function destroy($id)
     {
         try {
             $this->repository->findOrFail($id)->delete();
+            $this->flushTag(FrontendResource::ATTRIBUTES->value);
             return $this->apiResponse(ATTRIBUTE_DELETED_SUCCESSFULLY, 200, true);
         } catch (\Exception $e) {
             throw new MarvelException(NOT_FOUND);
@@ -257,7 +145,8 @@ class AttributeController extends CoreController
         $list = $this->repository->where('shop_id', $shop_id)->with(['values'])->get()->toArray();
 
         if (!count($list)) {
-            return response()->stream(function () {}, 200, $headers);
+            return response()->stream(function () {
+            }, 200, $headers);
         }
         # add headers for each column in the CSV download
         array_unshift($list, array_keys($list[0]));

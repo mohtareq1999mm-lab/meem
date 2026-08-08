@@ -44,26 +44,7 @@ class ReviewController extends CoreController
     }
 
 
-    /**
-     * @OA\Get(
-     *     path="/reviews",
-     *     operationId="getReviews",
-     *     tags={"Reviews"},
-     *     summary="List Reviews",
-     *     description="List reviews for a product.",
-     *     @OA\Parameter(name="product_id", in="query", required=false, description="Filter by Product ID", @OA\Schema(type="integer")),
-     *     @OA\Parameter(name="limit", in="query", description="Items per page", @OA\Schema(type="integer", default=15)),
-     *     @OA\Parameter(name="page", in="query", description="Page number", @OA\Schema(type="integer", default=1)),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Reviews retrieved",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Review")),
-     *             @OA\Property(property="total", type="integer")
-     *         )
-     *     )
-     * )
-     */
+
     public function index(Request $request)
     {
         $request->validate([
@@ -75,31 +56,6 @@ class ReviewController extends CoreController
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ReviewResource::collection($data));
     }
 
-    /**
-     * @OA\Post(
-     *     path="/reviews",
-     *     operationId="createReview",
-     *     tags={"Reviews"},
-     *     summary="Create Review",
-     *     description="Submit a review for a product. Requires CUSTOMER permission.",
-     *     security={{"sanctum": {}}},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"rating", "product_id", "shop_id", "order_id"},
-     *             @OA\Property(property="rating", type="integer", example=5),
-     *             @OA\Property(property="comment", type="string", example="Great!"),
-     *             @OA\Property(property="product_id", type="integer", example=10),
-     *             @OA\Property(property="shop_id", type="integer", example=2),
-     *             @OA\Property(property="order_id", type="integer", example=100),
-     *             @OA\Property(property="photos", type="array", @OA\Items(type="object"))
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Review created", @OA\JsonContent(ref="#/components/schemas/Review")),
-     *     @OA\Response(response=401, description="Unauthenticated"),
-     *     @OA\Response(response=400, description="Bad Request or Already Reviewed")
-     * )
-     */
     public function store(ReviewCreateRequest $request)
     {
         try {
@@ -121,26 +77,6 @@ class ReviewController extends CoreController
         }
     }
 
-    /**
-     * @OA\Put(
-     *     path="/reviews/{id}",
-     *     operationId="updateReview",
-     *     tags={"Reviews"},
-     *     summary="Update Review",
-     *     description="Update a review. Requires permission.",
-     *     security={{"sanctum": {}}},
-     *     @OA\Parameter(name="id", in="path", required=true, description="Review ID", @OA\Schema(type="integer")),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *              @OA\Property(property="rating", type="integer"),
-     *              @OA\Property(property="comment", type="string")
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Review updated", @OA\JsonContent(ref="#/components/schemas/Review")),
-     *     @OA\Response(response=401, description="Unauthenticated")
-     * )
-     */
     public function update(ReviewUpdateRequest $request, $id)
     {
         $request->merge(["id" => $id]);
@@ -158,19 +94,6 @@ class ReviewController extends CoreController
         return $this->repository->updateReview($request, $id);
     }
 
-    /**
-     * @OA\Delete(
-     *     path="/reviews/{id}",
-     *     operationId="deleteReview",
-     *     tags={"Reviews"},
-     *     summary="Delete Review",
-     *     description="Delete a review. Requires permission.",
-     *     security={{"sanctum": {}}},
-     *     @OA\Parameter(name="id", in="path", required=true, description="Review ID", @OA\Schema(type="integer")),
-     *     @OA\Response(response=200, description="Review deleted"),
-     *     @OA\Response(response=401, description="Unauthenticated")
-     * )
-     */
     public function destroy($id)
     {
         try {

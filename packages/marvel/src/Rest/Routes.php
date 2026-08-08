@@ -4,14 +4,9 @@ use App\Http\Controllers\Api\General\DashboardController;
 use App\Http\Controllers\Api\InvoiceController;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
-use Marvel\Enums\Role;
-use Marvel\Http\Controllers\AbusiveReportController;
-use Marvel\Http\Controllers\ActivityLogController;
 use Marvel\Http\Controllers\AddressController;
-use Marvel\Http\Controllers\AnalyticsController;
 use Marvel\Http\Controllers\AttributeController;
 use Marvel\Http\Controllers\AttributeValueController;
-use Marvel\Http\Controllers\AuthorController;
 use Marvel\Http\Controllers\BannerController;
 use Marvel\Http\Controllers\BrandController;
 use Marvel\Http\Controllers\ContactController;
@@ -20,41 +15,22 @@ use Marvel\Http\Controllers\CategoryController;
 use Marvel\Http\Controllers\CityController;
 use Marvel\Http\Controllers\CouponAssignmentController;
 use Marvel\Http\Controllers\CouponController;
-use Marvel\Http\Controllers\DeliveryTimeController;
-use Marvel\Http\Controllers\DownloadController;
 use Marvel\Http\Controllers\FaqsController;
-use Marvel\Http\Controllers\FeedbackController;
 use Marvel\Http\Controllers\FlashSaleController;
-use Marvel\Http\Controllers\FlashSaleVendorRequestController;
-use Marvel\Http\Controllers\ManufacturerController;
 use Marvel\Http\Controllers\Order\OrderController;
 use Marvel\Http\Controllers\ProductController;
 use Marvel\Http\Controllers\ProductImportController;
 use Marvel\Http\Controllers\PromotionController;
-use Marvel\Http\Controllers\QuestionController;
 use Marvel\Http\Controllers\RefundController;
-use Marvel\Http\Controllers\ResourceController;
 use Marvel\Http\Controllers\ReviewController;
 use Marvel\Http\Controllers\RoleAndPermissionController;
 use Marvel\Http\Controllers\SettingsController;
-use Marvel\Http\Controllers\ShippingController;
-use Marvel\Http\Controllers\ShopController;
 use Marvel\Http\Controllers\SliderController;
 use Marvel\Http\Controllers\SectionController;
 use Marvel\Http\Controllers\SectionTypeController;
 use Marvel\Http\Controllers\TagController;
-use Marvel\Http\Controllers\TaxController;
-use Marvel\Http\Controllers\TypeController;
 use Marvel\Http\Controllers\UserController;
 use Marvel\Http\Controllers\WishlistController;
-use Marvel\Http\Controllers\WithdrawController;
-use Marvel\Http\Controllers\LanguageController;
-use Marvel\Http\Controllers\NotifyLogsController;
-use Marvel\Http\Controllers\OwnershipTransferController;
-use Marvel\Http\Controllers\RefundPolicyController;
-use Marvel\Http\Controllers\RefundReasonController;
-use Marvel\Http\Controllers\StoreNoticeController;
-use Marvel\Http\Controllers\TermsAndConditionsController;
 use Marvel\Http\Controllers\ContentPageController;
 use Marvel\Http\Controllers\CountryController;
 use Marvel\Http\Controllers\FastShippingController;
@@ -130,8 +106,15 @@ Route::middleware(["throttle:sensitive"])->group(function () {
     Route::apiResource('contacts', ContactController::class)->except(['update']);
 });
 
-Route::middleware(['auth:sanctum'])->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:admin'])->group(function () {
+    //======================== settings site ========================/
     Route::get('settings', [SettingsController::class, 'index']);
+    Route::put('settings', [SettingsController::class, 'update']);
+
+    Route::get('fast-shipping/settings', [FastShippingController::class, 'getSettings']);
+    Route::put('fast-shipping/settings', [FastShippingController::class, 'updateSettings']);
+
+    //======================== users ========================/
     Route::get('me', [UserController::class, 'me']);
     Route::post('admin-users/add', [UserController::class, 'adminAddUsers']);
     Route::put('admin-users/update-activation', [UserController::class, 'adminUpdateActivationUsers']);
@@ -139,58 +122,77 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('admin-users/restore/{id}', [UserController::class, 'adminRestoreUser']);
     Route::get('admin-users/trashed', [UserController::class, 'adminTrashedUsers']);
     Route::delete('admin-users/delete-forever/{id}', [UserController::class, 'adminDeleteUsersForever']);
+
+    //======================== brands ========================/
     Route::put('brands/reorder', [BrandController::class, 'reorder']);
     Route::apiResource('brands', BrandController::class);
+
+    //======================== sliders ========================/
     Route::patch('sliders/change-status', [SliderController::class, 'changeStatus']);
     Route::put('sliders/reorder', [SliderController::class, 'reorder']);
     Route::apiResource('sliders', SliderController::class);
-    Route::get('fast-shipping/settings', [FastShippingController::class, 'getSettings']);
-    Route::put('fast-shipping/settings', [FastShippingController::class, 'updateSettings']);
 
+    //======================== categories ========================/
     Route::put('categories/feature', [CategoryController::class, 'addOrRemoveCategoryFromFeature']);
     Route::apiResource('categories', CategoryController::class);
-    Route::apiResource('pickup-locations', PickupLocationController::class);
-    Route::apiResource('attributes', AttributeController::class);
-    Route::apiResource('attribute-values', AttributeValueController::class);
 
+    //======================== shops locations ========================/
+    Route::apiResource('pickup-locations', PickupLocationController::class);
+
+
+    //======================== attributes ========================/
+    Route::apiResource('attributes', AttributeController::class);
+//    Route::apiResource('attribute-values', AttributeValueController::class);
 
 
     Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('orders/{id}', [OrderController::class, 'show'])->name('orders.show');
 
-
+//==================================== banner ========================/
     Route::put('banner/change-status', [BannerController::class, 'changeStatus']);
     Route::post('banner/reorder', [BannerController::class, 'reorder']);
     Route::apiResource('banners', BannerController::class);
 
+    //======================== countries ========================/
     Route::apiResource('countries', CountryController::class);
     Route::get('countries/{id}/governorates', [CountryController::class, 'governorates'])->middleware('auth:sanctum');
     Route::post('countries/change-status', [CountryController::class, 'bulkStatus'])->middleware('auth:sanctum');
 
+    //======================== governorates ========================/
     Route::put('governorates/change-status', [GovernorateController::class, 'bulkStatus'])->middleware('auth:sanctum');
     Route::put('governorates/{id}/fast-shipping', [GovernorateController::class, 'toggleFastShipping'])->middleware('auth:sanctum');
     Route::get('governorates/{id}/cities', [GovernorateController::class, 'cities'])->middleware('auth:sanctum');
     Route::apiResource('governorates', GovernorateController::class);
 
+    //======================== cities ========================/
     Route::apiResource('cities', CityController::class);
 
+    //============================= shipping prices ========================/
+    Route::apiResource('shipping-prices', ShippingPriceController::class);
+
+    //======================== reviews ========================/
     Route::patch('reviews/{id}/toggle-approve', [ReviewController::class, 'toggleApproveReview']);
     Route::apiResource('reviews', ReviewController::class);
+
+    //======================== products ========================/
     Route::post('products/bulk-delete', [ProductController::class, 'destroyBulk']);
     Route::delete('products/all', [ProductController::class, 'destroyAll']);
-
     Route::post('products/import', [ProductImportController::class, 'import'])->name('admin.products.import');
     Route::get('products/import/{id}', [ProductImportController::class, 'status'])->name('admin.products.import.status');
     Route::post('products/import/{id}/cancel', [ProductImportController::class, 'cancel'])->name('admin.products.import.cancel');
     Route::get('products/import/{id}/download-errors', [ProductImportController::class, 'downloadErrors'])->name('admin.products.import.download-errors');
     Route::apiResource('products', ProductController::class);
 
+//============================= flash sale ========================/
     Route::put('flash-sale/reorder', [FlashSaleController::class, 'reorder']);
     Route::apiResource('flash-sale', FlashSaleController::class);
     Route::get('product-flash-sale-info', [FlashSaleController::class, 'getFlashSaleInfoByProductID']);
 
+    //============================= faqs ========================/
     Route::put('faqs/reorder', [FaqsController::class, 'reorder']);
     Route::apiResource('faqs', FaqsController::class);
+
+    //============================= coupons ========================/
     Route::prefix('coupons/{coupon}')->group(function () {
         Route::get('assignments', [CouponAssignmentController::class, 'index']);
         Route::post('assignments', [CouponAssignmentController::class, 'store']);
@@ -198,14 +200,20 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('assignments/{assignment}', [CouponAssignmentController::class, 'update']);
         Route::delete('assignments/{assignment}', [CouponAssignmentController::class, 'destroy']);
     });
+    Route::apiResource('coupons', CouponController::class);
+
+    //============================= wishlists ========================/
     Route::patch('wishlists/toggle', [WishlistController::class, 'toggle']);
     Route::apiResource('wishlists', WishlistController::class)->only(['index', 'store']);
     Route::get('wishlists/in_wishlist/{product_id}', [WishlistController::class, 'in_wishlist']);
-    Route::apiResource('coupons', CouponController::class);
+
+    //============================= promotions ========================/
     Route::apiResource('promotions', PromotionController::class);
-    Route::apiResource('shipping-prices', ShippingPriceController::class);
+
+    //============================= tags ========================/
     Route::apiResource('tags', TagController::class);
-    Route::put('settings', [SettingsController::class, 'update']);
+
+    //============================= role and permission ========================/
     Route::get('/roles', [RoleAndPermissionController::class, 'getAllRoles']);
     Route::get('/roles/{id}', [RoleAndPermissionController::class, 'showRole']);
     Route::post('/roles', [RoleAndPermissionController::class, 'addRole']);
@@ -213,13 +221,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::delete('/roles/{id}', [RoleAndPermissionController::class, 'destroyRole']);
     Route::post('/users/{userId}/assign-role', [RoleAndPermissionController::class, 'assignRole']);
     Route::post('/users/{userId}/remove-role', [RoleAndPermissionController::class, 'removeRoleFromUser']);
-
+//=============================  permission ========================/
     Route::get('/permissions', [RoleAndPermissionController::class, 'getAllPermissions']);
     Route::post('/roles/{roleId}/permissions', [RoleAndPermissionController::class, 'assignPermissionToRole']);
     Route::post('/users/{userId}/permissions', [RoleAndPermissionController::class, 'givePermission']);
     Route::put('/users/{userId}/permissions', [RoleAndPermissionController::class, 'syncPermissions']);
     Route::delete('/users/{userId}/permissions', [RoleAndPermissionController::class, 'removePermission']);
 
+    //=============================  pages ========================/
     Route::post('content-pages/{content_page}/attach-sections', [ContentPageController::class, 'attachSections']);
     Route::patch('content-pages/{content_page}/toggle-active', [ContentPageController::class, 'toggleActive']);
     Route::apiResource('content-pages', ContentPageController::class);
@@ -260,8 +269,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
 });
 
 
-
-
 Route::middleware(['auth:sanctum', "throttle:cart"])->group(function () {
     Route::get('cart', [CartController::class, 'index']);
     Route::post('cart', [CartController::class, 'store']);
@@ -271,7 +278,6 @@ Route::middleware(['auth:sanctum', "throttle:cart"])->group(function () {
     Route::delete('cart/delete-item/{itemId}', [CartController::class, 'deleteItemFromCart']);
     Route::delete('cart/delete-items', [CartController::class, 'destroy']);
 });
-
 
 
 Route::middleware(['auth:sanctum', 'throttle:analytics'])->prefix('dashboard')->group(function () {
@@ -292,23 +298,11 @@ Route::middleware(['auth:sanctum', 'throttle:analytics'])->prefix('dashboard')->
     Route::get('finance', [DashboardController::class, 'financeAnalytics']);
     Route::get('reconciliation', [DashboardController::class, 'reconciliation']);
 });
-    // Route::apiResource('shippings', ShippingController::class);
-/**
- * Import/Export Routes - Rate Limited (uploads)
- * Protects against storage and processing abuse
- */
-Route::get('samples/product-import', [ProductImportController::class, 'downloadSample']);
-Route::middleware(['auth:sanctum', 'throttle:uploads'])->group(function () {
-    Route::post('import-products', [ProductController::class, 'importProducts']);
-    Route::post('import-variation-options', [ProductController::class, 'importVariationOptions']);
-    Route::post('import-attributes', [AttributeController::class, 'importAttributes']);
-});
+// need to ad end point to update data for dashboard
+// Route::apiResource('shippings', ShippingController::class);
 
-Route::middleware(['auth:sanctum'])->group(function () {
-    Route::get('export-products/{shop_id}', [ProductController::class, 'exportProducts']);
-    Route::get('export-variation-options/{shop_id}', [ProductController::class, 'exportVariableOptions']);
-    Route::get('export-attributes/{shop_id}', [AttributeController::class, 'exportAttributes']);
-});
+
+
 
 Route::group(['prefix' => 'admin', 'controller' => NotificationController::class], function () {
     Route::get('notifications', 'index');
@@ -320,7 +314,6 @@ Route::group(['prefix' => 'admin', 'controller' => NotificationController::class
 });
 
 
-
 /**
  * Refund Routes - Rate Limited (5/min per user)
  * Protects against refund fraud attempts
@@ -328,7 +321,6 @@ Route::group(['prefix' => 'admin', 'controller' => NotificationController::class
 Route::middleware(['throttle:refunds'])->group(function () {
     Route::apiResource('refunds', RefundController::class);
 });
-
 
 
 Route::prefix('shipments')->middleware('auth:sanctum')->group(function () {
@@ -356,9 +348,6 @@ Route::prefix('invoices')->group(function () {
 });
 
 
-
-
-
 Route::get('check-card-payment', function () {
     return [
         'CardNumber' => '2223000000000007',
@@ -366,8 +355,6 @@ Route::get('check-card-payment', function () {
         'CardCVV' => '100',
     ];
 });
-
-
 
 
 Route::get('/enum-types', function () {

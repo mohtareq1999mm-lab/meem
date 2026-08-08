@@ -2,6 +2,8 @@
 
 namespace Marvel\Http\Controllers;
 
+use App\Enums\FrontendResource;
+use App\Traits\HasCache;
 use Illuminate\Http\Request;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Database\Repositories\PromotionRepository;
@@ -14,7 +16,7 @@ use Throwable;
 
 class PromotionController extends CoreController
 {
-    use ApiResponse;
+    use ApiResponse , HasCache;
 
     public $repository;
 
@@ -58,20 +60,21 @@ class PromotionController extends CoreController
 
         $promotions = $query->paginate($limit)->withQueryString();
         $promotionData = PromotionResource::collection($promotions)->response()->getData(true);
+        $promotionDataCache = $this->remember(FrontendResource::PROMOTIONS->value, md5($request->fullUrl()), $promotionData);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
-            "data" => $promotionData['data'] ?? [],
-            "page" => $promotionData['meta']['current_page'] ?? 0,
-            "current_page" => $promotionData['meta']['current_page'] ?? 0,
-            "from" => $promotionData['meta']['from'] ?? 0,
-            "to" => $promotionData['meta']['to'] ?? 0,
-            "last_page" => $promotionData['meta']['last_page'] ?? 0,
-            "path" => $promotionData['meta']['path'] ?? "",
-            "per_page" => $promotionData['meta']['per_page'] ?? 0,
-            "total" => $promotionData['meta']['total'] ?? 0,
-            "next_page_url" => $promotionData['links']['next'] ?? "",
-            "prev_page_url" => $promotionData['links']['prev'] ?? "",
-            "last_page_url" => $promotionData['links']['last'] ?? "",
-            "first_page_url" => $promotionData['links']['first'] ?? "",
+            "data" => $promotionDataCache['data'] ?? [],
+            "page" => $promotionDataCache['meta']['current_page'] ?? 0,
+            "current_page" => $promotionDataCache['meta']['current_page'] ?? 0,
+            "from" => $promotionDataCache['meta']['from'] ?? 0,
+            "to" => $promotionDataCache['meta']['to'] ?? 0,
+            "last_page" => $promotionDataCache['meta']['last_page'] ?? 0,
+            "path" => $promotionDataCache['meta']['path'] ?? "",
+            "per_page" => $promotionDataCache['meta']['per_page'] ?? 0,
+            "total" => $promotionDataCache['meta']['total'] ?? 0,
+            "next_page_url" => $promotionDataCache['links']['next'] ?? "",
+            "prev_page_url" => $promotionDataCache['links']['prev'] ?? "",
+            "last_page_url" => $promotionDataCache['links']['last'] ?? "",
+            "first_page_url" => $promotionDataCache['links']['first'] ?? "",
         ]);
     }
 
@@ -79,6 +82,7 @@ class PromotionController extends CoreController
     {
         try {
             $promotion = $this->repository->storePromotion($request);
+            $this->flushTag(FrontendResource::PROMOTIONS->value);
             return $this->apiResponse(CREATED_PROMOTION_SUCCESSFULLY, 201, true, PromotionResource::make($promotion));
         } catch (MarvelException $e) {
             return $this->apiResponse(COULD_NOT_CREATE_THE_RESOURCE, 400, false);
@@ -99,6 +103,7 @@ class PromotionController extends CoreController
     {
         try {
             $promotion = $this->repository->updatePromotion($id, $request);
+            $this->flushTag(FrontendResource::PROMOTIONS->value);
             return $this->apiResponse(UPDATED_PROMOTION_SUCCESSFULLY, 200, true, PromotionResource::make($promotion));
         } catch (MarvelException $e) {
             return $this->apiResponse(COULD_NOT_UPDATE_THE_RESOURCE, 400, false);
@@ -110,6 +115,7 @@ class PromotionController extends CoreController
         try {
             $promotion = $this->repository->findOrFail($id);
             $promotion->delete();
+            $this->flushTag(FrontendResource::PROMOTIONS->value);
             return $this->apiResponse(DELETED_PROMOTION_SUCCESSFULLY, 200, true);
         } catch (Throwable $e) {
             return $this->apiResponse(COULD_NOT_DELETE_THE_RESOURCE, 400, false);
