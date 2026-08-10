@@ -490,7 +490,7 @@ class UserController extends CoreController
         }
         $email_verified = $user->hasVerifiedEmail();
         $data = [
-            "token" => $user->createToken('auth_token')->plainTextToken,
+            "token" => $user->createToken('auth_token',[],now()->addWeekdays(14))->plainTextToken,
             "email_verified" => $email_verified,
             "permissions" => $user->getAllPermissions()->pluck('name'),
             "role" => $user->roles->pluck('name'),
@@ -516,7 +516,7 @@ class UserController extends CoreController
             return $this->apiResponse(USER_NOT_VERIFIED, 404, false);
         }
         $data = [
-            "token" => $user->createToken('auth_token')->plainTextToken,
+            "token" => $user->createToken('auth_token',[],now()->addWeek())->plainTextToken,
             "permissions" => $user->getAllPermissions()->pluck('name'),
             "email_verified" => $email_verified,
             "role" => $user->roles->pluck('name'),
@@ -580,7 +580,7 @@ class UserController extends CoreController
         if ($user->verifyOneTimePassword($request->code)) {
             $user->update(['email_verified_at' => now()]);
             $data = [
-                "token" => $user->createToken('auth_token')->plainTextToken,
+                "token" => $user->createToken('auth_token',[],now()->addWeek())->plainTextToken,
             ];
             return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true, $data);
         }
@@ -987,7 +987,7 @@ class UserController extends CoreController
             );
 
             $data = [
-                "token" => $userCreated->createToken('auth_token')->plainTextToken,
+                "token" => $userCreated->createToken('auth_token',[],now()->addWeek())->plainTextToken,
             ];
             return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true, $data);
         } catch (\Exception $e) {
@@ -1103,7 +1103,7 @@ class UserController extends CoreController
                     $user = User::where('id', $user->id)->first();
                 }
 
-                $token = $user->createToken('auth_token')->plainTextToken;
+                $token = $user->createToken('auth_token',[],now()->addWeek())->plainTextToken;
 
                 return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true, ['token' => $token]);
             } else {
