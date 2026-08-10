@@ -893,3 +893,81 @@ YES
 Notes:
 `type` is optional, defaults to `web`, and the web flow is byte-for-byte backward compatible. No schema changes, no migrations, no API contract changes for existing clients. The `state` mechanism is safe because `stateless()` disables Socialite's own CSRF state while `with(['state' => ...])` still appends the custom value to the authorization URL and the provider echoes it back. LSP diagnostics on Marvel package files are pre-existing false positives — all modified files pass `php -l`.
 
+---
+
+Date:
+2026-08-10
+
+Feature:
+Site Reviews
+
+Revision:
+1
+
+Summary:
+Full implementation of the Website/Site Reviews module with a pending → approved/rejected moderation workflow. Customers submit a rating (1–5), optional title, and comment; new reviews always start as `pending`. Public `GET /api/v1/general/site-reviews` returns only approved reviews (cached with `FrontendResource::SITE_REVIEWS` tag, flushed on moderation). Customer `POST /api/v1/general/site-reviews` (auth:sanctum) forces `pending` status and null moderator — customers can never set `status`, `moderated_by`, or `moderated_at`. Admin Dashboard endpoints in Marvel (`GET /api/v1/site-reviews`, `GET /api/v1/site-reviews/{id}`, `PATCH .../approve`, `PATCH .../reject`) are permission-guarded; approve/reject run in a DB transaction and only allow `pending → approved` / `pending → rejected`. Admin list/detail eager-loads `user` and `moderator` so the dashboard displays the actual admin name (no N+1). Added 3 permission constants + seeder + en/ar translations, 4 message constants + en/ar translations, `SiteReviewStatus` enum, `site_reviews` migration (FKs, indexes), `SiteReviewFactory` (pending/approved/rejected states), `SiteReviewSeeder` (registered in DatabaseSeeder), and customer + admin controllers. 54 feature tests / 141 assertions all passing.
+
+Verified Bugs Fixed:
+None
+
+Documentation Updated:
+YES (production-status.md, feature-dependencies.md, regression-matrix.md, production-history.md)
+
+Routes Updated:
+YES (2 customer routes in routes/api.php: GET/POST /api/v1/general/site-reviews; 4 admin routes in packages/marvel/src/Rest/Routes.php)
+
+Regression Executed:
+YES
+
+Regression Result:
+PASS (SiteReviewsSuite 54/54, 141 assertions, 0 errors, 0 failures)
+
+Production Ready:
+YES
+
+Notes:
+This is a website-wide review system — NO product_id, no Shop/Vendor concepts. Business logic lives in `app/` (SiteReviewService); Marvel is the admin CRUD/UI layer only. Migration `2026_08_10_000001_create_site_reviews_table` ran successfully on MySQL (DB: chawkbazar). PermissionSeeder must be re-run in production to register the 3 new permissions (same pattern as prior features). Pre-existing unrelated issue unchanged: `php artisan route:list` fails on missing `App\Http\Controllers\BkashTokenizePaymentController`; routes were verified via a custom script instead.
+
+---
+
+Date:
+2026-08-10
+
+Feature:
+Site Reviews (API Investigation)
+
+Revision:
+2
+
+Summary:
+Full API investigation of the Site Reviews module documented in `api-desc/siteReview/` (12 files: README, api, backend, database, flow, frontend, bug-report, changelog, test-cases, qa, jira, jira-frontend). Fixed 2 verified production bugs. BUG-SR-001 (HIGH): non-numeric `{id}` on the 3 admin `{id}` routes (`show`/`approve`/`reject`) type-hinted `int $id` with no route constraint → `TypeError` → HTTP 500. Fixed by adding `->whereNumber('id')` route constraints in `packages/marvel/src/Rest/Routes.php`. BUG-SR-002 (MEDIUM): unvalidated `limit` in the admin list — `?limit=-5` produced SQL `LIMIT -5` → `QueryException` → HTTP 409; `?limit=0`/`?limit=abc` silently fell back; no upper bound. Fixed in `SiteReviewController::index()` with `$limit = max(1, min((int) $request->query('limit', 15), 100))`. Added `tests/Feature/SiteReviews/SiteReviewBugRegressionTest.php` (4 tests: non-numeric id → 404, negative limit normalized, zero/non-numeric fallback, oversized capped at 100). Full suite now 58 tests / 152 assertions all passing. 5 additional observations documented as open (BUG-SR-003..007): 4h public cache staleness, rating enforced app-side only (no DB CHECK), multiple reviews per user allowed by design, approve/reject 404 vs 409 conflation, redundant/duplicate indexes.
+
+Verified Bugs Fixed:
+- BUG-SR-001 (HIGH): non-numeric `{id}` on admin show/approve/reject → HTTP 500 TypeError. Fix: `->whereNumber('id')` route constraints on the 3 routes.
+- BUG-SR-002 (MEDIUM): unvalidated `limit` → SQL `LIMIT -5` → 409; no upper bound. Fix: clamp to `max(1, min((int) $limit, 100))`, default 15.
+
+Open Observations (documented, not fixed):
+- BUG-SR-003 (LOW): public list cached 4h — new approved reviews appear late
+- BUG-SR-004 (LOW): rating 1–5 enforced app-side only; no DB CHECK constraint
+- BUG-SR-005 (INFO): multiple reviews per user allowed by design (by design)
+- BUG-SR-006 (INFO): approve/reject on non-pending returns 404 (no distinction from missing id)
+- BUG-SR-007 (LOW): redundant/duplicate indexes on site_reviews (covered by composite; harmless)
+
+Documentation Updated:
+YES (api-desc/siteReview/* — 12 files; docs/production-status.md; docs/feature-dependencies.md; docs/regression-matrix.md; docs/production-history.md)
+
+Routes Updated:
+YES (added `->whereNumber('id')` to 3 admin routes in packages/marvel/src/Rest/Routes.php)
+
+Regression Executed:
+YES
+
+Regression Result:
+PASS (SiteReviewsSuite 58/58, 152 assertions, 0 errors, 0 failures — 54 existing + 4 new bug-regression)
+
+Production Ready:
+YES
+
+Notes:
+Both fixes are backward compatible — no schema changes, no new migrations, no API contract changes (the previous 500/409 responses were unintended behavior, not documented contracts). `?limit` is capped at 100 to prevent oversized queries. The full investigation findings, per-endpoint reference, and open observations are tracked in `api-desc/siteReview/bug-report.md`. Pre-existing unrelated issue unchanged: `php artisan route:list` fails on missing `BkashTokenizePaymentController`; admin routes verified via a custom route script instead. LSP diagnostics on Marvel package files are pre-existing false positives — modified files pass `php -l`.
+

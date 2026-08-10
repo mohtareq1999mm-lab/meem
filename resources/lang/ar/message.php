@@ -56,6 +56,12 @@ return [
     'MESSAGE.REVIEW_UPDATED_SUCCESSFULLY' => 'تم تحديث التقييم بنجاح',
     'MESSAGE.REVIEW_DELETED_SUCCESSFULLY' => 'تم حذف التقييم بنجاح',
 
+    // Site Reviews
+    'MESSAGE.SITE_REVIEW_CREATED_SUCCESSFULLY' => 'تم إرسال تقييم الموقع بنجاح',
+    'MESSAGE.SITE_REVIEW_APPROVED_SUCCESSFULLY' => 'تمت الموافقة على تقييم الموقع بنجاح',
+    'MESSAGE.SITE_REVIEW_REJECTED_SUCCESSFULLY' => 'تم رفض تقييم الموقع بنجاح',
+    'ERROR.SITE_REVIEW_NOT_FOUND' => 'تقييم الموقع غير موجود',
+
     'ERROR.USER_NOT_FOUND' => 'المستخدم غير موجود',
     'ERROR.TOKEN_NOT_FOUND' => 'الرمز غير موجود',
     'ERROR.NOT_AVAILABLE_FOR_BOOKING' => 'غير متاح للحجز',

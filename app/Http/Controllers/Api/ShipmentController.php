@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
 use Marvel\Enums\Permission;
 use Marvel\Traits\ApiResponse;
 
-class ShipmentController extends Controller
+class       ShipmentController extends Controller
 {
     use ApiResponse;
 

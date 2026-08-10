@@ -144,6 +144,12 @@ return [
     'MESSAGE.REVIEW_DELETED_SUCCESSFULLY' => 'Review deleted successfully',
     'ERROR.ALREADY_GIVEN_REVIEW_FOR_THIS_PRODUCT' => 'You have already submitted a review for this product',
 
+    // Site Reviews
+    'MESSAGE.SITE_REVIEW_CREATED_SUCCESSFULLY' => 'Site review submitted successfully',
+    'MESSAGE.SITE_REVIEW_APPROVED_SUCCESSFULLY' => 'Site review approved successfully',
+    'MESSAGE.SITE_REVIEW_REJECTED_SUCCESSFULLY' => 'Site review rejected successfully',
+    'ERROR.SITE_REVIEW_NOT_FOUND' => 'Site review not found',
+
     // General Errors
     'ERROR.NOT_FOUND' => 'Not found',
     'ERROR.COULD_NOT_CREATE_THE_RESOURCE' => 'Could not create the resource',

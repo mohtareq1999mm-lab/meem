@@ -218,6 +218,9 @@ class PermissionSeeder extends Seeder
             'approve-reviews',
             'delete-reviews',
             'restore-user',
+            'view-site-reviews',
+            'approve-site-reviews',
+            'reject-site-reviews',
 
             //content-pages
             'view-content-pages',

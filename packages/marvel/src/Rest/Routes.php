@@ -6,7 +6,6 @@ use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 use Marvel\Http\Controllers\AddressController;
 use Marvel\Http\Controllers\AttributeController;
-use Marvel\Http\Controllers\AttributeValueController;
 use Marvel\Http\Controllers\BannerController;
 use Marvel\Http\Controllers\BrandController;
 use Marvel\Http\Controllers\ContactController;
@@ -38,7 +37,9 @@ use Marvel\Http\Controllers\GovernorateController;
 use Marvel\Http\Controllers\NotificationController;
 use Marvel\Http\Controllers\PickupLocationController;
 use Marvel\Http\Controllers\ShippingPriceController;
+use Marvel\Http\Controllers\SiteReviewController;
 use Marvel\Http\Controllers\SocialController;
+use App\Http\Controllers\Api\ShipmentController;
 
 // use Illuminate\Support\Facades\Auth;
 
@@ -174,6 +175,12 @@ Route::middleware(['auth:sanctum', 'throttle:admin'])->group(function () {
     Route::patch('reviews/{id}/toggle-approve', [ReviewController::class, 'toggleApproveReview']);
     Route::apiResource('reviews', ReviewController::class);
 
+    //======================== site reviews ========================/
+    Route::get('site-reviews', [SiteReviewController::class, 'index']);
+    Route::get('site-reviews/{id}', [SiteReviewController::class, 'show'])->whereNumber('id');
+    Route::patch('site-reviews/{id}/approve', [SiteReviewController::class, 'approve'])->whereNumber('id');
+    Route::patch('site-reviews/{id}/reject', [SiteReviewController::class, 'reject'])->whereNumber('id');
+
     //======================== products ========================/
     Route::post('products/bulk-delete', [ProductController::class, 'destroyBulk']);
     Route::delete('products/all', [ProductController::class, 'destroyAll']);
@@ -302,8 +309,6 @@ Route::middleware(['auth:sanctum', 'throttle:analytics'])->prefix('dashboard')->
 // Route::apiResource('shippings', ShippingController::class);
 
 
-
-
 Route::group(['prefix' => 'admin', 'controller' => NotificationController::class], function () {
     Route::get('notifications', 'index');
     Route::get('notifications/unread', 'unread');
@@ -324,12 +329,12 @@ Route::middleware(['throttle:refunds'])->group(function () {
 
 
 Route::prefix('shipments')->middleware('auth:sanctum')->group(function () {
-    Route::get('/', [\App\Http\Controllers\Api\ShipmentController::class, 'index']);
-    Route::get('uuid/{uuid}', [\App\Http\Controllers\Api\ShipmentController::class, 'showByUuid']);
-    Route::get('{id}', [\App\Http\Controllers\Api\ShipmentController::class, 'show']);
-    Route::post('/', [\App\Http\Controllers\Api\ShipmentController::class, 'store']);
-    Route::put('{id}/status', [\App\Http\Controllers\Api\ShipmentController::class, 'updateStatus']);
-    Route::put('{id}', [\App\Http\Controllers\Api\ShipmentController::class, 'update']);
+    Route::get('/', [ShipmentController::class, 'index']);
+    Route::get('uuid/{uuid}', [ShipmentController::class, 'showByUuid']);
+    Route::get('{id}', [ShipmentController::class, 'show']);
+    Route::post('/', [ShipmentController::class, 'store']);
+    Route::put('{id}/status', [ShipmentController::class, 'updateStatus']);
+    Route::put('{id}', [ShipmentController::class, 'update']);
 });
 
 Route::get('orders', [OrderController::class, 'index'])->name('orders.index');

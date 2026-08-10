@@ -84,6 +84,10 @@ final class Permission extends Enum
     public const APPROVE_REVIEWS = 'approve-reviews';
     public const DELETE_REVIEWS = 'delete-reviews';
 
+    public const VIEW_SITE_REVIEWS = 'view-site-reviews';
+    public const APPROVE_SITE_REVIEWS = 'approve-site-reviews';
+    public const REJECT_SITE_REVIEWS = 'reject-site-reviews';
+
     public const VIEW_CITY = 'view-city';
     public const CREATE_CITY = 'create-city';
     public const UPDATE_CITY = 'update-city';

@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\General\PickupLocationController;
 use App\Http\Controllers\Api\General\ProductController;
 use App\Http\Controllers\Api\General\PromotionController;
 use App\Http\Controllers\Api\General\SettingController;
+use App\Http\Controllers\Api\General\SiteReviewController;
 use App\Http\Controllers\Api\General\SliderController;
 use App\Http\Controllers\Api\General\TagController;
 use App\Http\Controllers\Api\ShipmentController;
@@ -92,6 +93,8 @@ Route::prefix('v1/general')->group(function () {
         Route::get('pickup-locations/{id}', [PickupLocationController::class, 'show']);
         //============================ fast shipping ========================/
         Route::get('fast-shipping/status', [FastShippingController::class, 'status']);
+        //============================ site reviews ========================/
+        Route::get('site-reviews', [SiteReviewController::class, 'index']);
     });
 
     Route::middleware(['api', 'auth:sanctum', 'throttle:authenticated'])->group(function () {
@@ -113,6 +116,8 @@ Route::prefix('v1/general')->group(function () {
         //========================= product reviews =========================//
         Route::post('products/{id}/reviews', [ProductController::class, 'addProductReview']);
         Route::put('products/reviews/{id}', [ProductController::class, 'updateProductReview']);
+        //========================= site reviews =========================//
+        Route::post('site-reviews', [SiteReviewController::class, 'store']);
         //======================== invoices ========================/
         Route::prefix('invoices')->group(function () {
             Route::get('my-invoices', [InvoiceController::class, 'myInvoices']);

@@ -447,6 +447,72 @@ Production Ready
 
 ---
 
+## Contacts
+
+**Purpose:**
+Manage contact messages and replies — create, list, filter (read/unread/replied), reply, delete, bulk delete.
+
+**Dependency Confidence:**
+Dependencies partially verified from source code.
+
+**Depends On:**
+- Authentication — Sanctum (Verified)
+- Permissions — `permission:` middleware on admin endpoints (Verified)
+- Translation System — constant keys resolved via `__()` and `translateNotice()` (Verified)
+
+**Used By:**
+- Contact Forms — public contact form submission (Verified)
+- Admin Notifications — `ContactMessageReceived` event triggers `NewContactMessageNotification` (Verified)
+- Notifications — database + broadcast notifications for new contact messages (Verified)
+
+**Regression Required When Changed:**
+- Contacts
+- Notifications (if event/listener structure changes)
+
+**Blocking Dependencies:**
+None
+
+**Current Status:**
+Production Ready
+
+---
+
+## Site Reviews
+
+**Purpose:**
+Website/site-wide customer reviews with a pending → approved/rejected moderation workflow. Customers submit a rating (1–5), optional title, and comment. Only approved reviews are publicly visible.
+
+**Dependency Confidence:**
+Dependencies partially verified from source code.
+
+**Depends On:**
+- Authentication — Sanctum; `POST /api/v1/general/site-reviews` behind `auth:sanctum` (Verified)
+- User model — `Marvel\Database\Models\User`; `site_reviews.user_id` FK and `moderated_by` FK to users (Verified)
+- Permissions — `permission:` middleware on admin endpoints (`view-site-reviews`, `approve-site-reviews`, `reject-site-reviews`) (Verified)
+- Translation System — constant keys in `packages/marvel/config/constants.php` resolved via `__('message.' . ...)` (Verified)
+- FrontendResource cache — `FrontendResource::SITE_REVIEWS` tag for public list caching + flush on moderation (Verified)
+
+**Used By:**
+- Frontend home / reviews UI — public `GET /api/v1/general/site-reviews` (Not verified)
+- Admin Dashboard — `Marvel\Http\Controllers\SiteReviewController` list/detail/approve/reject (Verified)
+
+**Regression Required When Changed:**
+- Site Reviews (`tests/Feature/SiteReviews/`)
+- Permissions (permission seeder + middleware checks)
+- Authentication (customer store endpoint)
+
+**Blocking Dependencies:**
+None
+
+**Current Status:**
+Production Ready
+
+**Notes:**
+- Revision 1 (2026-08-10): Full implementation — service layer in `app/Services/SiteReview/SiteReviewService.php`, customer controller in `app/Http/Controllers/Api/General/SiteReviewController.php`, admin controller in `packages/marvel/src/Http/Controllers/SiteReviewController.php`. New reviews always start as `pending`; customers can never set `status`, `moderated_by`, or `moderated_at`. Only `pending → approved` and `pending → rejected` transitions allowed (DB transaction + status guard in service). Admin list/detail eager-loads `user` and `moderator` to display the actual admin name (no N+1). 3 permission constants added (`VIEW_SITE_REVIEWS`, `APPROVE_SITE_REVIEWS`, `REJECT_SITE_REVIEWS`) + PermissionSeeder + en/ar translations. 54 tests / 141 assertions all passing.
+- Revision 2 (2026-08-10): Full API investigation (`api-desc/siteReview/`, 12 files). Fixed 2 verified bugs: BUG-SR-001 (High) non-numeric `{id}` on the 3 admin `{id}` routes (`show`/`approve`/`reject`) caused HTTP 500 TypeError — added `->whereNumber('id')` route constraints in `packages/marvel/src/Rest/Routes.php`; BUG-SR-002 (Medium) unvalidated `limit` (`?limit=-5` → SQL LIMIT -5 → 409) — `index()` now normalizes via `$limit = max(1, min((int) $request->query('limit', 15), 100))`. Added `tests/Feature/SiteReviews/SiteReviewBugRegressionTest.php` (4 tests). Full suite now 58 tests / 152 assertions all passing.
+
+---
+
 ## Payment System
 
 **Purpose:**

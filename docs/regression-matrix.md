@@ -381,10 +381,49 @@ Wishlist
 
 ---
 
+## Site Reviews
+
+**Changed Feature:**
+Site Reviews (Revision 2 — API investigation + bug fixes)
+
+**Affected Features:**
+- Authentication — customer `POST /api/v1/general/site-reviews` behind `auth:sanctum`
+- Permissions — 3 new permissions (`view-site-reviews`, `approve-site-reviews`, `reject-site-reviews`) added to PermissionSeeder
+- User model — `site_reviews.user_id` + `moderated_by` FKs to users
+- FrontendResource — new `SITE_REVIEWS` cache tag
+- Routes — 3 admin `{id}` routes now constrained with `whereNumber('id')` (BUG-SR-001)
+- Admin list — `limit` query param normalized (BUG-SR-002)
+
+**Regression:**
+
+| Suite | Status | Reason |
+|-------|--------|--------|
+| SiteReviewCreationTest | PASS (12/12) | Create, pending default, mass-assignment guards, validation, unauth |
+| SiteReviewPublicApiTest | PASS (7/7) | Approved-only visibility, no moderation fields, customer name |
+| SiteReviewModerationTest | PASS (17/17) | Approve/reject flows, admin id/timestamp, transitions, 404 |
+| SiteReviewAdminApiTest | PASS (11/11) | Admin list/detail, moderator name, status filter, N+1 guard |
+| SiteReviewRelationshipsTest | PASS (8/8) | user/moderator relations, factory states |
+| SiteReviewBugRegressionTest | PASS (4/4) | NEW (Rev 2) — non-numeric id → 404 not 500; negative/zero/non-numeric/oversized limit normalization |
+
+**Changes Applied (Revision 1):**
+- Created `SiteReviewStatus` enum, `site_reviews` migration, `SiteReview` model, `SiteReviewService`, `CreateSiteReviewRequest`, `SiteReviewResource`, `AdminSiteReviewResource`, customer + admin controllers, `SiteReviewFactory`, `SiteReviewSeeder`
+- Added 3 permission constants + seeder + en/ar permission translations; 4 message constants + en/ar translations
+- Added 2 customer routes (`routes/api.php`) and 4 admin routes (`packages/marvel/src/Rest/Routes.php`)
+- Created `tests/Feature/SiteReviews/` suite — 54 tests / 141 assertions
+
+**Changes Applied (Revision 2):**
+- `packages/marvel/src/Rest/Routes.php`: Added `->whereNumber('id')` to the 3 admin `{id}` routes (`show`/`approve`/`reject`) — BUG-SR-001 (non-numeric id → HTTP 500 TypeError)
+- `packages/marvel/src/Http/Controllers/SiteReviewController.php::index()`: `$limit = max(1, min((int) $request->query('limit', 15), 100))` — BUG-SR-002 (`?limit=-5` → SQL `LIMIT -5` → QueryException → 409; no upper bound)
+- Created `tests/Feature/SiteReviews/SiteReviewBugRegressionTest.php` (4 tests)
+- Full suite now 58 tests / 152 assertions all passing
+
+---
+
 ## Full Suite Status
 
 | Suite | Status | Date | Notes |
 |-------|--------|------|-------|
+| SiteReviewsSuite | PASS (58/58, 152 assertions) | 2026-08-10 | New suite — creation, public API, moderation, admin API, relationships + 4 bug-regression tests (Rev 2) |
 | WishlistApiTest | PASS (36/36, 106 assertions) | 2026-08-04 | New suite — auth, scoping, CRUD, toggle, in_wishlist, my-wishlists, validation, 405 guards |
 | RoleAndPermissionTest | PASS (32/32) | 2026-07-20 | Rev 2: 8 production bugs fixed — routes, display_name, missing fields, delete cascade, login |
 | FlashSaleReorderTest | PASS (3/3) | 2026-07-17 | Regression test for route ordering bug |
