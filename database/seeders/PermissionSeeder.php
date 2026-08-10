@@ -222,6 +222,16 @@ class PermissionSeeder extends Seeder
             'approve-site-reviews',
             'reject-site-reviews',
 
+            // 💱 Currencies
+            'view-currencies',
+            'create-currency',
+            'update-currency',
+            'delete-currency',
+            'view-exchange-rates',
+            'create-exchange-rate',
+            'update-exchange-rate',
+            'set-base-currency',
+
             //content-pages
             'view-content-pages',
             'create-content-pages',
@@ -396,6 +406,17 @@ class PermissionSeeder extends Seeder
             'view-abusive-reports',
             'accept-abusive-report',
             'reject-abusive-report',
+            'view-site-reviews',
+            'approve-site-reviews',
+            'reject-site-reviews',
+            'view-currencies',
+            'create-currency',
+            'update-currency',
+            'delete-currency',
+            'view-exchange-rates',
+            'create-exchange-rate',
+            'update-exchange-rate',
+            'set-base-currency',
         ];
 
         $viewPermission = [
