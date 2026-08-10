@@ -494,6 +494,7 @@ class UserController extends CoreController
             "email_verified" => $email_verified,
             "permissions" => $user->getAllPermissions()->pluck('name'),
             "role" => $user->roles->pluck('name'),
+            'expires_at' => $user->tokens()->latest()->first()?->expires_at,
         ];
 
         return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true, $data);
@@ -518,7 +519,8 @@ class UserController extends CoreController
             "token" => $user->createToken('auth_token')->plainTextToken,
             "permissions" => $user->getAllPermissions()->pluck('name'),
             "email_verified" => $email_verified,
-            "role" => $user->roles->pluck('name')
+            "role" => $user->roles->pluck('name'),
+            'expires_at' => $user->tokens()->latest()->first()?->expires_at,
         ];
         AdminLoggedIn::dispatch($user, request()->ip(), request()->userAgent());
         return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true, $data);
