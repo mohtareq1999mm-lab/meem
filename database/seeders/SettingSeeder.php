@@ -46,6 +46,13 @@ class SettingSeeder extends Seeder
             ]);
         }
 
+        $options = $setting->options ?? [];
+        $options['currency'] ??= 'USD';
+        $options['base_currency_code'] ??= 'USD';
+        $options['catalog_currency_code'] ??= 'USD';
+        $setting->options = $options;
+        $setting->save();
+
         $settingImages = File::exists(public_path('images/settings'))
             ? collect(File::files(public_path('images/settings')))
             : collect(File::exists(public_path('images/shops'))

@@ -62,6 +62,21 @@ return [
     'MESSAGE.SITE_REVIEW_REJECTED_SUCCESSFULLY' => 'تم رفض تقييم الموقع بنجاح',
     'ERROR.SITE_REVIEW_NOT_FOUND' => 'تقييم الموقع غير موجود',
 
+    // Currencies
+    'MESSAGE.CURRENCY_CREATED_SUCCESSFULLY' => 'تم إنشاء العملة بنجاح',
+    'MESSAGE.CURRENCY_UPDATED_SUCCESSFULLY' => 'تم تحديث العملة بنجاح',
+    'MESSAGE.CURRENCY_DELETED_SUCCESSFULLY' => 'تم حذف العملة بنجاح',
+    'MESSAGE.CURRENCY_RATE_CREATED_SUCCESSFULLY' => 'تم إنشاء سعر الصرف بنجاح',
+    'MESSAGE.CURRENCY_RATE_UPDATED_SUCCESSFULLY' => 'تم تحديث سعر الصرف بنجاح',
+    'MESSAGE.CURRENCY_RATE_DELETED_SUCCESSFULLY' => 'تم حذف سعر الصرف بنجاح',
+    'MESSAGE.SET_BASE_CURRENCY_SUCCESSFULLY' => 'تم تحديث العملة الأساسية بنجاح',
+    'ERROR.CURRENCY_NOT_FOUND' => 'العملة غير موجودة',
+    'ERROR.CURRENCY_RATE_NOT_FOUND' => 'سعر الصرف غير موجود',
+    'ERROR.CANNOT_DELETE_BASE_CURRENCY' => 'لا يمكن حذف العملة الأساسية',
+    'ERROR.CANNOT_DELETE_CURRENCY_IN_USE' => 'لا يمكن حذف عملة لديها أسعار صرف',
+    'ERROR.EXCHANGE_RATE_NOT_FOUND' => 'لا يوجد سعر صرف لهذه العملة في التاريخ المحدد أو قبله',
+    'ERROR.CURRENCY_INACTIVE' => 'لا يمكن تعيين العملات غير النشطة كعملة أساسية',
+
     'ERROR.USER_NOT_FOUND' => 'المستخدم غير موجود',
     'ERROR.TOKEN_NOT_FOUND' => 'الرمز غير موجود',
     'ERROR.NOT_AVAILABLE_FOR_BOOKING' => 'غير متاح للحجز',

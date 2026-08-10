@@ -88,6 +88,16 @@ final class Permission extends Enum
     public const APPROVE_SITE_REVIEWS = 'approve-site-reviews';
     public const REJECT_SITE_REVIEWS = 'reject-site-reviews';
 
+    // 💱 Currencies
+    public const VIEW_CURRENCIES = 'view-currencies';
+    public const CREATE_CURRENCY = 'create-currency';
+    public const UPDATE_CURRENCY = 'update-currency';
+    public const DELETE_CURRENCY = 'delete-currency';
+    public const VIEW_EXCHANGE_RATES = 'view-exchange-rates';
+    public const CREATE_EXCHANGE_RATE = 'create-exchange-rate';
+    public const UPDATE_EXCHANGE_RATE = 'update-exchange-rate';
+    public const SET_BASE_CURRENCY = 'set-base-currency';
+
     public const VIEW_CITY = 'view-city';
     public const CREATE_CITY = 'create-city';
     public const UPDATE_CITY = 'update-city';

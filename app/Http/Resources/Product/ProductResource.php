@@ -13,7 +13,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class ProductResource extends JsonResource
 {
-    use HasProductFilters;
+    use HasProductFilters, ConvertsProductPrice;
     /**
      * Transform the resource into an array.
      *
@@ -21,13 +21,17 @@ class ProductResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $convertedCurrentPrice = $this->convertCatalogPrice($this->current_price);
+
         return [
             'id'                     => $this->id,
             'name'                   => $this->getTranslation('name', app()->getLocale()),
             'slug'                   => $this->slug,
             'description'            => $this->getTranslation('description', app()->getLocale()),
             'price'                  => $this->roundMoney($this->price),
-            'current_price'          => $this->roundMoney($this->current_price),
+            'current_price'          => $convertedCurrentPrice,
+            'converted_current_price' => $convertedCurrentPrice,
+            'currency'               => $this->baseCurrency(),
             'discount_type'          => $this->discount_type,
             'discount_amount'        => $this->roundMoney($this->discount_amount),
             'start_date'             => $this->start_date,
@@ -75,10 +79,13 @@ class ProductResource extends JsonResource
     private function getVariants()
     {
         return $this->variations->map(function ($variant) {
+            $convertedCurrentPrice = $this->convertCatalogPrice($variant->current_price);
+
             return [
                 'id' => $variant->id,
                 'price' => $this->roundMoney($variant->price),
-                'current_price' => $this->roundMoney($variant->current_price),
+                'current_price' => $convertedCurrentPrice,
+                'converted_current_price' => $convertedCurrentPrice,
                 'quantity' => (int) $variant->quantity,
                 'height' => $variant->height,
                 'width' => $variant->width,

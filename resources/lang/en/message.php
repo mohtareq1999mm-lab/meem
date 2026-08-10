@@ -150,6 +150,21 @@ return [
     'MESSAGE.SITE_REVIEW_REJECTED_SUCCESSFULLY' => 'Site review rejected successfully',
     'ERROR.SITE_REVIEW_NOT_FOUND' => 'Site review not found',
 
+    // Currencies
+    'MESSAGE.CURRENCY_CREATED_SUCCESSFULLY' => 'Currency created successfully',
+    'MESSAGE.CURRENCY_UPDATED_SUCCESSFULLY' => 'Currency updated successfully',
+    'MESSAGE.CURRENCY_DELETED_SUCCESSFULLY' => 'Currency deleted successfully',
+    'MESSAGE.CURRENCY_RATE_CREATED_SUCCESSFULLY' => 'Exchange rate created successfully',
+    'MESSAGE.CURRENCY_RATE_UPDATED_SUCCESSFULLY' => 'Exchange rate updated successfully',
+    'MESSAGE.CURRENCY_RATE_DELETED_SUCCESSFULLY' => 'Exchange rate deleted successfully',
+    'MESSAGE.SET_BASE_CURRENCY_SUCCESSFULLY' => 'Base currency updated successfully',
+    'ERROR.CURRENCY_NOT_FOUND' => 'Currency not found',
+    'ERROR.CURRENCY_RATE_NOT_FOUND' => 'Exchange rate not found',
+    'ERROR.CANNOT_DELETE_BASE_CURRENCY' => 'The base currency cannot be deleted',
+    'ERROR.CANNOT_DELETE_CURRENCY_IN_USE' => 'Cannot delete a currency that has exchange rates',
+    'ERROR.EXCHANGE_RATE_NOT_FOUND' => 'No exchange rate found for this currency on or before the selected date',
+    'ERROR.CURRENCY_INACTIVE' => 'Inactive currencies cannot be set as the base currency',
+
     // General Errors
     'ERROR.NOT_FOUND' => 'Not found',
     'ERROR.COULD_NOT_CREATE_THE_RESOURCE' => 'Could not create the resource',

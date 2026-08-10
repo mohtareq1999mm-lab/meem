@@ -4,6 +4,7 @@ namespace App\Services\Checkout;
 
 use App\DTOs\CheckoutTotals;
 use App\Events\OrderCreated;
+use App\Services\Currency\CurrencyService;
 use Illuminate\Support\Facades\Schema;
 use Marvel\Database\Models\Cart;
 use Marvel\Database\Models\Order;
@@ -13,6 +14,7 @@ class OrderCreationService
 {
     public function __construct(
         private \App\Services\General\PromotionService $promotionService,
+        private CurrencyService $currencyService,
     ) {}
 
     public function findPendingOrderForUser(int $userId): ?Order
@@ -28,6 +30,8 @@ class OrderCreationService
     {
         $shippingPrice = $shippingPrice ?? 0;
         $totalPrice = round((float) $checkoutTotals->finalTotal + $shippingPrice + ($fastShippingFee ?? 0), 2);
+
+        $currencySnapshot = $this->resolveCurrencySnapshot($totalPrice);
 
         $pickupLocationId = $orderData['pickup_location_id'] ?? null;
         $pickupSnapshot = $this->resolvePickupLocationSnapshot($pickupLocationId);
@@ -65,6 +69,16 @@ class OrderCreationService
             'status' => Order::ORDER_STATUS_PENDING,
         ];
 
+        if (Schema::hasColumn('orders', 'currency_code')) {
+            $orderDataForCreate = array_merge($orderDataForCreate, [
+                'currency_code' => $currencySnapshot['currency_code'],
+                'base_currency_code' => $currencySnapshot['base_currency_code'],
+                'currency_rate' => $currencySnapshot['currency_rate'],
+                'currency_rate_date' => $currencySnapshot['currency_rate_date'],
+                'converted_total_price' => $currencySnapshot['converted_total_price'],
+            ]);
+        }
+
         if (Schema::hasColumn('orders', 'payment_status')) {
             $orderDataForCreate['payment_status'] = Order::PAYMENT_STATUS_PENDING;
         }
@@ -86,10 +100,12 @@ class OrderCreationService
         $shippingPrice = $shippingPrice ?? 0;
         $totalPrice = round((float) $checkoutTotals->finalTotal + $shippingPrice + ($fastShippingFee ?? 0), 2);
 
+        $currencySnapshot = $this->resolveCurrencySnapshot($totalPrice);
+
         $pickupLocationId = $orderData['pickup_location_id'] ?? $order->pickup_location_id;
         $pickupSnapshot = $this->resolvePickupLocationSnapshot($pickupLocationId);
 
-        $order->update([
+        $updateData = [
             'governorate_id' => $governorateId ?? $orderData['governorate_id'] ?? $order->governorate_id,
             'name' => $orderData['name'] ?? $order->name,
             'user_phone' => $orderData['user_phone'] ?? $order->user_phone,
@@ -118,7 +134,19 @@ class OrderCreationService
             'promotion_code' => $checkoutTotals->promotionCode() ?? $order->promotion_code,
             'promotion_type' => $checkoutTotals->promotionType() ?? $order->promotion_type,
             'promotion_discount' => $checkoutTotals->promotionDiscount ?? $order->promotion_discount,
-        ]);
+        ];
+
+        if (Schema::hasColumn('orders', 'currency_code')) {
+            $updateData = array_merge($updateData, [
+                'currency_code' => $currencySnapshot['currency_code'],
+                'base_currency_code' => $currencySnapshot['base_currency_code'],
+                'currency_rate' => $currencySnapshot['currency_rate'],
+                'currency_rate_date' => $currencySnapshot['currency_rate_date'],
+                'converted_total_price' => $currencySnapshot['converted_total_price'],
+            ]);
+        }
+
+        $order->update($updateData);
 
         return $order->fresh();
     }
@@ -201,6 +229,32 @@ class OrderCreationService
             ]);
         }
     }
+
+    private function resolveCurrencySnapshot(float $totalPrice): array
+    {
+        if (!Schema::hasColumn('orders', 'currency_code')) {
+            return [
+                'currency_code' => null,
+                'base_currency_code' => null,
+                'currency_rate' => null,
+                'currency_rate_date' => null,
+                'converted_total_price' => $totalPrice,
+            ];
+        }
+
+        $catalogCode = $this->currencyService->getCatalogCode();
+        $baseCode = $this->currencyService->getBaseCode();
+        $conversion = $this->currencyService->convert($totalPrice, $catalogCode, $baseCode);
+
+        return [
+            'currency_code' => $catalogCode,
+            'base_currency_code' => $baseCode,
+            'currency_rate' => $conversion->rate,
+            'currency_rate_date' => $conversion->effectiveDate,
+            'converted_total_price' => $conversion->convertedAmount,
+        ];
+    }
+
 
     private function resolvePickupLocationSnapshot(?int $pickupLocationId): array
     {

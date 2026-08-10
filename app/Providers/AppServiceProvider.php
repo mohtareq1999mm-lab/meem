@@ -23,6 +23,7 @@ class AppServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->singleton(\App\Contexts\ChannelContext::class);
+        $this->app->singleton(\App\Services\Currency\CurrencyService::class);
 
         $this->app->bind(FrontendWebhookDispatcher::class, FrontendWebhookService::class);
 

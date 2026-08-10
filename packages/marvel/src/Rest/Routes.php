@@ -32,6 +32,8 @@ use Marvel\Http\Controllers\UserController;
 use Marvel\Http\Controllers\WishlistController;
 use Marvel\Http\Controllers\ContentPageController;
 use Marvel\Http\Controllers\CountryController;
+use Marvel\Http\Controllers\CurrencyController;
+use Marvel\Http\Controllers\CurrencyRateController;
 use Marvel\Http\Controllers\FastShippingController;
 use Marvel\Http\Controllers\GovernorateController;
 use Marvel\Http\Controllers\NotificationController;
@@ -180,6 +182,13 @@ Route::middleware(['auth:sanctum', 'throttle:admin'])->group(function () {
     Route::get('site-reviews/{id}', [SiteReviewController::class, 'show'])->whereNumber('id');
     Route::patch('site-reviews/{id}/approve', [SiteReviewController::class, 'approve'])->whereNumber('id');
     Route::patch('site-reviews/{id}/reject', [SiteReviewController::class, 'reject'])->whereNumber('id');
+
+    //======================== currencies ========================/
+    Route::apiResource('currencies', CurrencyController::class)->whereNumber('currency');
+    Route::post('currencies/{id}/set-base', [CurrencyController::class, 'setBase'])->whereNumber('id');
+
+    //======================== currency rates ========================/
+    Route::apiResource('currency-rates', CurrencyRateController::class)->whereNumber('currency_rate');
 
     //======================== products ========================/
     Route::post('products/bulk-delete', [ProductController::class, 'destroyBulk']);

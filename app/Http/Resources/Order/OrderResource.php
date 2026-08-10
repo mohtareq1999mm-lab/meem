@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Order;
 
+use App\Services\Currency\CurrencyService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Marvel\Http\Resources\Order\OrderTransactionResource;
@@ -26,6 +27,10 @@ class OrderResource extends JsonResource
             'coupon_discount_type' => $this->coupon_discount_type,
             'promotion_discount' => $this->roundMoney($this->promotion_discount),
             'total' => $this->roundMoney($this->total_price),
+            'converted_total' => $this->roundMoney($this->converted_total_price),
+            'currency' => $this->currency_code ?? $this->fallbackBaseCode(),
+            'base_currency' => $this->base_currency_code ?? $this->fallbackBaseCode(),
+            'exchange_rate' => $this->currency_rate,
             'promotion' => $this->promotion_id ? [
                 'id' => $this->promotion_id,
                 'type' => $this->promotion_type,
@@ -57,6 +62,11 @@ class OrderResource extends JsonResource
             'order_has_invoice' => $this->latestInvoice !== null,
             'invoice_id' => $this->latestInvoice?->uuid,
         ];
+    }
+
+    private function fallbackBaseCode(): ?string
+    {
+        return app(CurrencyService::class)->getBaseCode();
     }
 
     private function resolvePickupLocation(): ?array

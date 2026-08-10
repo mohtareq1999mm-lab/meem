@@ -8,7 +8,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class ProductMiniResource extends JsonResource
 {
-    use HasProductFilters;
+    use HasProductFilters, ConvertsProductPrice;
     /**
      * Transform the resource into an array.
      *
@@ -17,13 +17,17 @@ class ProductMiniResource extends JsonResource
 
     public function toArray($request): array
     {
+        $convertedCurrentPrice = $this->convertCatalogPrice($this->current_price);
+
         return [
             'id' => $this->id,
             'name' => $this->getTranslation('name', app()->getLocale()),
             'slug' => $this->slug,
             'price' => $this->roundMoney($this->price),
             'has_variants' => $this->product_type !== 'simple' ? true : false,
-            'current_price' => $this->roundMoney($this->current_price),
+            'current_price' => $convertedCurrentPrice,
+            'converted_current_price' => $convertedCurrentPrice,
+            'currency' => $this->baseCurrency(),
             'quantity' => (int) $this->stock_quantity,
             'in_stock'               =>(bool) $this->in_stock,
             'discount_active' => (bool) $this->discount_active,

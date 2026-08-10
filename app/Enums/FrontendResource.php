@@ -29,6 +29,7 @@ enum FrontendResource: string
     case ORDERS = 'orders';
     case DASHBOARD = 'dashboard';
     case SITE_REVIEWS = 'site_reviews';
+    case CURRENCIES = 'currencies';
     public static function values(): array
     {
         return array_map(fn (self $case) => $case->value, self::cases());

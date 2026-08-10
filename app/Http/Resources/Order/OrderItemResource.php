@@ -18,12 +18,48 @@ class OrderItemResource extends JsonResource
             'quantity' => (int) $this->product_quantity,
             'unit_price' => $this->roundMoney($this->product_price),
             'total_price' => $this->roundMoney($this->product_total_price),
+            'converted_unit_price' => $this->convertWithOrderRate($this->product_price),
+            'converted_total_price' => $this->convertWithOrderRate($this->product_total_price),
             'promotion_discount_amount' => $this->roundMoney($this->promotion_discount_amount),
             'is_gift' => (bool) ($this->is_gift ?? false),
             'promotion_id' => $this->promotion_id,
             'product' => $this->resolveProduct($request),
             'variant' => $this->resolveVariant($request),
         ];
+    }
+
+    /**
+     * @return string|null
+     */
+    private function orderRate(): ?string
+    {
+        if (!$this->relationLoaded('order') || !$this->order) {
+            return null;
+        }
+
+        $rate = $this->order->currency_rate;
+
+        if ($rate === null || $rate === '') {
+            return null;
+        }
+
+        return (string) $rate;
+    }
+
+    private function convertWithOrderRate($value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $amount = (float) $value;
+        $rate = $this->orderRate();
+
+        if ($rate === null || (float) $rate === 1.0) {
+            return round($amount, 2);
+        }
+
+        return round($amount * (float) $rate, 2);
     }
 
     /**

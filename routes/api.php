@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\General\BannerController;
 use App\Http\Controllers\Api\General\BrandController;
 use App\Http\Controllers\Api\General\CategoryController;
+use App\Http\Controllers\Api\Currency\CurrencyController;
 use App\Http\Controllers\Api\General\CityController;
 use App\Http\Controllers\Api\General\ContentPageController;
 use App\Http\Controllers\Api\General\CountryController;
@@ -95,6 +96,8 @@ Route::prefix('v1/general')->group(function () {
         Route::get('fast-shipping/status', [FastShippingController::class, 'status']);
         //============================ site reviews ========================/
         Route::get('site-reviews', [SiteReviewController::class, 'index']);
+        //============================ currencies ========================/
+        Route::get('currencies', [CurrencyController::class, 'index']);
     });
 
     Route::middleware(['api', 'auth:sanctum', 'throttle:authenticated'])->group(function () {
