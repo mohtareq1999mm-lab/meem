@@ -81,7 +81,7 @@ class SettingsController extends CoreController
                 throw new HttpException(422, __('message.ERROR.FAVICON_UPLOAD_FAILED'));
             }
         }
-        $this->flushCache(FrontendResource::SETTINGS->value);
+        $this->flushTag(FrontendResource::SETTINGS->value);
         $settings = Settings::first();
         return $this->apiResponse(SETTINGS_UPDATED_SUCCESSFULLY, 200, true, SettingResource::make($settings));
     }
