@@ -50,6 +50,7 @@ class SettingSeeder extends Seeder
         $options['currency'] ??= 'USD';
         $options['base_currency_code'] ??= 'USD';
         $options['catalog_currency_code'] ??= 'USD';
+        $options['currency_selection_enabled'] ??= false;
         $setting->options = $options;
         $setting->save();
 

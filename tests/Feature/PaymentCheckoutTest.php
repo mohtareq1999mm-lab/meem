@@ -96,7 +96,7 @@ class PaymentCheckoutTest extends TestCase
             $table->softDeletes();
         });
 
-Schema::create('users', function (Blueprint $table) {
+        Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
@@ -856,7 +856,7 @@ Schema::create('users', function (Blueprint $table) {
             ],
         ]);
 
-        $response = $this->postJson(self::PREFIX . '/general/fast-shipping/checkout', [
+$response = $this->postJson(self::PREFIX . '/general/fast-shipping/checkout', [
             'name' => 'Test User',
             'user_phone' => '01000000000',
             'user_email' => 'test@test.com',

@@ -6,7 +6,7 @@
 
 Fetch platform settings. Returns full settings object with site info, SEO, social, contact, media, options.
 
-**Authentication:** Public (no auth required)
+**Authentication:** Sanctum token with `view-settings` permission (route is inside the `auth:sanctum` + `throttle:admin` group). For the public, unauthenticated settings endpoint see `GET /api/v1/general/settings`.
 
 **Query Parameters:** None
 
@@ -33,6 +33,7 @@ Fetch platform settings. Returns full settings object with site info, SEO, socia
         "phone": "+201001234567",
         "fast_shipping_page_publish": 1,
         "minimumOrderAmount": 100,
+        "currency_selection_enabled": false,
         "options": {
             "minimumOrderAmount": 100,
             "fast_shipping": {
@@ -47,11 +48,13 @@ Fetch platform settings. Returns full settings object with site info, SEO, socia
 }
 ```
 
+> **Public variant:** `GET /api/v1/general/settings` (route name `settings.front`) returns the same `SettingResource` shape, including top-level `currency_selection_enabled`, but the translatable fields (`site_name`, `site_desc`, `meta_desc`, `site_copy_right`) are returned as a **single locale string** instead of `{ar, en}` objects.
+
 ---
 
 ### PUT /api/v1/settings
 
-Update platform settings. Replaces all provided fields. Super admin only.
+Update platform settings. Replaces all provided fields. Super admin only. Both `view-settings`/`update-settings` permissions are enforced via the route middleware group.
 
 **Authentication:** Sanctum token with `update-settings` permission
 
@@ -70,6 +73,7 @@ Update platform settings. Replaces all provided fields. Super admin only.
     "youtube": "https://youtube.com/...",
     "phone": "+201001234567",
     "fast_shipping_page_publish": "1",
+    "currency_selection_enabled": false,
     "options": {
         "minimumOrderAmount": 100,
         "fast_shipping": {
@@ -105,7 +109,11 @@ Update platform settings. Replaces all provided fields. Super admin only.
 | youtube | required, url |
 | phone | required, string |
 | fast_shipping_page_publish | required, in:0,1 |
+| minimum_order_amount | sometimes, numeric, min:0 |
+| currency_selection_enabled | sometimes, boolean |
 | options | sometimes, array |
+
+> **`currency_selection_enabled` behavior:** when present, it is **merged** into the stored `options` (i.e. it is set to the boolean value while preserving other option keys such as `fast_shipping`), it resets the `CurrencyService` effective-currency memo, and the `settings` cache tag is flushed. Omitting the field leaves the stored value untouched.
 
 **Response 200:**
 ```json

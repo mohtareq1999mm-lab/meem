@@ -22,6 +22,7 @@
 - [ ] Logo and favicon image upload
 - [ ] fast_shipping_page_publish toggle
 - [ ] minimumOrderAmount number input
+- [ ] **Currency selection toggle** — `currency_selection_enabled` boolean switch (maps to `PUT /api/v1/settings`; when off, the storefront currency selector is hidden)
 - [ ] Fast shipping sub-section (enabled, duration, fee, hours)
 - [ ] **Loading state:** Skeleton form
 - [ ] **Error state:** Show error alert

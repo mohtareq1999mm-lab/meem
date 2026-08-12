@@ -1,5 +1,15 @@
 # Changelog - Currency Feature
 
+## [1.1.0] — 2026-08-12
+
+### Added
+- Public `POST /api/v1/general/currencies/select` endpoint (`SelectCurrencyRequest`) that stores a user currency preference (`user_preferences`) and a `guest_currency` cookie, then returns `CURRENCY_SELECTED_SUCCESSFULLY` with a `CurrencyResource`.
+- `UserCurrencyPreferenceService` — read/write/validate user preference + guest cookie.
+- `CurrencyService::getEffectiveCode()` / `getEffectiveCurrency()` / `isCurrencySelectionEnabled()` / `forgetEffectiveCode()`.
+
+### Changed
+- `CurrencyService::getEffectiveCode()` — when the setting `currency_selection_enabled` is `false` (default) the effective currency now always resolves to the **catalog code**, ignoring any stored user preference or guest cookie. When `true`, it resolves `user preference > guest cookie > catalog code`.
+
 ## [Unreleased]
 
 ### Added

@@ -89,6 +89,7 @@
 - Cache invalidated on any currency/rate change
 
 ### US-007: Payment & Invoice Currency Sourcing
+
 **As** the system
 **I want** all payment artifacts to quote the order's base currency
 **So that** invoices, QR codes, gateway invoices/refunds and reconciliations agree with the order
@@ -96,6 +97,30 @@
 **Acceptance Criteria:**
 - MyFatoorah invoice `DisplayCurrencyIso`, refunds, payment transactions, cashier-QR payload, invoice snapshots and reconciliation `compareCurrency` resolve to `base_currency_code ?? currency_code ?? config('payment.default_currency')`
 - Legacy orders (no currency columns) still work via the config fallback
+
+### US-008: Public Currency Selection
+
+**As** a storefront visitor
+**I want** to choose a display currency
+**So that** I can view prices in my preferred currency
+
+**Acceptance Criteria:**
+- `POST /api/v1/general/currencies/select` accepts `currency_code` (must exist and be active)
+- Authenticated users' selection is stored as a preference; guests get a `guest_currency` cookie
+- Returns `CURRENCY_SELECTED_SUCCESSFULLY` with the selected `CurrencyResource`
+- The selection only takes effect when the admin setting `currency_selection_enabled` is `true`; otherwise the effective currency stays the catalog code
+
+### US-009: Currency Selection Toggle (Settings)
+
+**As** an admin
+**I want** to enable/disable customer currency selection
+**So that** I control whether storefront visitors can switch display currency
+
+**Acceptance Criteria:**
+- `PUT /api/v1/settings` accepts `currency_selection_enabled` (boolean)
+- It is merged into `options` without dropping other options and flushes the settings cache / effective-currency memo
+- Both admin and public settings responses expose a top-level `currency_selection_enabled` boolean
+- When `false` (default), effective currency always resolves to the catalog code
 
 ## Bug Tickets
 

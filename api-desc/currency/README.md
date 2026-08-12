@@ -9,7 +9,7 @@ Multi-Currency Management (Admin CRUD, Exchange Rates, Conversion Engine, Order/
 The Currency module introduces full multi-currency support to the e-commerce platform:
 
 - **Admin API** (`/api/v1/currencies`, `/api/v1/currency-rates`) — full CRUD for currencies and exchange rates, plus setting a base **or catalog** currency. Permission-gated.
-- **Public API** (`/api/v1/general/currencies`) — read-only list of active currencies for storefronts, cached.
+- **Public API** (`/api/v1/general/currencies`) — read-only list of active currencies for storefronts, cached; `POST /currencies/select` persists a user/guest currency preference.
 - **Conversion engine** — bcmath-based, database-backed rate resolution with historical lookups.
 - **Price snapshots** — orders record the currency snapshot at creation time (base currency + catalog code); products, carts and orders expose catalog-to-base converted prices.
 - **Payment sourcing** — gateways, QR payloads, transactions, invoice snapshots and reconciliation quote the order's base currency.
@@ -23,7 +23,7 @@ Currencies are fully translatable (name, symbol, country_name in en/ar), support
     |                                           |
     |--- GET/POST/PUT/DELETE /api/v1/currencies         |
     |--- POST /api/v1/currencies/{id}/set-base          |--- GET /api/v1/general/currencies
-    |--- POST /api/v1/currencies/{id}/set-catalog       |
+    |--- POST /api/v1/currencies/{id}/set-catalog       |--- POST /api/v1/general/currencies/select
     |--- GET/POST/PUT/DELETE /api/v1/currency-rates     |
     v                                           v
 [Marvel CurrencyController / CurrencyRateController]   [App\CurrencyController (public)]
@@ -69,6 +69,7 @@ Currencies are fully translatable (name, symbol, country_name in en/ar), support
 | Method | URI | Controller Method | Permission | Notes |
 |--------|-----|-------------------|------------|-------|
 | GET | `/currencies` | `index` | — | Active currencies only, tag-cached 4h |
+| POST | `/currencies/select` | `select` | — | Persist user/guest currency preference + guest cookie; gated by `currency_selection_enabled` |
 
 ## Key Files
 
@@ -80,6 +81,8 @@ Currencies are fully translatable (name, symbol, country_name in en/ar), support
 | Service (singleton) | `app/Services/Currency/CurrencyService.php` |
 | Conversion Service | `app/Services/Currency/CurrencyConversionService.php` |
 | Rate Service | `app/Services/Currency/CurrencyRateService.php` |
+| Preference Service | `app/Services/Currency/UserCurrencyPreferenceService.php` |
+| Select Currency Request | `app/Http/Requests/SelectCurrencyRequest.php` |
 | Model | `app/Models/Currency.php` |
 | Model | `app/Models/CurrencyRate.php` |
 | Resource | `app/Http/Resources/Currency/CurrencyResource.php` |
@@ -96,7 +99,7 @@ Currencies are fully translatable (name, symbol, country_name in en/ar), support
 | Enum | `packages/marvel/src/Enums/Permission.php` (lines 92–99) |
 | Constants | `packages/marvel/config/constants.php` (lines 525–566) |
 | Admin Routes | `packages/marvel/src/Rest/Routes.php` (lines 186–191) |
-| Public Routes | `routes/api.php` (line 100) |
+| Public Routes | `routes/api.php` (lines 100-101) |
 | Migration | `database/migrations/2026_08_10_000002_create_currencies_table.php` |
 | Migration | `database/migrations/2026_08_10_000003_create_currency_rates_table.php` |
 | Migration | `database/migrations/2026_08_10_000004_add_currency_columns_to_orders_table.php` |

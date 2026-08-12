@@ -9,7 +9,7 @@ class OrderProduct extends Model
 {
     protected $table = 'order_products';
 
-    public $fillable = [
+public $fillable = [
         'order_id',
         'product_id',
         'product_variant_id',
@@ -24,6 +24,10 @@ class OrderProduct extends Model
         'product_flash_sale_price',
         'is_gift',
         'promotion_id',
+        'currency_code',
+        'catalog_currency_code',
+        'catalog_price',
+        'catalog_total_price',
     ];
 
     protected $casts = [
@@ -34,6 +38,8 @@ class OrderProduct extends Model
         'product_total_price' => 'float',
         'product_discount_price' => 'float',
         'product_flash_sale_price' => 'float',
+        'catalog_price' => 'float',
+        'catalog_total_price' => 'float',
     ];
 
 

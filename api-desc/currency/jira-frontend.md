@@ -67,6 +67,7 @@
 - Delete is a hard delete with confirmation
 
 ### FE-US-005: Storefront Currency Selector
+
 **As** a storefront visitor
 **I want** a currency selector
 **So that** I can view prices in my currency
@@ -74,6 +75,8 @@
 **Acceptance Criteria:**
 - Fetches cached `GET /api/v1/general/currencies` (active only, no auth)
 - Renders code + symbol from the flat list
+- Selecting a currency calls `POST /api/v1/general/currencies/select { currency_code }` to persist the choice (user preference / guest cookie)
+- When the admin setting `currency_selection_enabled` is `false`, the selector is hidden/disabled (selection is ignored)
 - Selecting a currency refreshes product prices client-side
 
 ---
@@ -107,3 +110,4 @@
 | PUT | `/api/v1/currency-rates/{id}` | UPDATE_CURRENCY_RATE | Rate form |
 | DELETE | `/api/v1/currency-rates/{id}` | DELETE_CURRENCY_RATE | Rate delete |
 | GET | `/api/v1/general/currencies` | Public | Storefront selector |
+| POST | `/api/v1/general/currencies/select` | Public | Storefront selector (persist selection) |

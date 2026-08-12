@@ -419,10 +419,52 @@ Site Reviews (Revision 2 — API investigation + bug fixes)
 
 ---
 
+## Currency Selection Enabled
+
+**Changed Feature:**
+Currency Selection Enabled (Revision 1)
+
+**Affected Features:**
+- Settings — `settings.options.currency_selection_enabled` added; `SettingsRequest` boolean rule; `SettingsController::update()` merge; `SettingResource` top-level field
+- CurrencyService — `getEffectiveCode()` gated by `isCurrencySelectionEnabled()` when disabled
+- Cart / Products — effective-currency-driven prices
+- Checkout / Orders — order currency snapshot at creation
+
+**Regression:**
+
+| Suite | Status | Reason |
+|-------|--------|--------|
+| CurrencySelectionEnabledTest | PASS (17/17, 37 assertions) | New suite — service flag, effective-currency gating, admin CRUD, validation, cache flush, isolation |
+| UserCurrencyPreferenceTest | PASS | Existing suite — enabled-path resolution preserved via `CurrencyTestCase` default `true` |
+| ProductCurrencyTest | PASS | Existing suite |
+| OrderCurrencyTest | PASS | Existing suite |
+| OrderItemSnapshotTest | PASS | Existing suite |
+| PaymentCurrencyTest | PASS | Existing suite |
+| ProductCacheTest | PASS | Existing suite |
+| SettingsCrudTest | PASS (3/3) | Existing suite |
+| SettingsValidationTest | PASS (6/6) | Existing suite |
+| SettingsRegressionTest | PASS (10/10) | Existing suite |
+| SettingsAuthenticationTest | 1 PRE-EXISTING FAILURE | `guests_can_view_settings` — expects guest 200 on auth-protected `/api/v1/settings`; fails identically without this feature's changes |
+| FinancialDeepAuditTest | 1 PRE-EXISTING FAILURE | `settings_api_returns_minimum_order_amount` — same guest-401 expectation issue; unrelated to this feature |
+
+**Combined Currency + Settings + Related Filter:** 183 passed / 2 failed (574 assertions) — the 2 failures are pre-existing and unrelated (verified by re-running them against the codebase without this feature's changes).
+
+**Changes Applied (Revision 1):**
+- `app/Services/Currency/CurrencyService.php`: Added memoized `isCurrencySelectionEnabled()` reading `settings.options.currency_selection_enabled` (default `false`); `getEffectiveCode()` returns catalog code when disabled; `forgetEffectiveCode()` resets the memoized flag
+- `packages/marvel/src/Http/Requests/SettingsRequest.php`: Added `currency_selection_enabled => ['sometimes','boolean']`
+- `packages/marvel/src/Http/Controllers/SettingsController.php`: Merges top-level `currency_selection_enabled` into `settings.options` (preserving base/catalog/currency options); calls `CurrencyService::forgetEffectiveCode()` after the update
+- `packages/marvel/src/Http/Resources/SettingResource.php`: Exposes top-level `currency_selection_enabled` (default `false`)
+- `database/seeders/SettingSeeder.php`: Defaults `currency_selection_enabled => false`
+- `tests/Feature/Currency/CurrencyTestCase.php`: `createSettings()` defaults `currency_selection_enabled => true` to preserve the existing suite's enabled-path tests
+- Created `tests/Feature/Currency/CurrencySelectionEnabledTest.php` (17 tests / 37 assertions)
+
+---
+
 ## Full Suite Status
 
 | Suite | Status | Date | Notes |
 |-------|--------|------|-------|
+| CurrencySelectionEnabledTest | PASS (17/17, 37 assertions) | 2026-08-12 | New suite — currency_selection_enabled flag, effective-currency gating, admin CRUD, validation, cache flush, isolation |
 | SiteReviewsSuite | PASS (58/58, 152 assertions) | 2026-08-10 | New suite — creation, public API, moderation, admin API, relationships + 4 bug-regression tests (Rev 2) |
 | WishlistApiTest | PASS (36/36, 106 assertions) | 2026-08-04 | New suite — auth, scoping, CRUD, toggle, in_wishlist, my-wishlists, validation, 405 guards |
 | RoleAndPermissionTest | PASS (32/32) | 2026-07-20 | Rev 2: 8 production bugs fixed — routes, display_name, missing fields, delete cascade, login |

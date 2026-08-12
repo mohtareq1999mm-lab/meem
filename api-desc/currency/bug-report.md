@@ -91,3 +91,21 @@
 - **Description:** `POST /currencies/{id}/set-catalog` was reachable by any authenticated admin (no Spatie middleware), unlike `set-base`.
 - **Fix:** Add `SET_CATALOG_CURRENCY` permission + middleware + seeder entries (admin + store owner lists).
 - **Status:** **FIXED**. Regression: `CatalogCurrencyTest::set_catalog_requires_permission`.
+
+## Issue 14 (DOC): CurrencyDocs Claimed Standard Pagination Envelope
+
+- **File:** `api-desc/currency/api.md`
+- **Description:** Admin list docs described Laravel's default `{data, meta, links}` pagination, but `CurrencyController::index()` / `CurrencyRateController::index()` return a **custom flattened envelope** (`data, page, current_page, from, to, last_page, path, per_page, total, next_page_url, prev_page_url, last_page_url, first_page_url`).
+- **Status:** Documentation corrected (no code change).
+
+## Issue 15 (DOC): Rate Docs Claimed Nested `currency` in Response
+
+- **File:** `api-desc/currency/api.md`
+- **Description:** `CurrencyRateResource` does **not** serialize the `currency` relation (only `id, currency_id, exchange_rate, effective_date, created_at`), but docs implied a nested `currency` object.
+- **Status:** Documentation corrected (no code change).
+
+## Issue 16 (DOC): Admin `GET /api/v1/settings` Auth Status
+
+- **File:** `api-desc/currency/*`, `api-desc/setting/*`
+- **Description:** Docs described `GET /api/v1/settings` as public. In reality it sits inside the `auth:sanctum` group (`Routes.php:114`); the public endpoint is `GET /api/v1/general/settings`.
+- **Status:** Documentation corrected (no code change).

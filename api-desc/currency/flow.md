@@ -302,3 +302,55 @@ App\CurrencyController@index()
   |
   (Cache invalidated on any currency/rate write via invalidatePriceCaches)
 ```
+
+## Flow 10: Select Currency (Public)
+
+```
+Storefront visitor
+  |
+  POST /api/v1/general/currencies/select   { currency_code: "KWD" }
+  |                                          [no auth, throttle:public-api]
+  v
+SelectCurrencyRequest
+  +-- validate: required, string, max:3,
+  |             exists(currencies,code) where is_active = true
+  |     Fail? -> 422
+  |
+  v
+App\CurrencyController@select()
+  |
+  +-- code = strtoupper("kwd") -> "KWD"
+  +-- user = auth('sanctum')->user() ?? auth()->user()
+  +-- if (user)  UserCurrencyPreferenceService::setUserPreference(user, code)
+  +-- UserCurrencyPreferenceService::setGuestCurrencyCode(code, request)   [guest_currency cookie]
+  +-- app(CurrencyService::class)->forgetEffectiveCode()
+  |
+  v
+CurrencyResource::make(Currency where code = 'KWD')
+  |
+  v
+{ status:200, message: 'Currency updated successfully', success:true, data }
+  |
+  (preference/cookie only honored when settings currency_selection_enabled = true)
+```
+
+## Flow 11: Effective Currency Resolution
+
+```
+Any display/checkout price call
+  |
+  v
+CurrencyService::getEffectiveCode()
+  |
+  +-- memoized? -> return
+  |
+  +-- isCurrencySelectionEnabled() ?      [settings.options.currency_selection_enabled, default false]
+  |     NO  -> effectiveCode = getCatalogCode()      [stored preference/cookie IGNORED]
+  |     YES v
+  |       user preference (validated active)? -> effectiveCode = preference
+  |       guest cookie (validated active)?      -> effectiveCode = guest cookie
+  |       otherwise                              -> effectiveCode = catalog code
+  |
+  v
+effectiveCode -> getEffectiveCurrency() -> Currency lookup
+```

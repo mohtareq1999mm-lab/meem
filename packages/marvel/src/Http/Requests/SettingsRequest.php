@@ -48,6 +48,7 @@ class SettingsRequest extends FormRequest
             'phone' => ['sometimes', 'string'],
             'fast_shipping_page_publish' => ['sometimes', 'in:0,1'],
             'minimum_order_amount' => ['sometimes', 'numeric', 'min:0'],
+            'currency_selection_enabled' => ['sometimes', 'boolean'],
             'options' => ['sometimes', 'array'],
         ];
     }

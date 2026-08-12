@@ -205,7 +205,47 @@ Production Ready (Phase 1)
 
 ---
 
-## Cart
+## Currency Selection Enabled
+
+**Purpose:**
+Admin-controlled flag that determines whether customers may select their display/checkout currency. When disabled (default), the effective currency always resolves to the catalog currency, ignoring stored user preferences and guest cookies. When enabled, the existing resolution applies (user preference > guest cookie > catalog).
+
+**Dependency Confidence:**
+All dependencies verified from source code.
+
+**Depends On:**
+- Settings — `settings.options.currency_selection_enabled` stored in the existing Marvel `Settings` model (Verified)
+- CurrencyService — `getEffectiveCode()` gated by `isCurrencySelectionEnabled()`; base/catalog codes untouched (Verified)
+- UserCurrencyPreferenceService — user preference + guest cookie resolution reused when enabled (Verified)
+- Authentication — Sanctum; admin update guarded by `Permission::UPDATE_SETTINGS`, read by `Permission::VIEW_SETTINGS` (Verified)
+- FrontendResource settings cache — `SettingsController::update()` flushes `SETTINGS` tag (Verified)
+
+**Used By:**
+- Frontend currency selector — public `GET /api/v1/general/settings` exposes `currency_selection_enabled` via `SettingResource` (Verified)
+- Cart / Product pricing — effective currency drives converted prices (Verified)
+- Checkout / Orders — `OrderCreationService` snapshots `getEffectiveCode()` at creation (Verified)
+
+**Regression Required When Changed:**
+- CurrencySelectionEnabledTest
+- UserCurrencyPreferenceTest
+- ProductCurrencyTest
+- OrderCurrencyTest
+- OrderItemSnapshotTest
+- PaymentCurrencyTest
+- ProductCacheTest
+- SettingsCrudTest / SettingsValidationTest
+
+**Blocking Dependencies:**
+None
+
+**Current Status:**
+Production Ready
+
+**Notes:**
+- Rev 1 (2026-08-12): Default `false` in `SettingSeeder`; `CurrencyTestCase::createSettings()` defaults to `true` to preserve the pre-existing currency suite's enabled-path behavior.
+- Does NOT modify `base_currency_code`, `catalog_currency_code`, user preferences, exchange rates, or existing orders. Payment gateway currency is not coupled to this flag.
+
+---
 
 **Purpose:**
 Manage shopping cart — add, remove, update items, calculate totals.

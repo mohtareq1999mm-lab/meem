@@ -267,21 +267,22 @@ private function resolveCurrencySnapshot(float $totalPrice): array
             ];
         }
 
-        $effectiveCode = $this->currencyService->getEffectiveCode();
-        $catalogCode = $this->currencyService->getCatalogCode();
+$catalogCode = $this->currencyService->getCatalogCode();
         $baseCode = $this->currencyService->getBaseCode();
+        $effectiveCode = $this->currencyService->getEffectiveCode();
 
-        $catalogToEffective = $this->safeConvert($totalPrice, $catalogCode, $effectiveCode);
-        $effectiveToBase = $this->safeConvert($catalogToEffective->convertedAmount, $effectiveCode, $baseCode);
+        $effectiveConversion = $this->safeConvert($totalPrice, $catalogCode, $effectiveCode);
+        $effectiveTotal = round((float) $effectiveConversion->convertedAmount, 2);
+        $baseConversion = $this->safeConvert($effectiveTotal, $effectiveCode, $baseCode);
 
         return [
             'currency_code' => $effectiveCode,
             'base_currency_code' => $baseCode,
             'catalog_currency_code' => $catalogCode,
-            'currency_rate' => $effectiveToBase->rate,
-            'currency_rate_date' => $effectiveToBase->effectiveDate,
-            'total_price' => $catalogToEffective->convertedAmount,
-            'converted_total_price' => $effectiveToBase->convertedAmount,
+            'currency_rate' => $baseConversion->rate,
+            'currency_rate_date' => $baseConversion->effectiveDate,
+            'total_price' => $effectiveTotal,
+            'converted_total_price' => round((float) $baseConversion->convertedAmount, 2),
         ];
     }
 

@@ -7,6 +7,7 @@ namespace Tests\Feature\Currency;
 use App\Models\Currency;
 use App\Models\CurrencyRate;
 use App\Services\Currency\CurrencyService;
+use App\Services\Currency\UserCurrencyPreferenceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Laravel\Sanctum\Sanctum;
@@ -34,6 +35,7 @@ abstract class CurrencyTestCase extends TestCase
         'create-exchange-rate',
         'update-exchange-rate',
         'set-base-currency',
+        'set-catalog-currency',
     ];
 
     protected function setUp(): void
@@ -65,6 +67,10 @@ abstract class CurrencyTestCase extends TestCase
         $options['currency'] ??= 'USD';
         $options['base_currency_code'] ??= 'USD';
         $options['catalog_currency_code'] ??= 'USD';
+        // The currency test suite exercises the enabled resolution path
+        // (preference > guest cookie > catalog) unless a test explicitly
+        // disables currency selection.
+        $options['currency_selection_enabled'] ??= true;
         $settings->options = $options;
         $settings->save();
 
@@ -144,6 +150,25 @@ abstract class CurrencyTestCase extends TestCase
     {
         $user = $this->createCustomer();
         Sanctum::actingAs($user);
+
+        return $user;
+    }
+
+    /**
+     * Authenticate the given user and store an effective-currency preference that
+     * CurrencyService::getEffectiveCode() will resolve for the rest of the test.
+     */
+    protected function actAsWithCurrencyPreference(User $user, string $currencyCode): void
+    {
+        Sanctum::actingAs($user);
+        app(UserCurrencyPreferenceService::class)->setUserPreference($user, $currencyCode);
+        $this->app->forgetInstance(CurrencyService::class);
+    }
+
+    protected function createCustomerWithCurrencyPreference(string $currencyCode): User
+    {
+        $user = $this->createCustomer();
+        $this->actAsWithCurrencyPreference($user, $currencyCode);
 
         return $user;
     }

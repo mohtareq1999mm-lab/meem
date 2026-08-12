@@ -37,6 +37,7 @@
 ```json
 {
     "minimumOrderAmount": 100,
+    "currency_selection_enabled": false,
     "fast_shipping": {
         "enabled": true,
         "duration_minutes": 120,
@@ -46,6 +47,12 @@
     }
 }
 ```
+
+| Key | Type | Default | Purpose |
+|-----|------|---------|---------|
+| `minimumOrderAmount` | number | 0 | Checkout minimum order total |
+| `currency_selection_enabled` | boolean | `false` | Allow storefront currency selection; when `false` the effective currency always resolves to the catalog code |
+| `fast_shipping` | object | defaults | Fast shipping config (managed via fast-shipping endpoints) |
 
 ## Query Patterns
 
@@ -67,6 +74,6 @@ WHERE `id` = 1;
 
 ## Performance
 
-- **Fetch settings:** 1 query, <5ms
+- **Fetch settings:** 1 query, <5ms (cached 4h under `settings` tag on admin + public endpoints)
 - **Fast shipping settings:** Cached 1 hour
-- **Settings update:** `lockForUpdate()` transaction
+- **Settings update:** `lockForUpdate()` transaction + `flushTag('settings')`

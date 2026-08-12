@@ -15,6 +15,7 @@ Dedicated feature tests live in `tests/Feature/Currency/`:
 | `BaseCurrencyTest.php` | Set-base success/guard/error/cache paths |
 | `CatalogCurrencyTest.php` | Set-catalog success/guard/error/cache/permission paths |
 | `CurrencyBugRegressionTest.php` | Regression coverage for BUG-001..004 |
+| `CurrencySelectionEnabledTest.php` | `currency_selection_enabled` feature (disabled → catalog; enabled → preference > cookie > catalog)
 
 ## Recommended Tests
 
@@ -61,6 +62,17 @@ Dedicated feature tests live in `tests/Feature/Currency/`:
 | FT-039 | Product `discount_amount` converted for fixed-rate, not percentage | Feature | High |
 | FT-040 | MyFatoorah invoice/refund use order base currency | Feature | High |
 | FT-041 | Reconciliation compares currency against order base with config fallback | Feature | High |
+| FT-042 | Public `POST /currencies/select` persists user preference (authenticated) | Feature | High |
+| FT-043 | Public `POST /currencies/select` sets guest cookie (unauthenticated) | Feature | High |
+| FT-044 | Public `POST /currencies/select` validates currency_code (missing / inactive / length) | Validation | High |
+| FT-045 | `select` returns 200 `CURRENCY_SELECTED_SUCCESSFULLY` with CurrencyResource | Structure | High |
+| FT-046 | Effective currency = catalog when `currency_selection_enabled` is false (preference ignored) | Feature | High |
+| FT-047 | Effective currency = user preference when selection enabled | Feature | High |
+| FT-048 | Effective currency = guest cookie when selection enabled and no user | Feature | Medium |
+| FT-049 | `PUT /api/v1/settings` with `currency_selection_enabled` merges into options without dropping others | Feature | High |
+| FT-050 | `SettingResource` exposes top-level `currency_selection_enabled` bool (admin + public) | Structure | High |
+
+> Note: `CurrencySelectionEnabledTest` (17 tests) already covers the `currency_selection_enabled` feature (enabled → preference > cookie > catalog; disabled → catalog).
 
 ## Missing / Weak Areas
 

@@ -85,6 +85,14 @@ Namespace `App\Http\Controllers\Api\Currency`, extends `App\Http\Controllers\Con
 - `index()` → `Currency::active()->orderBy('sort_order')->orderBy('code')->get()`.
 - Caches `CurrencyResource::collection(...)` under `FrontendResource::CURRENCIES->value` tag, key `md5(request()->fullUrl())`, TTL 4h.
 - Returns `apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $cached)`.
+- `select(SelectCurrencyRequest)` → `POST /api/v1/general/currencies/select`:
+  1. `strtoupper` the validated `currency_code`.
+  2. `$user = auth('sanctum')->user() ?? auth()->user()`; if present, `UserCurrencyPreferenceService::setUserPreference($user, $code)`.
+  3. Always `UserCurrencyPreferenceService::setGuestCurrencyCode($code, $request)` (sets `guest_currency` cookie).
+  4. `app(CurrencyService::class)->forgetEffectiveCode()`.
+  5. Returns `apiResponse(CURRENCY_SELECTED_SUCCESSFULLY, 200, true, new CurrencyResource($currency))`.
+
+> **Gating:** the stored preference/cookie only affects `getEffectiveCode()` when `isCurrencySelectionEnabled()` is `true`. Otherwise the effective currency always resolves to the catalog code.
 
 ## Services
 
@@ -94,6 +102,9 @@ Registered as singleton in `AppServiceProvider::register()` (line 26). Uses `Has
 
 - `getBaseCode()` / `getCatalogCode()` — from settings options, uppercase, default `config('shop.default_currency', 'USD')`.
 - `getBaseCurrency()` / `getCatalogCurrency()` — query `Currency` by code.
+- `isCurrencySelectionEnabled()` — memoized bool from `settings.options.currency_selection_enabled` (default `false`).
+- `getEffectiveCode(?User)` / `getEffectiveCurrency()` — when selection is **disabled** returns the catalog code (ignores stored preference/cookie); when **enabled** resolves `user preference > guest cookie > catalog code` (via `UserCurrencyPreferenceService`), validating/clearing stale codes and falling back to catalog when preference tables are absent.
+- `forgetEffectiveCode()` — resets `effectiveCode`, `effectiveCurrency` and the `currencySelectionEnabled` memo (called on settings update, `select`, set-base/set-catalog, rate writes).
 - `convert(amount, from, to, ?date)` — delegates to `CurrencyConversionService`.
 - `convertPrice(amount, from, to, ?date)` — float conversion rounded to 2 decimals; identity short-circuit.
 - `storeCurrency(array)` — `Currency::create` + `invalidatePriceCaches()`.
@@ -121,6 +132,15 @@ Registered as singleton in `AppServiceProvider::register()` (line 26). Uses `Has
 - `update(CurrencyRate, array)` — updates `exchange_rate`; invalidates caches.
 - `delete(CurrencyRate)` — hard delete; invalidates caches.
 - `list(?currencyId, ?effectiveDate, ?dateFrom, ?dateTo, ?code, limit)` — `with('currency')`, filters (`currency_id`, `whereDate effective_date`, `whereDate >= date_from`, `whereDate <= date_to`, `whereHas currency.code = code`), `orderByDesc('effective_date')`, `orderByDesc('id')`, paginate.
+
+### UserCurrencyPreferenceService — `app/Services/Currency/UserCurrencyPreferenceService.php`
+
+- `setUserPreference(User, string $code)` — store the user's currency preference (`user_preferences` table).
+- `getUserPreference(?User)` — read stored preference (per-user).
+- `clearUserPreference(User)` / `clearGuestCurrencyCode()` — clear stale/invalid selections.
+- `setGuestCurrencyCode(string $code, Request)` — persist a `guest_currency` cookie.
+- `getGuestCurrencyCode()` — read the guest cookie.
+- `isValidActiveCurrency(string $code)` — verify the code exists and is active.
 
 ## DTO — `app/DTOs/CurrencyConversionResult.php`
 
@@ -150,7 +170,7 @@ Fillable: currency_id, exchange_rate, effective_date. Casts: `exchange_rate => s
 Fields: id, code, name, symbol, country_name (translated per locale), numeric_code, decimal_places (int), icon, is_active (bool), sort_order (int), `is_base`, `is_catalog`, created_at (ISO8601).
 
 ### CurrencyRateResource — `app/Http/Resources/Currency/CurrencyRateResource.php`
-Fields: id, currency_id, exchange_rate, effective_date (`toDateString()`), created_at (ISO8601).
+Fields: id, currency_id, exchange_rate, effective_date (`toDateString()`), created_at (ISO8601). The `currency` relation is eager-loaded (for filtering/ordering) but is **not** serialized in the response.
 
 ## Form Requests
 
@@ -160,6 +180,7 @@ Fields: id, currency_id, exchange_rate, effective_date (`toDateString()`), creat
 | `UpdateCurrencyRequest` | same fields, all `sometimes`/`nullable` |
 | `StoreCurrencyRateRequest` | currency_id exists, exchange_rate numeric gt:0, effective_date date |
 | `UpdateCurrencyRateRequest` | exchange_rate required numeric gt:0 |
+| `SelectCurrencyRequest` | currency_code required, string, max:3, exists in `currencies` with `is_active = true` |
 
 ## Enums & Constants
 
@@ -169,5 +190,5 @@ Fields: id, currency_id, exchange_rate, effective_date (`toDateString()`), creat
 
 ## Routes
 
-- Admin: `packages/marvel/src/Rest/Routes.php` lines 186–191 (apiResource with `whereNumber('currency')` / `whereNumber('currency_rate')`, `set-base` + `set-catalog` with `whereNumber('id')`).
-- Public: `routes/api.php` line 100 under `v1/general` prefix.
+- Admin: `packages/marvel/src/Rest/Routes.php` lines 186–192 (apiResource with `whereNumber('currency')` / `whereNumber('currency_rate')`, `set-base` + `set-catalog` with `whereNumber('id')`), all inside the `auth:sanctum` + `throttle:admin` group.
+- Public: `routes/api.php` lines 100–101 under `v1/general` prefix (`GET currencies`, `POST currencies/select`).

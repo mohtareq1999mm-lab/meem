@@ -28,7 +28,8 @@ export const currencyRateApi = {
 
 // Storefront
 export const publicCurrencyApi = {
-  list()                  // GET /api/v1/general/currencies
+  list()                          // GET /api/v1/general/currencies
+  select(currency_code)           // POST /api/v1/general/currencies/select
 }
 ```
 
@@ -58,9 +59,12 @@ ExchangeRateFormDialog.vue → create/update
 | Base currency switch | `POST /currencies/{id}/set-base` (shows 422 error for inactive/no-rate) |
 | Catalog currency switch | `POST /currencies/{id}/set-catalog` (shows 422 error for inactive/no-rate) |
 | Currency delete | 409 with `CANNOT_DELETE_BASE_CURRENCY` or `CANNOT_DELETE_CURRENCY_IN_USE` |
+| Currency selector (storefront) | `GET /api/v1/general/currencies` + `POST /api/v1/general/currencies/select` |
 
 ## Notes
 
 - `code` is stored uppercase; server uppercases it during validation.
 - `is_base` / `is_catalog` are computed against current settings, not stored flags.
 - Storefront currency selector uses the cached `GET /api/v1/general/currencies` list (active only).
+- Storefront selection should call `POST /api/v1/general/currencies/select { currency_code }` to persist the choice (user preference + guest cookie). The persisted selection only takes effect when the admin setting `currency_selection_enabled` is `true`; otherwise the effective currency stays the catalog code.
+- The currency selector's effective-currency read should be taken from the settings flag: when `currency_selection_enabled` is `false`, hide/disable the selector (the selection is ignored).

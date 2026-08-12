@@ -3,6 +3,7 @@
 namespace Marvel\Http\Controllers;
 
 use App\Enums\FrontendResource;
+use App\Services\Currency\CurrencyService;
 use App\Traits\HasCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -61,9 +62,17 @@ class SettingsController extends CoreController
             "minimum_order_amount"
         ]);
 
-
+        if ($request->has('currency_selection_enabled')) {
+            $options = array_merge($settings->options ?? [], $data['options'] ?? []);
+            $options['currency_selection_enabled'] = $request->boolean('currency_selection_enabled');
+            $data['options'] = $options;
+        }
 
         $settings->update($data);
+
+        if ($request->has('currency_selection_enabled')) {
+            app(CurrencyService::class)->forgetEffectiveCode();
+        }
 
 
         if ($request->has('logo')) {

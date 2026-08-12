@@ -20,6 +20,12 @@ None for admin settings endpoints.
 | 4 | `test_update_settings_forbidden` | Feature | PUT without permission → 403 |
 | 5 | `test_update_settings_validation` | Feature | PUT invalid data → 422 |
 | 6 | `test_update_minimum_order_amount` | Feature | Set minimumOrderAmount, verify in GET |
+| 7 | `test_update_currency_selection_enabled` | Feature | PUT `currency_selection_enabled: true` → 200; reflected in GET response |
+| 8 | `test_currency_selection_enabled_merges_options` | Feature | Setting the flag preserves `fast_shipping`/other option keys |
+| 9 | `test_currency_selection_enabled_invalid` | Validation | PUT `currency_selection_enabled: "yes"` → 422 |
+| 10 | `test_settings_response_includes_currency_selection_enabled` | Structure | GET (admin + public) exposes top-level bool |
+| 11 | `test_guest_cannot_access_admin_settings` | Auth | GET /api/v1/settings without token → 401 |
+| 12 | `test_public_settings_endpoint` | Feature | GET /api/v1/general/settings without token → 200 (includes `currency_selection_enabled`)
 
 ### Fast Shipping Tests
 

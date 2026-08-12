@@ -97,6 +97,27 @@
 | TC-PUB-003 | Public list cached under `currencies` tag | Cache hit on repeat call |
 | TC-PUB-004 | Cache invalidated on currency/rate write | Fresh data on next call |
 
+### Public Currency Select
+
+| TC ID | Description | Expected |
+|-------|-------------|----------|
+| TC-SEL-001 | Select stores user preference (authenticated) | 200, preference persisted |
+| TC-SEL-002 | Select sets guest cookie (unauthenticated) | 200, `guest_currency` cookie set |
+| TC-SEL-003 | Select missing/inactive/invalid currency_code | 422 |
+| TC-SEL-004 | Select returns `CURRENCY_SELECTED_SUCCESSFULLY` + CurrencyResource | 200 |
+| TC-SEL-005 | Effective currency = catalog when `currency_selection_enabled` is false | Preference ignored |
+| TC-SEL-006 | Effective currency = user preference when enabled | Preference used |
+| TC-SEL-007 | Effective currency = guest cookie when enabled, no user | Cookie used |
+
+### Currency Selection Setting
+
+| TC ID | Description | Expected |
+|-------|-------------|----------|
+| TC-SET-001 | `PUT /api/v1/settings` accepts `currency_selection_enabled` boolean | 200 |
+| TC-SET-002 | Setting merges into options without losing `fast_shipping` etc. | Other options preserved |
+| TC-SET-003 | `SettingResource` exposes top-level `currency_selection_enabled` bool | Present (admin + public) |
+| TC-SET-004 | Settings update resets effective-currency memo | Next resolution uses new value |
+
 ## Manual Test Checklist
 
 - [ ] Verify delete guard order: base currency check happens before rates check
@@ -113,3 +134,8 @@
 - [ ] Verify `/currencies` filters: search (translated fields), code, is_active, sort_order
 - [ ] Verify `/currency-rates` filters: date_from, date_to, code
 - [ ] Verify MyFatoorah invoice `DisplayCurrencyIso` matches the order's base currency
+- [ ] Verify `POST /api/v1/general/currencies/select` persists user preference / guest cookie and returns `CURRENCY_SELECTED_SUCCESSFULLY`
+- [ ] Verify `select` returns 422 for missing/inactive currency_code
+- [ ] Verify effective currency is the catalog code when `currency_selection_enabled` is false, even with a stored preference
+- [ ] Verify `PUT /api/v1/settings` with `currency_selection_enabled` merges into options (does not drop `fast_shipping`/other keys)
+- [ ] Verify both admin and public settings responses include the top-level `currency_selection_enabled` bool

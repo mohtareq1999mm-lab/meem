@@ -44,6 +44,7 @@ class SettingResource extends Resource
             'phone' => $this?->phone,
             'fast_shipping_page_publish' => $this->fast_shipping_page_publish,
             'minimumOrderAmount' => $this->minimum_order_amount,
+            'currency_selection_enabled' => (bool) data_get($this->options, 'currency_selection_enabled', false),
             'options' => $this->options ?? null,
         ];
     }

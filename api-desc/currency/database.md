@@ -81,9 +81,12 @@ Model casts (`Order`): `currency_rate => string`, `currency_rate_date => date`, 
 
 | Table | Relation | Column |
 |-------|----------|--------|
-| `settings` | options JSON | `base_currency_code`, `catalog_currency_code`, `currency` |
+| `settings` | options JSON | `base_currency_code`, `catalog_currency_code`, `currency`, `currency_selection_enabled` (bool) |
 | `orders` | snapshot | currency snapshot columns (above) |
 | `products` | price conversion | via `ConvertsProductPrice` (no DB column) |
+| `user_preferences` | preference | stores the user's selected currency code (`UserCurrencyPreferenceService`) |
+
+> `currency_selection_enabled` lives in `settings.options`. `UserCurrencyPreferenceService` reads/writes a `user_preferences` table (user currency selection) and a `guest_currency` cookie. When `currency_selection_enabled` is `false` (default), the stored preference/cookie is **ignored** by `CurrencyService::getEffectiveCode()`.
 
 ---
 

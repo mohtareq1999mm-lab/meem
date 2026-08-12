@@ -971,3 +971,91 @@ YES
 Notes:
 Both fixes are backward compatible — no schema changes, no new migrations, no API contract changes (the previous 500/409 responses were unintended behavior, not documented contracts). `?limit` is capped at 100 to prevent oversized queries. The full investigation findings, per-endpoint reference, and open observations are tracked in `api-desc/siteReview/bug-report.md`. Pre-existing unrelated issue unchanged: `php artisan route:list` fails on missing `BkashTokenizePaymentController`; admin routes verified via a custom route script instead. LSP diagnostics on Marvel package files are pre-existing false positives — modified files pass `php -l`.
 
+---
+
+Date:
+2026-08-12
+
+Feature:
+Project State Infrastructure (AI Development Rules System)
+
+Revision:
+2
+
+Summary:
+Re-established and verified the permanent AI development architecture rule system. Verified that all mandatory architecture instruction files exist and contain the required rules: `docs/architecture/` folder, `docs/architecture/AI-DEVELOPMENT-RULES.md` (Architecture First — Mandatory Rule, Discovery / Architecture Understanding / Change Plan / Implementation phases, Forbidden Actions, Frozen Architecture Rule, Final AI Principle), and `docs/architecture/runtime-pricing-architecture.md` (Status: Frozen, single `ProductPricingService` pipeline, resource/model/controller purity rules). Verified the four production state files are present and current: `docs/production-status.md`, `docs/feature-dependencies.md`, `docs/regression-matrix.md`, `docs/production-history.md`. Confirmed the referenced investigation manual `ai/api-investigation-manual.md` exists. Documentation-only task — no application code, no routes, no migrations modified.
+
+Verified Bugs Fixed:
+None
+
+Files Created/Verified:
+- docs/architecture/ (folder)
+- docs/architecture/AI-DEVELOPMENT-RULES.md
+- docs/architecture/runtime-pricing-architecture.md
+- docs/production-status.md
+- docs/feature-dependencies.md
+- docs/regression-matrix.md
+- docs/production-history.md
+
+Documentation Updated:
+YES
+
+Routes Updated:
+NO
+
+Regression Executed:
+NO
+
+Regression Result:
+NOT RUN (no application code changed)
+
+Production Ready:
+YES
+
+Notes:
+Infrastructure files only — no application code modified. Pre-existing working-tree modifications to `app/`, `packages/`, `tests/`, `api-desc/currency/` were NOT touched by this task and remain as-is.
+
+---
+
+Date:
+2026-08-12
+
+Feature:
+Currency Selection Enabled
+
+Revision:
+1
+
+Summary:
+Implemented the Admin-controlled `currency_selection_enabled` setting (stored in `settings.options`, default `false`). When `false`, `CurrencyService::getEffectiveCode()` resolves to the catalog currency and ignores any stored user preference or guest cookie; when `true`, the existing resolution (`user preference > guest cookie > catalog`) applies. Added `CurrencyService::isCurrencySelectionEnabled()` (memoized in the singleton, reset via `forgetEffectiveCode()`). `SettingsRequest` now validates `currency_selection_enabled` as a boolean; `SettingsController::update()` merges it into `settings.options` (preserving base/catalog codes) and invalidates the memoized effective code; `SettingResource` exposes a top-level `currency_selection_enabled` field (default false) so the existing public `GET /api/v1/general/settings` endpoint advertises the flag. No new permissions, no new endpoints, no new settings model, no cache architecture change — reused the existing Marvel Settings flow and `FrontendResource::SETTINGS` tag flush. `SettingSeeder` defaults the flag to `false`; `CurrencyTestCase::createSettings()` defaults to `true` so the pre-existing currency test suite keeps exercising the enabled resolution path. Added `tests/Feature/Currency/CurrencySelectionEnabledTest.php` (17 tests / 37 assertions): service flag defaults, effective-currency gating (disabled ignores preference/cookie; enabled prefers preference > cookie > catalog), admin read/update/invalid-boolean validation, settings cache flush, and isolation (base/catalog codes, user preferences, existing orders untouched).
+
+Verified Bugs Fixed:
+None
+
+Files Modified:
+- app/Services/Currency/CurrencyService.php
+- packages/marvel/src/Http/Requests/SettingsRequest.php
+- packages/marvel/src/Http/Controllers/SettingsController.php
+- packages/marvel/src/Http/Resources/SettingResource.php
+- database/seeders/SettingSeeder.php
+- tests/Feature/Currency/CurrencyTestCase.php
+- tests/Feature/Currency/CurrencySelectionEnabledTest.php (new)
+
+Documentation Updated:
+YES (production-status.md, feature-dependencies.md, regression-matrix.md, production-history.md)
+
+Routes Updated:
+NO
+
+Regression Executed:
+YES
+
+Regression Result:
+PASS (CurrencySelectionEnabledTest 17/17, 37 assertions; combined Currency + Settings + ProductCache + OrderItemSnapshot + PaymentCurrency filter: 183 passed / 2 failed — the 2 failures are PRE-EXISTING and unrelated: SettingsAuthenticationTest::guests_can_view_settings and FinancialDeepAuditTest::settings_api_returns_minimum_order_amount both expect guest 200 on the auth-protected `/api/v1/settings` route; verified they fail identically without this feature's changes)
+
+Production Ready:
+YES
+
+Notes:
+Backward compatible — additive setting, no schema/migration/route changes. The existing `POST /api/v1/general/currencies/select` endpoint is intentionally left unchanged: it may still store a preference, but the stored preference is ignored for effective-currency resolution while the flag is `false` (the frontend hides the selector based on the public setting). Existing orders remain immutable; disabling the setting does not modify base/catalog codes, user preferences, exchange rates, or order snapshots. LSP diagnostics on Marvel package files are pre-existing false positives — all modified files pass `php -l`.
+

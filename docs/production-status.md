@@ -18,6 +18,7 @@
 | Authentication | 1 | Production Ready | YES | Sanctum, Spatie Permission, Mail Config, Translation System | All Features | Passed | 2026-07-22 | 0 (no dedicated auth tests) | None (4 fixed) |
 | Promotions | 0 | Not Started | NO | — | — | Not Required | — | — | — |
 | Payment System | 0 | Not Started | NO | — | — | Not Required | — | — | — |
+| Currency Selection Enabled | 1 | Production Ready | YES | Settings (options), CurrencyService (base/catalog/effective), Authentication (Sanctum), UserCurrencyPreferenceService, FrontendResource settings cache | Frontend currency selector, Cart, Checkout, Orders | Passed (17/17 new; 183 pass / 2 pre-existing unrelated failures in combined Currency+Settings filter) | 2026-08-12 | 17/17 (37 assertions) | None |
 
 ## Legend
 

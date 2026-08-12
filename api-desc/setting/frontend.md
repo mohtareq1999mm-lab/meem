@@ -6,9 +6,9 @@
 
 **Purpose:** Retrieve current settings for the admin settings form.
 
-**Authentication:** Public (index is unauthenticated)
+**Authentication:** Sanctum token with `view-settings` permission (admin). For public reads, use `GET /api/v1/general/settings` (no auth).
 
-**Response 200:** Full settings object (see api.md)
+**Response 200:** Full settings object (see api.md) — includes top-level `currency_selection_enabled` (boolean) and `minimumOrderAmount`.
 
 ---
 
@@ -18,9 +18,13 @@
 
 **Authentication:** Sanctum token with `update-settings` permission
 
-**Request:** JSON body with all settings fields
+**Request:** JSON body with all settings fields (including optional `currency_selection_enabled` boolean and `minimum_order_amount`)
 
 **Response 200:** Updated settings object
+
+**Notes:**
+- `currency_selection_enabled` is a top-level boolean toggle; when sent it is merged into `options` (other option keys preserved) and resets the storefront effective-currency memo.
+- When `currency_selection_enabled` is `false`, the storefront currency selector is hidden/disabled (selections are stored but ignored).
 
 ---
 

@@ -50,17 +50,23 @@ Error envelope: `{ "status": 4xx, "message": "translated", "success": false }`.
         "created_at": "2026-08-10T00:00:00+00:00"
       }
     ],
+    "page": 1,
     "current_page": 1,
     "from": 1,
     "to": 15,
     "last_page": 1,
+    "path": "http://localhost/api/v1/currencies",
     "per_page": 15,
     "total": 3,
     "next_page_url": "",
-    "prev_page_url": ""
+    "prev_page_url": "",
+    "last_page_url": "http://localhost/api/v1/currencies?page=1",
+    "first_page_url": "http://localhost/api/v1/currencies?page=1"
   }
 }
 ```
+
+> **Pagination envelope note:** this is a **custom flattened envelope** produced by `CurrencyController::index()` (not Laravel's default `{data, meta, links}`). Keys inside `data`: `data`, `page`, `current_page`, `from`, `to`, `last_page`, `path`, `per_page`, `total`, `next_page_url`, `prev_page_url`, `last_page_url`, `first_page_url`. The same shape is used by `CurrencyRateController::index()`.
 
 ---
 
@@ -243,12 +249,23 @@ Same structure as list item, `is_base` / `is_catalog` reflect current settings.
         "created_at": "2026-08-10T00:00:00+00:00"
       }
     ],
+    "page": 1,
     "current_page": 1,
+    "from": 1,
+    "to": 3,
+    "last_page": 1,
+    "path": "http://localhost/api/v1/currency-rates",
     "per_page": 15,
-    "total": 3
+    "total": 3,
+    "next_page_url": "",
+    "prev_page_url": "",
+    "last_page_url": "http://localhost/api/v1/currency-rates?page=1",
+    "first_page_url": "http://localhost/api/v1/currency-rates?page=1"
   }
 }
 ```
+
+> Same custom flattened pagination envelope as currencies.
 
 ---
 
@@ -274,13 +291,23 @@ Same structure as list item, `is_base` / `is_catalog` reflect current settings.
 `CurrencyRateService::store()` looks up `(currency_id, effective_date)`; if found it **updates** the rate, otherwise it **creates** a new row. No duplicate rows per currency/day (also enforced by unique DB constraint).
 
 ### Response (200)
-`message` = `CURRENCY_RATE_CREATED_SUCCESSFULLY`, data includes nested `currency` (via `CurrencyRateResource` + loaded relation).
+`message` = `CURRENCY_RATE_CREATED_SUCCESSFULLY`, `data` is a `CurrencyRateResource`:
+```json
+{
+  "id": 1,
+  "currency_id": 2,
+  "exchange_rate": "0.2500000000",
+  "effective_date": "2026-08-10",
+  "created_at": "2026-08-10T00:00:00+00:00"
+}
+```
+> **Note:** `CurrencyRateResource` does **NOT** serialize a nested `currency` object — only `id, currency_id, exchange_rate, effective_date, created_at` are returned, even though the relation is eager-loaded for filtering/ordering.
 
 ---
 
 ## 9. Show Exchange Rate (Admin)
 
-**GET** `/api/v1/currency-rates/{currency_rate}` — `{currency_rate}` numeric. Missing → 404.
+**GET** `/api/v1/currency-rates/{currency_rate}` — `{currency_rate}` numeric. Missing → 404. Returns the same `CurrencyRateResource` shape as create.
 
 ---
 
@@ -311,6 +338,61 @@ Flat array of active currencies (same item structure minus admin flags depend on
 
 ---
 
+## 12a. Select Currency (Public / Storefront)
+
+**POST** `/api/v1/general/currencies/select` — no auth required, `throttle:public-api`.
+
+### Request Body (`SelectCurrencyRequest`)
+
+```json
+{ "currency_code": "KWD" }
+```
+
+| Field | Type | Required | Rules |
+|-------|------|----------|-------|
+| `currency_code` | string | Yes | required, string, max:3, `Rule::exists('currencies','code')->where('is_active', true)` |
+
+### Flow
+1. Code uppercased (`strtoupper`).
+2. If an authenticated user is present (`auth('sanctum')->user() ?? auth()->user()`), the preference is stored via `UserCurrencyPreferenceService::setUserPreference`.
+3. A `guest_currency` cookie is always set for guests via `setGuestCurrencyCode`.
+4. `CurrencyService::forgetEffectiveCode()` resets the memoized effective currency.
+5. Returns `200` `CURRENCY_SELECTED_SUCCESSFULLY` with the selected `CurrencyResource`.
+
+### Response (200)
+```json
+{
+  "status": 200,
+  "message": "Currency updated successfully",
+  "success": true,
+  "data": {
+    "id": 2,
+    "code": "KWD",
+    "name": "Kuwaiti Dinar",
+    "symbol": "KD",
+    "country_name": "Kuwait",
+    "numeric_code": "414",
+    "decimal_places": 3,
+    "icon": "kw",
+    "is_active": true,
+    "sort_order": 2,
+    "is_base": true,
+    "is_catalog": false,
+    "created_at": "2026-08-10T00:00:00+00:00"
+  }
+}
+```
+
+### Errors
+| Status | Condition |
+|--------|-----------|
+| 422 | Missing/invalid `currency_code`, or code not among active currencies |
+
+### Interaction with `currency_selection_enabled`
+The stored preference/cookie only affects display/pricing resolution when the setting `currency_selection_enabled` is `true` (see `change-response.md` §7). When `false` (default), the selection is stored but ignored by `CurrencyService::getEffectiveCode()` — the effective currency remains the catalog code.
+
+---
+
 ## Business Rules Summary
 
 1. **Base vs catalog currency** live in settings `options` (`base_currency_code`, `catalog_currency_code`, `currency`), default `config('shop.default_currency')` (USD).
@@ -327,3 +409,5 @@ Flat array of active currencies (same item structure minus admin flags depend on
 9. **Catalog currency switch** (`set-catalog`) re-points `catalog_currency_code` without touching the base currency or the `currency` option.
 10. **Delete protection** for base currency and currencies referenced by rates.
 11. **All user-facing messages** come from `resources/lang/{en,ar}/message.php`.
+12. **Effective currency** (`CurrencyService::getEffectiveCode()`) — when the setting `currency_selection_enabled` is `false` (default) it always resolves to the catalog code; when `true` it resolves to `user preference > guest cookie > catalog code`.
+13. **Settings responses** (admin `GET/PUT /api/v1/settings` and public `GET /api/v1/general/settings`) expose a top-level `currency_selection_enabled` boolean; `PUT /api/v1/settings` accepts it as `sometimes|boolean` and merges it into `options` without dropping other options.
