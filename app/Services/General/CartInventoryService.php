@@ -316,24 +316,15 @@ class CartInventoryService
                 $item->delete();
             }
 
-            $remainingItems = CartItem::where('cart_id', $cart->id)
+$remainingItems = CartItem::where('cart_id', $cart->id)
                 ->lockForUpdate()
                 ->get();
 
-            foreach ($remainingItems as $item) {
-                if ($item->reserved_quantity > 0) {
-                    $stock = $this->lockInventoryRowByItem($item);
-                    $this->releaseStock($stock, (int) $item->reserved_quantity);
-                }
-
-                $item->delete();
-            }
-
             $cart->update([
-                'status' => 'checked_out',
+                'status' => $remainingItems->isEmpty() ? 'checked_out' : 'active',
                 'expires_at' => null,
                 'reserved_at' => null,
-                'total_price' => 0,
+                'total_price' => round((float) $remainingItems->sum('total_price'), 2),
             ]);
 
             return true;

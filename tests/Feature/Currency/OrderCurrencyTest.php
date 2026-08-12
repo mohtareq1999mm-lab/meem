@@ -36,8 +36,14 @@ class OrderCurrencyTest extends CurrencyTestCase
 
     private function createOrder(OrderCreationService $service, Cart $cart, CheckoutTotals $totals): Order
     {
-        $order = $service->createOrder(
-            orderData: ['user_id' => $cart->user_id, 'name' => 'Currency Customer'],
+$order = $service->createOrder(
+            orderData: [
+                'user_id' => $cart->user_id,
+                'name' => 'Currency Customer',
+                'user_phone' => '01000000000',
+                'user_email' => 'currency@example.com',
+                'address' => '123 Currency Street',
+            ],
             cart: $cart,
             checkoutTotals: $totals,
             shippingPrice: 0,
@@ -59,8 +65,9 @@ class OrderCurrencyTest extends CurrencyTestCase
         $cart = $this->makeCart();
         $order = $this->createOrder(app(OrderCreationService::class), $cart, $this->makeTotals(100.0));
 
-        $this->assertSame('USD', $order->currency_code);
+$this->assertSame('USD', $order->currency_code);
         $this->assertSame('KWD', $order->base_currency_code);
+        $this->assertSame('USD', $order->catalog_currency_code);
         $this->assertSame('0.221000', $order->currency_rate);
         $this->assertEquals(now()->toDateString(), $order->currency_rate_date->toDateString());
         $this->assertSame(22.1, $order->converted_total_price);
@@ -78,8 +85,10 @@ class OrderCurrencyTest extends CurrencyTestCase
 
         $this->assertSame('USD', $order->currency_code);
         $this->assertSame('USD', $order->base_currency_code);
+        $this->assertSame('USD', $order->catalog_currency_code);
         $this->assertSame('1', $order->currency_rate);
         $this->assertSame(100.0, $order->converted_total_price);
+        $this->assertSame(100.0, $order->total_price);
     }
 
     /** @test */
@@ -93,6 +102,7 @@ class OrderCurrencyTest extends CurrencyTestCase
 
         $order = $this->createOrder($service, $cart, $this->makeTotals(100.0));
         $this->assertSame('USD', $order->base_currency_code);
+        $this->assertSame('USD', $order->catalog_currency_code);
 
         app(CurrencyService::class)->setBaseCurrency($kwd);
 
@@ -104,9 +114,11 @@ class OrderCurrencyTest extends CurrencyTestCase
             shippingPrice: 0,
         );
 
-        $this->assertSame('USD', $updated->currency_code);
+$this->assertSame('USD', $updated->currency_code);
         $this->assertSame('KWD', $updated->base_currency_code);
+        $this->assertSame('USD', $updated->catalog_currency_code);
         $this->assertSame(44.2, $updated->converted_total_price);
+        $this->assertSame(200.0, $updated->total_price);
     }
 
     /** @test */
@@ -120,9 +132,12 @@ class OrderCurrencyTest extends CurrencyTestCase
         $cart = $this->makeCart();
         $order = $this->createOrder(app(OrderCreationService::class), $cart, $this->makeTotals(0.0));
 
+$this->assertSame('USD', $order->currency_code);
         $this->assertSame('KWD', $order->base_currency_code);
+        $this->assertSame('USD', $order->catalog_currency_code);
         $this->assertSame('0.221000', $order->currency_rate);
         $this->assertSame(0.0, $order->converted_total_price);
+        $this->assertSame(0.0, $order->total_price);
     }
 
     /** @test */
@@ -138,8 +153,9 @@ class OrderCurrencyTest extends CurrencyTestCase
 
         $data = OrderResource::make($order)->toArray(request());
 
-        $this->assertSame('USD', $data['currency']);
+$this->assertSame('USD', $data['currency']);
         $this->assertSame('KWD', $data['base_currency']);
+        $this->assertSame('USD', $data['catalog_currency']);
         $this->assertSame('0.221000', $data['exchange_rate']);
         $this->assertSame(22.1, $data['converted_total']);
         $this->assertSame(100.0, $data['total']);

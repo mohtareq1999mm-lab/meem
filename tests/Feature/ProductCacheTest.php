@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\FrontendResource;
+use App\Services\Currency\CurrencyService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Marvel\Database\Models\Brand;
@@ -48,7 +49,7 @@ class ProductCacheTest extends TestCase
             $fullUrl .= '?' . http_build_query($query);
         }
 
-        return md5($fullUrl);
+        return md5($fullUrl . '|currency:' . app(CurrencyService::class)->getEffectiveCode());
     }
 
     public function test_products_endpoint_writes_response_to_cache_without_search_parameter(): void

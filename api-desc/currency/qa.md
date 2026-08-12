@@ -25,6 +25,17 @@
 | TC-CUR-017 | Set base to currency without a rate ≤ today | 422 `EXCHANGE_RATE_NOT_FOUND` |
 | TC-CUR-018 | Unauthenticated | 401 (all endpoints) |
 | TC-CUR-019 | Forbidden without permission | 403 |
+| TC-CUR-020 | Set catalog to active currency with rate ≤ today | 200 `SET_CATALOG_CURRENCY_SUCCESSFULLY` |
+| TC-CUR-021 | Set catalog updates only `catalog_currency_code` option | base_currency_code & currency untouched |
+| TC-CUR-022 | Set catalog to inactive currency | 422 `CURRENCY_INACTIVE` |
+| TC-CUR-023 | Set catalog to currency without a rate ≤ today | 422 `EXCHANGE_RATE_NOT_FOUND` |
+| TC-CUR-024 | Set catalog missing currency | 404 |
+| TC-CUR-025 | Set catalog requires `set-catalog-currency` permission | 403 |
+| TC-CUR-026 | Set catalog flushes product/currency price caches | Cache cleared |
+| TC-CUR-027 | List filters by `code` | Only matching currency |
+| TC-CUR-028 | List filters by `search` (code/numeric_code/name/symbol/country_name) | Only matching currencies |
+| TC-CUR-029 | List filters by `is_active` (0/1) | Only matching status |
+| TC-CUR-030 | List filters by `sort_order` | Only matching sort order |
 
 ### Exchange Rates (Admin)
 
@@ -40,6 +51,10 @@
 | TC-RATE-008 | Update rate `exchange_rate` | 200 `CURRENCY_RATE_UPDATED_SUCCESSFULLY` |
 | TC-RATE-009 | Delete rate | Hard delete |
 | TC-RATE-010 | Show/missing rate | 200 / 404 |
+| TC-RATE-011 | List filters by `date_from` | Only rates with effective_date >= date |
+| TC-RATE-012 | List filters by `date_to` | Only rates with effective_date <= date |
+| TC-RATE-013 | List filters by `code` (currency ISO code) | Only matching currency rates |
+| TC-RATE-014 | List `code` with unknown code | Empty result (total 0) |
 
 ### Conversion Logic
 
@@ -55,12 +70,23 @@
 
 | TC ID | Description | Expected |
 |-------|-------------|----------|
-| TC-ORD-001 | Order stores currency_code / base_currency_code | Persisted |
+| TC-ORD-001 | Order stores currency_code / base_currency_code | Persisted (currency_code == base_currency_code) |
 | TC-ORD-002 | Order stores currency_rate (ratio) | e.g. `0.221000` |
 | TC-ORD-003 | Order stores currency_rate_date | Effective date used |
-| TC-ORD-004 | Order stores converted_total_price | e.g. `22.10` |
-| TC-ORD-005 | OrderResource exposes currency/base_currency/exchange_rate/converted_total | Present |
+| TC-ORD-004 | Order stores converted_total_price and total_price as base amount | e.g. `22.10` |
+| TC-ORD-005 | OrderResource exposes currency/base_currency/catalog_currency/exchange_rate/converted_total | Present |
 | TC-ORD-006 | Update order after base change refreshes snapshot | New snapshot values |
+
+### Payment / Invoice / Reconciliation (currency sourcing)
+
+| TC ID | Description | Expected |
+|-------|-------------|----------|
+| TC-PAY-001 | MyFatoorah invoice uses order base currency (DisplayCurrencyIso) | `base_currency_code` |
+| TC-PAY-002 | MyFatoorah refund currency uses order base currency | `base_currency_code` |
+| TC-PAY-003 | Payment transactions created with order base currency | `currency` = order base |
+| TC-PAY-004 | Reconciliation `compareCurrency` uses order base currency | expected = order base |
+| TC-PAY-005 | Invoice snapshot `pricing_breakdown.currency` uses order base | `base_currency_code` |
+| TC-PAY-006 | Legacy orders (no currency columns) fall back to config default | `config('payment.default_currency')` |
 
 ### Public List
 
@@ -79,6 +105,11 @@
 - [ ] Verify decimal precision: `0.2210000000` stored, `0.221000` ratio, `22.10` converted total
 - [ ] Verify historical lookup picks rate `<=` the requested date (not the newest row globally)
 - [ ] Verify set-base 422 messages shown when currency inactive or has no rate ≤ today
+- [ ] Verify set-catalog 422 messages shown when currency inactive or has no rate ≤ today
+- [ ] Verify set-catalog does not change base currency or the `currency` option
 - [ ] Verify storefront list only shows active currencies, ordered by sort_order then code
-- [ ] Verify price caches flushed when base currency changes or a rate is written
+- [ ] Verify price caches flushed when base/catalog currency changes or a rate is written
 - [ ] Verify 409 delete errors return distinct codes/messages for base vs in-use currency
+- [ ] Verify `/currencies` filters: search (translated fields), code, is_active, sort_order
+- [ ] Verify `/currency-rates` filters: date_from, date_to, code
+- [ ] Verify MyFatoorah invoice `DisplayCurrencyIso` matches the order's base currency

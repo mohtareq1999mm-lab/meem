@@ -64,7 +64,7 @@ class InvoiceService
                 'total_discount' => $totalDiscount,
                 'total' => $total,
                 'amount_paid' => $total,
-                'currency' => $paidTransaction?->currency ?? 'EGP',
+                'currency' => $paidTransaction?->currency ?? $order->currency_code ?? $order->base_currency_code ?? 'EGP',
                 'payment_method' => $order->payment_method,
                 'payment_gateway' => $order->payment_gateway,
                 'status' => 'generated',

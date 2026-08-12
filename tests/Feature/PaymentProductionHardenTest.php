@@ -146,7 +146,7 @@ class PaymentProductionHardenTest extends TestCase
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
         });
 
-        Schema::create('users', function (Blueprint $table) {
+Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
@@ -156,6 +156,39 @@ class PaymentProductionHardenTest extends TestCase
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();
+        });
+
+        Schema::create('user_preferences', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->string('currency_code', 3)->nullable();
+            $table->timestamps();
+            $table->unique('user_id');
+        });
+
+        Schema::create('currencies', function (Blueprint $table) {
+            $table->id();
+            $table->string('code', 3)->unique();
+            $table->json('name');
+            $table->json('symbol')->nullable();
+            $table->json('country_name')->nullable();
+            $table->string('numeric_code', 3)->nullable();
+            $table->unsignedTinyInteger('decimal_places')->default(2);
+            $table->string('icon')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->integer('sort_order')->default(0);
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        Schema::create('currency_rates', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('currency_id')->constrained('currencies')->cascadeOnDelete();
+            $table->decimal('exchange_rate', 20, 10);
+            $table->date('effective_date');
+            $table->timestamps();
+            $table->unique(['currency_id', 'effective_date']);
+            $table->index('effective_date');
         });
 
         Schema::create('personal_access_tokens', function (Blueprint $table) {
@@ -626,8 +659,9 @@ class PaymentProductionHardenTest extends TestCase
     }
 
     /** @test */
-    public function callback_amount_mismatch_does_not_cancel_order()
+public function callback_amount_mismatch_does_not_cancel_order()
     {
+        \Illuminate\Support\Facades\Config::set('services.myfatoorah.base_url', 'https://api.myfatoorah.com/v2/');
         Event::fake([PaymentFailed::class, OrderCancelled::class]);
         $invoiceId = 'INV-AMT';
         $order = $this->createOrderWithPendingTransaction('online', $invoiceId, gateway: 'myfatoorah');
@@ -773,10 +807,14 @@ class PaymentProductionHardenTest extends TestCase
         $this->assertTrue($result);
     }
 
-    /** @test */
+/** @test */
     public function order_listing_has_no_n_plus_one()
     {
         Sanctum::actingAs($this->user);
+
+        foreach (range(1, 3) as $i) {
+            $this->createOrderWithPendingTransaction('cod');
+        }
 
         DB::enableQueryLog();
 
@@ -785,8 +823,7 @@ class PaymentProductionHardenTest extends TestCase
         $queries = count(DB::getQueryLog());
         DB::disableQueryLog();
 
-        \Log::info('Order listing query count: ' . $queries);
-        // Query logging may not work in sqlite test env; skip assertion
+        $this->assertLessThan(20, $queries, 'Order listing should not perform N+1 queries (actual: ' . $queries . ')');
     }
 
     /** @test */
@@ -929,8 +966,9 @@ class PaymentProductionHardenTest extends TestCase
     }
 
     /** @test */
-    public function mark_paid_response_has_correct_structure()
+public function mark_paid_response_has_correct_structure()
     {
+        Event::fake([PaymentSucceeded::class]);
         $order = $this->createOrderWithPendingTransaction('cod');
 
         Sanctum::actingAs($this->admin);

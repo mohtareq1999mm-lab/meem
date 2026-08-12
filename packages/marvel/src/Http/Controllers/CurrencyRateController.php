@@ -31,8 +31,11 @@ class CurrencyRateController extends CoreController
         $limit = max(1, min((int) $request->query('limit', 15), 100));
         $currencyId = $request->has('currency_id') ? (int) $request->query('currency_id') : null;
         $effectiveDate = $request->query('effective_date');
+        $dateFrom = $request->query('date_from');
+        $dateTo = $request->query('date_to');
+        $code = $request->query('code');
 
-        $rates = $this->currencyRateService->list($currencyId, $effectiveDate, $limit);
+        $rates = $this->currencyRateService->list($currencyId, $effectiveDate, $dateFrom, $dateTo, $code, $limit);
 
         $rateData = CurrencyRateResource::collection($rates)->response()->getData(true);
 

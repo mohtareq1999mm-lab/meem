@@ -9,6 +9,7 @@ use App\Services\Currency\CurrencyService;
 use Illuminate\Support\Str;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\ProductVariant;
+use Marvel\Enums\DiscountType;
 use Marvel\Enums\ProductType;
 
 class ProductCurrencyTest extends CurrencyTestCase
@@ -42,24 +43,24 @@ class ProductCurrencyTest extends CurrencyTestCase
 
         $this->assertSame(100.0, $data['price']);
         $this->assertSame(100.0, $data['current_price']);
-        $this->assertSame(100.0, $data['converted_current_price']);
+        $this->assertArrayNotHasKey('converted_current_price', $data);
         $this->assertSame('USD', $data['currency']['code']);
     }
 
-    /** @test */
-    public function current_price_is_converted_to_the_base_currency(): void
+/** @test */
+    public function current_price_is_converted_to_the_effective_currency(): void
     {
-        $kwd = $this->seedCurrencyData()['KWD'];
+        $this->seedCurrencyData();
 
-        app(CurrencyService::class)->setBaseCurrency($kwd);
+        $this->createCustomerWithCurrencyPreference('KWD');
 
         $product = $this->makeProduct(100.0);
 
         $data = $this->resourceArray($product);
 
-        $this->assertSame(100.0, $data['price']);
+        $this->assertSame(22.1, $data['price']);
         $this->assertSame(22.1, $data['current_price']);
-        $this->assertSame(22.1, $data['converted_current_price']);
+        $this->assertArrayNotHasKey('converted_current_price', $data);
         $this->assertSame('KWD', $data['currency']['code']);
     }
 
@@ -79,12 +80,12 @@ class ProductCurrencyTest extends CurrencyTestCase
         $this->assertArrayHasKey('id', $data['currency']);
     }
 
-    /** @test */
+/** @test */
     public function variant_prices_are_converted_alongside_the_product(): void
     {
-        $kwd = $this->seedCurrencyData()['KWD'];
+        $this->seedCurrencyData();
 
-        app(CurrencyService::class)->setBaseCurrency($kwd);
+        $this->createCustomerWithCurrencyPreference('KWD');
 
         $product = $this->makeProduct(100.0, ProductType::VARIABLE);
         ProductVariant::create(['product_id' => $product->id, 'price' => 100.0, 'quantity' => 5]);
@@ -95,9 +96,9 @@ class ProductCurrencyTest extends CurrencyTestCase
         $this->assertCount(1, $data['variants']);
         $variant = $data['variants'][0];
 
-        $this->assertSame(100.0, $variant['price']);
+        $this->assertSame(22.1, $variant['price']);
         $this->assertSame(22.1, $variant['current_price']);
-        $this->assertSame(22.1, $variant['converted_current_price']);
+        $this->assertArrayNotHasKey('converted_current_price', $variant);
     }
 
     /** @test */
@@ -112,22 +113,60 @@ class ProductCurrencyTest extends CurrencyTestCase
         $data = $this->resourceArray($product->fresh());
 
         $this->assertNull($data['current_price']);
-        $this->assertNull($data['converted_current_price']);
+        $this->assertArrayNotHasKey('converted_current_price', $data);
     }
 
-    /** @test */
+/** @test */
+    public function fixed_rate_discount_amount_is_converted_to_the_effective_currency(): void
+    {
+        $this->seedCurrencyData();
+
+        $this->createCustomerWithCurrencyPreference('KWD');
+
+        $product = $this->makeProduct(100.0);
+        $product->update([
+            'has_discount' => true,
+            'discount_type' => DiscountType::FIXED_RATE,
+            'discount_amount' => 20.0,
+        ]);
+
+        $data = $this->resourceArray($product->fresh());
+
+        $this->assertSame(22.1, $data['price']);
+        $this->assertSame(4.42, $data['discount_amount']);
+    }
+
+/** @test */
+    public function percentage_discount_amount_is_not_converted_to_money(): void
+    {
+        $this->seedCurrencyData();
+
+        $this->createCustomerWithCurrencyPreference('KWD');
+
+        $product = $this->makeProduct(100.0);
+        $product->update([
+            'has_discount' => true,
+            'discount_type' => DiscountType::PERCENTAGE,
+            'discount_amount' => 20.0,
+        ]);
+
+        $data = $this->resourceArray($product->fresh());
+
+        $this->assertSame(20.0, $data['discount_amount']);
+    }
+
+/** @test */
     public function conversion_updates_when_the_exchange_rate_changes(): void
     {
-        $currencies = $this->seedCurrencyData();
-        $kwd = $currencies['KWD'];
+        $this->seedCurrencyData();
 
-        app(CurrencyService::class)->setBaseCurrency($kwd);
+        $this->createCustomerWithCurrencyPreference('KWD');
 
         $product = $this->makeProduct(100.0);
         $this->assertSame(22.1, $this->resourceArray($product)['current_price']);
 
         \App\Models\CurrencyRate::query()
-            ->where('currency_id', $kwd->id)
+            ->whereHas('currency', fn ($query) => $query->where('code', 'KWD'))
             ->whereDate('effective_date', now()->toDateString())
             ->update(['exchange_rate' => '0.2500000000']);
 

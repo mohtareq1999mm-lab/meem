@@ -157,7 +157,8 @@ class PaymentReconciliationJob implements ShouldQueue
             return false;
         }
 
-        $localCurrency = config('payment.default_currency');
+$localCurrency = $order->currency_code ?? $order->base_currency_code
+            ?? config('payment.default_currency');
         $gatewayCurrency = $gatewayResult->currency;
 
         if ($localCurrency !== $gatewayCurrency) {

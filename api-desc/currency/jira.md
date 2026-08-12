@@ -25,8 +25,17 @@
 **Acceptance Criteria:**
 - One rate per currency per effective date (upsert on same day)
 - Rate must be a positive numeric value
-- Filter rates by currency and effective date
+- Filter rates by currency, effective date, date range (`date_from`, `date_to`) and currency code
 - Deleting a rate is a hard delete
+
+### US-002b: Filter Currencies & Rates
+**As** an admin
+**I want** to search and filter the currencies and exchange-rate lists
+**So that** I can find rows quickly in large datasets
+
+**Acceptance Criteria:**
+- `/currencies` supports `search` (code/numeric_code/name/symbol/country_name incl. translations), `code`, `is_active`, `sort_order`
+- `/currency-rates` supports `date_from`, `date_to`, `code` in addition to `currency_id`/`effective_date`
 
 ### US-003: Set Base Currency
 **As** an admin
@@ -37,6 +46,17 @@
 - Base currency must be active
 - Base currency must have a rate on/before today
 - Switching updates settings and flushes price caches
+
+### US-003b: Set Catalog Currency
+**As** an admin
+**I want** to switch the catalog currency independently
+**So that** products display/store prices in a chosen catalog while orders/payments stay in the base currency
+
+**Acceptance Criteria:**
+- Catalog currency must be active and have a rate on/before today
+- Switching updates **only** `catalog_currency_code` (base currency + `currency` option untouched)
+- Requires `set-catalog-currency` permission
+- Flushes price caches
 
 ### US-004: Convert Prices
 **As** the system
@@ -54,9 +74,9 @@
 **So that** orders are auditable even if rates change later
 
 **Acceptance Criteria:**
-- Orders store currency_code, base_currency_code, currency_rate, currency_rate_date, converted_total_price
+- Orders store currency_code (= base), base_currency_code, catalog_currency_code, currency_rate, currency_rate_date, total_price (base amount), converted_total_price
 - Snapshot refreshes when an order is updated after a base-currency change
-- OrderResource exposes currency, base_currency, exchange_rate, converted_total
+- OrderResource exposes currency, base_currency, catalog_currency, exchange_rate, converted_total
 
 ### US-006: Public Currency List
 **As** a storefront visitor
@@ -68,6 +88,15 @@
 - Only active currencies, cached 4h under the `currencies` tag
 - Cache invalidated on any currency/rate change
 
+### US-007: Payment & Invoice Currency Sourcing
+**As** the system
+**I want** all payment artifacts to quote the order's base currency
+**So that** invoices, QR codes, gateway invoices/refunds and reconciliations agree with the order
+
+**Acceptance Criteria:**
+- MyFatoorah invoice `DisplayCurrencyIso`, refunds, payment transactions, cashier-QR payload, invoice snapshots and reconciliation `compareCurrency` resolve to `base_currency_code ?? currency_code ?? config('payment.default_currency')`
+- Legacy orders (no currency columns) still work via the config fallback
+
 ## Bug Tickets
 
 | Ticket | Description | Priority | Severity |
@@ -76,3 +105,7 @@
 | BUG-002 | Base currency without rates could be deleted (check order) | High | High |
 | BUG-003 | Date comparisons failed on SQLite (raw `<=` vs `whereDate`) | Medium | Medium |
 | BUG-004 | Rate string precision differs between SQLite and MySQL | Low | Low |
+| BUG-005 | Reconciliation `compareCurrency` passed `null` (TypeError) for legacy orders | High | High |
+| BUG-006 | `SET_CATALOG_CURRENCY_SUCCESSFULLY` constant/translations undefined | High | High |
+| BUG-007 | `set-catalog` had no permission gate | High | High |
+| BUG-008 | Reconciliation queue test asserted non-existent `low` queue | Low | Low |

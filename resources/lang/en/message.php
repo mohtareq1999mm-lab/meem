@@ -158,12 +158,16 @@ return [
     'MESSAGE.CURRENCY_RATE_UPDATED_SUCCESSFULLY' => 'Exchange rate updated successfully',
     'MESSAGE.CURRENCY_RATE_DELETED_SUCCESSFULLY' => 'Exchange rate deleted successfully',
     'MESSAGE.SET_BASE_CURRENCY_SUCCESSFULLY' => 'Base currency updated successfully',
+    'MESSAGE.SET_CATALOG_CURRENCY_SUCCESSFULLY' => 'Catalog currency updated successfully',
     'ERROR.CURRENCY_NOT_FOUND' => 'Currency not found',
     'ERROR.CURRENCY_RATE_NOT_FOUND' => 'Exchange rate not found',
     'ERROR.CANNOT_DELETE_BASE_CURRENCY' => 'The base currency cannot be deleted',
     'ERROR.CANNOT_DELETE_CURRENCY_IN_USE' => 'Cannot delete a currency that has exchange rates',
     'ERROR.EXCHANGE_RATE_NOT_FOUND' => 'No exchange rate found for this currency on or before the selected date',
     'ERROR.CURRENCY_INACTIVE' => 'Inactive currencies cannot be set as the base currency',
+    'MESSAGE.CURRENCY_SELECTED_SUCCESSFULLY' => 'Currency updated successfully',
+    'ERROR.PAYMENT_CURRENCY_UNSUPPORTED' => 'Payment gateway does not support the selected currency :currency',
+    'ERROR.CURRENCY_RATE_UNAVAILABLE_AT_CHECKOUT' => 'Exchange rate is temporarily unavailable for :currency. Please try again later',
 
     // General Errors
     'ERROR.NOT_FOUND' => 'Not found',

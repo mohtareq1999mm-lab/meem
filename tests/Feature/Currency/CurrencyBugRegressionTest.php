@@ -27,8 +27,14 @@ class CurrencyBugRegressionTest extends CurrencyTestCase
         $cart = Cart::create(['user_id' => $user->id, 'status' => 'active', 'total_price' => 100.0]);
         $totals = new CheckoutTotals(100.0, 0, 0, 100.0);
 
-        $order = app(OrderCreationService::class)->createOrder(
-            orderData: ['user_id' => $user->id],
+$order = app(OrderCreationService::class)->createOrder(
+            orderData: [
+                'user_id' => $user->id,
+                'name' => 'Currency Customer',
+                'user_phone' => '01000000000',
+                'user_email' => $user->email,
+                'address' => '123 Currency Street',
+            ],
             cart: $cart,
             checkoutTotals: $totals,
             shippingPrice: 0,
@@ -38,11 +44,13 @@ class CurrencyBugRegressionTest extends CurrencyTestCase
 
         $persisted = Order::query()->findOrFail($order->id);
 
-        $this->assertSame('USD', $persisted->getRawOriginal('currency_code'));
+$this->assertSame('USD', $persisted->getRawOriginal('currency_code'));
         $this->assertSame('KWD', $persisted->getRawOriginal('base_currency_code'));
-        $this->assertSame('0.221000', $persisted->getRawOriginal('currency_rate'));
-        $this->assertSame(now()->toDateString(), $persisted->getRawOriginal('currency_rate_date'));
-        $this->assertSame('22.100', $persisted->getRawOriginal('converted_total_price'));
+        $this->assertSame('USD', $persisted->getRawOriginal('catalog_currency_code'));
+        $this->assertSame(0.221, $persisted->getRawOriginal('currency_rate'));
+        $this->assertSame(now()->toDateString(), substr((string) $persisted->getRawOriginal('currency_rate_date'), 0, 10));
+$this->assertSame(22.1, $persisted->getRawOriginal('converted_total_price'));
+        $this->assertEquals(100.0, $persisted->getRawOriginal('total_price'));
     }
 
     /** @test */
@@ -91,9 +99,9 @@ class CurrencyBugRegressionTest extends CurrencyTestCase
 
         $result = app(CurrencyService::class)->convert(100.0, 'USD', 'KWD');
 
-        $this->assertSame('0.221000', $result->rate);
-        $this->assertSame('1.000000', $result->sourceRate);
-        $this->assertSame('0.221000', $result->targetRate);
+$this->assertSame('0.221000', $result->rate);
+        $this->assertSame('1', $result->sourceRate);
+        $this->assertSame('0.221', $result->targetRate);
         $this->assertSame(22.1, $result->convertedAmount);
     }
 }

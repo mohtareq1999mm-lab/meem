@@ -29,10 +29,11 @@ class CartRepository extends BaseRepository
             return;
         }
 
-        $affected = $cart->items()
+$affected = $cart->items()
             ->where(function ($q) {
                 $q->whereNotNull('promotion_id')->orWhere('discount_amount', '>', 0);
             })
+            ->where('is_gift', false)
             ->update([
                 'promotion_id' => null,
                 'discount_amount' => 0,

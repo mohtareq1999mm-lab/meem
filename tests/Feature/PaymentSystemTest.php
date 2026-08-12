@@ -135,7 +135,7 @@ class PaymentSystemTest extends TestCase
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
         });
 
-        Schema::create('users', function (Blueprint $table) {
+Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
@@ -145,6 +145,39 @@ class PaymentSystemTest extends TestCase
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();
+        });
+
+        Schema::create('user_preferences', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->string('currency_code', 3)->nullable();
+            $table->timestamps();
+            $table->unique('user_id');
+        });
+
+        Schema::create('currencies', function (Blueprint $table) {
+            $table->id();
+            $table->string('code', 3)->unique();
+            $table->json('name');
+            $table->json('symbol')->nullable();
+            $table->json('country_name')->nullable();
+            $table->string('numeric_code', 3)->nullable();
+            $table->unsignedTinyInteger('decimal_places')->default(2);
+            $table->string('icon')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->integer('sort_order')->default(0);
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        Schema::create('currency_rates', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('currency_id')->constrained('currencies')->cascadeOnDelete();
+            $table->decimal('exchange_rate', 20, 10);
+            $table->date('effective_date');
+            $table->timestamps();
+            $table->unique(['currency_id', 'effective_date']);
+            $table->index('effective_date');
         });
 
         Schema::create('personal_access_tokens', function (Blueprint $table) {

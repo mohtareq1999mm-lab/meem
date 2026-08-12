@@ -3,7 +3,9 @@
 namespace App\Services\Checkout;
 
 use App\DTOs\CheckoutTotals;
+use App\DTOs\CurrencyConversionResult;
 use App\Events\OrderCreated;
+use App\Exceptions\CurrencyRateNotFoundException;
 use App\Services\Currency\CurrencyService;
 use Illuminate\Support\Facades\Schema;
 use Marvel\Database\Models\Cart;
@@ -44,9 +46,9 @@ class OrderCreationService
             'user_email' => $orderData['user_email'] ?? null,
             'address' => $orderData['address'] ?? null,
             'notes' => $orderData['notes'] ?? null,
-            'shipping_method' => $shippingMethod ?? 'SCHEDULED',
+'shipping_method' => $shippingMethod ?? 'SCHEDULED',
             'expected_delivery_at' => $eta,
-            'fast_shipping_fee' => $fastShippingFee ?? 0,
+            'fast_shipping_fee' => $this->convertToEffective($fastShippingFee ?? 0),
             'fulfillment_type' => $orderData['fulfillment_type'] ?? 'delivery',
             'payment_method' => $orderData['payment_method'] ?? 'online',
             'payment_gateway' => $orderData['payment_gateway'] ?? null,
@@ -54,25 +56,27 @@ class OrderCreationService
             'pickup_location_name' => $pickupSnapshot['name'],
             'pickup_location_address' => $pickupSnapshot['address'],
             'pickup_location_phone' => $pickupSnapshot['phone'],
-            'pickup_location_coordinates' => $pickupSnapshot['coordinates'],
-            'price' => $checkoutTotals->subtotal,
-            'shipping_price' => $shippingPrice,
+'pickup_location_coordinates' => $pickupSnapshot['coordinates'],
+            'price' => $this->convertToEffective($checkoutTotals->subtotal),
+            'shipping_price' => $this->convertToEffective($shippingPrice),
             'total_price' => $totalPrice,
             'coupon' => $checkoutTotals->coupon ?? $cart->coupon ?? null,
-            'coupon_discount' => $checkoutTotals->couponDiscount ?: null,
+            'coupon_discount' => $this->convertToEffective($checkoutTotals->couponDiscount ?: null),
             'coupon_discount_type' => $checkoutTotals->couponDiscountType,
             'coupon_discount_max_amount' => $checkoutTotals->couponDiscountMaxAmount,
             'promotion_id' => $checkoutTotals->promotionId(),
             'promotion_code' => $checkoutTotals->promotionCode(),
             'promotion_type' => $checkoutTotals->promotionType(),
-            'promotion_discount' => $checkoutTotals->promotionDiscount,
+            'promotion_discount' => $this->convertToEffective($checkoutTotals->promotionDiscount),
             'status' => Order::ORDER_STATUS_PENDING,
         ];
 
         if (Schema::hasColumn('orders', 'currency_code')) {
             $orderDataForCreate = array_merge($orderDataForCreate, [
+                'total_price' => $currencySnapshot['total_price'],
                 'currency_code' => $currencySnapshot['currency_code'],
                 'base_currency_code' => $currencySnapshot['base_currency_code'],
+                'catalog_currency_code' => $currencySnapshot['catalog_currency_code'],
                 'currency_rate' => $currencySnapshot['currency_rate'],
                 'currency_rate_date' => $currencySnapshot['currency_rate_date'],
                 'converted_total_price' => $currencySnapshot['converted_total_price'],
@@ -113,8 +117,10 @@ class OrderCreationService
             'address' => $orderData['address'] ?? $order->address,
             'notes' => $orderData['notes'] ?? $order->notes,
             'shipping_method' => $shippingMethod ?? $order->shipping_method,
-            'expected_delivery_at' => $eta ?? $order->expected_delivery_at,
-            'fast_shipping_fee' => $fastShippingFee ?? $order->fast_shipping_fee,
+'expected_delivery_at' => $eta ?? $order->expected_delivery_at,
+            'fast_shipping_fee' => $fastShippingFee !== null
+                ? $this->convertToEffective($fastShippingFee)
+                : $order->fast_shipping_fee,
             'fulfillment_type' => $orderData['fulfillment_type'] ?? $order->fulfillment_type,
             'payment_method' => $orderData['payment_method'] ?? $order->payment_method,
             'payment_gateway' => $orderData['payment_gateway'] ?? $order->payment_gateway,
@@ -122,24 +128,30 @@ class OrderCreationService
             'pickup_location_name' => $pickupSnapshot['name'],
             'pickup_location_address' => $pickupSnapshot['address'],
             'pickup_location_phone' => $pickupSnapshot['phone'],
-            'pickup_location_coordinates' => $pickupSnapshot['coordinates'],
-            'price' => $checkoutTotals->subtotal,
-            'shipping_price' => $shippingPrice,
+'pickup_location_coordinates' => $pickupSnapshot['coordinates'],
+            'price' => $this->convertToEffective($checkoutTotals->subtotal),
+            'shipping_price' => $this->convertToEffective($shippingPrice),
             'total_price' => $totalPrice,
             'coupon' => $checkoutTotals->coupon ?? $cart->coupon ?? $order->coupon,
-            'coupon_discount' => $checkoutTotals->couponDiscount ?: $order->coupon_discount,
+            'coupon_discount' => $checkoutTotals->couponDiscount !== null
+                ? $this->convertToEffective($checkoutTotals->couponDiscount)
+                : $order->coupon_discount,
             'coupon_discount_type' => $checkoutTotals->couponDiscountType ?? $order->coupon_discount_type,
             'coupon_discount_max_amount' => $checkoutTotals->couponDiscountMaxAmount ?? $order->coupon_discount_max_amount,
             'promotion_id' => $checkoutTotals->promotionId() ?? $order->promotion_id,
             'promotion_code' => $checkoutTotals->promotionCode() ?? $order->promotion_code,
             'promotion_type' => $checkoutTotals->promotionType() ?? $order->promotion_type,
-            'promotion_discount' => $checkoutTotals->promotionDiscount ?? $order->promotion_discount,
+            'promotion_discount' => $checkoutTotals->promotionDiscount !== null
+                ? $this->convertToEffective($checkoutTotals->promotionDiscount)
+                : $order->promotion_discount,
         ];
 
         if (Schema::hasColumn('orders', 'currency_code')) {
             $updateData = array_merge($updateData, [
+                'total_price' => $currencySnapshot['total_price'],
                 'currency_code' => $currencySnapshot['currency_code'],
                 'base_currency_code' => $currencySnapshot['base_currency_code'],
+                'catalog_currency_code' => $currencySnapshot['catalog_currency_code'],
                 'currency_rate' => $currencySnapshot['currency_rate'],
                 'currency_rate_date' => $currencySnapshot['currency_rate_date'],
                 'converted_total_price' => $currencySnapshot['converted_total_price'],
@@ -155,9 +167,9 @@ class OrderCreationService
     {
         foreach ($cart->items as $item) {
             try {
-                $quantity = max(1, (int) ($item->quantity ?? 0));
+$quantity = max(1, (int) ($item->quantity ?? 0));
                 $lineTotal = (float) ($item->total_price ?? 0);
-                $effectiveUnitPrice = $quantity > 0 ? $lineTotal / $quantity : 0;
+                $catalogUnitPrice = $quantity > 0 ? $lineTotal / $quantity : 0;
                 $promotionDiscountAmount = round(max(0, ((float) ($item->price ?? 0) * $quantity) - $lineTotal), 2);
 
                 $product = $item->product ?? null;
@@ -182,21 +194,32 @@ class OrderCreationService
                         : null;
                 }
 
-                $orderItem = $order->orderItems()->create([
+                $orderItemData = [
                     'product_id' => $item->product_id,
                     'product_variant_id' => $item->product_variant_id,
                     'product_name' => $productName,
                     'product_quantity' => $quantity,
-                    'product_price' => $effectiveUnitPrice,
-                    'product_total_price' => round($lineTotal, 2),
+                    'product_price' => $this->convertToEffective($catalogUnitPrice, $order->currency_code),
+                    'product_total_price' => $this->convertToEffective($lineTotal, $order->currency_code),
                     'product_sku' => $productSku,
-                    'product_flash_sale_price' => $flashSalePrice,
-                    'product_discount_price' => $discountPrice,
-                    'promotion_discount_amount' => $promotionDiscountAmount,
+                    'product_flash_sale_price' => $flashSalePrice !== null ? $this->convertToEffective($flashSalePrice, $order->currency_code) : null,
+                    'product_discount_price' => $discountPrice !== null ? $this->convertToEffective($discountPrice, $order->currency_code) : null,
+                    'promotion_discount_amount' => $this->convertToEffective($promotionDiscountAmount, $order->currency_code),
                     'attributes' => $item->attributes ?? null,
                     'is_gift' => (bool) ($item->is_gift ?? false),
                     'promotion_id' => $item->promotion_id,
-                ]);
+                ];
+
+                if (Schema::hasColumn('order_products', 'currency_code')) {
+                    $orderItemData = array_merge($orderItemData, [
+                        'currency_code' => $order->currency_code ?? $this->currencyService->getEffectiveCode(),
+                        'catalog_currency_code' => $this->currencyService->getCatalogCode(),
+                        'catalog_price' => round($catalogUnitPrice, 2),
+                        'catalog_total_price' => round($lineTotal, 2),
+                    ]);
+                }
+
+                $orderItem = $order->orderItems()->create($orderItemData);
 
                 if (!$orderItem) {
                     return false;
@@ -230,29 +253,72 @@ class OrderCreationService
         }
     }
 
-    private function resolveCurrencySnapshot(float $totalPrice): array
+private function resolveCurrencySnapshot(float $totalPrice): array
     {
         if (!Schema::hasColumn('orders', 'currency_code')) {
             return [
                 'currency_code' => null,
                 'base_currency_code' => null,
+                'catalog_currency_code' => null,
                 'currency_rate' => null,
                 'currency_rate_date' => null,
+                'total_price' => $totalPrice,
                 'converted_total_price' => $totalPrice,
             ];
         }
 
+        $effectiveCode = $this->currencyService->getEffectiveCode();
         $catalogCode = $this->currencyService->getCatalogCode();
         $baseCode = $this->currencyService->getBaseCode();
-        $conversion = $this->currencyService->convert($totalPrice, $catalogCode, $baseCode);
+
+        $catalogToEffective = $this->safeConvert($totalPrice, $catalogCode, $effectiveCode);
+        $effectiveToBase = $this->safeConvert($catalogToEffective->convertedAmount, $effectiveCode, $baseCode);
 
         return [
-            'currency_code' => $catalogCode,
+            'currency_code' => $effectiveCode,
             'base_currency_code' => $baseCode,
-            'currency_rate' => $conversion->rate,
-            'currency_rate_date' => $conversion->effectiveDate,
-            'converted_total_price' => $conversion->convertedAmount,
+            'catalog_currency_code' => $catalogCode,
+            'currency_rate' => $effectiveToBase->rate,
+            'currency_rate_date' => $effectiveToBase->effectiveDate,
+            'total_price' => $catalogToEffective->convertedAmount,
+            'converted_total_price' => $effectiveToBase->convertedAmount,
         ];
+    }
+
+    private function safeConvert(float $amount, string $fromCode, string $toCode): CurrencyConversionResult
+    {
+        try {
+            return $this->currencyService->convert($amount, $fromCode, $toCode);
+        } catch (CurrencyRateNotFoundException $e) {
+            throw new \InvalidArgumentException(
+                __('message.' . CURRENCY_RATE_UNAVAILABLE_AT_CHECKOUT, ['currency' => $toCode]),
+                0,
+                $e
+            );
+        }
+    }
+
+    private function convertToEffective(float|string|null $catalogAmount, ?string $toCode = null): ?float
+    {
+        if ($catalogAmount === null || $catalogAmount === '') {
+            return null;
+        }
+
+        $toCode = strtoupper($toCode ?? $this->currencyService->getEffectiveCode());
+
+        try {
+            return $this->currencyService->convertPrice(
+                (string) $catalogAmount,
+                $this->currencyService->getCatalogCode(),
+                $toCode
+            );
+        } catch (CurrencyRateNotFoundException $e) {
+            throw new \InvalidArgumentException(
+                __('message.' . CURRENCY_RATE_UNAVAILABLE_AT_CHECKOUT, ['currency' => $toCode]),
+                0,
+                $e
+            );
+        }
     }
 
 

@@ -4,6 +4,7 @@ namespace App\Services\General;
 
 use App\Contexts\ChannelContext;
 use App\Enums\Channel;
+use App\Services\Currency\CurrencyService;
 use App\Traits\HasChannelFilter;
 use App\Http\Resources\Banner\BannerResource;
 use App\Http\Resources\Brand\BrandResource;
@@ -17,6 +18,7 @@ use App\Services\General\ProductService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Marvel\Database\Models\Banner;
 use Marvel\Database\Models\Brand;
 use Marvel\Database\Models\Category;
@@ -35,9 +37,15 @@ class HomeService
         private readonly ChannelContext $channelContext,
     ) {}
 
-    private function cacheKey(string $key): string
+private function cacheKey(string $key): string
     {
-        return $this->channelContext->getChannel()->value . ':' . $key;
+        $cacheKey = $this->channelContext->getChannel()->value . ':' . $key;
+
+        if (in_array($key, self::CURRENCY_AWARE_CACHE_KEYS, true)) {
+            $cacheKey .= ':' . strtoupper(app(CurrencyService::class)->getEffectiveCode());
+        }
+
+        return $cacheKey;
     }
 
     public function getNavData(?int $level = null)
@@ -409,7 +417,7 @@ class HomeService
             ->get();
     }
 
-    private const CACHE_KEYS = [
+private const CACHE_KEYS = [
         'home-nav-bar',
         'home-data',
         'home-active-sliders',
@@ -427,6 +435,15 @@ class HomeService
         'home-flash-sales-after-9',
     ];
 
+    private const CURRENCY_AWARE_CACHE_KEYS = [
+        'home-flash-sales',
+        'home-discount-products-end-today',
+        'home-flash-sale-products',
+        'home-weekly-products',
+        'home-all-discount-products',
+        'home-flash-sales-after-9',
+    ];
+
     public static function clearCache(?string $channel = null): void
     {
         $channels = $channel !== null ? [$channel] : Channel::values();
@@ -435,8 +452,27 @@ class HomeService
             foreach (self::CACHE_KEYS as $key) {
                 $cacheKey = $ch . ':' . $key;
                 Cache::forget($cacheKey);
+
+                if (in_array($key, self::CURRENCY_AWARE_CACHE_KEYS, true)) {
+                    foreach (self::activeCurrencyCodes() as $code) {
+                        Cache::forget($cacheKey . ':' . $code);
+                    }
+                }
             }
         }
+    }
+
+private static function activeCurrencyCodes(): array
+    {
+        if (!Schema::hasTable('currencies')) {
+            return [];
+        }
+
+        return \App\Models\Currency::query()
+            ->where('is_active', true)
+            ->pluck('code')
+            ->map(fn (string $code) => strtoupper($code))
+            ->all();
     }
 
     private function moneyValue($value)

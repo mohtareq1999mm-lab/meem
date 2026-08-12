@@ -250,4 +250,84 @@ class CurrencyAdminApiTest extends CurrencyTestCase
         $this->assertSame(3, $response->json('data.per_page'));
         $this->assertSame(5, $response->json('data.total'));
     }
+
+    /** @test */
+    public function list_can_be_filtered_by_code(): void
+    {
+        $this->createAuthenticatedAdmin();
+        $this->seedCurrencyData();
+
+        $response = $this->getJson(self::PREFIX . '/currencies?code=USD');
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('success', true);
+        $this->assertSame(1, $response->json('data.total'));
+        $this->assertSame('USD', $response->json('data.data.0.code'));
+    }
+
+    /** @test */
+    public function list_can_be_filtered_by_search_code(): void
+    {
+        $this->createAuthenticatedAdmin();
+        $this->seedCurrencyData();
+
+        $response = $this->getJson(self::PREFIX . '/currencies?search=KW');
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('success', true);
+        $this->assertSame(1, $response->json('data.total'));
+        $this->assertSame('KWD', $response->json('data.data.0.code'));
+    }
+
+    /** @test */
+    public function list_search_matches_translated_name(): void
+    {
+        $this->createAuthenticatedAdmin();
+        $this->seedCurrencyData();
+
+        $response = $this->getJson(self::PREFIX . '/currencies?search=Dinar');
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('success', true);
+        $this->assertSame(1, $response->json('data.total'));
+        $this->assertSame('KWD', $response->json('data.data.0.code'));
+    }
+
+    /** @test */
+    public function list_can_be_filtered_by_is_active(): void
+    {
+        $this->createAuthenticatedAdmin();
+        $this->seedCurrencyData();
+        $sar = Currency::query()->where('code', 'SAR')->first();
+        $sar->update(['is_active' => false]);
+
+        $response = $this->getJson(self::PREFIX . '/currencies?is_active=1');
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('success', true);
+        $this->assertSame(2, $response->json('data.total'));
+
+        foreach ($response->json('data.data') as $item) {
+            $this->assertTrue($item['is_active']);
+        }
+
+        $inactive = $this->getJson(self::PREFIX . '/currencies?is_active=0');
+
+        $inactive->assertStatus(200);
+        $this->assertSame(1, $inactive->json('data.total'));
+        $this->assertFalse($inactive->json('data.data.0.is_active'));
+    }
+
+    /** @test */
+    public function list_can_be_filtered_by_sort_order(): void
+    {
+        $this->createAuthenticatedAdmin();
+        $this->seedCurrencyData();
+
+        $response = $this->getJson(self::PREFIX . '/currencies?sort_order=0');
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('success', true);
+        $this->assertSame(3, $response->json('data.total'));
+    }
 }

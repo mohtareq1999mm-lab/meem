@@ -13,13 +13,22 @@ class MyFatoorahGateway implements PaymentGatewayContract
         private MyfatoraService $myfatoraService,
     ) {}
 
-    public function createInvoice(
+public function createInvoice(
         Order $order,
         float $amount,
         string $callbackUrl,
         string $errorUrl,
         array $metadata = []
     ): GatewayResult {
+        $orderCurrency = $order->currency_code ?? $order->base_currency_code ?? config('payment.default_currency', 'EGP');
+
+        if (!$this->supportsCurrency($orderCurrency)) {
+            return new GatewayResult(
+                success: false,
+                errorMessage: __('message.ERROR.PAYMENT_CURRENCY_UNSUPPORTED', ['currency' => $orderCurrency]),
+            );
+        }
+
         $mobile = $order->user_phone ?? '';
         $mobile = preg_replace('/^\+?20/', '', $mobile);
         $mobile = preg_replace('/[^0-9]/', '', $mobile);
@@ -29,7 +38,7 @@ class MyFatoorahGateway implements PaymentGatewayContract
             'InvoiceValue' => $amount,
             'CustomerName' => $order->name ?? 'Customer',
             'NotificationOption' => 'LNK',
-            'DisplayCurrencyIso' => 'EGP',
+            'DisplayCurrencyIso' => $orderCurrency,
             'MobileCountryCode' => '+20',
             'CustomerMobile' => $mobile,
             'CustomerEmail' => $order->user_email,
@@ -109,9 +118,16 @@ class MyFatoorahGateway implements PaymentGatewayContract
         );
     }
 
-    public function name(): string
+public function name(): string
     {
         return 'myfatoorah';
+    }
+
+    public function supportsCurrency(string $currencyCode): bool
+    {
+        $supported = (array) (config('payment.gateways.myfatoorah.supported_currencies') ?? []);
+
+        return in_array(strtoupper($currencyCode), array_map('strtoupper', $supported), true);
     }
 
     public function refund(
@@ -119,6 +135,15 @@ class MyFatoorahGateway implements PaymentGatewayContract
         float $amount,
         ?string $reason = null
     ): GatewayResult {
+        $orderCurrency = $order->currency_code ?? $order->base_currency_code ?? config('payment.default_currency', 'EGP');
+
+        if (!$this->supportsCurrency($orderCurrency)) {
+            return new GatewayResult(
+                success: false,
+                errorMessage: __('message.ERROR.PAYMENT_CURRENCY_UNSUPPORTED', ['currency' => $orderCurrency]),
+            );
+        }
+
         $transaction = $order->transactions()
             ->whereNotNull('gateway_transaction_id')
             ->latest()
@@ -150,11 +175,11 @@ class MyFatoorahGateway implements PaymentGatewayContract
         $refundId = data_get($response, 'Data.RefundId');
         $refundStatus = data_get($response, 'Data.RefundStatus');
 
-        return new GatewayResult(
+return new GatewayResult(
             success: true,
             gatewayTransactionId: $refundId ? (string) $refundId : null,
             amount: $amount,
-            currency: 'EGP',
+            currency: $orderCurrency,
             status: $refundStatus ?? 'refunded',
             rawResponse: $response,
         );

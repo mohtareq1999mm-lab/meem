@@ -231,6 +231,7 @@ class PermissionSeeder extends Seeder
             'create-exchange-rate',
             'update-exchange-rate',
             'set-base-currency',
+            'set-catalog-currency',
 
             //content-pages
             'view-content-pages',
@@ -417,6 +418,7 @@ class PermissionSeeder extends Seeder
             'create-exchange-rate',
             'update-exchange-rate',
             'set-base-currency',
+            'set-catalog-currency',
         ];
 
         $viewPermission = [

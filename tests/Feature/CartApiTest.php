@@ -327,7 +327,7 @@ class CartApiTest extends TestCase
             'end_date' => now()->addMonth(),
         ]);
 
-        $response = $this->postJson(self::PREFIX . '/coupons/add-to-cart', [
+$response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
             'code' => 'TEST10',
         ]);
 
@@ -1523,8 +1523,8 @@ class CartApiTest extends TestCase
     // Gift item not returned as part of CartItemResource
     // =========================================================================
 
-    /** @test */
-    public function gift_item_attribute_not_exposed_in_item_resource(): void
+/** @test */
+    public function gift_item_attribute_exposed_in_item_resource(): void
     {
         $this->auth();
 
@@ -1548,7 +1548,8 @@ class CartApiTest extends TestCase
 
         $item = $response->json('data.data.0.normal_items.0');
         $this->assertNotNull($item);
-        $this->assertArrayNotHasKey('is_gift', $item);
+        $this->assertArrayHasKey('is_gift', $item);
+        $this->assertTrue($item['is_gift']);
     }
 
     // =========================================================================

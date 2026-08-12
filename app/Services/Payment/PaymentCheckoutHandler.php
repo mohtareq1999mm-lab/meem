@@ -36,8 +36,18 @@ class PaymentCheckoutHandler
             return $this->apiResponse($e->getMessage(), 422, false);
         }
 
-        $callbackUrl ??= route('api.checkout.callback');
+$callbackUrl ??= route('api.checkout.callback');
         $errorUrl ??= route('api.checkout.errorCallback');
+
+        $orderCurrency = $order->currency_code ?? $order->base_currency_code ?? config('payment.default_currency', 'EGP');
+
+        if (!$gatewayInstance->supportsCurrency($orderCurrency)) {
+            return $this->apiResponse(
+                __('message.ERROR.PAYMENT_CURRENCY_UNSUPPORTED', ['currency' => $orderCurrency]),
+                422,
+                false
+            );
+        }
 
         $result = $gatewayInstance->createInvoice(
             $order,
@@ -60,7 +70,7 @@ class PaymentCheckoutHandler
             'payment_method' => $gateway,
             'status' => 'pending',
             'amount' => $amount,
-            'currency' => config('payment.default_currency', 'KWD'),
+            'currency' => $order->currency_code ?? $order->base_currency_code ?? config('payment.default_currency', 'EGP'),
             'gateway_transaction_id' => $result->gatewayTransactionId,
             'gateway_response' => $rawResponse,
         ]);
@@ -80,7 +90,7 @@ class PaymentCheckoutHandler
             'payment_method' => 'cod',
             'status' => 'pending',
             'amount' => $order->total_price,
-            'currency' => config('payment.default_currency', 'EGP'),
+            'currency' => $order->currency_code ?? $order->base_currency_code ?? config('payment.default_currency', 'EGP'),
         ]);
 
         if (!$transaction) {
@@ -100,7 +110,7 @@ class PaymentCheckoutHandler
             'payment_method' => 'pay_at_cashier',
             'status' => 'pending',
             'amount' => $order->total_price,
-            'currency' => config('payment.default_currency', 'EGP'),
+            'currency' => $order->currency_code ?? $order->base_currency_code ?? config('payment.default_currency', 'EGP'),
         ]);
 
         if (!$transaction) {

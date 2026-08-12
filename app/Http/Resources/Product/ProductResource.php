@@ -7,6 +7,7 @@ use App\Http\Resources\Brand\BrandResource;
 use App\Http\Resources\Slider\SliderResource;
 use App\Traits\HasProductFilters;
 use Marvel\Database\Models\Category;
+use Marvel\Enums\DiscountType;
 use Marvel\Http\Resources\TagResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -28,12 +29,11 @@ class ProductResource extends JsonResource
             'name'                   => $this->getTranslation('name', app()->getLocale()),
             'slug'                   => $this->slug,
             'description'            => $this->getTranslation('description', app()->getLocale()),
-            'price'                  => $this->roundMoney($this->price),
+            'price'                  => $this->convertCatalogPrice($this->price),
             'current_price'          => $convertedCurrentPrice,
-            'converted_current_price' => $convertedCurrentPrice,
-            'currency'               => $this->baseCurrency(),
+            'currency'               => $this->effectiveCurrency(),
             'discount_type'          => $this->discount_type,
-            'discount_amount'        => $this->roundMoney($this->discount_amount),
+            'discount_amount'        => $this->formatDiscountAmount(),
             'start_date'             => $this->start_date,
             'end_date'               => $this->end_date,
             'sku'                    => $this->sku,
@@ -83,9 +83,8 @@ class ProductResource extends JsonResource
 
             return [
                 'id' => $variant->id,
-                'price' => $this->roundMoney($variant->price),
+                'price' => $this->convertCatalogPrice($variant->price),
                 'current_price' => $convertedCurrentPrice,
-                'converted_current_price' => $convertedCurrentPrice,
                 'quantity' => (int) $variant->quantity,
                 'height' => $variant->height,
                 'width' => $variant->width,
@@ -104,6 +103,19 @@ class ProductResource extends JsonResource
                 'value' => optional($attrProduct->attributeValue)->value,
             ];
         });
+    }
+
+    private function formatDiscountAmount(): ?float
+    {
+        if ($this->discount_amount === null || $this->discount_amount === '') {
+            return null;
+        }
+
+        if (in_array($this->discount_type, [DiscountType::FIXED_RATE, 'fixed'], true)) {
+            return $this->convertCatalogPrice($this->discount_amount);
+        }
+
+        return $this->roundMoney($this->discount_amount);
     }
 
     private function roundMoney($value)

@@ -6,10 +6,14 @@ Dedicated feature tests live in `tests/Feature/Currency/`:
 
 | File | Covers |
 |------|--------|
-| `CurrencyAdminApiTest.php` | CRUD + set-base for currencies (admin auth/permission) |
-| `CurrencyRateTest.php` | CRUD + upsert for exchange rates |
+| `CurrencyAdminApiTest.php` | CRUD + set-base + filters (search/code/is_active/sort_order) for currencies (admin auth/permission) |
+| `CurrencyRateTest.php` | CRUD + upsert + filters (date_from/date_to/code) for exchange rates |
 | `CurrencyConversionTest.php` | Conversion logic, historical/latest rate lookup |
 | `OrderCurrencyTest.php` | Order snapshot persistence + OrderResource |
+| `ProductCurrencyTest.php` | Product price conversion + `discount_amount` conversion for fixed-rate discounts |
+| `PaymentCurrencyTest.php` | MyFatoorah invoice/refund currency, reconciliation `compareCurrency`, invoice snapshot currency sourcing |
+| `BaseCurrencyTest.php` | Set-base success/guard/error/cache paths |
+| `CatalogCurrencyTest.php` | Set-catalog success/guard/error/cache/permission paths |
 | `CurrencyBugRegressionTest.php` | Regression coverage for BUG-001..004 |
 
 ## Recommended Tests
@@ -41,16 +45,25 @@ Dedicated feature tests live in `tests/Feature/Currency/`:
 | FT-023 | Conversion uses latest rate with effective_date ≤ date | Feature | High |
 | FT-024 | Conversion throws `CurrencyRateNotFoundException` when no rate | Failure | High |
 | FT-025 | Conversion returns scale-6 ratio and round-2 converted total | Precision | High |
-| FT-026 | Order snapshot stores all 5 currency columns | Feature | High |
-| FT-027 | OrderResource exposes currency/base_currency/exchange_rate/converted_total | Structure | High |
+| FT-026 | Order snapshot stores all currency columns | Feature | High |
+| FT-027 | OrderResource exposes currency/base_currency/catalog_currency/exchange_rate/converted_total | Structure | High |
 | FT-028 | Update order after base change refreshes snapshot | Feature | Medium |
 | FT-029 | Public list returns active currencies only, no auth | Feature | High |
 | FT-030 | Public list is cached under `currencies` tag and invalidated on writes | Cache | High |
 | FT-031 | Unauthenticated access to admin endpoints → 401 | Auth | High |
 | FT-032 | Missing permission → 403 | Auth | High |
+| FT-033 | Set-catalog success updates only catalog_currency_code option | Feature | High |
+| FT-034 | Set-catalog inactive currency → 422 | Validation | High |
+| FT-035 | Set-catalog currency without rate → 422 | Validation | High |
+| FT-036 | Set-catalog requires permission → 403 | Auth | High |
+| FT-037 | Currency list filters: code / search / is_active / sort_order | Filter | Medium |
+| FT-038 | Rate list filters: date_from / date_to / code | Filter | Medium |
+| FT-039 | Product `discount_amount` converted for fixed-rate, not percentage | Feature | High |
+| FT-040 | MyFatoorah invoice/refund use order base currency | Feature | High |
+| FT-041 | Reconciliation compares currency against order base with config fallback | Feature | High |
 
 ## Missing / Weak Areas
 
-- **OrderSnapshot regression tests** currently fail because `OrderCreationService` requires NOT NULL `user_phone`/`user_email`/`address`/`name`; order-currency tests must supply them.
-- **Historical rate coverage** for USD is incomplete (seed past-day USD rate before asserting historical/latest lookups).
-- **Rate string precision** assertions are DB-dependent (SQLite returns `'1'`/`'0.221'` vs MySQL `'1.0000000000'`/`'0.2210000000'`); normalize via `bcmul($rate,'1',10)` or relax expectations.
+- **Payment/checkout suites not fully green** — `PaymentCallbackStressTest` (9 fail, 401 on callback GET), `PaymentProductionHardenTest` (14 fail + 1 risky), `CartApiTest` (5 fail) and `CheckoutApiTest` (1 fail, `no such table: currencies` on GET /orders) all fail **identically on baseline** (verified via `git stash`) — pre-existing, unrelated to the currency refactor, but untriaged.
+- **Combined test-file runs are unreliable** on this setup — `php artisan test file1 file2` executes only the first file; every suite must be run individually.
+- **Rate string precision** assertions are DB-dependent (SQLite returns `'1'`/`'0.221'` vs MySQL `'1.0000000000'`/`'0.2210000000'`); tests normalize to SQLite-native values.

@@ -8,10 +8,11 @@ Multi-Currency Management (Admin CRUD, Exchange Rates, Conversion Engine, Order/
 
 The Currency module introduces full multi-currency support to the e-commerce platform:
 
-- **Admin API** (`/api/v1/currencies`, `/api/v1/currency-rates`) — full CRUD for currencies and exchange rates, plus setting a base currency. Permission-gated.
+- **Admin API** (`/api/v1/currencies`, `/api/v1/currency-rates`) — full CRUD for currencies and exchange rates, plus setting a base **or catalog** currency. Permission-gated.
 - **Public API** (`/api/v1/general/currencies`) — read-only list of active currencies for storefronts, cached.
 - **Conversion engine** — bcmath-based, database-backed rate resolution with historical lookups.
-- **Price snapshots** — orders record the currency snapshot at creation time; products expose catalog-to-base converted prices.
+- **Price snapshots** — orders record the currency snapshot at creation time (base currency + catalog code); products, carts and orders expose catalog-to-base converted prices.
+- **Payment sourcing** — gateways, QR payloads, transactions, invoice snapshots and reconciliation quote the order's base currency.
 
 Currencies are fully translatable (name, symbol, country_name in en/ar), support soft deletes, a base currency + catalog currency concept stored in settings, and rate history keyed by `(currency, effective_date)`.
 
@@ -22,6 +23,7 @@ Currencies are fully translatable (name, symbol, country_name in en/ar), support
     |                                           |
     |--- GET/POST/PUT/DELETE /api/v1/currencies         |
     |--- POST /api/v1/currencies/{id}/set-base          |--- GET /api/v1/general/currencies
+    |--- POST /api/v1/currencies/{id}/set-catalog       |
     |--- GET/POST/PUT/DELETE /api/v1/currency-rates     |
     v                                           v
 [Marvel CurrencyController / CurrencyRateController]   [App\CurrencyController (public)]
@@ -29,16 +31,18 @@ Currencies are fully translatable (name, symbol, country_name in en/ar), support
     v                                           v
 [CurrencyService (singleton)]                  [CurrencyResource] + HasCache (tag: currencies)
     |--- store/update/delete currency
-    |--- setBaseCurrency
+    |--- setBaseCurrency / setCatalogCurrency
     |--- convert / convertPrice  -> [CurrencyConversionService]
     |--- invalidatePriceCaches (tag flush)
     v
-[CurrencyRateService] -> upsert / list rates
+[CurrencyRateService] -> upsert / list rates (currency_id, effective_date, date_from, date_to, code)
     v
 [Models: Currency, CurrencyRate]
     v
 [OrderCreationService]  -> resolveCurrencySnapshot  (order price snapshot)
 [ConvertsProductPrice]  -> convertPrice              (product price conversion)
+[CartResource/CartItemResource] -> convertPrice      (cart conversion + currency field)
+[Payments/Invoices/Reconciliation] -> order base currency sourcing
 ```
 
 ## Key Endpoints
@@ -47,13 +51,14 @@ Currencies are fully translatable (name, symbol, country_name in en/ar), support
 
 | Method | URI | Controller Method | Permission | Notes |
 |--------|-----|-------------------|------------|-------|
-| GET | `/currencies` | `index` | `view-currencies` | Paginated (limit 1–100) |
+| GET | `/currencies` | `index` | `view-currencies` | Paginated (limit 1–100) + search/code/is_active/sort_order filters |
 | POST | `/currencies` | `store` | `create-currency` | Validates ISO 3-letter code |
 | GET | `/currencies/{currency}` | `show` | `view-currencies` | `{currency}` must be numeric |
 | PUT | `/currencies/{currency}` | `update` | `update-currency` | |
 | DELETE | `/currencies/{currency}` | `destroy` | `delete-currency` | Soft delete w/ guards |
 | POST | `/currencies/{id}/set-base` | `setBase` | `set-base-currency` | `{id}` must be numeric |
-| GET | `/currency-rates` | `index` | `view-exchange-rates` | Filter currency_id / effective_date |
+| POST | `/currencies/{id}/set-catalog` | `setCatalog` | `set-catalog-currency` | `{id}` must be numeric |
+| GET | `/currency-rates` | `index` | `view-exchange-rates` | Filter currency_id / effective_date / date_from / date_to / code |
 | POST | `/currency-rates` | `store` | `create-exchange-rate` | Upsert per (currency, date) |
 | GET | `/currency-rates/{currency_rate}` | `show` | `view-exchange-rates` | |
 | PUT | `/currency-rates/{currency_rate}` | `update` | `update-exchange-rate` | |
@@ -95,11 +100,17 @@ Currencies are fully translatable (name, symbol, country_name in en/ar), support
 | Migration | `database/migrations/2026_08_10_000002_create_currencies_table.php` |
 | Migration | `database/migrations/2026_08_10_000003_create_currency_rates_table.php` |
 | Migration | `database/migrations/2026_08_10_000004_add_currency_columns_to_orders_table.php` |
+| Migration | `database/migrations/2026_08_11_000001_add_catalog_currency_code_to_orders_table.php` |
 | Seeder | `database/seeders/CurrencySeeder.php` |
 | Order snapshot service | `app/Services/Checkout/OrderCreationService.php` |
 | Order snapshot resource | `app/Http/Resources/Order/OrderResource.php` |
+| Cart conversion | `packages/marvel/src/Http/Resources/CartResource.php` / `CartItemResource.php` |
 | Product price trait | `app/Http/Resources/Product/ConvertsProductPrice.php` |
+| Payment sourcing | `app/Services/Payment/PaymentCheckoutHandler.php`, `app/Services/Gateway/MyFatoorahGateway.php`, `app/Services/Gateway/CashierQrService.php`, `app/Services/Invoice/InvoiceService.php`, `app/Services/Invoice/InvoiceSnapshotService.php`, `app/Jobs/PaymentReconciliationJob.php` |
 | Registration | `app/Providers/AppServiceProvider.php` (line 26) |
+| Tests | `tests/Feature/Currency/*` (incl. `CatalogCurrencyTest`, `PaymentCurrencyTest`) |
+| Test base | `tests/Feature/Currency/CurrencyTestCase.php` |
+| Response changes | `api-desc/currency/change-response.md` |
 
 ## Tech Stack
 

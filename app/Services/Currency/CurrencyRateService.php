@@ -45,12 +45,15 @@ class CurrencyRateService
         $this->currencyService->invalidatePriceCaches();
     }
 
-    public function list(?int $currencyId, ?string $effectiveDate, int $limit): LengthAwarePaginator
+    public function list(?int $currencyId, ?string $effectiveDate, ?string $dateFrom, ?string $dateTo, ?string $code, int $limit): LengthAwarePaginator
     {
         return CurrencyRate::query()
             ->with('currency')
             ->when($currencyId, fn ($query) => $query->where('currency_id', $currencyId))
             ->when($effectiveDate, fn ($query) => $query->whereDate('effective_date', $effectiveDate))
+            ->when($dateFrom, fn ($query) => $query->whereDate('effective_date', '>=', $dateFrom))
+            ->when($dateTo, fn ($query) => $query->whereDate('effective_date', '<=', $dateTo))
+            ->when($code, fn ($query) => $query->whereHas('currency', fn ($q) => $q->where('code', $code)))
             ->orderByDesc('effective_date')
             ->orderByDesc('id')
             ->paginate($limit);

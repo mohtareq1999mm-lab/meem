@@ -29,13 +29,33 @@ class CurrencyController extends CoreController
         $this->middleware('permission:' . Permission::UPDATE_CURRENCY, ['only' => ['update']]);
         $this->middleware('permission:' . Permission::DELETE_CURRENCY, ['only' => ['destroy']]);
         $this->middleware('permission:' . Permission::SET_BASE_CURRENCY, ['only' => ['setBase']]);
+        $this->middleware('permission:' . Permission::SET_CATALOG_CURRENCY, ['only' => ['setCatalog']]);
     }
 
     public function index(Request $request): JsonResponse
     {
         $limit = max(1, min((int) $request->query('limit', 15), 100));
+        $search = $request->query('search');
+        $code = $request->query('code');
+        $isActive = $request->has('is_active') ? filter_var($request->query('is_active'), FILTER_VALIDATE_BOOLEAN) : null;
+        $sortOrder = $request->has('sort_order') ? (int) $request->query('sort_order') : null;
 
         $currencies = Currency::query()
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('code', 'like', "%{$search}%")
+                        ->orWhere('numeric_code', 'like', "%{$search}%")
+                        ->orWhere('name->en', 'like', "%{$search}%")
+                        ->orWhere('name->ar', 'like', "%{$search}%")
+                        ->orWhere('symbol->en', 'like', "%{$search}%")
+                        ->orWhere('symbol->ar', 'like', "%{$search}%")
+                        ->orWhere('country_name->en', 'like', "%{$search}%")
+                        ->orWhere('country_name->ar', 'like', "%{$search}%");
+                });
+            })
+            ->when($code, fn ($query) => $query->where('code', $code))
+            ->when($isActive !== null, fn ($query) => $query->where('is_active', $isActive))
+            ->when($sortOrder !== null, fn ($query) => $query->where('sort_order', $sortOrder))
             ->orderBy('sort_order')
             ->orderBy('code')
             ->paginate($limit);
@@ -128,5 +148,23 @@ class CurrencyController extends CoreController
         }
 
         return $this->apiResponse(SET_BASE_CURRENCY_SUCCESSFULLY, 200, true, CurrencyResource::make($currency));
+    }
+    public function setCatalog(int $id): JsonResponse
+    {
+        $currency = Currency::query()->withTrashed()->find($id);
+
+        if (!$currency) {
+            return $this->apiResponse(CURRENCY_NOT_FOUND, 404, false);
+        }
+
+        try {
+            $this->currencyService->setCatalogCurrency($currency);
+        } catch (CurrencyInactiveException $e) {
+            return $this->apiResponse(CURRENCY_INACTIVE, 422, false);
+        } catch (CurrencyRateNotFoundException $e) {
+            return $this->apiResponse(EXCHANGE_RATE_NOT_FOUND, 422, false);
+        }
+
+        return $this->apiResponse(SET_CATALOG_CURRENCY_SUCCESSFULLY, 200, true, CurrencyResource::make($currency));
     }
 }

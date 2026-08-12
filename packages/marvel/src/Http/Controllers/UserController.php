@@ -37,6 +37,7 @@ use Marvel\Traits\ApiResponse;
 use Marvel\Traits\UsersTrait;
 use Marvel\Traits\WalletsTrait;
 use App\Enums\UserType;
+use App\Services\Currency\UserCurrencyPreferenceService;
 use Spatie\Newsletter\Facades\Newsletter;
 
 /**
@@ -485,9 +486,12 @@ class UserController extends CoreController
                 ->orWhere('phone_number', $request->phone_number);
         })->where('is_active', true)->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+if (!$user || !Hash::check($request->password, $user->password)) {
             return $this->apiResponse(INVALID_CREDENTIALS, 404, false);
         }
+
+        app(UserCurrencyPreferenceService::class)->adoptGuestCurrencyOnLogin($user, $request);
+
         $email_verified = $user->hasVerifiedEmail();
         $data = [
             "token" => $user->createToken('auth_token',[],now()->addWeekdays(14))->plainTextToken,
@@ -577,8 +581,11 @@ class UserController extends CoreController
             return $this->apiResponse(USER_NOT_FOUND, 404, false);
         }
 
-        if ($user->verifyOneTimePassword($request->code)) {
+if ($user->verifyOneTimePassword($request->code)) {
             $user->update(['email_verified_at' => now()]);
+
+            app(UserCurrencyPreferenceService::class)->adoptGuestCurrencyOnLogin($user, $request);
+
             $data = [
                 "token" => $user->createToken('auth_token',[],now()->addWeek())->plainTextToken,
             ];
@@ -979,12 +986,14 @@ class UserController extends CoreController
                 ]
             );
 
-            $userCreated->providers()->updateOrCreate(
+$userCreated->providers()->updateOrCreate(
                 [
                     'provider' => $provider,
                     'provider_user_id' => $user->getId(),
                 ]
             );
+
+            app(UserCurrencyPreferenceService::class)->adoptGuestCurrencyOnLogin($userCreated, $request);
 
             $data = [
                 "token" => $userCreated->createToken('auth_token',[],now()->addWeek())->plainTextToken,

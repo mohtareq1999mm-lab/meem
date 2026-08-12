@@ -97,6 +97,7 @@ final class Permission extends Enum
     public const CREATE_EXCHANGE_RATE = 'create-exchange-rate';
     public const UPDATE_EXCHANGE_RATE = 'update-exchange-rate';
     public const SET_BASE_CURRENCY = 'set-base-currency';
+    public const SET_CATALOG_CURRENCY = 'set-catalog-currency';
 
     public const VIEW_CITY = 'view-city';
     public const CREATE_CITY = 'create-city';

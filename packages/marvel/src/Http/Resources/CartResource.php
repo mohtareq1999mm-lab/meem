@@ -4,6 +4,7 @@ namespace Marvel\Http\Resources;
 
 use App\Services\Coupon\CouponCalculator;
 use App\Http\Resources\Coupons\CouponResource;
+use App\Services\Currency\CurrencyService;
 use App\Services\General\PromotionService;
 use Illuminate\Http\Request;
 use Marvel\Database\Models\Coupon;
@@ -35,6 +36,7 @@ class CartResource extends Resource
         }
 
         $promotionService = app(PromotionService::class);
+        $currencyService = app(CurrencyService::class);
 
         return [
             'id' => $this->id,
@@ -46,10 +48,11 @@ class CartResource extends Resource
             'expires_at' => $this->expires_at,
             'total_items' => $items ? $items->count() : null,
             'total_quantity' => $items ? $items->sum('quantity') : null,
-            'total_price' => $subtotal,
-            'subtotal' => $subtotal,
-            'coupon_discount' => $couponDiscount,
-            'total_after_coupon' => round(max(0, $subtotal - $couponDiscount), 2),
+            'total_price' => $this->convertPrice($subtotal, $currencyService),
+            'subtotal' => $this->convertPrice($subtotal, $currencyService),
+            'coupon_discount' => $this->convertPrice($couponDiscount, $currencyService),
+            'total_after_coupon' => $this->convertPrice(round(max(0, $subtotal - $couponDiscount), 2), $currencyService),
+'currency' => $currencyService->getEffectiveCode(),
             'normal_items_count' => $normalItems->count(),
             'fast_items_count' => $fastItems->count(),
             'normal_items' => CartItemResource::collection($normalItems),
@@ -58,5 +61,18 @@ class CartResource extends Resource
                 ? $promotionService->hasEligiblePromotion($this->resource)
                 : false,
         ];
+    }
+
+    private function convertPrice($value, CurrencyService $currencyService): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+return $currencyService->convertPrice(
+            $value,
+            $currencyService->getCatalogCode(),
+            $currencyService->getEffectiveCode(),
+        );
     }
 }

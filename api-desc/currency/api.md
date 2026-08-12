@@ -20,6 +20,10 @@ Error envelope: `{ "status": 4xx, "message": "translated", "success": false }`.
 |-------|------|----------|-------------|
 | `limit` | int | No | Per page (default 15, max 100, min 1) |
 | `page` | int | No | Page number |
+| `search` | string | No | Free-text search across `code`, `numeric_code`, `name`, `symbol`, `country_name` (en & ar translations) |
+| `code` | string | No | Exact code filter (e.g. `USD`) |
+| `is_active` | bool | No | Filter by `true`/`false` (`1`/`0`) |
+| `sort_order` | int | No | Filter by exact `sort_order` value |
 
 ### Response
 
@@ -182,9 +186,34 @@ Same structure as list item, `is_base` / `is_catalog` reflect current settings.
 
 ---
 
-## 7. List Exchange Rates (Admin)
+## 6a. Set Catalog Currency (Admin)
 
-**GET** `/api/v1/currency-rates`
+**POST** `/api/v1/currencies/{id}/set-catalog`
+
+`{id}` constrained numeric.
+
+### Permission
+`set-catalog-currency` (Spatie). Admin route group `auth:sanctum` + `throttle:admin`.
+
+### Flow (`CurrencyService::setCatalogCurrency`)
+1. `DB::transaction`, lock settings row.
+2. Reject inactive currency → **422** `CURRENCY_INACTIVE`.
+3. Require an exchange rate `effective_date <= today` → **422** `EXCHANGE_RATE_NOT_FOUND`.
+4. Update settings options: `catalog_currency_code` = code only. **`base_currency_code` and `currency` are left untouched.**
+5. Clear cached settings (tag flush), reset memoized catalog code, flush price caches.
+
+### Response (200)
+`message` = `SET_CATALOG_CURRENCY_SUCCESSFULLY`, data = `CurrencyResource`.
+
+### Errors
+| Status | Condition |
+|--------|-----------|
+| 422 | Inactive currency / missing rate |
+| 404 | Currency not found |
+
+---
+
+## 7. List Exchange Rates (Admin)
 
 ### Query Parameters
 
@@ -193,6 +222,9 @@ Same structure as list item, `is_base` / `is_catalog` reflect current settings.
 | `limit` | int | No | Per page (default 15, max 100) |
 | `currency_id` | int | No | Filter by currency |
 | `effective_date` | date | No | Filter exact date (Y-m-d) |
+| `date_from` | date | No | Filter `effective_date >= date` (Y-m-d) |
+| `date_to` | date | No | Filter `effective_date <= date` (Y-m-d) |
+| `code` | string | No | Filter by currency code (e.g. `USD`) |
 
 ### Response
 
@@ -287,7 +319,11 @@ Flat array of active currencies (same item structure minus admin flags depend on
    - `converted = round(bcdiv(bcmul(amount, targetRate, 6), sourceRate, 6), 2)`
    - Same-code conversion is identity (no DB query, rate `1`).
 3. **Rate resolution** picks the latest `effective_date <= date` (`whereDate`), raising `CurrencyRateNotFoundException` if none.
-4. **Order snapshot** (`OrderCreationService::resolveCurrencySnapshot`) stores `currency_code`, `base_currency_code`, `currency_rate` (ratio), `currency_rate_date`, `converted_total_price` on every create/update.
+4. **Order snapshot** (`OrderCreationService::resolveCurrencySnapshot`) stores `currency_code` (= base), `base_currency_code`, `catalog_currency_code`, `currency_rate` (catalog→base ratio), `currency_rate_date`, `total_price` (converted base amount) and `converted_total_price` on every create/update.
 5. **Product prices** converted via `ConvertsProductPrice` from catalog → base code.
-6. **Delete protection** for base currency and currencies referenced by rates.
-7. **All user-facing messages** come from `resources/lang/{en,ar}/message.php`.
+6. **Cart responses** — `CartResource`/`CartItemResource` convert item prices, subtotals, coupon discount and totals to base currency and expose `currency` (base code).
+7. **Order responses** — `OrderResource` exposes `currency`/`base_currency` (base code) plus new `catalog_currency` field; `total_price` is the base-currency amount.
+8. **Payment currency sourcing** — gateways, QR payloads, payment-transaction records, invoice snapshots and the reconciliation job read the order's base currency (`base_currency_code ?? currency_code`) and fall back to `config('payment.default_currency')` for legacy orders.
+9. **Catalog currency switch** (`set-catalog`) re-points `catalog_currency_code` without touching the base currency or the `currency` option.
+10. **Delete protection** for base currency and currencies referenced by rates.
+11. **All user-facing messages** come from `resources/lang/{en,ar}/message.php`.

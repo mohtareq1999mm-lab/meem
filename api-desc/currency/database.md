@@ -59,19 +59,21 @@ LIMIT 1
 
 ## Table: `orders` (currency snapshot columns)
 
-Added by `2026_08_10_000004_add_currency_columns_to_orders_table.php`:
+Added by `2026_08_10_000004_add_currency_columns_to_orders_table.php` and `2026_08_11_000001_add_catalog_currency_code_to_orders_table.php`:
 
 | Column | Type | Nullable | Notes |
 |--------|------|----------|-------|
-| currency_code | varchar(3) | YES | Catalog currency at order time |
+| currency_code | varchar(3) | YES | **Base** currency at order time (== base_currency_code) |
 | base_currency_code | varchar(3) | YES | Base currency at order time |
-| currency_rate | decimal(20,10) | YES | Conversion ratio (target/source, 6dp computed) |
+| catalog_currency_code | varchar(3) | YES | Catalog currency snapshot at order time (new) |
+| currency_rate | decimal(20,10) | YES | Catalog→base ratio (target/source, 6dp computed) |
 | currency_rate_date | date | YES | Effective date used |
-| converted_total_price | decimal(10,3) | YES | total_price converted to base |
+| total_price | decimal(10,3) | YES | **Base-amount** total (converted) |
+| converted_total_price | decimal(10,3) | YES | Converted base amount (kept for backward compat) |
 
-Backfill on migrate: `converted_total_price = total_price` where null.
+Backfills on migrate: `converted_total_price = total_price` where null; `catalog_currency_code = currency_code`.
 
-Model casts (`Order`): `currency_rate => string`, `currency_rate_date => date`, `converted_total_price => float`.
+Model casts (`Order`): `currency_rate => string`, `currency_rate_date => date`, `converted_total_price => float`. `catalog_currency_code` added to `$fillable`.
 
 ---
 
@@ -107,6 +109,7 @@ Seeds 6 currencies + today's rate via `firstOrCreate` (idempotent):
 | `2026_08_10_000002_create_currencies_table.php` | `currencies` table |
 | `2026_08_10_000003_create_currency_rates_table.php` | `currency_rates` table |
 | `2026_08_10_000004_add_currency_columns_to_orders_table.php` | order snapshot columns + backfill |
+| `2026_08_11_000001_add_catalog_currency_code_to_orders_table.php` | `catalog_currency_code` on orders + backfill from `currency_code` |
 
 ---
 

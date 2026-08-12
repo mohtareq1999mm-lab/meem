@@ -61,6 +61,7 @@ class Order extends Model
         'total_price',
         'currency_code',
         'base_currency_code',
+        'catalog_currency_code',
         'currency_rate',
         'currency_rate_date',
         'converted_total_price',

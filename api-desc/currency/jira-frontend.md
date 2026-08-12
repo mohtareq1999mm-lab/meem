@@ -15,8 +15,9 @@
 
 **Acceptance Criteria:**
 - Fetches `GET /api/v1/currencies` with `limit`/`page`
+- Filters/search: `search` (name/code/symbol/country), `code`, `is_active`, `sort_order`
 - Columns: Code, Name, Symbol, Country, Decimals, Active, Base badge
-- Actions: edit, delete, set base
+- Actions: edit, delete, set base, set catalog
 - Delete shows 409 error messages (`CANNOT_DELETE_BASE_CURRENCY` / `CANNOT_DELETE_CURRENCY_IN_USE`)
 - Loading skeleton + error state
 
@@ -43,13 +44,24 @@
 - 422 `CURRENCY_INACTIVE` / `EXCHANGE_RATE_NOT_FOUND` errors displayed
 - Base badge updates after success
 
+### FE-US-003b: Set Catalog Currency Dialog
+**As** an admin
+**I want** to switch the catalog currency independently
+**So that** the display/catalog prices use a separate currency while orders stay in base
+
+**Acceptance Criteria:**
+- Uses `POST /api/v1/currencies/{id}/set-catalog`
+- Confirmation before switching
+- 422 `CURRENCY_INACTIVE` / `EXCHANGE_RATE_NOT_FOUND` errors displayed
+- Catalog badge updates after success; base badge unchanged
+
 ### FE-US-004: Exchange Rates Table & Form
 **As** an admin
 **I want** a rates table with create/update/delete
 **So that** conversion values stay current
 
 **Acceptance Criteria:**
-- Uses `GET /api/v1/currency-rates` with `currency_id` + `effective_date` filters
+- Uses `GET /api/v1/currency-rates` with `currency_id`, `effective_date`, `date_from`, `date_to`, `code` filters
 - Create/update via `POST` / `PUT /currency-rates/{id}` (upsert per currency/day)
 - `exchange_rate` numeric > 0; `effective_date` date
 - Delete is a hard delete with confirmation
@@ -70,10 +82,11 @@
 
 | ID | Description | h | Component |
 |----|-------------|---|-----------|
-| FE-T-001 | Create CurrenciesTable with pagination | 5 | `CurrenciesTable.vue` |
+| FE-T-001 | Create CurrenciesTable with pagination + filters | 5 | `CurrenciesTable.vue` |
 | FE-T-002 | Create CurrencyFormDialog (translatable fields) | 4 | `CurrencyFormDialog.vue` |
 | FE-T-003 | Create SetBaseCurrencyDialog | 2 | `SetBaseCurrencyDialog.vue` |
-| FE-T-004 | Create ExchangeRatesTable with filters | 4 | `ExchangeRatesTable.vue` |
+| FE-T-003b | Create SetCatalogCurrencyDialog | 2 | `SetCatalogCurrencyDialog.vue` |
+| FE-T-004 | Create ExchangeRatesTable with filters (currency/date range/code) | 5 | `ExchangeRatesTable.vue` |
 | FE-T-005 | Create ExchangeRateFormDialog (upsert) | 3 | `ExchangeRateFormDialog.vue` |
 | FE-T-006 | Create currency API service | 1 | `services/currencyApi.js` |
 | FE-T-007 | Create storefront currency selector | 2 | `CurrencySelector.vue` |
@@ -83,12 +96,13 @@
 
 | Method | Endpoint | Permission | Usage |
 |--------|----------|-----------|-------|
-| GET | `/api/v1/currencies` | VIEW_CURRENCIES | Data table |
+| GET | `/api/v1/currencies` | VIEW_CURRENCIES | Data table (+ search/code/is_active/sort_order) |
 | POST | `/api/v1/currencies` | CREATE_CURRENCY | Create dialog |
 | PUT | `/api/v1/currencies/{id}` | UPDATE_CURRENCY | Edit dialog |
 | DELETE | `/api/v1/currencies/{id}` | DELETE_CURRENCY | Delete action |
 | POST | `/api/v1/currencies/{id}/set-base` | SET_BASE_CURRENCY | Set base dialog |
-| GET | `/api/v1/currency-rates` | VIEW_CURRENCY_RATES | Rates table |
+| POST | `/api/v1/currencies/{id}/set-catalog` | SET_CATALOG_CURRENCY | Set catalog dialog |
+| GET | `/api/v1/currency-rates` | VIEW_CURRENCY_RATES | Rates table (+ date_from/date_to/code) |
 | POST | `/api/v1/currency-rates` | CREATE_CURRENCY_RATE | Rate form |
 | PUT | `/api/v1/currency-rates/{id}` | UPDATE_CURRENCY_RATE | Rate form |
 | DELETE | `/api/v1/currency-rates/{id}` | DELETE_CURRENCY_RATE | Rate delete |

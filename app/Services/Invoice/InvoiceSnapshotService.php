@@ -74,7 +74,7 @@ class InvoiceSnapshotService
                 'shipping_price' => (float) $order->shipping_price,
                 'fast_shipping_fee' => (float) ($order->fast_shipping_fee ?? 0),
                 'total' => (float) $order->total_price,
-                'currency' => $paidTransaction?->currency ?? 'EGP',
+                'currency' => $paidTransaction?->currency ?? $order->currency_code ?? $order->base_currency_code ?? 'EGP',
                 'exchange_rate' => null,
                 'coupon' => $order->coupon ? [
                     'code' => $order->coupon,

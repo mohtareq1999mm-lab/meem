@@ -94,13 +94,47 @@ CurrencyService::setBaseCurrency($currency)
   |     +-- options['base_currency_code'] = code
   |     +-- options['currency'] = code
   |     +-- settings->save()
-  |     +-- Cache::forget('cached_settings_{locale}' / _en / _ar)
+  |     +-- flushTag(FrontendResource::SETTINGS->value)
   |
   +-- memoize $this->baseCode / $this->baseCurrency
   +-- invalidatePriceCaches(flushSettings: true)
   |
   v
 { status:200, message: 'Base currency updated successfully', success:true, data }
+```
+
+## Flow 3a: Set Catalog Currency (Admin)
+
+```
+Admin Client
+  |
+  POST /api/v1/currencies/2/set-catalog
+  |
+  v
+auth:sanctum -> permission:set-catalog-currency
+  |
+  v
+CurrencyController@setCatalog(2)
+  |
+  +-- Currency::withTrashed()->find(2)      [not found -> 404]
+  |
+  v
+CurrencyService::setCatalogCurrency($currency)
+  |
+  +-- DB::transaction
+  |     +-- Settings::lockForUpdate()->first()
+  |     +-- !$currency->is_active -> CurrencyInactiveException -> 422 CURRENCY_INACTIVE
+  |     +-- CurrencyRate where currency_id=2 and whereDate(effective_date <= today) exists?
+  |           NO -> CurrencyRateNotFoundException -> 422 EXCHANGE_RATE_NOT_FOUND
+  |     +-- options['catalog_currency_code'] = code    [base_currency_code & currency untouched]
+  |     +-- settings->save()
+  |     +-- flushTag(FrontendResource::SETTINGS->value)
+  |
+  +-- memoize $this->catalogCode / $this->catalogCurrency
+  +-- invalidatePriceCaches(flushSettings: true)
+  |
+  v
+{ status:200, message: 'Catalog currency updated successfully', success:true, data }
 ```
 
 ## Flow 4: Convert Currency (internal engine)
@@ -141,13 +175,29 @@ OrderCreationService::createOrder / updateOrder
   |     +-- catalogCode = CurrencyService::getCatalogCode()
   |     +-- baseCode    = CurrencyService::getBaseCode()
   |     +-- conversion  = convert($totalPrice, catalogCode, baseCode)
-  |     +-- [currency_code, base_currency_code, currency_rate=rate,
-  |          currency_rate_date=effectiveDate, converted_total_price=convertedAmount]
+  |     +-- [currency_code=baseCode, base_currency_code=baseCode,
+  |          catalog_currency_code=catalogCode, currency_rate=rate,
+  |          currency_rate_date=effectiveDate, total_price=convertedAmount,
+  |          converted_total_price=convertedAmount]
   |
   +-- Schema::hasColumn('orders','currency_code') ? merge into create/update data
   |
   v
-Order::create / update  ->  OrderResource exposes currency/base_currency/exchange_rate/converted_total
+Order::create / update  ->  OrderResource exposes currency/base_currency/catalog_currency/exchange_rate/converted_total
+```
+
+## Flow 5a: Cart & Product Price Conversion (display layer)
+
+```
+CartResource / CartItemResource / ProductResource / ProductMiniResource
+  |
+  +-- catalogCode = CurrencyService::getCatalogCode()
+  +-- baseCode    = CurrencyService::getBaseCode()
+  +-- convertPrice(value, catalogCode, baseCode)   [null/empty -> null]
+  |
+  v
+  Cart totals/items, product price/current_price, discount_amount (fixed only)
+  = converted base-currency values; CartResource adds `currency` = base code
 ```
 
 ## Flow 6: Create Exchange Rate (upsert)
@@ -177,7 +227,62 @@ CurrencyRateService::store($validated)
 { status:200, message: 'Exchange rate created successfully', success:true, data+currency }
 ```
 
-## Flow 7: List Currencies (Public, cached)
+## Flow 7: List Exchange Rates with Filters (Admin)
+
+```
+Admin Client
+  |
+  GET /api/v1/currency-rates?currency_id=2&effective_date=&date_from=&date_to=&code=USD&limit=
+  |
+  v
+auth:sanctum -> permission:view-exchange-rates
+  |
+  v
+CurrencyRateController@index(Request)
+  |
+  +-- limit = clamp(default 15, 1..100)
+  +-- read filters: currency_id, effective_date, date_from, date_to, code
+  |
+  v
+CurrencyRateService::list(currencyId, effectiveDate, dateFrom, dateTo, code, limit)
+  |
+  +-- CurrencyRate::with('currency')
+  |     +-- currency_id          -> where currency_id
+  |     +-- effective_date       -> whereDate(effective_date, =)
+  |     +-- date_from            -> whereDate(effective_date, >=)
+  |     +-- date_to              -> whereDate(effective_date, <=)
+  |     +-- code                 -> whereHas(currency, where code)
+  |     +-- orderByDesc(effective_date, id) -> paginate
+  |
+  v
+{ status:200, message, success:true, data: { data[], pagination meta } }
+```
+
+## Flow 8: List Currencies with Filters (Admin)
+
+```
+Admin Client
+  |
+  GET /api/v1/currencies?search=KW&code=&is_active=1&sort_order=0&limit=
+  |
+  v
+auth:sanctum -> permission:view-currencies
+  |
+  v
+CurrencyController@index(Request)
+  |
+  +-- limit = clamp(default 15, 1..100)
+  +-- search   -> LIKE across code/numeric_code/name->en|ar/symbol->en|ar/country_name->en|ar
+  +-- code     -> where code =
+  +-- is_active-> filter_var(bool), null if absent
+  +-- sort_order -> where sort_order =
+  +-- orderBy(sort_order, code) -> paginate
+  |
+  v
+{ status:200, message, success:true, data: { data[], pagination meta } }
+```
+
+## Flow 9: List Currencies (Public, cached)
 
 ```
 Storefront

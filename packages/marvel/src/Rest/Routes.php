@@ -186,6 +186,7 @@ Route::middleware(['auth:sanctum', 'throttle:admin'])->group(function () {
     //======================== currencies ========================/
     Route::apiResource('currencies', CurrencyController::class)->whereNumber('currency');
     Route::post('currencies/{id}/set-base', [CurrencyController::class, 'setBase'])->whereNumber('id');
+    Route::post('currencies/{id}/set-catalog', [CurrencyController::class, 'setCatalog'])->whereNumber('id');
 
     //======================== currency rates ========================/
     Route::apiResource('currency-rates', CurrencyRateController::class)->whereNumber('currency_rate');

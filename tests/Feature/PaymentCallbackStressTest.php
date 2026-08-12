@@ -442,6 +442,7 @@ class PaymentCallbackStressTest extends TestCase
     /** @test */
     public function callback_with_amount_mismatch_blocks_order(): void
     {
+        \Illuminate\Support\Facades\Config::set('services.myfatoorah.base_url', 'https://api.myfatoorah.com/v2/');
         Event::fake([PaymentFailed::class]);
         $invoiceId = 'INV-MISMATCH';
         $order = $this->createOrderWithPendingTransaction('online', $invoiceId, gateway: 'myfatoorah');

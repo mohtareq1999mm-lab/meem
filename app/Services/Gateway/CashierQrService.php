@@ -19,7 +19,7 @@ class CashierQrService
             'order_id' => $order->id,
             'order_number' => $order->order_number,
             'amount' => round((float) $transaction->amount, 2),
-            'currency' => $transaction->currency ?? config('payment.default_currency', 'EGP'),
+            'currency' => $transaction->currency ?? $order->currency_code ?? $order->base_currency_code,
         ]);
 
         $size = (int) config('payment.pay_at_cashier.size', 50);

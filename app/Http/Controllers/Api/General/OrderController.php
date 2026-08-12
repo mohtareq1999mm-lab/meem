@@ -286,18 +286,20 @@ class OrderController extends Controller
             }
         }
 
-        if (!$hasMismatch && $result->currency !== null && $result->currency !== config('payment.default_currency', 'EGP')) {
+        $expectedCurrency = $order->currency_code ?? $order->base_currency_code ?? config('payment.default_currency', 'EGP');
+
+        if (!$hasMismatch && $result->currency !== null && $result->currency !== $expectedCurrency) {
             if ($isTestGateway) {
                 \Log::info('Payment currency mismatch ignored (test gateway)', [
                     'order_id' => $order->id,
-                    'expected' => config('payment.default_currency', 'EGP'),
+                    'expected' => $expectedCurrency,
                     'received' => $result->currency,
                 ]);
             } else {
                 $hasMismatch = true;
                 \Log::warning('Payment currency mismatch - blocking order', [
                     'order_id' => $order->id,
-                    'expected' => config('payment.default_currency', 'EGP'),
+                    'expected' => $expectedCurrency,
                     'received' => $result->currency,
                 ]);
             }

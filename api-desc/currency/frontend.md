@@ -9,16 +9,17 @@ Admin SPA + storefront consume these endpoints for currency/rate management and 
 ```javascript
 // Admin
 export const currencyApi = {
-  list(params)        // GET /api/v1/currencies?limit=&page=
+  list(params)        // GET /api/v1/currencies?limit=&page=&search=&code=&is_active=&sort_order=
   show(id)            // GET /api/v1/currencies/{id}
   create(payload)     // POST /api/v1/currencies
   update(id, payload) // PUT /api/v1/currencies/{id}
   remove(id)          // DELETE /api/v1/currencies/{id}
   setBase(id)         // POST /api/v1/currencies/{id}/set-base
+  setCatalog(id)      // POST /api/v1/currencies/{id}/set-catalog
 }
 
 export const currencyRateApi = {
-  list(params)            // GET /api/v1/currency-rates?currency_id=&effective_date=&limit=
+  list(params)            // GET /api/v1/currency-rates?currency_id=&effective_date=&date_from=&date_to=&code=&limit=
   show(id)                // GET /api/v1/currency-rates/{id}
   create(payload)         // POST /api/v1/currency-rates
   update(id, exchange_rate) // PUT /api/v1/currency-rates/{id}
@@ -34,11 +35,12 @@ export const publicCurrencyApi = {
 ## Expected Frontend Components
 
 ```
-CurrenciesTable.vue      → index    (table, search, pagination)
+CurrenciesTable.vue      → index    (table, search, pagination, code/is_active/sort_order filters)
 CurrencyFormDialog.vue   → create/update (translatable name/symbol/country_name)
 CurrencyDetailDrawer.vue → show    (base/catalog flags)
 SetBaseCurrencyDialog.vue → setBase (confirmation)
-ExchangeRatesTable.vue   → index    (filter by currency, date)
+SetCatalogCurrencyDialog.vue → setCatalog (confirmation)
+ExchangeRatesTable.vue   → index    (filter by currency, date range, code)
 ExchangeRateFormDialog.vue → create/update
 ```
 
@@ -54,6 +56,7 @@ ExchangeRateFormDialog.vue → create/update
 | Catalog currency badge | `is_catalog` in `CurrencyResource` |
 | Exchange rate form | `currency_id`, `exchange_rate`, `effective_date` |
 | Base currency switch | `POST /currencies/{id}/set-base` (shows 422 error for inactive/no-rate) |
+| Catalog currency switch | `POST /currencies/{id}/set-catalog` (shows 422 error for inactive/no-rate) |
 | Currency delete | 409 with `CANNOT_DELETE_BASE_CURRENCY` or `CANNOT_DELETE_CURRENCY_IN_USE` |
 
 ## Notes

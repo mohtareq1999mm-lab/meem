@@ -669,11 +669,11 @@ class PaymentReconciliationTest extends TestCase
     }
 
     /** @test */
-    public function reconciliation_job_is_on_low_queue(): void
+    public function reconciliation_job_is_on_the_meem_medium_queue(): void
     {
         $job = new PaymentReconciliationJob();
 
-        $this->assertEquals('low', $job->queue);
+        $this->assertEquals('meem-medium', $job->queue);
     }
 
     // =========================================================================

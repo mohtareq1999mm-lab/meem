@@ -17,13 +17,13 @@ trait ConvertsProductPrice
         return $currencyService->convertPrice(
             $catalogPrice,
             $currencyService->getCatalogCode(),
-            $currencyService->getBaseCode(),
+            $currencyService->getEffectiveCode(),
         );
     }
 
-    protected function baseCurrency(): ?array
+    protected function effectiveCurrency(): ?array
     {
-        $currency = app(CurrencyService::class)->getBaseCurrency();
+        $currency = app(CurrencyService::class)->getEffectiveCurrency();
 
         if (!$currency) {
             return null;

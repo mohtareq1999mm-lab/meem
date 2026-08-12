@@ -55,8 +55,8 @@ class CurrencyConversionTest extends CurrencyTestCase
 
         $this->assertSame(22.1, $result->convertedAmount);
         $this->assertSame('0.221000', $result->rate);
-        $this->assertSame('1.0000000000', $result->sourceRate);
-        $this->assertSame('0.2210000000', $result->targetRate);
+        $this->assertSame('1', $result->sourceRate);
+        $this->assertSame('0.221', $result->targetRate);
     }
 
     /** @test */
@@ -84,7 +84,9 @@ class CurrencyConversionTest extends CurrencyTestCase
     public function historical_rate_is_used_for_a_past_date(): void
     {
         $currencies = $this->seedCurrencyData();
+        $usd = $currencies['USD'];
         $kwd = $currencies['KWD'];
+        $this->createRate($usd, '1.0000000000', now()->subDays(3)->toDateString());
         $this->createRate($kwd, '0.2000000000', now()->subDay()->toDateString());
 
         $result = $this->conversion()->convert(100, 'USD', 'KWD', now()->subDay()->toDateString());
@@ -97,7 +99,9 @@ class CurrencyConversionTest extends CurrencyTestCase
     public function latest_rate_before_the_date_wins(): void
     {
         $currencies = $this->seedCurrencyData();
+        $usd = $currencies['USD'];
         $kwd = $currencies['KWD'];
+        $this->createRate($usd, '1.0000000000', now()->subDays(3)->toDateString());
         $this->createRate($kwd, '0.2000000000', now()->subDays(2)->toDateString());
         $this->createRate($kwd, '0.2100000000', now()->subDay()->toDateString());
 

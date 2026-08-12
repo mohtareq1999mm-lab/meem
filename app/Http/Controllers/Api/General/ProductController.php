@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Product\ProductMiniResource;
 use App\Http\Resources\Product\ProductResource;
 use App\Http\Resources\Product\ReviewResource;
+use App\Services\Currency\CurrencyService;
 use App\Services\General\ProductEngine\ProductStrategyResolver;
 use App\Services\General\ProductService;
 use App\Traits\HasCache;
@@ -79,8 +80,12 @@ class ProductController extends Controller
             $responseData['filters'] = $filters;
             $responseData['categories'] = $this->getCollectionCategories($productIds);
 
-            if ($this->shouldCache($request)) {
-                $responseData = $this->remember(FrontendResource::PRODUCTS->value . '_' . $type, md5($request->fullUrl()), $responseData);
+if ($this->shouldCache($request)) {
+                $responseData = $this->remember(
+                    FrontendResource::PRODUCTS->value . '_' . $type,
+                    $this->currencyAwareCacheKey($request),
+                    $responseData
+                );
             }
 
             return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $responseData);
@@ -107,8 +112,12 @@ class ProductController extends Controller
         $responseData['filters'] = $filters;
         $responseData['categories'] = $this->getCollectionCategories($productIds);
 
-        if ($this->shouldCache($request)) {
-            $responseData = $this->remember(FrontendResource::PRODUCTS->value, md5($request->fullUrl()), $responseData);
+if ($this->shouldCache($request)) {
+            $responseData = $this->remember(
+                FrontendResource::PRODUCTS->value,
+                $this->currencyAwareCacheKey($request),
+                $responseData
+            );
         }
 
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $responseData);
@@ -120,9 +129,14 @@ class ProductController extends Controller
      * Requests that contain a "search" parameter bypass the cache entirely so
      * that search results always reflect up-to-date data.
      */
-    private function shouldCache(Request $request): bool
+private function shouldCache(Request $request): bool
     {
         return !$request->has('search');
+    }
+
+    private function currencyAwareCacheKey(Request $request): string
+    {
+        return md5($request->fullUrl() . '|currency:' . app(CurrencyService::class)->getEffectiveCode());
     }
 
     /**

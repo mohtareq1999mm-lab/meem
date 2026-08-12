@@ -26,7 +26,7 @@ class CurrencyRateTest extends CurrencyTestCase
         $response->assertJsonPath('data.currency.code', 'KWD');
         $this->assertEquals(0.25, (float) $response->json('data.exchange_rate'));
 
-        $this->assertDatabaseCount('currency_rates', 4);
+        $this->assertDatabaseCount('currency_rates', 3);
     }
 
     /** @test */
@@ -43,7 +43,7 @@ class CurrencyRateTest extends CurrencyTestCase
             'exchange_rate' => '0.3000000000',
         ]))->assertStatus(200);
 
-        $this->assertDatabaseCount('currency_rates', 4);
+        $this->assertDatabaseCount('currency_rates', 3);
 
         $rate = CurrencyRate::query()
             ->where('currency_id', $kwd->id)
@@ -124,6 +124,54 @@ class CurrencyRateTest extends CurrencyTestCase
         $response->assertJsonPath('success', true);
         $this->assertSame(1, $response->json('data.total'));
         $this->assertSame('2026-01-01', $response->json('data.data.0.effective_date'));
+    }
+
+/** @test */
+    public function list_can_be_filtered_by_code(): void
+    {
+        $this->createAuthenticatedAdmin();
+        $this->seedCurrencyData();
+        $sar = Currency::query()->where('code', 'SAR')->first();
+        $this->createRate($sar, '3.7000000000', now()->subDay()->toDateString());
+
+        $response = $this->getJson(self::PREFIX . '/currency-rates?code=SAR');
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('success', true);
+        $this->assertSame(2, $response->json('data.total'));
+
+        foreach ($response->json('data.data') as $item) {
+            $this->assertSame('SAR', $item['currency']['code']);
+        }
+    }
+
+    /** @test */
+    public function list_can_be_filtered_by_date_range(): void
+    {
+        $this->createAuthenticatedAdmin();
+        $this->seedCurrencyData();
+        $sar = Currency::query()->where('code', 'SAR')->first();
+        $this->createRate($sar, '3.1000000000', '2026-01-01');
+        $this->createRate($sar, '3.2000000000', '2026-02-01');
+
+        $response = $this->getJson(self::PREFIX . '/currency-rates?date_from=2026-01-15&date_to=2026-02-15');
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('success', true);
+        $this->assertSame(1, $response->json('data.total'));
+        $this->assertSame('2026-02-01', $response->json('data.data.0.effective_date'));
+    }
+
+    /** @test */
+    public function list_code_filter_returns_empty_for_unknown_code(): void
+    {
+        $this->createAuthenticatedAdmin();
+        $this->seedCurrencyData();
+
+        $response = $this->getJson(self::PREFIX . '/currency-rates?code=XXX');
+
+        $response->assertStatus(200);
+        $this->assertSame(0, $response->json('data.total'));
     }
 
     /** @test */

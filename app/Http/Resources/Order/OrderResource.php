@@ -30,6 +30,7 @@ class OrderResource extends JsonResource
             'converted_total' => $this->roundMoney($this->converted_total_price),
             'currency' => $this->currency_code ?? $this->fallbackBaseCode(),
             'base_currency' => $this->base_currency_code ?? $this->fallbackBaseCode(),
+            'catalog_currency' => $this->catalog_currency_code ?? $this->base_currency_code ?? $this->fallbackBaseCode(),
             'exchange_rate' => $this->currency_rate,
             'promotion' => $this->promotion_id ? [
                 'id' => $this->promotion_id,

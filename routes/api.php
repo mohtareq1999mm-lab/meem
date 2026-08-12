@@ -98,6 +98,10 @@ Route::prefix('v1/general')->group(function () {
         Route::get('site-reviews', [SiteReviewController::class, 'index']);
         //============================ currencies ========================/
         Route::get('currencies', [CurrencyController::class, 'index']);
+        Route::post('currencies/select', [CurrencyController::class, 'select']);
+        //======================== payment callbacks (gateway redirect, public) ========================/
+        Route::any('checkout/callback', [OrderController::class, 'checkoutCallback'])->name('api.checkout.callback');
+        Route::any('checkout/error-callback', [OrderController::class, 'checkoutErrorCallback'])->name('api.checkout.errorCallback');
     });
 
     Route::middleware(['api', 'auth:sanctum', 'throttle:authenticated'])->group(function () {
@@ -109,8 +113,6 @@ Route::prefix('v1/general')->group(function () {
         Route::post('checkout/cod/{orderId}/mark-paid', [OrderController::class, 'markCodAsPaid'])->middleware(['permission:update-order-status']);
         Route::post('checkout/cashier/{orderId}/mark-paid', [OrderController::class, 'markCashierPaid'])->middleware(['permission:update-order-status']);
         Route::get('checkout/transaction-qr/{uuid}', [OrderController::class, 'getTransactionQr']);
-        Route::any('checkout/callback', [OrderController::class, 'checkoutCallback'])->name('api.checkout.callback');
-        Route::any('checkout/error-callback', [OrderController::class, 'checkoutErrorCallback'])->name('api.checkout.errorCallback');
         //======================== fast shipping checkout ========================/
         Route::post('fast-shipping/checkout', [FastShippingController::class, 'checkout']);
         //======================== orders ========================//
