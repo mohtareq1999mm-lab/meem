@@ -56,4 +56,9 @@ class UserCouponAssignedNotification extends Notification implements ShouldQueue
     {
         return 'coupon.assigned';
     }
+
+    public function databaseType($notifiable): string
+    {
+        return $this->broadcastType();
+    }
 }

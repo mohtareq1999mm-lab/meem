@@ -43,16 +43,66 @@ return [
             'body' => 'You have used the coupon :coupon_code.',
         ],
     ],
+    'flash_sale' => [
+        'available' => [
+            'title' => 'Flash sale is live',
+            'body' => 'A new flash sale :flash_sale_title has started. Grab the deals before they end!',
+        ],
+        'price_drop' => [
+            'title' => 'Price drop in flash sale',
+            'body' => 'A product in the :flash_sale_title flash sale just dropped in price. Check it out now!',
+        ],
+        'ending_soon' => [
+            'title' => 'Flash sale ending soon',
+            'body' => 'The :flash_sale_title flash sale ends within 24 hours. Don’t miss out!',
+        ],
+    ],
+    'review' => [
+        'approved' => [
+            'title' => 'Review approved',
+            'body' => 'Your review for :product_name has been approved and is now visible.',
+        ],
+        'rejected' => [
+            'title' => 'Review not approved',
+            'body' => 'Your review for :product_name could not be approved at this time.',
+        ],
+    ],
+    'discount' => [
+        'changed' => [
+            'title' => 'Discount updated',
+            'body' => 'The discount on :product_name has been updated. Tap to see the new offer!',
+        ],
+    ],
+    'price' => [
+        'drop' => [
+            'title' => 'Price dropped',
+            'body' => ':product_name dropped from :old_price to :new_price. Grab it before it’s gone!',
+        ],
+    ],
+    'back' => [
+        'in_stock' => [
+            'title' => 'Back in stock',
+            'body' => ':product_name is back in stock. Order now before it sells out again!',
+        ],
+    ],
+    'cart' => [
+        'abandoned' => [
+            'title' => 'You left items in your cart',
+            'body' => 'Your cart is waiting for you. Complete your order before it expires!',
+        ],
+    ],
     'promotion' => [
         'available' => [
             'title' => 'New promotion available',
             'body' => 'Check out :promotion_name and save on your next order.',
         ],
-    ],
-    'flash_sale' => [
-        'available' => [
-            'title' => 'Flash sale is live',
-            'body' => 'A new flash sale :flash_sale_title has started. Grab the deals before they end!',
+        'price_drop' => [
+            'title' => 'Price drop in promotion',
+            'body' => 'A product in the :promotion_name promotion just dropped in price. Check it out now!',
+        ],
+        'ending_soon' => [
+            'title' => 'Promotion ending soon',
+            'body' => 'The :promotion_name promotion ends within 24 hours. Don’t miss out!',
         ],
     ],
 ];

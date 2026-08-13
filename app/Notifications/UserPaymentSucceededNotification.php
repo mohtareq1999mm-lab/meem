@@ -53,4 +53,9 @@ class UserPaymentSucceededNotification extends Notification implements ShouldQue
     {
         return 'payment.succeeded';
     }
+
+    public function databaseType($notifiable): string
+    {
+        return $this->broadcastType();
+    }
 }

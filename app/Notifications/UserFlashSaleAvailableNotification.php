@@ -54,4 +54,9 @@ class UserFlashSaleAvailableNotification extends Notification implements ShouldQ
     {
         return 'flash_sale.available';
     }
+
+    public function databaseType($notifiable): string
+    {
+        return $this->broadcastType();
+    }
 }

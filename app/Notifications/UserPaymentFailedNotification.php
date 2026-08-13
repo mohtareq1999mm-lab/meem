@@ -52,4 +52,9 @@ class UserPaymentFailedNotification extends Notification implements ShouldQueue
     {
         return 'payment.failed';
     }
+
+    public function databaseType($notifiable): string
+    {
+        return $this->broadcastType();
+    }
 }

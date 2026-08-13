@@ -2,6 +2,9 @@
 
 namespace App\Observers;
 
+use App\Events\ProductBackInStock;
+use App\Events\ProductDiscountChanged;
+use App\Events\ProductPriceDrop;
 use App\Jobs\LogActivityJob;
 use Illuminate\Support\Facades\Auth;
 use Marvel\Database\Models\Product;
@@ -70,6 +73,59 @@ class ProductObserver
                 ['old' => $oldValues, 'new' => $newValues],
             );
         }
+
+        $this->notifyDiscountChanged($product);
+        $this->notifyPriceDrop($product);
+        $this->notifyBackInStock($product);
+    }
+
+    private function notifyDiscountChanged(Product $product): void
+    {
+        $discountFields = [
+            'has_discount',
+            'discount_type',
+            'discount_amount',
+            'discount_status',
+            'price_after_discount',
+        ];
+
+        if (!$product->isDirty($discountFields)) {
+            return;
+        }
+
+        $oldValues = [];
+        $newValues = [];
+
+        foreach ($discountFields as $field) {
+            if ($product->isDirty($field)) {
+                $oldValues[$field] = $product->getOriginal($field);
+                $newValues[$field] = $product->{$field};
+            }
+        }
+
+        event(new ProductDiscountChanged($product, $oldValues, $newValues));
+    }
+
+    private function notifyPriceDrop(Product $product): void
+    {
+        $oldPrice = $product->getOriginal('price');
+
+        if (is_null($oldPrice) || $oldPrice <= $product->price) {
+            return;
+        }
+
+        event(new ProductPriceDrop($product, $oldPrice, $product->price));
+    }
+
+    private function notifyBackInStock(Product $product): void
+    {
+        $oldStock = $product->getOriginal('stock_quantity');
+
+        if (is_null($oldStock) || $oldStock > 0 || $product->stock_quantity <= 0) {
+            return;
+        }
+
+        event(new ProductBackInStock($product));
     }
 
     public function deleted(Product $product): void

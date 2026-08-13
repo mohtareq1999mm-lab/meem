@@ -52,4 +52,9 @@ class UserCouponAvailableNotification extends Notification implements ShouldQueu
     {
         return 'coupon.available';
     }
+
+    public function databaseType($notifiable): string
+    {
+        return $this->broadcastType();
+    }
 }

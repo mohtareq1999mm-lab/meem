@@ -52,4 +52,9 @@ class UserOrderCancelledNotification extends Notification implements ShouldQueue
     {
         return 'order.cancelled';
     }
+
+    public function databaseType($notifiable): string
+    {
+        return $this->broadcastType();
+    }
 }

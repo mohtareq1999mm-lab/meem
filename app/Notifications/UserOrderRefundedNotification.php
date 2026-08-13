@@ -53,4 +53,9 @@ class UserOrderRefundedNotification extends Notification implements ShouldQueue
     {
         return 'order.refunded';
     }
+
+    public function databaseType($notifiable): string
+    {
+        return $this->broadcastType();
+    }
 }

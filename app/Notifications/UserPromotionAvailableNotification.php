@@ -55,4 +55,9 @@ class UserPromotionAvailableNotification extends Notification implements ShouldQ
     {
         return 'promotion.available';
     }
+
+    public function databaseType($notifiable): string
+    {
+        return $this->broadcastType();
+    }
 }

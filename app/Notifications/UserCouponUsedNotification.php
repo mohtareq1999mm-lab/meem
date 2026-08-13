@@ -59,4 +59,9 @@ class UserCouponUsedNotification extends Notification implements ShouldQueue
     {
         return 'coupon.used';
     }
+
+    public function databaseType($notifiable): string
+    {
+        return $this->broadcastType();
+    }
 }

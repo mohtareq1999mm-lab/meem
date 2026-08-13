@@ -137,6 +137,14 @@ Schema::create('social_login_codes', function (Blueprint $table) {
             $table->softDeletes();
         });
 
+        Schema::create('wishlists', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('product_id');
+            $table->unsignedBigInteger('product_variant_id')->nullable();
+            $table->timestamps();
+        });
+
         Schema::create('categories', function (Blueprint $table) {
             $table->id();
             $table->string('name');

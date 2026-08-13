@@ -5,7 +5,9 @@ namespace Marvel\Database\Repositories;
 
 
 use App\Events\QuestionAnswered;
+use App\Events\ReviewApproved;
 use App\Events\ReviewCreated;
+use App\Events\ReviewRejected;
 use Exception;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
@@ -108,8 +110,16 @@ class ReviewRepository extends BaseRepository
     {
         try {
             $review = $this->findOrFail($id);
+            $wasApproved = (bool) $review->approved;
             $review->approved = !$review->approved;
             $review->save();
+
+            if (!$wasApproved && $review->approved) {
+                event(new ReviewApproved($review));
+            } elseif ($wasApproved && !$review->approved) {
+                event(new ReviewRejected($review));
+            }
+
             return $review;
         } catch (Exception $e) {
             throw new HttpException(400, SOMETHING_WENT_WRONG);

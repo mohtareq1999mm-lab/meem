@@ -15,7 +15,12 @@ use App\Events\OrderCreated;
 use App\Events\OrderStatusChanged;
 use App\Events\PaymentFailed;
 use App\Events\PaymentSucceeded;
+use App\Events\ProductBackInStock;
+use App\Events\ProductDiscountChanged;
+use App\Events\ProductPriceDrop;
 use App\Events\PromotionActivated;
+use App\Events\ReviewApproved;
+use App\Events\ReviewRejected;
 use App\Events\UserRolesUpdated;
 use App\Listeners\SendUserFlashSaleAvailableNotification;
 use App\Listeners\SendUserPromotionAvailableNotification;
@@ -38,6 +43,13 @@ use App\Listeners\SendUserOrderCancelledNotification;
 use App\Listeners\SendUserOrderCreatedNotification;
 use App\Listeners\SendUserPaymentFailedNotification;
 use App\Listeners\SendUserPaymentSucceededNotification;
+use App\Listeners\SendUserProductBackInStockNotification;
+use App\Listeners\SendUserProductDiscountChangedNotification;
+use App\Listeners\SendUserProductPriceDropNotification;
+use App\Listeners\SendUserPromotionPriceDropNotification;
+use App\Listeners\SendUserFlashSalePriceDropNotification;
+use App\Listeners\SendUserReviewApprovedNotification;
+use App\Listeners\SendUserReviewRejectedNotification;
 use App\Observers\BrandObserver;
 use App\Observers\CategoryObserver;
 use App\Observers\CouponObserver;
@@ -117,9 +129,26 @@ class EventServiceProvider extends ServiceProvider
         ],
         PromotionActivated::class => [
             SendUserPromotionAvailableNotification::class,
+            SendUserPromotionPriceDropNotification::class,
         ],
         FlashSaleActivated::class => [
             SendUserFlashSaleAvailableNotification::class,
+            SendUserFlashSalePriceDropNotification::class,
+        ],
+        ReviewApproved::class => [
+            SendUserReviewApprovedNotification::class,
+        ],
+        ReviewRejected::class => [
+            SendUserReviewRejectedNotification::class,
+        ],
+        ProductDiscountChanged::class => [
+            SendUserProductDiscountChangedNotification::class,
+        ],
+        ProductPriceDrop::class => [
+            SendUserProductPriceDropNotification::class,
+        ],
+        ProductBackInStock::class => [
+            SendUserProductBackInStockNotification::class,
         ],
         InvoiceCreated::class => [
             LogInvoiceCreated::class,

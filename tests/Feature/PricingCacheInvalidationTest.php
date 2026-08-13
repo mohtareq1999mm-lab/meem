@@ -39,6 +39,29 @@ class PricingCacheInvalidationTest extends TestCase
 
     private function createAllTables(): void
     {
+        Schema::create('notifications', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->string('type');
+            $table->morphs('notifiable');
+            $table->text('data');
+            $table->timestamp('read_at')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('email')->unique();
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('password');
+            $table->rememberToken();
+            $table->string('type')->default('user');
+            $table->boolean('is_active')->default(true);
+            $table->string('phone_number')->nullable()->unique();
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
         Schema::create('products', function (Blueprint $table) {
             $table->id();
             $table->string('name');

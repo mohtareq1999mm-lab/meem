@@ -54,4 +54,9 @@ class UserOrderCreatedNotification extends Notification implements ShouldQueue
     {
         return 'order.created';
     }
+
+    public function databaseType($notifiable): string
+    {
+        return $this->broadcastType();
+    }
 }
