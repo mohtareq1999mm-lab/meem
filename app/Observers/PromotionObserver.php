@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Events\PromotionActivated;
 use App\Jobs\LogActivityJob;
 use Illuminate\Support\Facades\Auth;
 use Marvel\Database\Models\Promotion;
@@ -25,6 +26,10 @@ class PromotionObserver
             'promotions',
             __('activity.promotion_created'),
         );
+
+        if ($promotion->status === true) {
+            event(new PromotionActivated($promotion));
+        }
     }
 
     public function updated(Promotion $promotion): void
@@ -56,6 +61,10 @@ class PromotionObserver
                 $description,
                 ['old' => ['status' => (string) $oldStatus], 'new' => ['status' => (string) $newStatus]],
             );
+
+            if ($oldStatus == false && $newStatus == true) {
+                event(new PromotionActivated($promotion));
+            }
         }
 
         if ($hasOtherChanges) {

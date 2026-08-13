@@ -142,6 +142,7 @@ class NotificationTest extends TestCase
             $table->string('order_number')->nullable();
             $table->string('name')->nullable();
             $table->string('status')->default('pending');
+            $table->string('payment_status')->nullable();
             $table->decimal('price', 10, 2)->nullable();
             $table->decimal('total_price', 10, 2)->nullable();
             $table->softDeletes();
@@ -650,6 +651,7 @@ class NotificationTest extends TestCase
             'user_id' => $admin->id,
             'order_number' => 'ORD-00000001',
             'status' => 'pending',
+            'payment_status' => 'pending',
         ]);
 
         OrderCreated::dispatch($order);

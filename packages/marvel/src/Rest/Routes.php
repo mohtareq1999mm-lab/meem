@@ -320,12 +320,25 @@ Route::middleware(['auth:sanctum', 'throttle:analytics'])->prefix('dashboard')->
 
 
 Route::group(['prefix' => 'admin', 'controller' => NotificationController::class], function () {
-    Route::get('notifications', 'index');
-    Route::get('notifications/unread', 'unread');
-    Route::patch('notifications/{id}/read', 'markAsRead');
-    Route::patch('notifications/read-all', 'markAllAsRead');
-    Route::delete('notifications/{id}', 'destroy');
-    Route::delete('notifications', 'destroyAll');
+    Route::middleware('permission:' . \Marvel\Enums\Permission::VIEW_NOTIFICATIONS)->group(function () {
+        Route::get('notifications', 'index');
+        Route::get('notifications/unread', 'unread');
+    });
+    Route::middleware('permission:' . \Marvel\Enums\Permission::MANAGE_NOTIFICATIONS)->group(function () {
+        Route::patch('notifications/{id}/read', 'markAsRead');
+        Route::patch('notifications/read-all', 'markAllAsRead');
+        Route::delete('notifications/{id}', 'destroy');
+        Route::delete('notifications', 'destroyAll');
+    });
+});
+
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::get('notifications/unread', [NotificationController::class, 'unread']);
+    Route::get('notifications/{id}', [NotificationController::class, 'show']);
+    Route::patch('notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::post('notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+    Route::delete('notifications/{id}', [NotificationController::class, 'destroy']);
 });
 
 

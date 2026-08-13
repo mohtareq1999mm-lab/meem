@@ -33,6 +33,7 @@ return [
     'MESSAGE.ALL_READ_CONTACTS_DELETED_SUCCESSFULLY' => 'تم حذف جميع جهات الاتصال المقروءة بنجاح',
     'NOTIFICATION.CONTACT_NEW_TITLE' => 'رسالة اتصال جديدة',
     'NOTIFICATION.CONTACT_NEW_MESSAGE' => 'تم استلام رسالة اتصال جديدة من :name.',
+    'MESSAGE.NOTIFICATION_FETCHED' => 'تم جلب الإشعار بنجاح.',
     'PRODUCT_TYPE.BEST_PRODUCT_SALES' => 'الأكثر مبيعاً',
     'PRODUCT_TYPE.BRANDS_PRODUCT' => 'منتجات العلامات التجارية',
     'PRODUCT_TYPE.NEW_ARRIVALS' => 'وصل حديثاً',

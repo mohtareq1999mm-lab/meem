@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Events\CouponCreated;
 use App\Jobs\LogActivityJob;
 use Illuminate\Support\Facades\Auth;
 use Marvel\Database\Models\Coupon;
@@ -18,6 +19,8 @@ class CouponObserver
             'coupons',
             __('activity.coupon_created'),
         );
+
+        event(new CouponCreated($coupon));
     }
 
     public function updated(Coupon $coupon): void

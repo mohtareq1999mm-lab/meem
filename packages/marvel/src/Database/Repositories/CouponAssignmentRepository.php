@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
+use App\Events\CouponAssigned;
 use Marvel\Database\Models\Coupon;
 use Marvel\Database\Models\CouponAssignment;
 use Marvel\Exceptions\MarvelBadRequestException;
@@ -69,7 +70,7 @@ class CouponAssignmentRepository extends BaseRepository
             throw new MarvelBadRequestException('COUPON_ALREADY_ASSIGNED_TO_USER');
         }
 
-        return DB::transaction(function () use ($couponId, $data) {
+        $assignment = DB::transaction(function () use ($couponId, $data) {
             $assignment = CouponAssignment::create([
                 'coupon_id' => $couponId,
                 'user_id' => $data['user_id'],
@@ -79,6 +80,10 @@ class CouponAssignmentRepository extends BaseRepository
 
             return $assignment->fresh();
         });
+
+        event(new CouponAssigned($assignment));
+
+        return $assignment;
     }
 
     public function updateAssignment(int $couponId, int $assignmentId, array $data): Model

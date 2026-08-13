@@ -111,6 +111,7 @@ return [
 
     // Notifications
     'MESSAGE.NOTIFICATIONS_FETCHED' => 'Notifications fetched successfully.',
+    'MESSAGE.NOTIFICATION_FETCHED' => 'Notification fetched successfully.',
     'NOTIFICATION.CONTACT_NEW_TITLE' => 'New Contact Message',
     'NOTIFICATION.CONTACT_NEW_MESSAGE' => 'New Contact Us message received from :name.',
     'MESSAGE.UNREAD_NOTIFICATIONS_FETCHED' => 'Unread notifications fetched successfully.',

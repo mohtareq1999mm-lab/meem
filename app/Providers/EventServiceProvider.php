@@ -6,12 +6,19 @@ use App\Events\AdminLoggedIn;
 use App\Events\ContactMessageReceived;
 use App\Events\FrontendCacheInvalidation;
 use App\Events\InvoiceCreated;
+use App\Events\AssignedCouponConsumed;
+use App\Events\CouponAssigned;
+use App\Events\CouponCreated;
+use App\Events\FlashSaleActivated;
 use App\Events\OrderCancelled;
 use App\Events\OrderCreated;
 use App\Events\OrderStatusChanged;
 use App\Events\PaymentFailed;
 use App\Events\PaymentSucceeded;
+use App\Events\PromotionActivated;
 use App\Events\UserRolesUpdated;
+use App\Listeners\SendUserFlashSaleAvailableNotification;
+use App\Listeners\SendUserPromotionAvailableNotification;
 use App\Listeners\DispatchFrontendCacheInvalidation;
 use App\Listeners\LogInvoiceCreated;
 use App\Listeners\LogUserRolesUpdated;
@@ -24,6 +31,13 @@ use App\Listeners\SendOrderCancelledNotification;
 use App\Listeners\SendOrderStatusChangedNotification;
 use App\Listeners\SendPaymentFailedNotification;
 use App\Listeners\SendPaymentSucceededNotification;
+use App\Listeners\SendUserCouponAssignedNotification;
+use App\Listeners\SendUserCouponAvailableNotification;
+use App\Listeners\SendUserCouponUsedNotification;
+use App\Listeners\SendUserOrderCancelledNotification;
+use App\Listeners\SendUserOrderCreatedNotification;
+use App\Listeners\SendUserPaymentFailedNotification;
+use App\Listeners\SendUserPaymentSucceededNotification;
 use App\Observers\BrandObserver;
 use App\Observers\CategoryObserver;
 use App\Observers\CouponObserver;
@@ -74,19 +88,38 @@ class EventServiceProvider extends ServiceProvider
         OrderCancelled::class => [
             RestoreProductInventory::class,
             SendOrderCancelledNotification::class,
+            SendUserOrderCancelledNotification::class,
         ],
         OrderCreated::class => [
             SendNewOrderNotification::class,
+            SendUserOrderCreatedNotification::class,
         ],
         OrderStatusChanged::class => [
             SendOrderStatusChangedNotification::class,
         ],
         PaymentFailed::class => [
             SendPaymentFailedNotification::class,
+            SendUserPaymentFailedNotification::class,
         ],
         PaymentSucceeded::class => [
             SendPaymentSucceededNotification::class,
             GenerateInvoiceListener::class,
+            SendUserPaymentSucceededNotification::class,
+        ],
+        AssignedCouponConsumed::class => [
+            SendUserCouponUsedNotification::class,
+        ],
+        CouponAssigned::class => [
+            SendUserCouponAssignedNotification::class,
+        ],
+        CouponCreated::class => [
+            SendUserCouponAvailableNotification::class,
+        ],
+        PromotionActivated::class => [
+            SendUserPromotionAvailableNotification::class,
+        ],
+        FlashSaleActivated::class => [
+            SendUserFlashSaleAvailableNotification::class,
         ],
         InvoiceCreated::class => [
             LogInvoiceCreated::class,

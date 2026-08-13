@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Events\FlashSaleActivated;
 use App\Jobs\LogActivityJob;
 use Illuminate\Support\Facades\Auth;
 use Marvel\Database\Models\FlashSale;
@@ -18,6 +19,10 @@ class FlashSaleObserver
             'flash_sales',
             __('activity.flash_sale_created'),
         );
+
+        if ($flashSale->status === true) {
+            event(new FlashSaleActivated($flashSale));
+        }
     }
 
     public function updated(FlashSale $flashSale): void
@@ -49,6 +54,10 @@ class FlashSaleObserver
                 $description,
                 ['old' => ['status' => (string) $oldStatus], 'new' => ['status' => (string) $newStatus]],
             );
+
+            if ($oldStatus == false && $newStatus == true) {
+                event(new FlashSaleActivated($flashSale));
+            }
         }
 
         if ($hasOtherChanges) {

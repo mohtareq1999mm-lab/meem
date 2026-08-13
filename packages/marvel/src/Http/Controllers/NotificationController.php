@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
-use Marvel\Enums\Permission;
 use Marvel\Traits\ApiResponse;
 
 class NotificationController extends Controller
@@ -16,9 +15,6 @@ class NotificationController extends Controller
     public function __construct()
     {
         $this->middleware('auth:sanctum');
-
-        $this->middleware('permission:' . Permission::VIEW_NOTIFICATIONS)->only(['index', 'unread']);
-        $this->middleware('permission:' . Permission::MANAGE_NOTIFICATIONS)->except(['index', 'unread']);
     }
 
     public function index(Request $request): JsonResponse
@@ -65,6 +61,15 @@ class NotificationController extends Controller
                 'total' => $notifications->count(),
             ],
         ]);
+    }
+
+    public function show(string $id): JsonResponse
+    {
+        $user = request()->user();
+
+        $notification = $user->notifications()->findOrFail($id);
+
+        return $this->apiResponse(NOTIFICATION_FETCHED, 200, true, $this->formatNotification($notification));
     }
 
     public function markAsRead(string $id): JsonResponse
@@ -120,11 +125,21 @@ class NotificationController extends Controller
     {
         $data = $notification->data;
 
+        $locale = app()->getLocale();
+
+        $resolve = function ($value) use ($locale) {
+            if (is_array($value)) {
+                return $value[$locale] ?? $value['en'] ?? '';
+            }
+
+            return (string) $value;
+        };
+
         return [
             'id' => $notification->id,
             'type' => $notification->type,
-            'title' => $data['title'] ?? '',
-            'message' => $data['message'] ?? '',
+            'title' => $resolve($data['title'] ?? ''),
+            'message' => $resolve($data['message'] ?? ''),
             'icon' => $data['icon'] ?? 'bell',
             'resource_type' => $data['resource_type'] ?? '',
             'resource_id' => $data['resource_id'] ?? null,

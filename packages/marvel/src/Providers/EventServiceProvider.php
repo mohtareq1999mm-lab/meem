@@ -85,7 +85,8 @@ class EventServiceProvider extends ServiceProvider
             // This listener was redundant AND broken (relied on commented-out ->products() relationship).
         ],
         OrderDelivered::class => [
-            SendOrderDeliveredNotification::class
+            SendOrderDeliveredNotification::class,
+            \App\Listeners\SendUserOrderDeliveredNotification::class,
         ],
         OwnershipTransferStatusControl::class => [
             OwnershipTransferStatusControlListener::class
@@ -113,6 +114,7 @@ class EventServiceProvider extends ServiceProvider
             RatingRemoved::class,
             \App\Listeners\RestoreInventoryOnRefund::class,
             \App\Listeners\GenerateCreditNoteOnRefund::class,
+            \App\Listeners\SendUserOrderRefundedNotification::class,
         ],
         ReviewCreated::class => [
             SendReviewNotification::class
