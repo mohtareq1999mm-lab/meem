@@ -2,15 +2,21 @@
 
 namespace App\Observers;
 
+use App\Enums\FrontendResource;
 use App\Events\FlashSaleActivated;
 use App\Jobs\LogActivityJob;
+use App\Traits\HasCache;
 use Illuminate\Support\Facades\Auth;
 use Marvel\Database\Models\FlashSale;
 
 class FlashSaleObserver
 {
+    use HasCache;
+
     public function created(FlashSale $flashSale): void
     {
+        $this->flushFlashSaleCache();
+
         LogActivityJob::dispatch(
             get_class($flashSale),
             $flashSale->id,
@@ -33,6 +39,8 @@ class FlashSaleObserver
         if (empty($dirty)) {
             return;
         }
+
+        $this->flushFlashSaleCache();
 
         $statusChanged = array_key_exists('status', $dirty);
         $hasOtherChanges = count($dirty) > ($statusChanged ? 1 : 0);
@@ -83,6 +91,8 @@ class FlashSaleObserver
 
     public function deleted(FlashSale $flashSale): void
     {
+        $this->flushFlashSaleCache();
+
         LogActivityJob::dispatch(
             get_class($flashSale),
             $flashSale->id,
@@ -95,6 +105,8 @@ class FlashSaleObserver
 
     public function restored(FlashSale $flashSale): void
     {
+        $this->flushFlashSaleCache();
+
         LogActivityJob::dispatch(
             get_class($flashSale),
             $flashSale->id,
@@ -107,6 +119,8 @@ class FlashSaleObserver
 
     public function forceDeleted(FlashSale $flashSale): void
     {
+        $this->flushFlashSaleCache();
+
         LogActivityJob::dispatch(
             get_class($flashSale),
             $flashSale->id,
@@ -115,5 +129,14 @@ class FlashSaleObserver
             'flash_sales',
             __('activity.flash_sale_force_deleted'),
         );
+    }
+
+    /**
+     * Invalidate the frontend flash sales listing cache so the next request
+     * rebuilds from the database.
+     */
+    private function flushFlashSaleCache(): void
+    {
+        $this->flushTag(FrontendResource::FLASH_SALES->value);
     }
 }

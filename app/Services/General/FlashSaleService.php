@@ -15,13 +15,16 @@ class FlashSaleService
         private readonly ProductService $productService,
     ) {}
 
-    public function paginateFlashSales($request)
+public function paginateFlashSales($request)
     {
-        $limit = $request->get('limit', 10);
+        $limit = $this->capLimit($request->get('limit', 10), 10);
         $start_date = $request->query('start_date');
         $end_date = $request->query('end_date');
         $flashSalesId = $request->query('flashSalesId');
         $order = $request->query('order', 'desc');
+        if (!in_array($order, ['asc', 'desc'], true)) {
+            $order = 'desc';
+        }
 
         $query = FlashSale::query()->valid()
             ->when($start_date, function ($query) use ($start_date) {
@@ -44,7 +47,7 @@ class FlashSaleService
 
     public function getFlashSaleBySlug($slug)
     {
-        $FlashSale = FlashSale::search('slug', $slug, app()->getLocale())->first();
+        $FlashSale = FlashSale::valid()->search('slug', $slug, app()->getLocale())->first();
         if ($FlashSale) {
             $FlashSale->load(['products' => function ($q) {
                 $this->applyChannelHomeFilter($q);
@@ -56,7 +59,7 @@ class FlashSaleService
     }
     public function getFlashSalesAndHereProductsByQtySet($request)
     {
-        $qty = $request->query('limit', 5);
+        $qty = $this->capLimit($request->query('limit', 5), 5);
         $start_date = $request->query('start_date', '');
         $end_date = $request->query('end_date', '');
 
@@ -70,17 +73,22 @@ class FlashSaleService
             ->with([
                 'products' => function ($query) use ($qty) {
                     $this->applyChannelHomeFilter($query);
-                    $query->with(['media'])->withAvg(['reviews' => fn($q) => $q->approved()], 'rating')->limit($qty);
+                    $query->with([
+                        'media',
+                        'flash_sales' => fn($q) => $q->valid(),
+                    ])->withAvg(['reviews' => fn($q) => $q->approved()], 'rating')->limit($qty);
                 }
             ])->get()
             ->pluck('products')
-            ->flatten();
+            ->flatten()
+            ->unique('id')
+            ->values();
 
         return $this->productService->enrichCollectionWithPricing($flashSales);
     }
     public function getFlashSaleProductsEndingThisWeek($request)
     {
-        $limit = $request->query('limit', 10);
+        $limit = $this->capLimit($request->query('limit', 10), 10);
         $weekEnd = now()->endOfWeek();
 
         $products = Product::query()
@@ -88,6 +96,7 @@ class FlashSaleService
             ->withAvg(['reviews' => fn($q) => $q->approved()], 'rating')
             ->select([
                 'id', 'name', 'slug', 'price', 'quantity',
+                'product_type', 'stock_quantity', 'in_stock', 'is_fast_shipping_available',
                 'has_discount', 'discount_type', 'discount_amount', 'discount_status',
                 'start_date', 'end_date',
             ])
@@ -112,13 +121,14 @@ class FlashSaleService
     }
     public function getFlashSaleProductsEndingToday($request)
     {
-        $limit = $request->query('limit', 10);
+        $limit = $this->capLimit($request->query('limit', 10), 10);
 
         $products = Product::query()
             ->with(['categories', 'variations', 'brands', 'media', 'flash_sales' => fn($q) => $q->valid()])
             ->withAvg(['reviews' => fn($q) => $q->approved()], 'rating')
             ->select([
                 'id', 'name', 'slug', 'price', 'quantity',
+                'product_type', 'stock_quantity', 'in_stock', 'is_fast_shipping_available',
                 'has_discount', 'discount_type', 'discount_amount', 'discount_status',
                 'start_date', 'end_date',
             ])
@@ -140,6 +150,20 @@ class FlashSaleService
             ->get();
 
         return $this->productService->enrichCollectionWithPricing($products)->values();
+    }
+
+    /**
+     * Normalize a request limit to a safe positive value capped at 100,
+     * consistent with the product endpoint conventions.
+     */
+    private function capLimit(mixed $requested, int $default): int
+    {
+        $limit = (int) $requested;
+        if ($limit <= 0) {
+            return $default;
+        }
+
+        return min($limit, 100);
     }
     private function moneyValue($value)
     {

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\General;
 
 use App\Enums\FrontendResource;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\FlashSaleIndexRequest;
 use App\Http\Resources\FlashSale\FlashSaleResource;
 use App\Http\Resources\Product\ProductMiniResource;
 use App\Services\General\FlashSaleService;
@@ -24,13 +25,16 @@ class FlashSaleController extends Controller
         $this->flashSaleService = $flashSaleService;
     }
 
-    public function index(Request $request)
+    public function index(FlashSaleIndexRequest $request)
     {
         if ($slug = $request->query('slug')) {
             return $this->getFlashSaleBySlug($slug);
         }
-        $flashSales = $this->flashSaleService->paginateFlashSales($request);
-        $flashCache = $this->remember(FrontendResource::FLASH_SALES->value, md5($request->fullUrl()), $flashSales);
+        $flashCache = $this->remember(
+            FrontendResource::FLASH_SALES->value,
+            md5($request->fullUrl()),
+            fn() => $this->flashSaleService->paginateFlashSales($request)
+        );
 
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, FlashSaleResource::collection($flashCache));
     }
