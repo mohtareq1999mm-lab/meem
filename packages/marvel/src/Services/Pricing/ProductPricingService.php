@@ -229,6 +229,13 @@ class ProductPricingService
                     ->first();
             }
 
+            if ($product->relationLoaded('flash_sales')) {
+                return $product->flash_sales
+                    ->filter(fn(FlashSale $flashSale) => $flashSale->isValid())
+                    ->sortByDesc('start_date')
+                    ->first();
+            }
+
             return $product->flash_sales()
                 ->valid()
                 ->orderBy('start_date', 'desc')

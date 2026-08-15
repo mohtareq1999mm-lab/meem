@@ -10,7 +10,10 @@ class CategoryNavbarResource extends JsonResource
     public function toArray(Request $request): array
     {
         $level = (int) ($this->level ?? 0);
-        $maxLevel = (int) $request->query('level', 3);
+        $requestedLevel = $request->query('level');
+        $maxLevel = $requestedLevel !== null && $requestedLevel !== '' && (int) $requestedLevel > 0
+            ? (int) $requestedLevel
+            : 3;
 
         return [
             'id' => $this->id,

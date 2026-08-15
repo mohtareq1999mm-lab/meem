@@ -5,11 +5,15 @@ namespace App\Services\General;
 use App\Traits\HasChannelFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Marvel\Database\Models\Category;
 
 class CategoryService
 {
     use HasChannelFilter;
+
+    private const ALLOWED_ORDER_DIRECTIONS = ['asc', 'desc'];
+
     public function paginate(Request $request)
     {
         $limit = $this->getLimit($request);
@@ -17,8 +21,8 @@ class CategoryService
         $pestCategory = $request->query('pest_category', false);
         $parent = $request->query('parent', false);
         $categoriesId = $request->query('categoriesId');
-        $order = $request->query('order', 'desc');
-        $query = Category::query()->active()->withCount('products');
+        $order = $this->resolveOrder($request);
+        $query = Category::query()->active()->withCount('products')->with('media');
 
         if (!empty($categoriesId)) {
             $ids = is_array($categoriesId) ? $categoriesId : explode(',', $categoriesId);
@@ -74,6 +78,23 @@ class CategoryService
             $q->where($field . '->' . $locale, 'like', "%$term%")
                 ->orWhere($field, 'like', "%$term%");
         });
+    }
+
+    private function resolveOrder(Request $request): string
+    {
+        $order = strtolower(trim((string) $request->query('order', 'desc')));
+
+        if ($order === '') {
+            return 'desc';
+        }
+
+        if (!in_array($order, self::ALLOWED_ORDER_DIRECTIONS, true)) {
+            throw ValidationException::withMessages([
+                'order' => __('validation.in', ['attribute' => 'order']),
+            ]);
+        }
+
+        return $order;
     }
 
     private function getLimit(Request $request): int

@@ -2,14 +2,22 @@
 
 namespace App\Observers;
 
+use App\Enums\FrontendResource;
 use App\Jobs\LogActivityJob;
+use App\Services\General\HomeService;
+use App\Traits\HasCache;
 use Illuminate\Support\Facades\Auth;
 use Marvel\Database\Models\Category;
 
 class CategoryObserver
 {
+    use HasCache;
+
     public function created(Category $category): void
     {
+        HomeService::clearCache();
+        $this->flushTag(FrontendResource::CATEGORIES->value);
+
         LogActivityJob::dispatch(
             get_class($category),
             $category->id,
@@ -28,6 +36,9 @@ class CategoryObserver
         if (empty($dirty)) {
             return;
         }
+
+        HomeService::clearCache();
+        $this->flushTag(FrontendResource::CATEGORIES->value);
 
         $statusChanged = array_key_exists('status', $dirty);
         $hasOtherChanges = count($dirty) > ($statusChanged ? 1 : 0);
@@ -74,6 +85,9 @@ class CategoryObserver
 
     public function deleted(Category $category): void
     {
+        HomeService::clearCache();
+        $this->flushTag(FrontendResource::CATEGORIES->value);
+
         LogActivityJob::dispatch(
             get_class($category),
             $category->id,
@@ -82,5 +96,11 @@ class CategoryObserver
             'categories',
             __('activity.category_deleted'),
         );
+    }
+
+    public function restored(Category $category): void
+    {
+        HomeService::clearCache();
+        $this->flushTag(FrontendResource::CATEGORIES->value);
     }
 }

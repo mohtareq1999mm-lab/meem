@@ -113,6 +113,7 @@ Schema::create('social_login_codes', function (Blueprint $table) {
             $table->decimal('price', 10, 2)->default(0);
             $table->string('status', 30)->default('publish');
             $table->boolean('in_stock')->default(true);
+            $table->integer('quantity')->default(0);
             $table->integer('stock_quantity')->default(10);
             $table->integer('reserved_quantity')->default(0);
             $table->integer('sold_quantity')->default(0);
@@ -145,10 +146,11 @@ Schema::create('social_login_codes', function (Blueprint $table) {
             $table->timestamps();
         });
 
-        Schema::create('categories', function (Blueprint $table) {
+Schema::create('categories', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('slug')->unique();
+            $table->text('details')->nullable();
             $table->text('description')->nullable();
             $table->unsignedBigInteger('parent_id')->nullable();
             $table->boolean('status')->default(true);
@@ -189,10 +191,15 @@ Schema::create('social_login_codes', function (Blueprint $table) {
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
             $table->string('sku')->nullable();
             $table->decimal('price', 10, 2)->default(0);
+            $table->decimal('sale_price', 10, 2)->nullable();
             $table->integer('stock_quantity')->default(0);
             $table->integer('reserved_quantity')->default(0);
             $table->integer('sold_quantity')->default(0);
             $table->boolean('in_stock')->default(true);
+            $table->string('height')->nullable();
+            $table->string('width')->nullable();
+            $table->string('length')->nullable();
+            $table->string('weight')->nullable();
             $table->timestamps();
         });
 
@@ -524,12 +531,16 @@ Schema::create('social_login_codes', function (Blueprint $table) {
 
         Schema::create('flash_sales', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('title');
             $table->string('slug')->unique();
             $table->text('description')->nullable();
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
             $table->boolean('status')->default(true);
+            $table->string('type', 30)->default('percentage');
+            $table->decimal('discount', 10, 2)->nullable();
+            $table->decimal('max_discount_amount', 10, 2)->nullable();
+            $table->integer('order')->default(0);
             $table->timestamps();
             $table->softDeletes();
         });
@@ -704,11 +715,13 @@ Schema::create('social_login_codes', function (Blueprint $table) {
             });
         }
 
-        Schema::create('attribute_products', function (Blueprint $table) {
+        Schema::create('attribute_product', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('attribute_id')->constrained('attributes')->cascadeOnDelete();
-            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
+            $table->foreignId('attribute_value_id')->constrained('attribute_values')->cascadeOnDelete();
+            $table->foreignId('product_variant_id')->constrained('product_variants')->cascadeOnDelete();
             $table->timestamps();
+            $table->unique(['attribute_value_id', 'product_variant_id'], 'attribute_product_value_variant_unique');
+            $table->index(['product_variant_id', 'attribute_value_id'], 'idx_attr_prod_variant_value');
         });
 
         Schema::create('coupon_product', function (Blueprint $table) {

@@ -196,7 +196,10 @@ Same structure as list item, `is_base` / `is_catalog` reflect current settings.
 
 **POST** `/api/v1/currencies/{id}/set-catalog`
 
-`{id}` constrained numeric.
+`{id}` constrained numeric (`whereNumber('id')`).
+
+### Description
+Marks the given currency as the **catalog currency** for the storefront. Only the `catalog_currency_code` setting option is updated; the base currency and the `currency` option are left untouched. This is the single source used for product-price conversion and display when `currency_selection_enabled` is `false`. Requires the currency to be active and to have an exchange rate whose `effective_date <= today`.
 
 ### Permission
 `set-catalog-currency` (Spatie). Admin route group `auth:sanctum` + `throttle:admin`.

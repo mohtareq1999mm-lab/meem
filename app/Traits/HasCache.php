@@ -2,22 +2,26 @@
 
 namespace App\Traits;
 
+use Closure;
 use Illuminate\Support\Facades\Cache;
 
 trait HasCache
 {
     /**
      * Get data from cache or execute the callback and cache the result.
+     *
+     * When a Closure is provided, it is only executed on a cache miss so the
+     * cache actually avoids the underlying work.
      */
     protected function remember(
         string $tag,
         string $key,
-        $data,
+        mixed $data,
         $ttl = null,
     ): mixed {
         $ttl ??= now()->addHours(4);
 
-        return Cache::tags([$tag])->remember($key, $ttl, fn() => $data);
+        return Cache::tags([$tag])->remember($key, $ttl, $data instanceof Closure ? $data : fn() => $data);
     }
 
     /**

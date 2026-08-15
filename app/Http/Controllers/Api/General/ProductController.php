@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\General;
 
 use App\Enums\FrontendResource;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ProductIndexRequest;
 use App\Http\Resources\Product\ProductMiniResource;
 use App\Http\Resources\Product\ProductResource;
 use App\Http\Resources\Product\ReviewResource;
@@ -47,50 +48,71 @@ class ProductController extends Controller
      * - productsId (string): Comma-separated product IDs.
      * - categoriesId, brandsId, promotionsId, flashSalesId, bannersId, couponsId, slidersId: Relation ID filters.
      */
-    public function index(Request $request): JsonResponse
+    public function index(ProductIndexRequest $request): JsonResponse
     {
         $type = $request->query('type', 'index');
+
         $order = $request->query('order', 'desc');
-
-        if (!empty($type)) {
-            $handler = $this->productStrategyResolver->resolve($type);
-            $data = $handler->getProducts($request);
-
-            $productIds = $data instanceof LengthAwarePaginator
-                ? $data->getCollection()->pluck('id')
-                : $data->pluck('id');
-
-            $filters = [];
-            if ($productIds->isNotEmpty()) {
-                $query = \Marvel\Database\Models\Product::query()->whereIn('id', $productIds);
-                $filters = $this->productService->getDynamicFilters($query);
-            }
-
-            if ($data instanceof LengthAwarePaginator) {
-                $collection = new ProductCollectionMini($data);
-                $responseData = $collection->toArray($request);
-            } else {
-                $total = $data->count();
-                $responseData = [
-                    'data' => ProductMiniResource::collection($data),
-                    'links' => $this->buildSimpleLinks($request, $total),
-                ];
-            }
-
-            $responseData['filters'] = $filters;
-            $responseData['categories'] = $this->getCollectionCategories($productIds);
-
-if ($this->shouldCache($request)) {
-                $responseData = $this->remember(
-                    FrontendResource::PRODUCTS->value . '_' . $type,
-                    $this->currencyAwareCacheKey($request),
-                    $responseData
-                );
-            }
-
-            return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $responseData);
+        if (!in_array($order, ['asc', 'desc'], true)) {
+            $order = 'desc';
         }
 
+        if (!empty($type)) {
+            $tag = FrontendResource::PRODUCTS->value . '_' . $type;
+            $build = fn() => $this->buildStrategyResponse($request, $type);
+        } else {
+            $tag = FrontendResource::PRODUCTS->value;
+            $build = fn() => $this->buildFallbackResponse($request, $order);
+        }
+
+        $responseData = $this->shouldCache($request)
+            ? $this->remember($tag, $this->currencyAwareCacheKey($request), $build)
+            : $build();
+
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $responseData);
+    }
+
+    /**
+     * Build the listing payload for a registered product strategy type.
+     * Executed only on a cache miss when the request is cacheable.
+     */
+    private function buildStrategyResponse(Request $request, string $type): array
+    {
+        $handler = $this->productStrategyResolver->resolve($type);
+        $data = $handler->getProducts($request);
+
+        $productIds = $data instanceof LengthAwarePaginator
+            ? $data->getCollection()->pluck('id')
+            : $data->pluck('id');
+
+        $filters = [];
+        if ($productIds->isNotEmpty()) {
+            $query = \Marvel\Database\Models\Product::query()->whereIn('id', $productIds);
+            $filters = $this->productService->getDynamicFilters($query);
+        }
+
+        if ($data instanceof LengthAwarePaginator) {
+            $responseData = (new ProductCollectionMini($data))->toArray($request);
+        } else {
+            $total = $data->count();
+            $responseData = [
+                'data' => ProductMiniResource::collection($data),
+                'links' => $this->buildSimpleLinks($request, $total),
+            ];
+        }
+
+        $responseData['filters'] = $filters;
+        $responseData['categories'] = $this->getCollectionCategories($productIds);
+
+        return $responseData;
+    }
+
+    /**
+     * Build the listing payload for the fallback (no-type) flow.
+     * Executed only on a cache miss when the request is cacheable.
+     */
+    private function buildFallbackResponse(Request $request, string $order): array
+    {
         $scoutQuery = $this->productService->buildScoutSearchQuery($request);
 
         if ($scoutQuery !== null) {
@@ -107,20 +129,11 @@ if ($this->shouldCache($request)) {
         }
 
         $productIds = $data->getCollection()->pluck('id');
-        $collection = new ProductCollectionMini($data);
-        $responseData = $collection->toArray($request);
+        $responseData = (new ProductCollectionMini($data))->toArray($request);
         $responseData['filters'] = $filters;
         $responseData['categories'] = $this->getCollectionCategories($productIds);
 
-if ($this->shouldCache($request)) {
-            $responseData = $this->remember(
-                FrontendResource::PRODUCTS->value,
-                $this->currencyAwareCacheKey($request),
-                $responseData
-            );
-        }
-
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $responseData);
+        return $responseData;
     }
 
     /**
@@ -129,7 +142,7 @@ if ($this->shouldCache($request)) {
      * Requests that contain a "search" parameter bypass the cache entirely so
      * that search results always reflect up-to-date data.
      */
-private function shouldCache(Request $request): bool
+    private function shouldCache(Request $request): bool
     {
         return !$request->has('search');
     }
@@ -223,7 +236,7 @@ private function shouldCache(Request $request): bool
             return $this->apiResponse(NOT_FOUND, 404, false);
         }
 
-        return $this->apiResponse(REVIEW_CREATED_SUCCESSFULLY, 200, true,ReviewResource::make($review));
+        return $this->apiResponse(REVIEW_CREATED_SUCCESSFULLY, 200, true, ReviewResource::make($review));
     }
 
     /**

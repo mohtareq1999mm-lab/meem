@@ -26,8 +26,14 @@ class NewContactMessageNotification extends Notification implements ShouldQueue
     public function toDatabase($notifiable): array
     {
         return [
-            'title' => 'New Contact Message',
-            'message' => "New Contact Us message received from {$this->contact->name}.",
+            'title' => [
+                'en' => __('notifications.admin.contact_message.title', [], 'en'),
+                'ar' => __('notifications.admin.contact_message.title', [], 'ar'),
+            ],
+            'message' => [
+                'en' => __('notifications.admin.contact_message.body', ['customer_name' => $this->contact->name], 'en'),
+                'ar' => __('notifications.admin.contact_message.body', ['customer_name' => $this->contact->name], 'ar'),
+            ],
             'icon' => 'mail',
             'resource_type' => 'contact',
             'resource_id' => $this->contact->id,
@@ -47,5 +53,10 @@ class NewContactMessageNotification extends Notification implements ShouldQueue
     public function broadcastType(): string
     {
         return 'contact.message';
+    }
+
+    public function databaseType($notifiable): string
+    {
+        return $this->broadcastType();
     }
 }

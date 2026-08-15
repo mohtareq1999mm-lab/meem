@@ -149,6 +149,13 @@ class Product extends Model implements HasMedia
             return null;
         }
 
+        if ($this->relationLoaded('flash_sales')) {
+            return $this->flash_sales
+                ->filter(fn(FlashSale $flashSale) => $flashSale->isValid())
+                ->sortByDesc('start_date')
+                ->first();
+        }
+
         $now = Carbon::now();
 
         return $this->flash_sales()

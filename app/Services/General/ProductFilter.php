@@ -66,6 +66,8 @@ class ProductFilter
             $brandIds = $this->resolveIds(Brand::class, $brandNames);
             if (!empty($brandIds)) {
                 $query->whereHas('brands', fn($q) => $q->whereIn('brands.id', $brandIds));
+            } else {
+                $query->whereRaw('1 = 0');
             }
         }
 
@@ -76,6 +78,8 @@ class ProductFilter
             if (!empty($categoryIds)) {
                 $expandedIds = $this->expandWithDescendants($categoryIds);
                 $query->whereHas('categories', fn($q) => $q->whereIn('categories.id', $expandedIds));
+            } else {
+                $query->whereRaw('1 = 0');
             }
         }
 

@@ -105,4 +105,18 @@ return [
             'body' => 'The :promotion_name promotion ends within 24 hours. Don’t miss out!',
         ],
     ],
+    'admin' => [
+        'new_order' => [
+            'title' => 'New order received',
+            'body' => 'New order #:order_number has been placed.',
+        ],
+        'contact_message' => [
+            'title' => 'New contact message',
+            'body' => 'A new contact message was received from :customer_name.',
+        ],
+        'login' => [
+            'title' => 'Admin login',
+            'body' => ':admin_name just logged in.',
+        ],
+    ],
 ];

@@ -806,7 +806,7 @@ class PricingProductionHardenTest extends TestCase
 
         $flashSale = new FlashSale();
         $flashSale->forceFill([
-            'name' => 'Test Flash',
+            'title' => 'Test Flash',
             'slug' => 'test-flash-' . Str::random(4),
             'type' => FlashSaleType::PERCENTAGE,
             'discount' => 10,
@@ -854,7 +854,7 @@ class PricingProductionHardenTest extends TestCase
 
         $flashSale = new FlashSale();
         $flashSale->forceFill([
-            'name' => 'Order Snap FS',
+            'title' => 'Order Snap FS',
             'slug' => 'order-snap-fs-' . Str::random(4),
             'type' => FlashSaleType::PERCENTAGE,
             'discount' => 10,
@@ -1031,7 +1031,7 @@ class PricingProductionHardenTest extends TestCase
 
         $flashSale = new FlashSale();
         $flashSale->forceFill([
-            'name' => 'Tomorrow Flash',
+            'title' => 'Tomorrow Flash',
             'slug' => 'tomorrow-flash-' . Str::random(4),
             'type' => FlashSaleType::PERCENTAGE,
             'discount' => 50,
@@ -1072,7 +1072,7 @@ class PricingProductionHardenTest extends TestCase
 
         $flashSale = new FlashSale();
         $flashSale->forceFill([
-            'name' => 'Expired Flash',
+            'title' => 'Expired Flash',
             'slug' => 'expired-flash-' . Str::random(4),
             'type' => FlashSaleType::PERCENTAGE,
             'discount' => 50,

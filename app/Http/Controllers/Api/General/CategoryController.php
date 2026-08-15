@@ -28,8 +28,11 @@ class CategoryController extends Controller
         if ($slug = $request->query('slug')) {
             return $this->getCategoryBySlug($slug);
         }
-        $categories = $this->categoryService->paginate($request);
-        $categoriesCache = $this->remember(FrontendResource::CATEGORIES->value, md5($request->fullUrl()), $categories);
+        $categoriesCache = $this->remember(
+            FrontendResource::CATEGORIES->value,
+            md5($request->fullUrl()),
+            fn() => $this->categoryService->paginate($request)
+        );
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, CategoryHomeResource::collection($categoriesCache));
     }
 

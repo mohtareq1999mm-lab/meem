@@ -658,8 +658,9 @@ class NotificationTest extends TestCase
 
         $this->assertEquals(1, $admin->notifications()->count());
         $notification = $admin->notifications()->first();
-        $this->assertEquals('App\Notifications\NewOrderNotification', $notification->type);
-        $this->assertEquals('New Order', $notification->data['title']);
+        $this->assertEquals('order.created', $notification->type);
+        $this->assertEquals('New order received', $notification->data['title']['en']);
+        $this->assertEquals('طلب جديد', $notification->data['title']['ar']);
         $this->assertEquals('order', $notification->data['resource_type']);
     }
 
@@ -678,8 +679,9 @@ class NotificationTest extends TestCase
 
         $this->assertEquals(1, $admin->notifications()->count());
         $notification = $admin->notifications()->first();
-        $this->assertEquals('App\Notifications\NewContactMessageNotification', $notification->type);
-        $this->assertEquals('New Contact Message', $notification->data['title']);
+        $this->assertEquals('contact.message', $notification->type);
+        $this->assertEquals('New contact message', $notification->data['title']['en']);
+        $this->assertEquals('رسالة تواصل جديدة', $notification->data['title']['ar']);
         $this->assertEquals('contact', $notification->data['resource_type']);
     }
 
@@ -691,8 +693,9 @@ class NotificationTest extends TestCase
 
         $this->assertEquals(1, $admin->notifications()->count());
         $notification = $admin->notifications()->first();
-        $this->assertEquals('App\Notifications\AdminLoggedInNotification', $notification->type);
-        $this->assertEquals('Admin Login', $notification->data['title']);
+        $this->assertEquals('admin.login', $notification->type);
+        $this->assertEquals('Admin login', $notification->data['title']['en']);
+        $this->assertEquals('تسجيل دخول المشرف', $notification->data['title']['ar']);
         $this->assertEquals('admin', $notification->data['resource_type']);
     }
 

@@ -2,17 +2,24 @@
 
 namespace App\Observers;
 
+use App\Enums\FrontendResource;
 use App\Events\ProductBackInStock;
 use App\Events\ProductDiscountChanged;
 use App\Events\ProductPriceDrop;
 use App\Jobs\LogActivityJob;
+use App\Services\General\ProductEngine\ProductStrategyResolver;
+use App\Traits\HasCache;
 use Illuminate\Support\Facades\Auth;
 use Marvel\Database\Models\Product;
 
 class ProductObserver
 {
+    use HasCache;
+
     public function created(Product $product): void
     {
+        $this->flushProductCaches();
+
         LogActivityJob::dispatch(
             get_class($product),
             $product->id,
@@ -31,6 +38,8 @@ class ProductObserver
         if (empty($dirty)) {
             return;
         }
+
+        $this->flushProductCaches();
 
         $statusChanged = array_key_exists('status', $dirty);
         $hasOtherChanges = count($dirty) > ($statusChanged ? 1 : 0);
@@ -130,6 +139,8 @@ class ProductObserver
 
     public function deleted(Product $product): void
     {
+        $this->flushProductCaches();
+
         LogActivityJob::dispatch(
             get_class($product),
             $product->id,
@@ -142,6 +153,8 @@ class ProductObserver
 
     public function restored(Product $product): void
     {
+        $this->flushProductCaches();
+
         LogActivityJob::dispatch(
             get_class($product),
             $product->id,
@@ -154,6 +167,8 @@ class ProductObserver
 
     public function forceDeleted(Product $product): void
     {
+        $this->flushProductCaches();
+
         LogActivityJob::dispatch(
             get_class($product),
             $product->id,
@@ -162,5 +177,18 @@ class ProductObserver
             'products',
             __('activity.product_force_deleted'),
         );
+    }
+
+    /**
+     * Invalidate every product listing cache variant so the next request
+     * rebuilds from the database.
+     */
+    private function flushProductCaches(): void
+    {
+        $this->flushTag(FrontendResource::PRODUCTS->value);
+
+        foreach (app(ProductStrategyResolver::class)->supportedTypes() as $type) {
+            $this->flushTag(FrontendResource::PRODUCTS->value . '_' . $type);
+        }
     }
 }

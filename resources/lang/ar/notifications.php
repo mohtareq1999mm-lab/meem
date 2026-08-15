@@ -105,4 +105,18 @@ return [
             'body' => 'ينتهي العرض :promotion_name خلال 24 ساعة. لا تفوت الفرصة!',
         ],
     ],
+    'admin' => [
+        'new_order' => [
+            'title' => 'طلب جديد',
+            'body' => 'تم تقديم طلب جديد رقم :order_number.',
+        ],
+        'contact_message' => [
+            'title' => 'رسالة تواصل جديدة',
+            'body' => 'تم استلام رسالة تواصل جديدة من :customer_name.',
+        ],
+        'login' => [
+            'title' => 'تسجيل دخول المشرف',
+            'body' => 'قام :admin_name بتسجيل الدخول للتو.',
+        ],
+    ],
 ];

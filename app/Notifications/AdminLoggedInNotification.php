@@ -27,8 +27,14 @@ class AdminLoggedInNotification extends Notification implements ShouldQueue
     public function toDatabase($notifiable): array
     {
         return [
-            'title' => 'Admin Login',
-            'message' => "{$this->admin->name} logged in.",
+            'title' => [
+                'en' => __('notifications.admin.login.title', [], 'en'),
+                'ar' => __('notifications.admin.login.title', [], 'ar'),
+            ],
+            'message' => [
+                'en' => __('notifications.admin.login.body', ['admin_name' => $this->admin->name], 'en'),
+                'ar' => __('notifications.admin.login.body', ['admin_name' => $this->admin->name], 'ar'),
+            ],
             'icon' => 'log-in',
             'resource_type' => 'admin',
             'resource_id' => $this->admin->id,
@@ -50,5 +56,10 @@ class AdminLoggedInNotification extends Notification implements ShouldQueue
     public function broadcastType(): string
     {
         return 'admin.login';
+    }
+
+    public function databaseType($notifiable): string
+    {
+        return $this->broadcastType();
     }
 }

@@ -147,12 +147,12 @@ class PricingCacheInvalidationTest extends TestCase
     public function test_clear_cache_removes_all_home_pricing_keys(): void
     {
         $keys = [
-            'home-flash-sales',
-            'home-discount-products-end-today',
-            'home-flash-sale-products',
-            'home-weekly-products',
-            'home-all-discount-products',
-            'home-flash-sales-after-9',
+            'home:home-flash-sales',
+            'home:home-discount-products-end-today',
+            'home:home-flash-sale-products',
+            'home:home-weekly-products',
+            'home:home-all-discount-products',
+            'home:home-flash-sales-after-9',
         ];
 
         foreach ($keys as $key) {

@@ -50,12 +50,14 @@ private function cacheKey(string $key): string
 
     public function getNavData(?int $level = null)
     {
+        $depth = $level !== null ? max(1, min((int) $level, 3)) : 3;
+
         $cacheKey = $level !== null
-            ? $this->cacheKey("home-nav-bar:level:{$level}")
+            ? $this->cacheKey("home-nav-bar:level:{$depth}")
             : $this->cacheKey('home-nav-bar');
 
-        return Cache::remember($cacheKey, 120, function () {
-            return CategoryNavbarResource::collection($this->getCategoryWithChildren());
+        return Cache::remember($cacheKey, 120, function () use ($depth) {
+            return CategoryNavbarResource::collection($this->getCategoryWithChildren($depth));
         });
     }
     public function getHomeData(?int $parentCategoryId = null, ?array $sections = null)
@@ -402,19 +404,29 @@ private function cacheKey(string $key): string
     }
 
 
-    private function getCategoryWithChildren(): Collection
+    private function getCategoryWithChildren(int $maxDepth): Collection
     {
         return Category::query()
             ->active()
             ->whereNull('parent_id')
             ->withCount('products')
-            ->with(['children' => function ($query) {
-                $query->active()->withCount('products')->with(['children' => function ($q) {
-                    $q->active()->withCount('products');
-                }]);
-            }])
+            ->with($this->categoryChildrenWith($maxDepth))
             ->orderByDesc('products_count')
             ->get();
+    }
+
+    private function categoryChildrenWith(int $remainingDepth): array
+    {
+        if ($remainingDepth <= 1) {
+            return [];
+        }
+
+        return [
+            'children' => function ($query) use ($remainingDepth) {
+                $query->active()->withCount('products');
+                $query->with($this->categoryChildrenWith($remainingDepth - 1));
+            },
+        ];
     }
 
 private const CACHE_KEYS = [
@@ -444,6 +456,8 @@ private const CACHE_KEYS = [
         'home-flash-sales-after-9',
     ];
 
+    private const NAV_BAR_LEVELS = [1, 2, 3];
+
     public static function clearCache(?string $channel = null): void
     {
         $channels = $channel !== null ? [$channel] : Channel::values();
@@ -452,6 +466,12 @@ private const CACHE_KEYS = [
             foreach (self::CACHE_KEYS as $key) {
                 $cacheKey = $ch . ':' . $key;
                 Cache::forget($cacheKey);
+
+                if ($key === 'home-nav-bar') {
+                    foreach (self::NAV_BAR_LEVELS as $level) {
+                        Cache::forget("{$cacheKey}:level:{$level}");
+                    }
+                }
 
                 if (in_array($key, self::CURRENCY_AWARE_CACHE_KEYS, true)) {
                     foreach (self::activeCurrencyCodes() as $code) {

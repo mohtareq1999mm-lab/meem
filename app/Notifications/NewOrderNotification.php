@@ -25,8 +25,14 @@ class NewOrderNotification extends Notification implements ShouldQueue
     public function toDatabase($notifiable): array
     {
         return [
-            'title' => 'New Order',
-            'message' => "New Order #{$this->order->order_number} has been placed.",
+            'title' => [
+                'en' => __('notifications.admin.new_order.title', [], 'en'),
+                'ar' => __('notifications.admin.new_order.title', [], 'ar'),
+            ],
+            'message' => [
+                'en' => __('notifications.admin.new_order.body', ['order_number' => $this->order->order_number], 'en'),
+                'ar' => __('notifications.admin.new_order.body', ['order_number' => $this->order->order_number], 'ar'),
+            ],
             'icon' => 'shopping-cart',
             'resource_type' => 'order',
             'resource_id' => $this->order->id,
@@ -48,5 +54,10 @@ class NewOrderNotification extends Notification implements ShouldQueue
     public function broadcastType(): string
     {
         return 'order.created';
+    }
+
+    public function databaseType($notifiable): string
+    {
+        return $this->broadcastType();
     }
 }
