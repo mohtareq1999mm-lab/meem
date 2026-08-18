@@ -8,7 +8,7 @@
 
 **Authentication:** Sanctum token with `view-settings` permission (admin). For public reads, use `GET /api/v1/general/settings` (no auth).
 
-**Response 200:** Full settings object (see api.md) — includes top-level `currency_selection_enabled` (boolean) and `minimumOrderAmount`.
+**Response 200:** Full settings object (see api.md) — includes top-level `currency_selection_enabled` (boolean), `minimumOrderAmount`, and the six social URL fields `facebook` / `instagram` / `linkedin` / `youtube` / `tiktok` / `snapchat`.
 
 ---
 
@@ -18,12 +18,13 @@
 
 **Authentication:** Sanctum token with `update-settings` permission
 
-**Request:** JSON body with all settings fields (including optional `currency_selection_enabled` boolean and `minimum_order_amount`)
+**Request:** JSON body with all settings fields (including optional `currency_selection_enabled` and `minimum_order_amount`). Social fields: `facebook`, `instagram`, `linkedin`, `youtube`, **`tiktok`**, **`snapchat`** (all `sometimes|url`).
 
 **Response 200:** Updated settings object
 
 **Notes:**
 - `currency_selection_enabled` is a top-level boolean toggle; when sent it is merged into `options` (other option keys preserved) and resets the storefront effective-currency memo.
+- Send it as a JSON boolean (`true`/`false`) — validation is `boolean` (also accepts `0`/`1`/`"0"`/`"1"`; rejects `2` or `"not-a-boolean"`).
 - When `currency_selection_enabled` is `false`, the storefront currency selector is hidden/disabled (selections are stored but ignored).
 
 ---

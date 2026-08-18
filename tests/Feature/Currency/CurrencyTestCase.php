@@ -34,6 +34,7 @@ abstract class CurrencyTestCase extends TestCase
         'view-exchange-rates',
         'create-exchange-rate',
         'update-exchange-rate',
+        'delete-exchange-rate',
         'set-base-currency',
         'set-catalog-currency',
     ];

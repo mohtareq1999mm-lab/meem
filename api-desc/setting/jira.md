@@ -31,11 +31,30 @@
 
 **Acceptance Criteria:**
 - [ ] `SettingResource` returns top-level `currency_selection_enabled` boolean (admin + public)
-- [ ] `SettingsRequest` accepts `currency_selection_enabled => sometimes|boolean`
+- [ ] `SettingsRequest` accepts `currency_selection_enabled => sometimes|boolean` (JSON boolean; rejects `"not-a-boolean"` / `2`)
 - [ ] `SettingsController::update()` merges the flag into `options` without dropping other keys, resets the effective-currency memo, and flushes the `settings` tag
 - [ ] Seeder defaults the flag to `false`
 
-**Status:** DONE (2026-08-12).
+**Status:** DONE (2026-08-12). BUG-SETTING-ADMIN-006 (interim `in:true,false` regression) was fixed 2026-08-18 by restoring `boolean`.
+
+---
+
+## Task 6: Add `tiktok` / `snapchat` Social Fields
+
+**Priority:** Medium
+**Component:** Settings
+**Effort:** Small
+**Files:**
+- `packages/marvel/src/Database/Models/Settings.php`
+- `packages/marvel/src/Http/Controllers/SettingsController.php`
+- `packages/marvel/src/Http/Requests/SettingsRequest.php`
+- `packages/marvel/src/Http/Resources/SettingResource.php`
+- `packages/marvel/database/migrations/2020_06_02_051901_create_marvel_tables.php`
+- `tests/Feature/Settings/SettingsCrudTest.php`, `tests/Feature/Settings/SettingsValidationTest.php`
+
+**Description:** Add TikTok and Snapchat URL fields to the settings API (column, fillable, request validation `sometimes|url`, resource response).
+
+**Status:** DONE — `tiktok`/`snapchat` columns + fillable + allowlist + `sometimes|url` + resource fields added; validation and CRUD/preservation tests added.
 
 ---
 

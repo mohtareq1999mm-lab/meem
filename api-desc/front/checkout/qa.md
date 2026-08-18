@@ -10,11 +10,11 @@
 
 | # | Test | Description | Expected |
 |---|------|-------------|----------|
-| F1 | Eligible promotions with cart | GET /checkout/promotions | 200, promotions |
+| F1 | Eligible promotions with cart | GET /checkout/promotions | 200, eligible_promotions |
 | F2 | Eligible promotions no cart | No cart | 400 |
 | F3 | Checkout COD | POST /checkout {cod} | 200, order_id |
 | F4 | Checkout online | POST /checkout {online} | 200, url |
-| F5 | Checkout cashier | POST {pay_at_cashier, pickup} | 200, qr_code |
+| F5 | Checkout cashier | POST {pay_at_cashier, pickup} | 200, order_id |
 | F6 | Checkout COD+pickup | COD + pickup | 422 |
 | F7 | Checkout without cart | No items | 400 |
 | F8 | Checkout with promotion | selected_promotion_id | 200 |
@@ -22,8 +22,8 @@
 | F10 | Expired coupon cleared | Expired coupon | 200, coupon removed |
 | F11 | Mark COD paid | POST /cod/{id}/mark-paid | 200 |
 | F12 | Mark cashier paid | POST /cashier/{id}/mark-paid | 200 |
-| F13 | Get QR | GET /transaction-qr/{uuid} | 200, SVG |
-| F14 | Get QR unauthorized | Other user's UUID | 403 |
+| F13 | Cashier response has no QR | Response body | No qr_code / transaction_uuid keys |
+| F14 | Cashier lifecycle preserved | Checkout → mark-paid | Transaction pending → paid, order completed |
 | F15 | Callback success | ANY /callback | Redirect /success |
 | F16 | Callback mismatch | Amount mismatch | Redirect /failed |
 | F17 | Error callback | ANY /error-callback | Redirect /failed |
@@ -42,6 +42,30 @@
 | V6 | Pickup without location_id | 422 |
 | V7 | Invalid governorate | 422 |
 | V8 | Unauthenticated | 401 |
+| V9 | Pay at cashier + delivery | fulfillment_type=delivery | 422, fulfillment_type error |
+| V10 | Pay at cashier without pickup_location_id | pickup, no location | 422, pickup_location_id error |
+| V11 | COD + pickup | business rule | 422, "COD is not available for pickup" |
+| V12 | Delivery without governorate, pickup with location | mixed | 200 (when governorate provided) |
+
+---
+
+## Request Body Requirements (what to send, when)
+
+| Field | When required | Notes |
+|-------|---------------|-------|
+| name | Always | string, max:255 |
+| user_phone | Always | string, max:255 |
+| user_email | Always | email, max:255 |
+| address | Always | array; empty `{}` acceptable for pickup |
+| notes | Optional | string |
+| payment_method | Optional | `online`/`cod`/`pay_at_cashier`; default `online` |
+| gateway | Only for `payment_method=online` | default `myfatoorah` |
+| fulfillment_type | Optional | `delivery`/`pickup`; default `delivery`; **must be `pickup` for pay_at_cashier** |
+| governorate_id | **When `fulfillment_type=delivery`** | exists:governorates,id |
+| pickup_location_id | **When `fulfillment_type=pickup`** | exists:pickup_locations,id |
+| selected_promotion_id | Optional | exists:promotions,id |
+| selected_gift_product_id | Optional | exists:products,id |
+| type | Optional | `web`/`mobile`; controls callback format |
 
 ---
 

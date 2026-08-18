@@ -124,9 +124,9 @@
 **Component:** Frontend — Public Verification
 **Story Points:** 5
 
-**Description:** Build a public invoice verification page accessed via QR code or URL.
+**Description:** Build an invoice verification page accessed via QR code or URL. Note: the verify endpoint currently requires Sanctum auth (`auth:sanctum`, `throttle:5,1`) and `data.invoice` is currently broken (HTTP 500) — see `api.md` contradictions. Do not depend on `data.invoice`.
 
-**API Endpoint:** `GET /api/v1/invoices/verify/{uuid}`
+**API Endpoint:** `GET /api/v1/general/invoices/verify/{uuid}`
 
 **Acceptance Criteria:**
 - [ ] Input field for UUID or verification URL
@@ -148,7 +148,8 @@
 **Description:** Build a customer-facing invoice list and detail page.
 
 **API Endpoints:**
-- `GET /api/v1/invoices/my-invoices`
+- `GET /api/v1/general/invoices/my-invoices`
+- `GET /api/v1/general/orders/invoice/{uuid}` (customer view one invoice, owner-only)
 - `GET /api/v1/invoices/{uuid}/download`
 
 **Acceptance Criteria:**

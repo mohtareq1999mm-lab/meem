@@ -3,6 +3,8 @@
 namespace Marvel\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Marvel\Database\Models\SectionType;
 use Spatie\EloquentSortable\Sortable;
 use Spatie\EloquentSortable\SortableTrait;
 use Spatie\Translatable\HasTranslations;
@@ -38,5 +40,10 @@ class Section extends Model implements Sortable
     public function contentPage()
     {
         return $this->belongsTo(ContentPage::class);
+    }
+
+    public function sectionType(): BelongsTo
+    {
+        return $this->belongsTo(SectionType::class, 'type', 'type');
     }
 }

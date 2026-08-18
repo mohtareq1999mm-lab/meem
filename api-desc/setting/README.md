@@ -37,6 +37,10 @@ Platform JSON `options` includes (among others):
 - `fast_shipping` — managed via the fast-shipping endpoints
 - `currency_selection_enabled` — boolean (default `false`); exposed as top-level `currency_selection_enabled`. When `false`, the storefront effective currency always resolves to the catalog code; when `true`, customer-selected currency preference / guest cookie is honored.
 
+## Social Media Fields
+
+Settings include `facebook`, `instagram`, `linkedin`, `youtube`, plus **`tiktok`** and **`snapchat`** (nullable URL strings). All six are exposed in the `SettingResource` response (admin + public) and accepted on `PUT /api/v1/settings` (`sometimes|url`).
+
 ## Dependencies
 
 - **Spatie Translatable** (`HasTranslations`) — bilingual site_name, site_desc, meta_desc, copyright

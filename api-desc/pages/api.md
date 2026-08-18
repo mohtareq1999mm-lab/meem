@@ -325,7 +325,7 @@ Delete a section.
 
 ---
 
-### put /api/v1/sections/reorder
+### post /api/v1/sections/reorder
 
 Reorder sections by providing an ordered array of section IDs.
 

@@ -126,7 +126,7 @@ if (!InvoiceStatus::tryFrom($invoice->status)?->canTransitionTo(InvoiceStatus::C
 
 **Component:** `routes/api.php`
 
-**Description:** Only `verify` (60/min) and `download` (30/min) have rate limiting. The list, show, my-invoices, regenerate, correct, cancel, and debit-note endpoints have no throttle middleware.
+**Description:** Only `verify` (5/min) and `download` (30/min) have rate limiting. The list, show, my-invoices, regenerate, correct, cancel, and debit-note endpoints have no throttle middleware.
 
 **Code Location:** `routes/api.php:123-136`
 

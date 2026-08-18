@@ -10,7 +10,6 @@ use App\Http\Resources\Order\OrderCollection;
 use App\Models\Invoice;
 use App\Services\General\CartInventoryService;
 use App\Services\General\OrderService;
-use App\Services\Gateway\CashierQrService;
 use App\Services\Payment\PaymentCheckoutHandler;
 use App\Services\Payment\PaymentGatewayFactory;
 use App\Events\OrderCancelled;
@@ -39,7 +38,6 @@ class OrderController extends Controller
         CartInventoryService $cartInventoryService,
         private PaymentGatewayFactory $paymentGatewayFactory,
         private PaymentCheckoutHandler $paymentCheckoutHandler,
-        private CashierQrService $cashierQrService,
     ) {
         $this->orderService = $orderService;
         $this->cartInventoryService = $cartInventoryService;
@@ -153,25 +151,6 @@ class OrderController extends Controller
 
         return $this->apiResponse(PAYMENT_SUCCESSFUL, 200, true);
     }
-
-    public function getTransactionQr(string $uuid, Request $request): \Illuminate\Http\Response|JsonResponse
-    {
-        $transaction = Transaction::byUuid($uuid)->first();
-
-        if (!$transaction) {
-            return $this->apiResponse(TRANSACTION_NOT_FOUND, 404, false);
-        }
-
-        $order = $transaction->order;
-        if (!$order || $order->user_id !== $request->user()->id) {
-            return $this->apiResponse(UNAUTHORIZED_TRANSACTION_ACCESS, 403, false);
-        }
-
-        $svg = $this->cashierQrService->generateSvg($transaction);
-
-        return response($svg, 200, ['Content-Type' => 'image/svg+xml']);
-    }
-
 
     public function checkoutCallback(Request $request)
     {

@@ -57,7 +57,7 @@
 | A4 | Guest corrects invoice | 401 |
 | A5 | Guest cancels invoice | 401 |
 | A6 | Guest issues debit note | 401 |
-| A7 | Guest verifies invoice | 200 (public) |
+| A7 | Guest verifies invoice | 401 (verify now requires auth:sanctum) |
 | A8 | No view-invoices permission | 403 |
 | A9 | No view-invoice permission | 403 |
 | A10 | No correct-invoice permission | 403 |
@@ -126,4 +126,4 @@
 - [ ] Snapshot version migration (current: 2.1.0, schema: 3)
 - [ ] Large invoice data payloads (performance)
 - [ ] Concurrent generation for same order (lockForUpdate test)
-- [ ] Rate limiting: verify 60 req/min, download 30 req/min
+- [ ] Rate limiting: verify 5 req/min, download 30 req/min

@@ -6,6 +6,10 @@
 
 Uses `CreatesTestTables` + `DatabaseTransactions`.
 
+**File:** `tests/Feature/Invoice/InvoiceDownloadPermissionTest.php` (18 tests, 52 assertions — added in 1.1.0, all green)
+
+**File:** `tests/Feature/OrderInvoiceEndpointTest.php` (7 tests — customer invoice view via order + order resource invoice fields)
+
 ### Invoice Service Tests (5 tests)
 
 | # | Test | Type | Description |
@@ -89,12 +93,12 @@ Uses `CreatesTestTables` + `DatabaseTransactions`.
 | FT-002 | GET /invoices filters by status | Feature | |
 | FT-003 | GET /invoices sorts by total/status/invoice_number | Feature | |
 | FT-004 | GET /invoices searches by invoice_number | Feature | |
-| FT-005 | GET /invoices/{id} returns InvoiceResource | Feature | |
-| FT-006 | GET /invoices/uuid/{uuid} returns InvoiceResource | Feature | |
-| FT-007 | GET /invoices/my-invoices scoped to user | Feature | |
-| FT-008 | GET /invoices/verify/{uuid} returns authentic=true | Feature | |
-| FT-009 | GET /invoices/verify/{uuid} returns 409 for tampered | Feature | |
-| FT-010 | GET /invoices/verify/{uuid} returns 404 | Feature | |
+| FT-005 | GET /invoices/{id} returns AdminInvoiceResource | Feature | |
+| FT-006 | GET /general/invoices/uuid/{uuid} returns AdminInvoiceResource | Feature | |
+| FT-007 | GET /general/invoices/my-invoices scoped to user | Feature | |
+| FT-008 | GET /general/invoices/verify/{uuid} returns authentic=true | Feature | |
+| FT-009 | GET /general/invoices/verify/{uuid} returns 409 for tampered | Feature | |
+| FT-010 | GET /general/invoices/verify/{uuid} returns 404 | Feature | |
 | FT-011 | GET /invoices/{uuid}/download returns PDF URL | Feature | |
 | FT-012 | GET /invoices/{uuid}/download returns 404 if no PDF | Feature | |
 | FT-013 | GET /invoices/{uuid}/download returns 404 if unauthorized | Auth | |
@@ -119,11 +123,28 @@ Uses `CreatesTestTables` + `DatabaseTransactions`.
 | FT-027 | Guest cannot correct | 401 |
 | FT-028 | Guest cannot cancel | 401 |
 | FT-029 | Guest cannot issue debit note | 401 |
-| FT-030 | Guest can verify (public) | 200 |
+| FT-030 | Guest cannot verify (verify now requires auth) | 401 |
 | FT-031 | No view-invoices permission → 403 | Auth |
 | FT-032 | No correct-invoice permission → 403 | Auth |
 | FT-033 | No cancel-invoice permission → 403 | Auth |
 | FT-034 | No issue-debit-note permission → 403 | Auth |
+| FT-043 | Guest cannot download invoice | 401 |
+| FT-044 | Owner can download without permission | 200 |
+| FT-045 | Non-owner with `view-invoice-download` → 200 | Auth |
+| FT-046 | Non-owner with `view-invoice` only → 404 (DENIED) | Auth |
+| FT-047 | Non-owner without any permission → 404 | Auth |
+| FT-048 | Super admin can download | 200 |
+| FT-049 | Real PDF file exists + readable + URL + invoice_number | Filesystem |
+| FT-050 | Invoice without PDF → 404 | Edge Case |
+| FT-051 | Unknown UUID → 404 | Edge Case |
+| FT-052 | Invalid UUID format → 404 | Edge Case |
+| FT-053 | `downloaded_at` set on first download only | DB |
+| FT-054 | Timeline `downloaded` event recorded | DB |
+| FT-055 | `view-invoice-download` permission exists in DB (no dupes) | DB |
+| FT-056 | Super admin role assigned the permission | DB |
+| FT-057 | Enum constant used (not hardcoded) | Code |
+| FT-058 | Auth failure does not leak invoice existence | Security |
+| FT-059 | Owner with permission still downloads (no regression) | Auth |
 
 ### Edge Case Tests
 
@@ -138,12 +159,37 @@ Uses `CreatesTestTables` + `DatabaseTransactions`.
 | FT-041 | Concurrent correction + cancellation race condition | Edge Case |
 | FT-042 | Verify count increments on each verification | Edge Case |
 
+### Frontend Contract Tests (View vs Download vs Preview)
+
+| # | Test | Type | Status |
+|---|------|------|--------|
+| TC-FE-VIEW-001 | `GET /orders/invoice/{uuid}` returns CustomerInvoiceResource fields + snapshot (owner) | Feature | ✅ `OrderInvoiceEndpointTest` |
+| TC-FE-VIEW-002 | `GET /orders/invoice/{uuid}` → 403 for non-owner | Auth | ✅ `OrderInvoiceEndpointTest` |
+| TC-FE-VIEW-003 | `GET /orders/invoice/{uuid}` → 401 guest, 404 unknown | Auth | ✅ `OrderInvoiceEndpointTest` |
+| TC-FE-VIEW-004 | `GET /invoices/{id}` (admin) returns AdminInvoiceResource (no snapshot-field leak in customer resource) | Feature | ⬜ Not yet implemented |
+| TC-FE-VIEW-005 | Customer resource omits `id`, `order_id`, `amount_paid`, `coupon_discount`, `promotion_discount`, hashes | Feature | ⬜ Not yet implemented |
+| TC-FE-DL-001 | Owner downloads without any permission | 200 | ✅ `InvoiceDownloadPermissionTest` |
+| TC-FE-DL-002 | Non-owner with `view-invoice-download` downloads | 200 | ✅ `InvoiceDownloadPermissionTest` |
+| TC-FE-DL-003 | Non-owner with `view-invoice` only → 404 | Auth | ✅ `InvoiceDownloadPermissionTest` |
+| TC-FE-DL-004 | Non-owner with no permission → 404 | Auth | ✅ `InvoiceDownloadPermissionTest` |
+| TC-FE-DL-005 | Guest → 401 | Auth | ✅ `InvoiceDownloadPermissionTest` |
+| TC-FE-DL-006 | Super admin downloads | 200 | ✅ `InvoiceDownloadPermissionTest` |
+| TC-FE-DL-007 | No PDF → 404 `{ status, pdf_generated_at }` | Edge | ✅ `InvoiceDownloadPermissionTest` |
+| TC-FE-DL-008 | Download returns JSON `{ url, invoice_number }` (not binary), url points to `storage/invoices/{pdf_path}` | Feature | ✅ `InvoiceDownloadPermissionTest` |
+| TC-FE-PREVIEW-001 | **No PDF preview endpoint exists** — assert 404 for `/invoices/{uuid}/preview` and `/general/invoices/{uuid}/preview` (documents that preview is NOT provided) | Regression | ⬜ Not yet implemented |
+| TC-FE-VERIFY-001 | Verify endpoint requires auth (401 guest) and throttle 5/min | Auth | ⬜ Not yet implemented |
+| TC-FE-VERIFY-002 | Verify authentic path returns `{ authentic:true, order, qr_content }` — assert invoice field NOT relied upon (currently broken 500) | Feature | ⬜ Blocked by disabled `InvoiceResource` |
+
 ## Missing Coverage
 
-- [ ] No Feature/API tests (all tests are unit tests)
+- [x] Feature/API tests (added `InvoiceDownloadPermissionTest.php` — 18 tests)
+- [x] PDF download flow tests with real PDF file on public disk
+- [x] Timeline event count/order assertions (downloaded event)
+- [x] Customer invoice view endpoint tests (`OrderInvoiceEndpointTest.php` — 7 tests)
 - [ ] No PDF generation flow tests (job is dispatched but not executed in test)
-- [ ] No timeline event count/order assertions
 - [ ] No snapshot override field format validation
 - [ ] No debit note number series isolation
 - [ ] No archived → terminal state enforcement
-- [ ] No rate limiting test for verify (60/min) and download (30/min)
+- [ ] No rate limiting test for verify (5/min) and download (30/min)
+- [ ] No test asserting PDF preview endpoint absence (TC-FE-PREVIEW-001)
+- [ ] No test for verify authentic-path 500 (disabled `InvoiceResource`) — TC-FE-VERIFY-002 blocked

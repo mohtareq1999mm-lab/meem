@@ -38,7 +38,11 @@
 
 **Component:** `OrderController.php` (lines 150-166)
 
+**Status:** RESOLVED (2026-08-18) — QR code feature removed.
+
 **Description:** Null transaction → 404. Valid transaction with deleted order → 403. But deleted order on valid transaction → 404.
+
+**Resolution:** The `getTransactionQr()` method, the `GET /checkout/transaction-qr/{uuid}` route, the `CashierQrService`, and the `Transaction::byUuid` scope were removed. Pay at Cashier now returns only `order_id` and is settled via `/cashier/{orderId}/mark-paid`, so the inconsistent 404/403 mapping no longer exists.
 
 ---
 

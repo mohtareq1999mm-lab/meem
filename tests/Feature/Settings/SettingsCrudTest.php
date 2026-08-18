@@ -95,6 +95,8 @@ class SettingsCrudTest extends TestCase
             'instagram' => 'https://instagram.com/old',
             'linkedin' => 'https://linkedin.com/old',
             'youtube' => 'https://youtube.com/old',
+            'tiktok' => 'https://tiktok.com/old',
+            'snapchat' => 'https://snapchat.com/old',
             'phone' => '1234567890',
             'fast_shipping_page_publish' => true,
             'options' => ['currency' => 'USD'],
@@ -113,6 +115,8 @@ class SettingsCrudTest extends TestCase
             'instagram' => 'https://instagram.com/new',
             'linkedin' => 'https://linkedin.com/new',
             'youtube' => 'https://youtube.com/new',
+            'tiktok' => 'https://tiktok.com/new',
+            'snapchat' => 'https://snapchat.com/new',
             'phone' => '0987654321',
             'fast_shipping_page_publish' => '1',
         ]);
@@ -121,6 +125,8 @@ class SettingsCrudTest extends TestCase
         $response->assertJsonPath('success', true);
 
         $this->assertEquals('New Name', $setting->refresh()->getTranslation('site_name', 'en'));
+        $this->assertEquals('https://tiktok.com/new', $setting->refresh()->tiktok);
+        $this->assertEquals('https://snapchat.com/new', $setting->refresh()->snapchat);
     }
 
     /** @test */
@@ -151,10 +157,67 @@ class SettingsCrudTest extends TestCase
                 'linkedin',
                 'promotion_video_url',
                 'youtube',
+                'tiktok',
+                'snapchat',
                 'phone',
                 'fast_shipping_page_publish',
                 'options',
             ],
         ]);
+    }
+
+    /** @test */
+    public function omitted_tiktok_and_snapchat_preserve_existing_values(): void
+    {
+        $setting = Settings::create([
+            'site_name' => json_encode(['en' => 'Test Site']),
+            'tiktok' => 'https://tiktok.com/old',
+            'snapchat' => 'https://snapchat.com/old',
+            'options' => ['currency' => 'USD'],
+        ]);
+
+        $response = $this->putJson(self::PREFIX . '/settings', [
+            'site_name' => ['en' => 'Updated Site'],
+            'fast_shipping_page_publish' => '1',
+        ]);
+
+        $response->assertOk();
+
+        $this->assertEquals('https://tiktok.com/old', $setting->refresh()->tiktok);
+        $this->assertEquals('https://snapchat.com/old', $setting->refresh()->snapchat);
+    }
+
+    /** @test */
+    public function updated_tiktok_and_snapchat_are_returned_by_admin_and_website_endpoints(): void
+    {
+        Settings::create([
+            'site_name' => json_encode(['en' => 'Test Site']),
+            'options' => ['currency' => 'USD'],
+        ]);
+
+        $updateResponse = $this->putJson(self::PREFIX . '/settings', [
+            'site_name' => ['en' => 'Updated Site'],
+            'tiktok' => 'https://tiktok.com/meem',
+            'snapchat' => 'https://snapchat.com/meem',
+            'facebook' => 'https://facebook.com/meem',
+            'instagram' => 'https://instagram.com/meem',
+            'linkedin' => 'https://linkedin.com/meem',
+            'youtube' => 'https://youtube.com/meem',
+            'fast_shipping_page_publish' => '1',
+        ]);
+
+        $updateResponse->assertOk();
+        $updateResponse->assertJsonPath('data.tiktok', 'https://tiktok.com/meem');
+        $updateResponse->assertJsonPath('data.snapchat', 'https://snapchat.com/meem');
+
+        $adminResponse = $this->getJson(self::PREFIX . '/settings');
+        $adminResponse->assertOk();
+        $adminResponse->assertJsonPath('data.tiktok', 'https://tiktok.com/meem');
+        $adminResponse->assertJsonPath('data.snapchat', 'https://snapchat.com/meem');
+
+        $websiteResponse = $this->getJson(self::PREFIX . '/general/settings');
+        $websiteResponse->assertOk();
+        $websiteResponse->assertJsonPath('data.tiktok', 'https://tiktok.com/meem');
+        $websiteResponse->assertJsonPath('data.snapchat', 'https://snapchat.com/meem');
     }
 }

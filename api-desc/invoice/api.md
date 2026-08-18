@@ -1,30 +1,58 @@
-# API Reference — Invoice
+# API Reference — Invoice (Frontend Contract)
+
+> **Source of truth:** This document reflects the actual implementation (`app/Http/Controllers/Api/InvoiceController.php`, `packages/marvel/src/Rest/Routes.php`, `routes/api.php`). Where the older documentation contradicts the source, the source wins and the contradiction is reported at the bottom.
 
 ---
 
-### GET /api/v1/invoices — List Invoices (Admin)
+## Invoice View vs PDF Download vs PDF Preview
 
-Paginated list of invoices with filtering, searching, and sorting.
+There are **three different things** a frontend can do with an invoice. They are **NOT** interchangeable:
 
-**Authentication**: `auth:sanctum`, permission: `view-invoices`
+| Capability | Endpoint | Returns | Permission |
+|-----------|----------|---------|------------|
+| **VIEW invoice data** | `GET /api/v1/general/orders/invoice/{uuid}` (customer) or `GET /api/v1/invoices/{id}` (admin) | JSON fields + immutable snapshot (no PDF binary) | Owner (customer) / `view-invoice` (admin) |
+| **VERIFY invoice authenticity** | `GET /api/v1/general/invoices/verify/{uuid}` | JSON `{ authentic, invoice, order, qr_content }` | `auth:sanctum` |
+| **DOWNLOAD PDF** | `GET /api/v1/invoices/{uuid}/download` | JSON `{ url, invoice_number }` — the PDF file itself is fetched from the returned URL | Owner OR `view-invoice-download` |
+| **PDF PREVIEW** | **NOT CURRENTLY PROVIDED** | — | — |
+
+> **PDF Preview:** There is **no dedicated PDF preview endpoint** in the source. The backend does **not** expose a `/preview` route, and the download endpoint does **not** stream PDF bytes — it returns a JSON body containing a storage URL. Any "preview" the frontend offers must be built on top of the `download` URL (e.g. render `{url}` in an `<iframe>`), and it still requires the download authorization rule (`view-invoice-download` for non-owners).
+
+---
+
+## Authentication Rules (source-verified)
+
+| Endpoint | Middleware |
+|----------|-----------|
+| `GET /api/v1/general/invoices/my-invoices` | `auth:sanctum` |
+| `GET /api/v1/general/invoices/uuid/{uuid}` | `auth:sanctum` + `permission:view-invoice` |
+| `GET /api/v1/general/invoices/verify/{uuid}` | `auth:sanctum` + `throttle:5,1` |
+| `GET /api/v1/general/orders/invoice/{uuid}` | `auth:sanctum` (owner-only, 403 otherwise) |
+| `GET /api/v1/invoices` | `auth:sanctum` + `permission:view-invoices` |
+| `GET /api/v1/invoices/{id}` | `auth:sanctum` + `permission:view-invoice` |
+| `GET /api/v1/invoices/{uuid}/download` | `auth:sanctum` + `throttle:30,1` (authorization is **inline** in the controller: owner OR `view-invoice-download`) |
+| `POST /api/v1/invoices/{id}/regenerate` | `auth:sanctum` + `permission:regenerate-invoice` |
+| `POST /api/v1/invoices/{id}/correct` | `auth:sanctum` + `permission:correct-invoice` |
+| `POST /api/v1/invoices/{id}/cancel` | `auth:sanctum` + `permission:cancel-invoice` |
+| `POST /api/v1/invoices/{id}/debit-note` | `auth:sanctum` + `permission:issue-debit-note` |
+
+---
+
+### GET /api/v1/general/invoices/my-invoices — My Invoices (Customer)
+
+Customer-facing list of the authenticated user's invoices.
+
+**Authentication**: `auth:sanctum`. No permission middleware (auto-scoped to `user_id`).
 
 **Query Parameters**:
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| limit | int | 15 | Items per page (max 100) |
-| search | string | - | Search invoice_number or order_number (LIKE) |
-| status | string | - | Filter by status (generated, ready, verified, cancelled, etc.) |
-| order_id | int | - | Filter by order ID |
-| user_id | int | - | Filter by user ID |
-| invoice_series | string | - | Filter by series (INV) |
-| currency | string | - | Filter by currency |
-| from | date | - | Filter by created_at >= from |
-| to | date | - | Filter by created_at <= to |
-| sort_by | string | created_at | Sort field (created_at, total, status, invoice_number) |
-| sort_direction | string | desc | Sort direction (asc, desc) |
+| limit | int | 15 | Items per page (max 100, `min((int)$request->get('limit', 15), 100)`) |
 
-**Response 200**:
+Eager loads: `order`.
+
+**Response 200**: `CustomerInvoiceCollection` → `{ data: CustomerInvoiceResource[], links: {...} }`
+
 ```json
 {
   "status": 200,
@@ -33,25 +61,20 @@ Paginated list of invoices with filtering, searching, and sorting.
   "data": {
     "data": [
       {
-        "id": 1,
         "uuid": "550e8400-...",
-        "order_id": 101,
         "invoice_number": "INV-2026-000001",
         "status": "ready",
         "subtotal": 100.0,
         "shipping_price": 10.0,
         "total_discount": 5.0,
         "total": 105.0,
-        "amount_paid": 105.0,
         "currency": "EGP",
         "payment_method": "online",
         "payment_gateway": "myfatoorah",
-        "pdf_generated_at": "2026-07-28T10:00:00Z",
-        "generated_at": "2026-07-28T09:00:00Z",
-        "is_correction": false,
-        "verify_count": 0,
-        "created_at": "2026-07-28T09:00:00Z",
-        "verification_url": "http://example.com/api/v1/general/invoices/verify/550e8400-..."
+        "generated_at": "2026-07-28T09:00:00+00:00",
+        "pdf_generated_at": "2026-07-28T10:00:00+00:00",
+        "verification_url": "http://example.com/api/v1/general/invoices/verify/550e8400-...",
+        "snapshot": { "...": "see InvoiceSnapshotResource below" }
       }
     ],
     "links": {
@@ -59,55 +82,39 @@ Paginated list of invoices with filtering, searching, and sorting.
       "from": 1,
       "to": 15,
       "last_page": 1,
+      "path": "http://example.com/api/v1/general/invoices/my-invoices",
       "per_page": 15,
-      "total": 1
+      "total": 1,
+      "next_page_url": null,
+      "prev_page_url": null,
+      "last_page_url": "http://example.com/api/v1/general/invoices/my-invoices?page=1",
+      "first_page_url": "http://example.com/api/v1/general/invoices/my-invoices?page=1"
     }
   }
 }
 ```
 
+> **Note on `download_url`:** The `download_url` field emitted by `CustomerInvoiceResource` points to `/api/v1/general/invoices/{uuid}/download`, which is **NOT a registered route**. The real download route is `GET /api/v1/invoices/{uuid}/download` (no `/general/`). Frontend must build the download URL as `/api/v1/invoices/{uuid}/download` and must **not** rely on the resource-provided `download_url`. (Reported contradiction.)
+
 ---
 
-### GET /api/v1/invoices/{id} — Show Invoice by ID (Admin)
+### GET /api/v1/general/invoices/uuid/{uuid} — Show Invoice by UUID
 
 **Authentication**: `auth:sanctum`, permission: `view-invoice`
 
-Eager loads: `order.orderItems`, `transaction`, `user`
+Eager loads: `order.orderItems`, `transaction`, `user`.
 
-**Response 200**: Full InvoiceResource (see resource structure below)
+**Response 200**: `AdminInvoiceResource` (full field set — see resource table below).
 
-**Response 404**:
-```json
-{ "status": 200, "message": "Not found", "success": false }
-```
+**Response 404** (non-existent UUID): default Laravel 404 (from `firstOrFail()`; not the `apiResponse` envelope).
 
 ---
 
-### GET /api/v1/invoices/uuid/{uuid} — Show Invoice by UUID (Admin)
+### GET /api/v1/general/invoices/verify/{uuid} — Verify Invoice Authenticity
 
-**Authentication**: `auth:sanctum`, permission: `view-invoice`
+> **Contradiction with older docs:** Older docs described this as a **public** endpoint with `throttle:60,1`. **Actual source:** the route sits inside the `auth:sanctum` group and adds `throttle:5,1`. Verification therefore currently **requires an authenticated Sanctum user**. (Reported contradiction.)
 
-Same response as show by ID.
-
----
-
-### GET /api/v1/invoices/my-invoices — My Invoices (Customer)
-
-**Authentication**: `auth:sanctum`
-
-Returns paginated invoices for the authenticated user. No permission check (auto-scoped to user).
-
-**Query Parameters**: `limit` (default 15, max 100)
-
-Eager loads: `order`
-
-**Response 200**: InvoiceCollection with user-scoped invoices.
-
----
-
-### GET /api/v1/invoices/verify/{uuid} — Verify Invoice (Public)
-
-**Authentication**: None. Throttle: 60 requests per minute.
+**Authentication**: `auth:sanctum` + `throttle:5,1`
 
 **Path Parameters**:
 
@@ -123,7 +130,7 @@ Eager loads: `order`
   "success": true,
   "data": {
     "authentic": true,
-    "invoice": { ...InvoiceResource... },
+    "invoice": {},
     "order": {
       "id": 101,
       "order_number": "ORD-001",
@@ -136,6 +143,8 @@ Eager loads: `order`
 }
 ```
 
+> **Critical known issue:** The `invoice` field is built from `InvoiceResource::make($invoice)`, but `InvoiceResource::toArray()` is **fully commented out** (returns nothing). Serializing it raises `TypeError: ...::toArray(): Return value must be of type array, none returned` → the endpoint **currently fails with HTTP 500** on the authentic path. Frontend must not depend on `data.invoice` until this resource is re-enabled. `qr_content` is the plain verification URL string.
+
 **Response 409 (Tampered)**:
 ```json
 {
@@ -146,28 +155,91 @@ Eager loads: `order`
 }
 ```
 
-**Response 404**:
-```json
-{ "status": 404, "message": "Not found", "success": false }
-```
+**Response 404**: `{ "status": 404, "message": "Not found", "success": false }` (apiResponse envelope).
 
-**Business Rules**:
-- Verification compares `verification_hash` (HMAC-SHA256 of `snapshot_hash` + app key) against computed value
-- `verify_count` is incremented on each verification
-- `last_verified_at` is updated; `verified_at` is set only on first verification
-- Timeline event `verified` is recorded
+**Business Rules** (from `InvoiceController::verify()` + `InvoiceService::verifyInvoice()`):
+- Verification compares `verification_hash` (computed as `hash('sha256', snapshot_hash . secret)` in `computeVerificationHash()`) against the stored value via `hash_equals()`.
+- Authentic path: `verify_count++`, `last_verified_at = now()`, `verified_at` set only on first verification, timeline `verified` event recorded.
+
+---
+
+### GET /api/v1/general/orders/invoice/{uuid} — Customer Invoice (via Order)
+
+Customer-facing invoice view. This is the recommended "view invoice data" endpoint for the storefront.
+
+**Authentication**: `auth:sanctum`. Authorization is inline: throws `AuthorizationException` (403) when `invoice.order.user_id !== auth()->id()`.
+
+**Response 200**: `CustomerInvoiceResource` (same shape as my-invoices item, incl. `snapshot`).
+
+**Response 401** (guest), **403** (non-owner), **404** (non-existent uuid via `firstOrFail()`).
+
+---
+
+### GET /api/v1/invoices — List Invoices (Admin)
+
+Paginated list of all invoices with filtering, searching, and sorting.
+
+**Authentication**: `auth:sanctum`, permission: `view-invoices`
+
+**Query Parameters**:
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| limit | int | 15 | Items per page (max 100) |
+| search | string | - | Search invoice_number or order_number (LIKE) |
+| status | string | - | Filter by status |
+| order_id | int | - | Filter by order ID |
+| user_id | int | - | Filter by user ID |
+| invoice_series | string | - | Filter by series (INV) |
+| currency | string | - | Filter by currency |
+| from | date | - | created_at >= from |
+| to | date | - | created_at <= to |
+| sort_by | string | created_at | Sort field (created_at, total, status, invoice_number; invalid → created_at) |
+| sort_direction | string | desc | asc or desc |
+
+**Response 200**: `AdminInvoiceCollection` → `{ data: AdminInvoiceResource[], links: {...} }`.
+
+---
+
+### GET /api/v1/invoices/{id} — Show Invoice by ID (Admin)
+
+**Authentication**: `auth:sanctum`, permission: `view-invoice`
+
+Eager loads: `order.orderItems`, `transaction`, `user`.
+
+**Response 200**: `AdminInvoiceResource`.
+
+**Response 404** (non-existent id): default Laravel 404 (`findOrFail()`; not the `apiResponse` envelope).
 
 ---
 
 ### GET /api/v1/invoices/{uuid}/download — Download PDF
 
-**Authentication**: `auth:sanctum`. Access: invoice owner OR user with `view-invoice` permission.
+> This is the **only** endpoint that authorizes PDF download. It returns a **JSON body with a storage URL**, not the PDF bytes.
+
+**Authentication**: `auth:sanctum`, `throttle:30,1`. No `permission:` middleware — authorization is **inline** in the controller.
+
+**Authorization rule (inline, privacy-first):**
+```php
+if ($invoice->user_id !== request()->user()->id
+    && !request()->user()->can(Permission::VIEW_INVOICE_DOWNLOAD)) {
+    return $this->apiResponse(NOT_FOUND, 404, false); // 404, not 403 (do not reveal existence)
+}
+```
+
+| Who | Result |
+|-----|--------|
+| Invoice owner (any role, no permission needed) | **200** |
+| Non-owner with `view-invoice-download` | **200** |
+| Non-owner with `view-invoice` **only** | **404** (DENIED) |
+| Non-owner with no permission | **404** (DENIED) |
+| Super admin (seeded with `view-invoice-download`) | **200** |
 
 **Path Parameters**:
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| uuid | string | Invoice UUID |
+| uuid | string | Invoice UUID (route constrained with `whereUuid`) |
 
 **Response 200**:
 ```json
@@ -182,7 +254,9 @@ Eager loads: `order`
 }
 ```
 
-**Response 404 (Not found or unauthorized)**:
+The `url` is `url('storage/invoices/' . $invoice->pdf_path)`. The PDF is stored on the `public` disk at `storage/app/public/invoices/{filename}.pdf` (filename = `invoice_number` with `/` → `-`, plus `.pdf`). The storage symlink must be present for the URL to resolve.
+
+**Response 404 (not found / unauthorized — same envelope, privacy)**:
 ```json
 { "status": 404, "message": "Not found", "success": false }
 ```
@@ -200,22 +274,18 @@ Eager loads: `order`
 }
 ```
 
-**Business Rules**:
-- Non-owner users must have `view-invoice` permission (returns 404 if not authorized — privacy)
-- `downloaded_at` is set only on first download
-- Timeline event `downloaded` is recorded
+**Business Rules / Side Effects**:
+- `downloaded_at` is set only on the **first** download (`$invoice->downloaded_at ?? now()`); repeat downloads keep the original value.
+- Timeline event `downloaded` is recorded on **every** successful download.
+- Status is **not** changed by download (the `downloaded` status is a separate lifecycle concept; the PDF job sets `ready`).
 
 ---
 
-### POST /api/v1/invoices/{id}/regenerate — Regenerate PDF
+### POST /api/v1/invoices/{id}/regenerate — Regenerate PDF (Admin)
 
 **Authentication**: `auth:sanctum`, permission: `regenerate-invoice`
 
-**Path Parameters**:
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| id | int | Invoice ID |
+**Path Parameters**: `id` (int).
 
 **Response 200**:
 ```json
@@ -223,36 +293,25 @@ Eager loads: `order`
   "status": 200,
   "message": "Data fetched successfully",
   "success": true,
-  "data": {
-    "invoice_id": 1,
-    "status": "pdf_generating"
-  }
+  "data": { "invoice_id": 1, "status": "pdf_generating" }
 }
 ```
 
-**Response 422** (invalid status):
-```json
-{ "status": 422, "message": "...", "success": false }
-```
+**Response 422** (invalid status): `{ status: 422, message: "...", success: false }` (uses `ERROR_ADDING_ITEMS_TO_ORDER` message).
 
 **Business Rules**:
-- Can only regenerate if status is `failed`, `ready`, or `generated` (not cancelled/archived/corrected)
-- Sets status to `pdf_generating`, increments `generation_attempts`, clears `last_generation_error`
-- Dispatches `GenerateInvoicePdfJob` to queue
+- Allowed only from `failed`, `ready`, `generated`.
+- Sets status → `pdf_generating`, increments `generation_attempts`, clears `last_generation_error`.
+- Records timeline `pdf_regenerated`.
+- Dispatches `GenerateInvoicePdfJob` (queue `meem-medium`, tries 3, backoff [30,120,300], timeout 120s).
 
 ---
 
-### POST /api/v1/invoices/{id}/correct — Correct Invoice
+### POST /api/v1/invoices/{id}/correct — Correct Invoice (Admin)
 
 **Authentication**: `auth:sanctum`, permission: `correct-invoice`
 
-**Path Parameters**:
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| id | int | Invoice ID |
-
-**Request Body**:
+**Request Body** (validated by `CorrectInvoiceRequest`):
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -268,116 +327,142 @@ Eager loads: `order`
 | overrides.shipping_address | array | sometimes | Override shipping address |
 | overrides.notes | string | sometimes | Override notes |
 
-**Response 200**:
-```json
-{
-  "status": 200,
-  "message": "Invoice corrected successfully",
-  "success": true,
-  "data": { ...InvoiceResource of correction... }
-}
-```
+**Response 200**: `{ status, message: "Invoice corrected successfully", success, data: AdminInvoiceResource(correction) }`
 
-**Response 422** (invalid status):
-```json
-{
-  "status": 422,
-  "message": "Invoice 1 cannot be corrected from status 'cancelled'",
-  "success": false
-}
-```
+**Response 422** (invalid status): `{ status: 422, message: "Invoice 1 cannot be corrected from status 'cancelled'", success: false }`
 
 **Business Rules**:
-- Creates a NEW invoice (correction) with a new invoice number
-- Marks the original invoice as `corrected` status
-- Only allowed from statuses: `generated`, `ready`, `verified`, `downloaded`, `printed`
-- Overrides are applied via `data_set()` on the snapshot
-- New invoice is auto-generated with `is_correction = true`
-- Both original and correction get timeline events
-- `GenerateInvoicePdfJob` is dispatched for the correction
+- Allowed only from `generated`, `ready`, `verified`, `downloaded`, `printed`.
+- Creates a **new** invoice (correction) with a new invoice number, `is_correction = true`, `correction_to_id = original.id`, status `generated`.
+- Original invoice → status `corrected` + `corrected_at` + `correction_reason`.
+- Overrides applied to snapshot via `data_set()`; snapshot re-hashed.
+- Timeline: `recordCorrected(original)` + `recordGenerated(correction)`.
+- After commit: dispatches `InvoiceCreated` + `GenerateInvoicePdfJob` for the correction.
 
 ---
 
-### POST /api/v1/invoices/{id}/cancel — Cancel Invoice
+### POST /api/v1/invoices/{id}/cancel — Cancel Invoice (Admin)
 
 **Authentication**: `auth:sanctum`, permission: `cancel-invoice`
 
-**Path Parameters**:
+**Request Body**: `reason` (string, required, max 500) — validated inline via `$request->validate()`.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| id | int | Invoice ID |
+**Response 200**: `{ status, message: "Invoice cancelled successfully", success, data: AdminInvoiceResource(fresh) }`
 
-**Request Body**:
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| reason | string | required | Cancellation reason (max 500) |
-
-**Response 200**:
-```json
-{
-  "status": 200,
-  "message": "Invoice cancelled successfully",
-  "success": true,
-  "data": { ...InvoiceResource... }
-}
-```
-
-**Response 422** (invalid status):
-```json
-{
-  "status": 422,
-  "message": "Invoice 1 cannot be cancelled from status 'archived'",
-  "success": false
-}
-```
+**Response 422** (invalid status): `{ status: 422, message: "Invoice 1 cannot be cancelled from status 'archived'", success: false }`
 
 **Business Rules**:
-- Sets status to `cancelled`, `cancelled_at`, and `cancellation_reason`
-- Only allowed from: `generated`, `ready`, `failed`, `corrected`, `verified`, `downloaded`, `printed`
-- Uses `lockForUpdate` inside transaction
-- Timeline event `cancelled` recorded
+- Allowed only from `generated`, `ready`, `failed`, `corrected`, `verified`, `downloaded`, `printed`.
+- Sets `status=cancelled`, `cancelled_at`, `cancellation_reason`.
+- Uses `lockForUpdate` inside transaction; timeline `cancelled` recorded.
 
 ---
 
-### POST /api/v1/invoices/{id}/debit-note — Issue Debit Note
+### POST /api/v1/invoices/{id}/debit-note — Issue Debit Note (Admin)
 
 **Authentication**: `auth:sanctum`, permission: `issue-debit-note`
 
-**Path Parameters**:
+**Request Body** (validated by `DebitNoteRequest`): `amount` (numeric, required, min 0.01), `reason` (string, required, max 500).
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| id | int | Invoice ID |
+**Response 201**: `{ status: 201, message: "Debit note issued successfully", success: true, data: { ...DebitNote attributes... } }` — the raw `DebitNote` model serialized (uuid, debit_note_number, debit_note_series, sequence_number, sequence_year, reason, type, amount, currency, created_by, line_items, notes, issued_at, timestamps). Not wrapped in a resource.
 
-**Request Body**:
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| amount | numeric | required | Debit amount (min 0.01) |
-| reason | string | required | Debit reason (max 500) |
-
-**Response 201**:
-```json
-{
-  "status": 201,
-  "message": "Debit note issued successfully",
-  "success": true,
-  "data": { ...DebitNote data... }
-}
-```
-
-**Response 422** (invalid status):
-```json
-{
-  "status": 422,
-  "message": "Cannot issue debit note for invoice in status: archived",
-  "success": false
-}
-```
+**Response 422** (invalid status): `{ status: 422, message: "Cannot issue debit note for invoice in status: archived", success: false }`
 
 **Business Rules**:
-- Only allowed from statuses: `generated`, `ready`, `verified`, `downloaded`, `printed`
-- Debit note gets auto-numbered via `InvoiceNumberService` with `DN` series prefix
-- Transactional creation
+- Allowed only from `generated`, `ready`, `verified`, `downloaded`, `printed`.
+- Auto-numbered via `InvoiceNumberService` (`DN` series).
+- Transactional creation.
+
+---
+
+## Resource Structures (source-verified)
+
+### AdminInvoiceResource — used by `index`, `show`, `showByUuid`, `correct`, `cancel`
+
+| Field | Type | Condition |
+|-------|------|-----------|
+| id | int | Always |
+| uuid | string | Always |
+| order_id | int | Always |
+| invoice_number | string | Always |
+| status | string | Always |
+| subtotal | float (rounded 2dp) | Always |
+| shipping_price | float (rounded 2dp) | Always |
+| coupon_discount | float (rounded 2dp) | Always |
+| promotion_discount | float (rounded 2dp) | Always |
+| total_discount | float (rounded 2dp) | Always |
+| total | float (rounded 2dp) | Always |
+| amount_paid | float (rounded 2dp) | Always |
+| currency | string | Always |
+| payment_method | string | Always |
+| payment_gateway | string | Always |
+| snapshot_hash | string | Always |
+| verification_hash | string | Always |
+| pdf_generated_at | string (ISO8601) | Always |
+| generated_at | string (ISO8601) | Always |
+| generation_attempts | int | Always (default 0) |
+| last_generation_error | string/null | Always |
+| is_correction | bool | Always |
+| correction_reason | string/null | Always |
+| corrected_at | string/null | Always |
+| cancelled_at | string/null | Always |
+| cancellation_reason | string/null | Always |
+| verified_at | string/null | Always |
+| downloaded_at | string/null | Always |
+| printed_at | string/null | Always |
+| archived_at | string/null | Always |
+| last_verified_at | string/null | Always |
+| verify_count | int | Always (default 0) |
+| created_at | string (ISO8601) | Always |
+| verification_url | string | When uuid |
+| qr_content | object `{uuid, invoice_number, verification_hash, issued_at, verification_url}` | When uuid |
+| download_url | string | When uuid AND pdf_path |
+| snapshot | InvoiceSnapshotResource | When data |
+| timeline | array (last 10) `{event, old_status, new_status, created_at}` | When relation loaded |
+| credit_notes_summary | object `{count, total_amount}` | When relation loaded |
+| debit_notes_summary | object `{count, total_amount}` | When relation loaded |
+
+> **Note:** `AdminInvoiceResource.download_url` emits `/api/v1/general/invoices/{uuid}/download` which is **not a registered route**. Use `GET /api/v1/invoices/{uuid}/download`.
+
+### CustomerInvoiceResource — used by `myInvoices` and `GET /orders/invoice/{uuid}`
+
+| Field | Type | Condition |
+|-------|------|-----------|
+| uuid | string | Always |
+| invoice_number | string | Always |
+| status | string | Always |
+| subtotal | float (rounded 2dp) | Always |
+| shipping_price | float (rounded 2dp) | Always |
+| total_discount | float (rounded 2dp) | Always |
+| total | float (rounded 2dp) | Always |
+| currency | string | Always |
+| payment_method | string | Always |
+| payment_gateway | string | Always |
+| generated_at | string (ISO8601) | Always |
+| pdf_generated_at | string (ISO8601) | Always |
+| verification_url | string | When uuid |
+| download_url | string | When uuid AND pdf_path |
+| snapshot | InvoiceSnapshotResource | When data |
+
+> **Note:** Customer resource exposes **no** `id`, `order_id`, `amount_paid`, `coupon_discount`, `promotion_discount`, hashes, or lifecycle timestamps.
+
+### InvoiceSnapshotResource — the frozen order snapshot
+
+Sections: `snapshot_version`, `snapshot_schema`, `order` `{id, order_number, status, payment_status, fulfillment_status}`, `customer` `{name}`, `billing_address`, `shipping_address`, `fulfillment` `{type, shipping_method, shipping_price, fast_shipping_fee, expected_delivery_at}`, `pickup_location`, `items[]` `{product_name, product_sku, attributes, quantity, unit_price, total_price, is_gift}`, `pricing_breakdown` `{subtotal, promotion_discount, coupon_discount, shipping_price, fast_shipping_fee, total, currency}`, `payment` `{method, gateway, paid_at}`, `metadata`, `audit` `{generated_by, generated_at}`.
+
+### Collections
+
+`AdminInvoiceCollection`, `CustomerInvoiceCollection`, `InvoiceCollection` all return `{ data: [...], links: { current_page, from, to, last_page, path, per_page, total, next_page_url, prev_page_url, last_page_url, first_page_url } }`.
+
+> **Note:** `InvoiceResource` / `InvoiceCollection` currently have their `toArray()` bodies commented out. They are only referenced by `verify()` and are effectively broken (see the verify known issue). All live list/show/correct/cancel endpoints use the `Admin*`/`Customer*` resources.
+
+---
+
+## Reported Contradictions (source is authoritative)
+
+1. **Verify is not public.** Older docs said `GET /verify/{uuid}` is public with `throttle:60,1`. Actual route: `auth:sanctum` + `throttle:5,1`.
+2. **Customer invoice URLs.** Older docs used `/api/v1/invoices/my-invoices`, `/api/v1/invoices/verify/{uuid}`, `/api/v1/invoices/uuid/{uuid}`, `/api/v1/orders/invoice/{uuid}`. Actual routes are under `/api/v1/general/...`.
+3. **`download_url` is broken in resources.** Both `AdminInvoiceResource` and `CustomerInvoiceResource` emit `download_url` = `/api/v1/general/invoices/{uuid}/download`, which is **not a registered route**. The real download route is `/api/v1/invoices/{uuid}/download`.
+4. **`InvoiceResource` is disabled.** `InvoiceResource::toArray()` is fully commented out; `verify()` fails with `TypeError` (HTTP 500) on the authentic path.
+5. **Download authorization is inline**, not a `permission:` middleware (route shows `[auth:sanctum, throttle:30,1]` only). Behavior matches the documented owner-OR-`view-invoice-download` rule.
+6. **Admin routes live in the package**, not `routes/api.php`: `packages/marvel/src/Rest/Routes.php` (lines 390-399), loaded under `api/v1` by `RestApiServiceProvider`. Customer routes live in `routes/api.php` (lines 133-137) inside the `v1/general` prefix.

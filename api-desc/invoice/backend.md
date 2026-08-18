@@ -9,40 +9,52 @@ The Invoice module is a comprehensive invoicing system with lifecycle management
 | Method | URL | Auth | Permission | Purpose |
 |--------|-----|------|------------|---------|
 | GET | `/api/v1/invoices` | Sanctum | `view-invoices` | List invoices (paginated, filterable, sortable) |
-| GET | `/api/v1/invoices/{id}` | Sanctum | `view-invoice` | Show by ID |
-| GET | `/api/v1/invoices/uuid/{uuid}` | Sanctum | `view-invoice` | Show by UUID |
-| GET | `/api/v1/invoices/my-invoices` | Sanctum | — | Current user's invoices |
-| GET | `/api/v1/invoices/verify/{uuid}` | Public | — | Verify authenticity |
-| GET | `/api/v1/invoices/{uuid}/download` | Sanctum | Owner or `view-invoice` | Download PDF |
+| GET | `/api/v1/invoices/{id}` | Sanctum | `view-invoice` | Show by ID (admin) |
+| GET | `/api/v1/invoices/{uuid}/download` | Sanctum + throttle:30,1 | Inline: owner OR `view-invoice-download` | Download PDF (returns JSON URL) |
+| GET | `/api/v1/general/invoices/my-invoices` | Sanctum | — | Current user's invoices (customer) |
+| GET | `/api/v1/general/invoices/uuid/{uuid}` | Sanctum | `view-invoice` | Show by UUID (admin) |
+| GET | `/api/v1/general/invoices/verify/{uuid}` | Sanctum + throttle:5,1 | — | Verify authenticity |
+| GET | `/api/v1/general/orders/invoice/{uuid}` | Sanctum | Owner-only (inline, 403 otherwise) | Customer view of one invoice |
 | POST | `/api/v1/invoices/{id}/regenerate` | Sanctum | `regenerate-invoice` | Regenerate PDF |
 | POST | `/api/v1/invoices/{id}/correct` | Sanctum | `correct-invoice` | Create corrected invoice |
 | POST | `/api/v1/invoices/{id}/cancel` | Sanctum | `cancel-invoice` | Cancel invoice |
 | POST | `/api/v1/invoices/{id}/debit-note` | Sanctum | `issue-debit-note` | Issue debit note |
 
+> **Route note (source-verified):** Admin routes live in **`packages/marvel/src/Rest/Routes.php`** (lines 390-399), loaded under `api/v1` by `RestApiServiceProvider`. Customer routes live in **`routes/api.php`** (lines 133-137) inside the `v1/general` prefix. Older docs pointing to `routes/api.php` lines 122-132 for the admin group were wrong.
+
 ## Route Definitions
 
-**File:** `routes/api.php` (lines 122-132)
+**File:** `packages/marvel/src/Rest/Routes.php` (lines 390-399, loaded under `api/v1`)
 
 ```
-Line 122: //======================== invoices ========================/
-Line 123: Route::prefix('invoices')->group(function () {
-Line 124:     Route::get('my-invoices', [InvoiceController::class, 'myInvoices'])->middleware('auth:sanctum');
-Line 125:     Route::get('verify/{uuid}', [InvoiceController::class, 'verify'])->middleware('throttle:60,1');
-Line 126:     Route::get('uuid/{uuid}', [InvoiceController::class, 'showByUuid'])->middleware('auth:sanctum');
-Line 127:
-Line 128:     Route::middleware(['auth:sanctum'])->group(function () {
-Line 129:         Route::get('/', [InvoiceController::class, 'index']);
-Line 130:         Route::get('{uuid}/download', [InvoiceController::class, 'download'])->whereUuid('uuid')->middleware('throttle:30,1');
-Line 131:         Route::get('{id}', [InvoiceController::class, 'show']);
-Line 132:         Route::post('{id}/regenerate', [InvoiceController::class, 'regenerate']);
-Line 133:         Route::post('{id}/correct', [InvoiceController::class, 'correct']);
-Line 134:         Route::post('{id}/cancel', [InvoiceController::class, 'cancel']);
-Line 135:         Route::post('{id}/debit-note', [InvoiceController::class, 'issueDebitNote']);
-Line 136:     });
+Line 390: Route::prefix('invoices')->group(function () {
+Line 391:     Route::middleware(['auth:sanctum'])->group(function () {
+Line 392:         Route::get('/', [InvoiceController::class, 'index']);
+Line 393:         Route::get('{uuid}/download', [InvoiceController::class, 'download'])->whereUuid('uuid')->middleware('throttle:30,1');
+Line 394:         Route::get('{id}', [InvoiceController::class, 'show']);
+Line 395:         Route::post('{id}/regenerate', [InvoiceController::class, 'regenerate']);
+Line 396:         Route::post('{id}/correct', [InvoiceController::class, 'correct']);
+Line 397:         Route::post('{id}/cancel', [InvoiceController::class, 'cancel']);
+Line 398:         Route::post('{id}/debit-note', [InvoiceController::class, 'issueDebitNote']);
+Line 399:     });
+Line 400: });
+```
+
+**File:** `routes/api.php` (lines 133-137, inside `Route::prefix('v1/general')`)
+
+```
+Line 133: Route::prefix('invoices')->group(function () {
+Line 134:     Route::get('my-invoices', [InvoiceController::class, 'myInvoices']);
+Line 135:     Route::get('verify/{uuid}', [InvoiceController::class, 'verify'])->middleware('throttle:5,1');
+Line 136:     Route::get('uuid/{uuid}', [InvoiceController::class, 'showByUuid']);
 Line 137: });
 ```
 
-**Note:** The `uuid/{uuid}` route must be defined BEFORE `{id}` to prevent `"uuid"` being captured as `{id}`.
+The customer group inherits `auth:sanctum` + `throttle:authenticated` from the enclosing group at `routes/api.php` line 113. The `orders/invoice/{uuid}` route is at `routes/api.php` line 126 in the same group.
+
+> **Verify throttle note:** The older docs claimed `verify` was public with `throttle:60,1`. Actual source: `auth:sanctum` + `throttle:5,1`.
+
+> **Route order note:** `uuid/{uuid}` is not in the same file/group as `{id}`, so the old "must be defined before `{id}`" warning does not apply to the current structure.
 
 ## Controller Flow
 
@@ -62,29 +74,35 @@ GET /invoices
       → when(from/to) → whereDate('created_at', ...)
       → when(sort_by) → orderBy(field, direction) else orderBy('created_at', 'desc')
       → paginate(min(limit, 100))
-    → InvoiceCollection($invoices)
+    → AdminInvoiceCollection($invoices)
 
-GET /invoices/my-invoices
+GET /general/invoices/my-invoices
   → InvoiceController@myInvoices(Request)
     → Invoice::where('user_id', auth()->id())
       → with('order') → orderBy('created_at', 'desc') → paginate(min(limit, 100))
-    → InvoiceCollection($invoices)
+    → CustomerInvoiceCollection($invoices)
 
 GET /invoices/{id}
   → InvoiceController@show($id)
     → Invoice::with(['order.orderItems', 'transaction', 'user'])->findOrFail($id)
-    → InvoiceResource::make($invoice)
+    → AdminInvoiceResource::make($invoice)
 
-GET /invoices/uuid/{uuid}
+GET /general/invoices/uuid/{uuid}
   → InvoiceController@showByUuid($uuid)
     → Invoice::with(['order.orderItems', 'transaction', 'user'])->where('uuid', $uuid)->firstOrFail()
-    → InvoiceResource::make($invoice)
+    → AdminInvoiceResource::make($invoice)
 
-GET /invoices/verify/{uuid}
+GET /general/orders/invoice/{uuid}
+  → OrderController@invoice($request, $uuid)
+    → Invoice::where('uuid', $uuid)->firstOrFail()
+    → Auth: invoice.order.user_id === auth()->id() → else AuthorizationException (403)
+    → CustomerInvoiceResource::make($invoice)
+
+GET /general/invoices/verify/{uuid}
   → InvoiceController@verify($uuid)
     → InvoiceService::verifyInvoice($uuid)
       → Find invoice by UUID
-      → Compute expected verification_hash (HMAC-SHA256 of snapshot_hash + app key)
+      → Compute expected verification_hash (hash('sha256', snapshot_hash . secret))
       → Compare with stored verification_hash via hash_equals()
     → If null → 404
     → If tampered → 409 with { authentic: false, tampered: true }
@@ -92,15 +110,16 @@ GET /invoices/verify/{uuid}
       → Increment verify_count
       → Update last_verified_at / verified_at
       → Timeline: recordVerified
+    → KNOWN ISSUE: InvoiceResource::toArray() is commented out → TypeError → HTTP 500
 
 GET /invoices/{uuid}/download
   → InvoiceController@download($uuid)
     → Invoice::with('order')->where('uuid', $uuid)->firstOrFail()
-    → Auth: owner check OR user can('view-invoice') → else 404
-    → If no pdf_path → 404 with 'PDF not yet generated'
+    → Auth: owner check OR user can('view-invoice-download') → else 404 (privacy)
+    → If no pdf_path → 404 with 'PDF not yet generated' + { status, pdf_generated_at }
     → Update downloaded_at on first download
     → Timeline: recordDownloaded
-    → Return: { url: storage/invoices/{pdf_path}, invoice_number }
+    → Return: { url: url('storage/invoices/' . pdf_path), invoice_number }
 
 POST /invoices/{id}/regenerate
   → InvoiceController@regenerate($id)
@@ -217,7 +236,24 @@ Transitions are enforced at TWO levels:
 
 ## Resources
 
-### InvoiceResource (`app/Http/Resources/Invoice/InvoiceResource.php`)
+### Resource mapping (source-verified)
+
+| Endpoint | Resource |
+|----------|----------|
+| GET `/invoices` (list) | `AdminInvoiceCollection` |
+| GET `/invoices/{id}` | `AdminInvoiceResource` |
+| GET `/general/invoices/uuid/{uuid}` | `AdminInvoiceResource` |
+| GET `/general/invoices/my-invoices` | `CustomerInvoiceCollection` |
+| GET `/general/orders/invoice/{uuid}` | `CustomerInvoiceResource` |
+| GET `/general/invoices/verify/{uuid}` | `InvoiceResource` (**disabled — see note below**) |
+| POST `/invoices/{id}/correct` | `AdminInvoiceResource` (correction) |
+| POST `/invoices/{id}/cancel` | `AdminInvoiceResource` (fresh invoice) |
+| POST `/invoices/{id}/debit-note` | raw `DebitNote` model (no resource) |
+| GET `/invoices/{uuid}/download` | JSON `{ url, invoice_number }` (no resource) |
+
+> **`InvoiceResource` is disabled.** `app/Http/Resources/Invoice/InvoiceResource.php::toArray()` has its entire body commented out. Any endpoint that serializes it (`verify()`) throws `TypeError` → HTTP 500. `InvoiceCollection` (`InvoiceCollection.php`) is likewise disabled (it collects `InvoiceResource`).
+
+### AdminInvoiceResource (`app/Http/Resources/Invoice/AdminInvoiceResource.php`)
 
 | Field | Type | Condition |
 |-------|------|-----------|
@@ -226,13 +262,13 @@ Transitions are enforced at TWO levels:
 | order_id | int | Always |
 | invoice_number | string | Always |
 | status | string | Always |
-| subtotal | float | Always |
-| shipping_price | float | Always |
-| coupon_discount | float | Always |
-| promotion_discount | float | Always |
-| total_discount | float | Always |
-| total | float | Always |
-| amount_paid | float | Always |
+| subtotal | float (rounded 2dp) | Always |
+| shipping_price | float (rounded 2dp) | Always |
+| coupon_discount | float (rounded 2dp) | Always |
+| promotion_discount | float (rounded 2dp) | Always |
+| total_discount | float (rounded 2dp) | Always |
+| total | float (rounded 2dp) | Always |
+| amount_paid | float (rounded 2dp) | Always |
 | currency | string | Always |
 | payment_method | string | Always |
 | payment_gateway | string | Always |
@@ -240,7 +276,7 @@ Transitions are enforced at TWO levels:
 | verification_hash | string | Always |
 | pdf_generated_at | string (ISO8601) | Always |
 | generated_at | string (ISO8601) | Always |
-| generation_attempts | int | Always |
+| generation_attempts | int | Always (default 0) |
 | last_generation_error | string|null | Always |
 | is_correction | bool | Always |
 | correction_reason | string|null | Always |
@@ -252,7 +288,7 @@ Transitions are enforced at TWO levels:
 | printed_at | string (ISO8601)|null | Always |
 | archived_at | string (ISO8601)|null | Always |
 | last_verified_at | string (ISO8601)|null | Always |
-| verify_count | int | Always |
+| verify_count | int | Always (default 0) |
 | created_at | string (ISO8601) | Always |
 | verification_url | string | When uuid exists |
 | qr_content | object | When uuid exists |
@@ -262,29 +298,56 @@ Transitions are enforced at TWO levels:
 | credit_notes_summary | object | When relation loaded |
 | debit_notes_summary | object | When relation loaded |
 
+> **Note:** `download_url` emits `/api/v1/general/invoices/{uuid}/download`, which is **not a registered route**. The real download route is `GET /api/v1/invoices/{uuid}/download`.
+
+### CustomerInvoiceResource (`app/Http/Resources/Invoice/CustomerInvoiceResource.php`)
+
+| Field | Type | Condition |
+|-------|------|-----------|
+| uuid | string | Always |
+| invoice_number | string | Always |
+| status | string | Always |
+| subtotal | float (rounded 2dp) | Always |
+| shipping_price | float (rounded 2dp) | Always |
+| total_discount | float (rounded 2dp) | Always |
+| total | float (rounded 2dp) | Always |
+| currency | string | Always |
+| payment_method | string | Always |
+| payment_gateway | string | Always |
+| generated_at | string (ISO8601) | Always |
+| pdf_generated_at | string (ISO8601) | Always |
+| verification_url | string | When uuid exists |
+| download_url | string | When uuid AND pdf_path |
+| snapshot | InvoiceSnapshotResource | When data exists |
+
+> Customer resource exposes **no** `id`, `order_id`, `amount_paid`, `coupon_discount`, `promotion_discount`, hashes, or lifecycle timestamps.
+
 ### InvoiceSnapshotResource (`app/Http/Resources/Invoice/InvoiceSnapshotResource.php`)
 
 Exposes the frozen snapshot data with formatted sections: order, customer, billing_address, shipping_address, fulfillment, pickup_location, items, pricing_breakdown, payment, metadata, audit.
 
-### InvoiceCollection
+### Collections
 
-Wraps `InvoiceResource` with pagination links.
+`AdminInvoiceCollection`, `CustomerInvoiceCollection`, and `InvoiceCollection` wrap their item resources with pagination links: `current_page`, `from`, `to`, `last_page`, `path`, `per_page`, `total`, `next_page_url`, `prev_page_url`, `last_page_url`, `first_page_url`.
 
 ## Event Flow
 
 ```
 PaymentSucceeded (event from payment system)
   ↓
-GenerateInvoiceListener (queued, high priority, 5 retries)
+GenerateInvoiceListener (queued — queue `meem-high`, afterCommit, 5 retries, backoff [10,30,60,120,300])
   ↓
 InvoiceService::generateFromOrder($order)
   ↓
 InvoiceCreated (dispatched after commit)
   ├── LogInvoiceCreated (sync — logs to Laravel log)
-  └── GenerateInvoicePdfJob (queued, low priority, 3 retries, 120s timeout)
+  └── GenerateInvoicePdfJob (queue `meem-medium`, 3 tries, backoff [30,120,300], 120s timeout)
         ↓
-      DomPDF renders from view → saves to storage/invoices/ → updates invoice status to 'ready'
+      DomPDF renders from view → saves to storage/invoices/{filename}.pdf → updates invoice status to 'ready'
+      On failure → status 'failed' + last_generation_error (job throws → 3 retries → failed())
 ```
+
+PDF filename: `str_replace('/', '-', invoice_number) . '.pdf'` on the `public` disk (`storage/app/public/invoices/`).
 
 ## Permissions
 
@@ -294,10 +357,25 @@ InvoiceCreated (dispatched after commit)
 |----------|-------|
 | `VIEW_INVOICES` | `view-invoices` |
 | `VIEW_INVOICE` | `view-invoice` |
+| `VIEW_INVOICE_DOWNLOAD` | `view-invoice-download` |
 | `REGENERATE_INVOICE` | `regenerate-invoice` |
 | `CORRECT_INVOICE` | `correct-invoice` |
 | `CANCEL_INVOICE` | `cancel-invoice` |
 | `ISSUE_DEBIT_NOTE` | `issue-debit-note` |
+
+**Permission usage (source-verified):**
+
+| Permission | Middleware on | Inline (controller) |
+|-----------|---------------|---------------------|
+| `view-invoices` | `index` | — |
+| `view-invoice` | `show`, `showByUuid` | — |
+| `view-invoice-download` | — (route has no permission middleware) | `download()` — owner OR permission |
+| `regenerate-invoice` | `regenerate` | — |
+| `correct-invoice` | `correct` | — |
+| `cancel-invoice` | `cancel` | — |
+| `issue-debit-note` | `issueDebitNote` | — |
+
+All seeded to all roles by `PermissionSeeder` (incl. `super_admin`).
 
 ## Constants & Translations
 
@@ -320,12 +398,19 @@ The controller uses hardcoded English strings:
 
 | File | Role |
 |------|------|
-| `routes/api.php` | Route definitions |
+| `routes/api.php` (lines 126, 133-137) | Customer/general routes (`v1/general`) |
+| `packages/marvel/src/Rest/Routes.php` (lines 390-399) | Admin invoice routes (`api/v1`) |
+| `packages/marvel/src/Providers/RestAPIServiceProvider.php` | Loads admin routes under `api/v1` |
 | `app/Http/Controllers/Api/InvoiceController.php` | Controller |
+| `app/Http/Controllers/Api/General/OrderController.php` | `invoice()` — customer invoice view |
 | `app/Http/Requests/Invoice/CorrectInvoiceRequest.php` | Correction validation |
 | `app/Http/Requests/Invoice/DebitNoteRequest.php` | Debit note validation |
-| `app/Http/Resources/Invoice/InvoiceResource.php` | API resource |
-| `app/Http/Resources/Invoice/InvoiceCollection.php` | Paginated collection |
+| `app/Http/Resources/Invoice/AdminInvoiceResource.php` | Admin show/correct/cancel resource |
+| `app/Http/Resources/Invoice/AdminInvoiceCollection.php` | Admin list collection |
+| `app/Http/Resources/Invoice/CustomerInvoiceResource.php` | Customer invoice resource |
+| `app/Http/Resources/Invoice/CustomerInvoiceCollection.php` | Customer list collection |
+| `app/Http/Resources/Invoice/InvoiceResource.php` | **Disabled** (verify only — commented out) |
+| `app/Http/Resources/Invoice/InvoiceCollection.php` | **Disabled** (collects InvoiceResource) |
 | `app/Http/Resources/Invoice/InvoiceSnapshotResource.php` | Snapshot resource |
 | `app/Services/Invoice/InvoiceService.php` | Core invoice service |
 | `app/Services/Invoice/InvoiceSnapshotService.php` | Snapshot builder |
@@ -348,3 +433,5 @@ The controller uses hardcoded English strings:
 | `packages/marvel/src/Enums/Permission.php` | Permissions |
 | `resources/views/pdf/invoice.blade.php` | PDF template |
 | `tests/Unit/Invoice/InvoiceLifecycleTest.php` | Unit tests |
+| `tests/Feature/Invoice/InvoiceDownloadPermissionTest.php` | Download permission feature tests (18) |
+| `tests/Feature/OrderInvoiceEndpointTest.php` | Customer invoice view feature tests (7) |

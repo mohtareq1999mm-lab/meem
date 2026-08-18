@@ -33,10 +33,12 @@
 | invoice_id | varchar(255), nullable | Gateway invoice |
 | gateway_transaction_id | varchar(255), nullable | Gateway transaction |
 | payment_method | varchar(255) | cod/online/pay_at_cashier |
-| uuid | varchar(255) | Unique UUID |
+| uuid | varchar(255) | Unique UUID (auto-generated on create) |
 | status | varchar(255) | pending/paid/failed |
 | amount | decimal(10,2) | |
 | currency | varchar(10) | Default currency |
+| gateway_response | json, nullable | Gateway raw response + `_callback_type` |
+| error_message | varchar/text, nullable | Failure reason |
 | paid_at | timestamp, nullable | |
 
 ## Key Queries

@@ -56,6 +56,8 @@ class SettingsController extends CoreController
             'linkedin',
             'promotion_video_url',
             'youtube',
+            'tiktok',
+            'snapchat',
             'phone',
             'fast_shipping_page_publish',
             'options',

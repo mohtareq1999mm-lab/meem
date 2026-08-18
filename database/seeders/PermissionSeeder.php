@@ -57,6 +57,7 @@ class PermissionSeeder extends Seeder
             'view-orders',
             'view-invoices',
             'view-invoice',
+            'view-invoice-download',
             'regenerate-invoice',
             'correct-invoice',
             'cancel-invoice',
@@ -174,6 +175,8 @@ class PermissionSeeder extends Seeder
             'create-category',
             'update-category',
             'delete-category',
+            'import-category',
+            'export-category',
             'create-brand',
             'update-brand',
             'delete-brand',
@@ -230,6 +233,7 @@ class PermissionSeeder extends Seeder
             'view-exchange-rates',
             'create-exchange-rate',
             'update-exchange-rate',
+            'delete-exchange-rate',
             'set-base-currency',
             'set-catalog-currency',
 
@@ -250,6 +254,13 @@ class PermissionSeeder extends Seeder
             'create-section-types',
             'update-section-types',
             'delete-section-types',
+
+            //static-pages
+            'view-static-pages',
+            'update-static-pages',
+            'create-static-sections',
+            'update-static-sections',
+            'delete-static-sections',
 
             //fast-shipping
             'view-fast-shipping',
@@ -312,6 +323,7 @@ class PermissionSeeder extends Seeder
             'delete-faq',
             'view-invoices',
             'view-invoice',
+            'view-invoice-download',
             'regenerate-invoice',
             'correct-invoice',
             'cancel-invoice',
@@ -361,6 +373,11 @@ class PermissionSeeder extends Seeder
             'create-section-types',
             'update-section-types',
             'delete-section-types',
+            'view-static-pages',
+            'update-static-pages',
+            'create-static-sections',
+            'update-static-sections',
+            'delete-static-sections',
         ];
 
         $superAdminPermission = [
@@ -382,6 +399,8 @@ class PermissionSeeder extends Seeder
             'create-category',
             'update-category',
             'delete-category',
+            'import-category',
+            'export-category',
             'create-brand',
             'update-brand',
             'delete-brand',
@@ -417,6 +436,7 @@ class PermissionSeeder extends Seeder
             'view-exchange-rates',
             'create-exchange-rate',
             'update-exchange-rate',
+            'delete-exchange-rate',
             'set-base-currency',
             'set-catalog-currency',
         ];

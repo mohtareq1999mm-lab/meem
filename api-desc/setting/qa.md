@@ -2,7 +2,12 @@
 
 ## Test Files
 
-No admin settings feature tests exist yet.
+Existing feature tests:
+- `tests/Feature/Settings/SettingsCrudTest.php` — GET/PUT, tiktok/snapchat preserve + expose
+- `tests/Feature/Settings/SettingsValidationTest.php` — 422 cases (incl. tiktok/snapchat URL)
+- `tests/Feature/Settings/SettingsAuthenticationTest.php` — auth/authorization (fixed 2026-08-18: `guests_can_view_settings` now hits public `/api/v1/general/settings`)
+- `tests/Feature/Settings/SettingsRegressionTest.php` — caching + read-after-update
+- `tests/Feature/Currency/CurrencySelectionEnabledTest.php` — currency flag (all passing after BUG-SETTING-ADMIN-006 fix)
 
 ---
 
@@ -22,6 +27,8 @@ No admin settings feature tests exist yet.
 | F10 | GET admin settings without auth | No token | 401 |
 | F11 | GET public settings (`/api/v1/general/settings`) | No auth | 200 |
 | F12 | PUT `currency_selection_enabled` | Set boolean via admin settings | 200, flag reflected in GET |
+| F13 | PUT tiktok/snapchat | Valid URLs | 200, reflected in admin + public GET |
+| F14 | PUT invalid tiktok/snapchat URL | `"not-a-url"` | 422 |
 
 ---
 
@@ -33,6 +40,7 @@ No admin settings feature tests exist yet.
 | S2 | minimumOrderAmount present | Top-level float | 0 or configured value |
 | S3 | Fast shipping GET structure | 5 fields | enabled, duration_minutes, fee, start_hour, end_hour |
 | S4 | currency_selection_enabled present | Top-level boolean | `false` default, matches `options.currency_selection_enabled` |
+| S5 | tiktok / snapchat present | URL strings | Null-safe when not configured; URL validated on PUT |
 
 ---
 

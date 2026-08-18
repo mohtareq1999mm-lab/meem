@@ -52,6 +52,7 @@ use App\Listeners\SendUserReviewApprovedNotification;
 use App\Listeners\SendUserReviewRejectedNotification;
 use App\Observers\BrandObserver;
 use App\Observers\CategoryObserver;
+use App\Observers\ContentPageObserver;
 use App\Observers\CouponObserver;
 use App\Observers\FlashSaleObserver;
 use App\Observers\MediaCleanupObserver;
@@ -59,6 +60,11 @@ use App\Observers\PickupLocationObserver;
 use App\Observers\ProductObserver;
 use App\Observers\PromotionObserver;
 use App\Observers\RoleObserver;
+use App\Observers\SectionObserver;
+use App\Observers\SectionTypeObserver;
+use App\Observers\SectionTypeSettingObserver;
+use App\Observers\StaticPageObserver;
+use App\Observers\StaticSectionObserver;
 use App\Observers\UserObserver;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
@@ -73,9 +79,15 @@ use Marvel\Database\Models\Product;
 use Marvel\Database\Models\Promotion;
 use Marvel\Database\Models\Review;
 use Marvel\Database\Models\Role;
+use Marvel\Database\Models\SectionType;
+use Marvel\Database\Models\SectionTypeSetting;
 use Marvel\Database\Models\Shop;
 use Marvel\Database\Models\Slider;
 use Marvel\Database\Models\User;
+use Marvel\Models\ContentPage;
+use Marvel\Models\Section;
+use Marvel\Database\Models\StaticPage;
+use Marvel\Database\Models\StaticSection;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -173,6 +185,12 @@ class EventServiceProvider extends ServiceProvider
         Role::class           => [RoleObserver::class],
         User::class           => [UserObserver::class, MediaCleanupObserver::class],
         PickupLocation::class => [PickupLocationObserver::class],
+        ContentPage::class          => [ContentPageObserver::class],
+        Section::class              => [SectionObserver::class],
+        SectionType::class          => [SectionTypeObserver::class],
+        SectionTypeSetting::class   => [SectionTypeSettingObserver::class],
+        StaticPage::class           => [StaticPageObserver::class],
+        StaticSection::class        => [StaticSectionObserver::class],
         Banner::class         => [MediaCleanupObserver::class],
         Review::class         => [MediaCleanupObserver::class],
         Shop::class           => [MediaCleanupObserver::class],

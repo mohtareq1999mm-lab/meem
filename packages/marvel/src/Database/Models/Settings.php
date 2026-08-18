@@ -36,6 +36,8 @@ class Settings extends Model implements HasMedia
         'linkedin',
         'promotion_video_url',
         'youtube',
+        'tiktok',
+        'snapchat',
         'phone',
         'fast_shipping_page_publish',
         'options',

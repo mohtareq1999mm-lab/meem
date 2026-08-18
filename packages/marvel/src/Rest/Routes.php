@@ -11,6 +11,8 @@ use Marvel\Http\Controllers\BrandController;
 use Marvel\Http\Controllers\ContactController;
 use Marvel\Http\Controllers\CartController;
 use Marvel\Http\Controllers\CategoryController;
+use Marvel\Http\Controllers\CategoryExportController;
+use Marvel\Http\Controllers\CategoryImportController;
 use Marvel\Http\Controllers\CityController;
 use Marvel\Http\Controllers\CouponAssignmentController;
 use Marvel\Http\Controllers\CouponController;
@@ -31,6 +33,7 @@ use Marvel\Http\Controllers\TagController;
 use Marvel\Http\Controllers\UserController;
 use Marvel\Http\Controllers\WishlistController;
 use Marvel\Http\Controllers\ContentPageController;
+use Marvel\Http\Controllers\StaticPageController;
 use Marvel\Http\Controllers\CountryController;
 use Marvel\Http\Controllers\CurrencyController;
 use Marvel\Http\Controllers\CurrencyRateController;
@@ -137,6 +140,17 @@ Route::middleware(['auth:sanctum', 'throttle:admin'])->group(function () {
 
     //======================== categories ========================/
     Route::put('categories/feature', [CategoryController::class, 'addOrRemoveCategoryFromFeature']);
+    Route::post('categories/import', [CategoryImportController::class, 'import'])->name('admin.categories.import');
+    Route::get('categories/import/sample', [CategoryImportController::class, 'downloadSample'])->name('admin.categories.import.sample');
+    Route::get('categories/import/{id}', [CategoryImportController::class, 'status'])->name('admin.categories.import.status');
+    Route::post('categories/import/{id}/cancel', [CategoryImportController::class, 'cancel'])->name('admin.categories.import.cancel');
+    Route::get('categories/import/{id}/download-errors', [CategoryImportController::class, 'downloadErrors'])->name('admin.categories.import.download-errors');
+    Route::get('categories/export', [CategoryExportController::class, 'export'])->name('admin.categories.export');
+    Route::get('categories/export/{id}', [CategoryExportController::class, 'status'])->name('admin.categories.export.status');
+    Route::get('categories/export/{id}/download', [CategoryExportController::class, 'download'])->name('admin.categories.export.download');
+    Route::post('categories/bulk-delete', [CategoryController::class, 'bulkDelete'])->name('admin.categories.bulk-delete');
+    Route::get('categories/bulk-delete/{id}', [CategoryController::class, 'bulkDeleteStatus'])->name('admin.categories.bulk-delete.status');
+    Route::post('categories/bulk-delete/{id}/cancel', [CategoryController::class, 'cancelBulkDelete'])->name('admin.categories.bulk-delete.cancel');
     Route::apiResource('categories', CategoryController::class);
 
     //======================== shops locations ========================/
@@ -249,13 +263,23 @@ Route::middleware(['auth:sanctum', 'throttle:admin'])->group(function () {
     Route::post('content-pages/{content_page}/attach-sections', [ContentPageController::class, 'attachSections']);
     Route::patch('content-pages/{content_page}/toggle-active', [ContentPageController::class, 'toggleActive']);
     Route::apiResource('content-pages', ContentPageController::class);
-    Route::put('sections/reorder', [SectionController::class, 'reorder']);
+    Route::post('sections/reorder', [SectionController::class, 'reorder']);
     Route::get('sections/types', [SectionController::class, 'getTypeSection']);
     Route::patch('sections/{section}/toggle-active', [SectionController::class, 'toggleStatus']);
     Route::apiResource('sections', SectionController::class);
     Route::apiResource('section-types', SectionTypeController::class);
     Route::post('section-types/{type}/settings', [SectionTypeController::class, 'updateSettings']);
     Route::get('section-types/{type}/settings', [SectionTypeController::class, 'settings']);
+
+    //============================= static pages ========================/
+    Route::get('static-pages', [StaticPageController::class, 'index']);
+    Route::get('static-pages/{static_page:slug}', [StaticPageController::class, 'show']);
+    Route::put('static-pages/{static_page:slug}', [StaticPageController::class, 'update']);
+    Route::post('static-pages/{static_page:slug}/sections', [StaticPageController::class, 'storeSection']);
+    // reorder is declared before sections/{static_section} to prevent route capture
+    Route::post('static-pages/{static_page:slug}/sections/reorder', [StaticPageController::class, 'reorderSections']);
+    Route::put('static-pages/{static_page:slug}/sections/{static_section}', [StaticPageController::class, 'updateSection']);
+    Route::delete('static-pages/{static_page:slug}/sections/{static_section}', [StaticPageController::class, 'destroySection']);
 
     Route::apiResource('users', UserController::class);
     Route::post('users/block-user', [UserController::class, 'banUser']);

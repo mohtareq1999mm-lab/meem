@@ -2,29 +2,53 @@
 
 ## Feature Name
 
-Admin Order List & Detail (read-only)
+Order List, Detail & Invoice — **two consumers** (customer frontend app + admin dashboard), read-only list/detail plus customer invoice view.
 
 ## Description
 
-Two endpoints under `/api/v1/orders` — paginated list (`index`) and single order detail (`show`). Permission-gated with `VIEW_ORDERS` / `VIEW_ORDER`. Returns `OrderCollection` / `OrderResource` with rich nested relations. The `show` endpoint resolves by primary ID or tracking number.
+Two separate endpoint groups share the name "orders" but have **different controllers, permissions, and response shapes**:
+
+- **Customer** (`/api/v1/general/orders`, `App\Http\Controllers\Api\General\OrderController`):
+  - `GET /api/v1/general/orders` — authenticated user's own orders (paginated, `App\Http\Resources\Order\OrderCollection` / `OrderResource`)
+  - `GET /api/v1/general/orders/invoice/{uuid}` — owner-only invoice view (`CustomerInvoiceResource`)
+- **Admin** (`/api/v1/orders`, `Marvel\Http\Controllers\Order\OrderController`):
+  - `GET /api/v1/orders` — paginated list, permission `view-orders` (`Marvel\Http\Resources\Order\OrderCollection`)
+  - `GET /api/v1/orders/{id}` — detail by ID or tracking number, permission `view-order` (`Marvel\Http\Resources\Order\OrderResource`)
+
+Both wrap responses in the standard envelope `{ status, message, success, data }` via `Marvel\Traits\ApiResponse`.
 
 ## Architecture
 
 ```
-[Admin Client]
+[Customer App]
     |
-    |--- GET /api/v1/orders                  (auth:sanctum + VIEW_ORDERS)
-    |--- GET /api/v1/orders/{id}             (auth:sanctum + VIEW_ORDER)
+    |--- GET /api/v1/general/orders                  (auth:sanctum + throttle:authenticated)
+    |--- GET /api/v1/general/orders/invoice/{uuid}   (auth:sanctum + owner-only)
     |
     v
-[Order\OrderController]
+[App\Http\Controllers\Api\General\OrderController]
+    |--- index()  -> OrderService::paginateForUser()  -> forUser(userId) + status filter
+    |--- invoice() -> Invoice::whereUuid()->firstOrFail(); owner check; CustomerInvoiceResource
+    |
+    v
+[App\Http\Resources\Order\OrderCollection / OrderResource]
+    |--- List: order fields + invoice_summary indicator (order_has_invoice / invoice_id)
+    |--- Detail: CustomerInvoiceResource (uuid, totals, snapshot, verification_url)
+
+[Admin Dashboard]
+    |
+    |--- GET /api/v1/orders               (auth:sanctum + throttle:admin + view-orders)
+    |--- GET /api/v1/orders/{id}          (auth:sanctum + throttle:admin + view-order)
+    |
+    v
+[Marvel\Http\Controllers\Order\OrderController]
     |--- index()  -> Order::query()->with(relations)->when(...filters)->paginate()
     |--- show()   -> Order::query()->with(relations)->findOrFail()
     |
     v
-[OrderCollection / OrderResource]
+[Marvel\Http\Resources\Order\OrderCollection / OrderResource]
     |--- List: data[], links{}
-    |--- Detail: id, order_number, status, customer, order_items, transactions, ...
+    |--- Detail: + customer_name, financial fields, order_items, transactions (routeIs('orders.show'))
     |
     v
 [Models: Order, User, OrderItem, Product, ProductVariant, Transaction, PickupLocation]
@@ -32,30 +56,40 @@ Two endpoints under `/api/v1/orders` — paginated list (`index`) and single ord
 
 ## Key Endpoints
 
-| Method | URI | Controller Method | Permission | Route Name |
-|--------|-----|-------------------|------------|------------|
-| GET | `/orders` | `index` | `VIEW_ORDERS` | `orders.index` |
-| GET | `/orders/{id}` | `show` | `VIEW_ORDER` | `orders.show` |
+### Customer
+
+| Method | URI | Controller Method | Auth |
+|--------|-----|-------------------|------|
+| GET | `/api/v1/general/orders` | `index` | Sanctum |
+| GET | `/api/v1/general/orders/invoice/{uuid}` | `invoice` | Sanctum + owner |
+
+### Admin
+
+| Method | URI | Controller Method | Permission |
+|--------|-----|-------------------|------------|
+| GET | `/api/v1/orders` | `index` | `view-orders` |
+| GET | `/api/v1/orders/{id}` | `show` | `view-order` |
 
 ## Key Files
 
 | Layer | Path |
 |-------|------|
-| Controller | `packages/marvel/src/Http/Controllers/Order/OrderController.php` |
-| Resource (collection) | `packages/marvel/src/Http/Resources/Order/OrderCollection.php` |
-| Resource (item) | `packages/marvel/src/Http/Resources/Order/OrderResource.php` |
-| Resource (item child) | `packages/marvel/src/Http/Resources/Order/OrderItemResource.php` |
-| Resource (transaction) | `packages/marvel/src/Http/Resources/Order/OrderTransactionResource.php` |
+| Controller (customer) | `app/Http/Controllers/Api/General/OrderController.php` |
+| Controller (admin) | `packages/marvel/src/Http/Controllers/Order/OrderController.php` |
+| Resource (customer) | `app/Http/Resources/Order/OrderCollection.php`, `app/Http/Resources/Order/OrderResource.php`, `app/Http/Resources/Order/OrderItemResource.php`, `app/Http/Resources/Order/OrderProductVariantResource.php` |
+| Resource (admin) | `packages/marvel/src/Http/Resources/Order/OrderCollection.php`, `OrderResource.php`, `OrderItemResource.php`, `OrderTransactionResource.php` |
+| Service (customer list) | `app/Services/General/OrderService.php` (`paginateForUser`) |
 | Model | `packages/marvel/src/Database/Models/Order.php` |
 | Enum (Permission) | `packages/marvel/src/Enums/Permission.php` |
-| Routes | `packages/marvel/src/Rest/Routes.php` (lines 208–209) |
+| Routes (admin) | `packages/marvel/src/Rest/Routes.php` (lines 165–166, loaded under `api/v1`) |
+| Routes (customer) | `routes/api.php` (lines 125–126, under `v1/general`) |
 
 ## Tech Stack
 
 - **Laravel** with Eloquent ORM
 - **Sanctum** authentication
-- **Spatie permissions** (`VIEW_ORDERS`, `VIEW_ORDER`)
-- **API Resources** (`OrderCollection`, `OrderResource`)
+- **Spatie permissions** (`view-orders`, `view-order`) — admin only
+- **API Resources** (`OrderCollection`, `OrderResource` in both app and Marvel namespaces)
 - **Pagination** with `?limit=` (default 15, max 100)
-- **10 filter parameters** via query string
-- **5 eager-loaded relations**
+- **Admin:** 10+ filter parameters; 5 eager-loaded relations
+- **Customer:** status filter only; scoped to `forUser`; `latestInvoice` eager-loaded to expose `order_has_invoice` / `invoice_id`

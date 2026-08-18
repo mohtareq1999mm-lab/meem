@@ -754,7 +754,9 @@ class PaymentCheckoutTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertJsonPath('success', true);
-        $response->assertJsonStructure(['data' => ['order_id', 'transaction_uuid', 'qr_code']]);
+        $response->assertJsonStructure(['data' => ['order_id']]);
+        $this->assertArrayNotHasKey('qr_code', $response->json('data'));
+        $this->assertArrayNotHasKey('transaction_uuid', $response->json('data'));
 
         $order = Order::where('user_id', $this->user->id)->first();
         $this->assertEquals('pay_at_cashier', $order->payment_method);
@@ -766,6 +768,62 @@ class PaymentCheckoutTest extends TestCase
             'payment_method' => 'pay_at_cashier',
             'status' => 'pending',
         ]);
+    }
+
+    /** @test */
+    public function pay_at_cashier_lifecycle_is_preserved_after_qr_removal()
+    {
+        Event::fake([\App\Events\PaymentSucceeded::class]);
+
+        Sanctum::actingAs($this->user);
+        $this->createActiveCart();
+        $this->createPickupLocation();
+
+        $response = $this->postJson(self::PREFIX . '/general/checkout', [
+            'name' => 'Test User',
+            'user_phone' => '01000000000',
+            'user_email' => 'test@test.com',
+            'address' => ['street' => 'Test St'],
+            'payment_method' => 'pay_at_cashier',
+            'fulfillment_type' => 'pickup',
+            'pickup_location_id' => 1,
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('success', true);
+        $response->assertJsonStructure(['data' => ['order_id']]);
+        $this->assertArrayNotHasKey('qr_code', $response->json('data'));
+        $this->assertArrayNotHasKey('transaction_uuid', $response->json('data'));
+
+        $order = Order::where('user_id', $this->user->id)->first();
+        $this->assertNotNull($order);
+        $this->assertEquals('pay_at_cashier', $order->payment_method);
+        $this->assertEquals('pending', $order->status);
+
+        $this->assertDatabaseHas('transactions', [
+            'order_id' => $order->id,
+            'payment_method' => 'pay_at_cashier',
+            'status' => 'pending',
+        ]);
+
+        $transaction = $order->transactions()->where('payment_method', 'pay_at_cashier')->first();
+        $this->assertNotNull($transaction->uuid);
+        $this->assertTrue(Str::isUuid($transaction->uuid));
+
+        app(\App\Services\General\OrderService::class)->markCashierPaid($order);
+
+        $this->assertDatabaseHas('transactions', [
+            'order_id' => $order->id,
+            'payment_method' => 'pay_at_cashier',
+            'status' => 'paid',
+        ]);
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => 'completed',
+        ]);
+
+        Event::assertDispatched(\App\Events\PaymentSucceeded::class, fn ($e) => $e->order->id === $order->id);
     }
 
     // ========== COD + Pickup Rejection ==========
@@ -963,28 +1021,6 @@ $response = $this->postJson(self::PREFIX . '/general/fast-shipping/checkout', [
         $this->assertEquals(1, Transaction::paid()->count());
     }
 
-    /** @test */
-    public function transaction_by_uuid_scope_works()
-    {
-        $order = Order::create([
-            'user_id' => $this->user->id,
-            'name' => 'Test',
-            'total_price' => 100,
-            'status' => 'pending',
-        ]);
-
-        $transaction = Transaction::create([
-            'order_id' => $order->id,
-            'user_id' => $this->user->id,
-            'payment_method' => 'cod',
-            'status' => 'pending',
-        ]);
-
-        $found = Transaction::byUuid($transaction->uuid)->first();
-        $this->assertNotNull($found);
-        $this->assertEquals($transaction->id, $found->id);
-    }
-
     // ========== Order Model: Payment Status for COD ==========
 
     /** @test */
@@ -1133,85 +1169,6 @@ $response = $this->postJson(self::PREFIX . '/general/fast-shipping/checkout', [
         ]);
 
         $response->assertStatus(422);
-    }
-
-    // ========== QR Endpoint ==========
-
-    /** @test */
-    public function qr_endpoint_requires_authentication()
-    {
-        $response = $this->getJson(self::PREFIX . '/general/checkout/transaction-qr/some-uuid');
-
-        $response->assertStatus(401);
-    }
-
-    /** @test */
-    public function qr_endpoint_returns_404_for_nonexistent_transaction()
-    {
-        Sanctum::actingAs($this->user);
-
-        $response = $this->getJson(self::PREFIX . '/general/checkout/transaction-qr/' . Str::uuid());
-
-        $response->assertStatus(404);
-    }
-
-    /** @test */
-    public function qr_endpoint_returns_403_for_other_users_transaction()
-    {
-        Sanctum::actingAs($this->user);
-
-        $otherUser = User::create([
-            'name' => 'Other',
-            'email' => 'other@example.com',
-            'password' => bcrypt('password'),
-        ]);
-
-        $order = Order::create([
-            'user_id' => $otherUser->id,
-            'name' => 'Other Order',
-            'total_price' => 100,
-            'status' => 'pending',
-        ]);
-
-        $transaction = Transaction::create([
-            'order_id' => $order->id,
-            'user_id' => $otherUser->id,
-            'payment_method' => 'pay_at_cashier',
-            'status' => 'pending',
-        ]);
-
-        $response = $this->getJson(self::PREFIX . '/general/checkout/transaction-qr/' . $transaction->uuid);
-
-        $response->assertStatus(403);
-    }
-
-    /** @test */
-    public function qr_endpoint_returns_qr_data_for_own_transaction()
-    {
-        Sanctum::actingAs($this->user);
-
-        $order = Order::create([
-            'user_id' => $this->user->id,
-            'name' => 'My Order',
-            'total_price' => 100,
-            'fulfillment_type' => 'pickup',
-            'payment_method' => 'pay_at_cashier',
-            'status' => 'pending',
-        ]);
-
-        $transaction = Transaction::create([
-            'order_id' => $order->id,
-            'user_id' => $this->user->id,
-            'payment_method' => 'pay_at_cashier',
-            'status' => 'pending',
-        ]);
-
-        $response = $this->getJson(self::PREFIX . '/general/checkout/transaction-qr/' . $transaction->uuid);
-
-        $response->assertOk();
-        $response->assertHeader('Content-Type', 'image/svg+xml');
-        $this->assertStringContainsString('<svg', $response->getContent());
-        $this->assertStringContainsString('</svg>', $response->getContent());
     }
 
     // ========== OrderService: markCodAsPaid ==========

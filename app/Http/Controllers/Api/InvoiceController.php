@@ -171,7 +171,7 @@ class InvoiceController extends Controller
             ->firstOrFail();
 
         if ($invoice->user_id !== request()->user()->id
-            && !request()->user()->can(Permission::VIEW_INVOICE)) {
+            && !request()->user()->can(Permission::VIEW_INVOICE_DOWNLOAD)) {
             return $this->apiResponse(NOT_FOUND, 404, false);
         }
 

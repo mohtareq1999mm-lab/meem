@@ -3,7 +3,9 @@
 namespace Marvel\Http\Controllers;
 
 use App\Http\Resources\Pages\SectionResource as PagesSectionResource;
+use App\Enums\FrontendResource;
 use App\Services\General\SectionTypeService;
+use App\Traits\HasCache;
 use Illuminate\Http\Request;
 use Marvel\Enums\Permission;
 use Marvel\Http\Requests\StoreSectionRequest;
@@ -13,7 +15,7 @@ use Marvel\Traits\ApiResponse;
 
 class SectionController extends CoreController
 {
-    use ApiResponse;
+    use ApiResponse, HasCache;
 
     public function __construct(
         private SectionTypeService $sectionTypeService
@@ -26,7 +28,7 @@ class SectionController extends CoreController
 
     public function index()
     {
-        $sections = Section::ordered()->get();
+        $sections = Section::ordered()->with('sectionType.settings')->get();
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, PagesSectionResource::collection($sections));
     }
 
@@ -40,12 +42,14 @@ class SectionController extends CoreController
         }
 
         $section = Section::create($data);
+        $section->loadMissing('sectionType.settings');
 
         return $this->apiResponse(SECTION_CREATED_SUCCESSFULLY, 200, true, PagesSectionResource::make($section));
     }
 
     public function show(Section $section)
     {
+        $section->loadMissing('sectionType.settings');
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, PagesSectionResource::make($section));
     }
 
@@ -58,6 +62,7 @@ class SectionController extends CoreController
         }
 
         $section->update($data);
+        $section->loadMissing('sectionType.settings');
 
         return $this->apiResponse(SECTION_UPDATED_SUCCESSFULLY, 200, true, PagesSectionResource::make($section));
     }
@@ -77,6 +82,7 @@ class SectionController extends CoreController
 
         try {
             Section::setNewOrder($request->sections);
+            $this->flushTag(FrontendResource::CONTENT_PAGES->value);
             return $this->apiResponse(SECTIONS_REORDERED_SUCCESSFULLY, 200, true);
         } catch (\Exception $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
@@ -87,6 +93,7 @@ class SectionController extends CoreController
     {
         $section->is_active = !$section->is_active;
         $section->save();
+        $section->loadMissing('sectionType.settings');
         return $this->apiResponse(UPDATE_DATA_SUCCESSFULLY, 200, true, PagesSectionResource::make($section));
     }
 

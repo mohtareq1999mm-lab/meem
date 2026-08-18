@@ -17,7 +17,8 @@ class StoreContentPageRequest extends FormRequest
     public function rules()
     {
         return [
-            'title' => 'nullable|array',
+            'title' => 'required|array',
+            'title.en' => 'required|string|max:30',
             'title.*' => ['nullable', 'string', 'max:30', UniqueTranslationRule::for('content_pages', 'title')],
         ];
     }

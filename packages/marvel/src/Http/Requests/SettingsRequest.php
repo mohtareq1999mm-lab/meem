@@ -45,6 +45,8 @@ class SettingsRequest extends FormRequest
             "linkedin" => ['sometimes', 'url'],
             "promotion_video_url" => ['sometimes', 'url'],
             'youtube' => ['sometimes', 'url'],
+            'tiktok' => ['sometimes', 'url'],
+            'snapchat' => ['sometimes', 'url'],
             'phone' => ['sometimes', 'string'],
             'fast_shipping_page_publish' => ['sometimes', 'in:0,1'],
             'minimum_order_amount' => ['sometimes', 'numeric', 'min:0'],

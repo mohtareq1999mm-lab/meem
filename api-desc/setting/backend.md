@@ -87,7 +87,16 @@ The fast shipping update uses `lockForUpdate()` transaction to prevent race cond
 | Top-level in response | `SettingResource`: `(bool) data_get($this->options, 'currency_selection_enabled', false)` |
 | Stored in | `settings.options.currency_selection_enabled` (JSON boolean) |
 | Seeder default | `SettingSeeder` sets `??= false` |
-| Written via | `PUT /api/v1/settings` with `currency_selection_enabled` (`sometimes|boolean`) — merged into options |
+| Written via | `PUT /api/v1/settings` with `currency_selection_enabled` (`sometimes|boolean`; accepts `true/false/0/1/"0"/"1"`) — merged into options |
 | Consumed by | `App\Services\Currency\CurrencyService::isCurrencySelectionEnabled()` / `getEffectiveCode()` |
 
 When `true`, the storefront can honor a customer-selected currency (user preference or guest cookie). When `false` (default), the effective currency always resolves to the catalog code.
+
+## tiktok / snapchat
+
+| Field | Source | Validation |
+|-------|--------|-----------|
+| `tiktok` | `settings.tiktok` (nullable string) | `sometimes\|url` on `PUT /api/v1/settings` |
+| `snapchat` | `settings.snapchat` (nullable string) | `sometimes\|url` on `PUT /api/v1/settings` |
+
+Added to the `settings` table columns, the `Settings` model `$fillable`, the `SettingsController@update` allowlist, and the `SettingResource` response (admin + public). Omitting them on update preserves existing values; they are also `NULL`-safe on GET when not configured.

@@ -60,19 +60,21 @@
 
 ---
 
-## Task 4: Pay at Cashier — QR Code Display
+## Task 4: Pay at Cashier Success Page
 
 **Priority:** Medium
 **Component:** Frontend — Checkout
-**Story Points:** 3
+**Story Points:** 2
+
+**Description:** The QR code feature was removed from Pay at Cashier. Checkout returns only `order_id`; the customer pays at the store and the cashier settles the order in the admin panel.
 
 **Acceptance Criteria:**
-- [ ] QR code image (base64 or SVG from API)
-- [ ] Transaction UUID, order ID, amount shown
-- [ ] "Download QR" button
-- [ ] Refresh QR button
-- [ ] **Loading:** QR placeholder
-- [ ] **Error:** "Failed to generate QR"
+- [ ] Order ID displayed
+- [ ] "Pay at the store" badge
+- [ ] Payment stays "pending" until the cashier marks it paid (`payment-cash`)
+- [ ] No QR code rendered or fetched — there is no `transaction-qr` endpoint
+- [ ] **Loading:** Order confirmation placeholder
+- [ ] **Error:** "Failed to place order"
 
 ---
 

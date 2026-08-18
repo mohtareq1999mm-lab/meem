@@ -30,6 +30,8 @@ Fetch platform settings. Returns full settings object with site info, SEO, socia
         "linkedin": "https://linkedin.com/company/mywebsite",
         "promotion_video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
         "youtube": "https://youtube.com/@mywebsite",
+        "tiktok": "https://tiktok.com/@mywebsite",
+        "snapchat": "https://snapchat.com/add/mywebsite",
         "phone": "+201001234567",
         "fast_shipping_page_publish": 1,
         "minimumOrderAmount": 100,
@@ -71,6 +73,8 @@ Update platform settings. Replaces all provided fields. Super admin only. Both `
     "instagram": "https://instagram.com/...",
     "linkedin": "https://linkedin.com/...",
     "youtube": "https://youtube.com/...",
+    "tiktok": "https://tiktok.com/...",
+    "snapchat": "https://snapchat.com/...",
     "phone": "+201001234567",
     "fast_shipping_page_publish": "1",
     "currency_selection_enabled": false,
@@ -107,6 +111,8 @@ Update platform settings. Replaces all provided fields. Super admin only. Both `
 | linkedin | required, url |
 | promotion_video_url | sometimes, url |
 | youtube | required, url |
+| tiktok | sometimes, url |
+| snapchat | sometimes, url |
 | phone | required, string |
 | fast_shipping_page_publish | required, in:0,1 |
 | minimum_order_amount | sometimes, numeric, min:0 |
@@ -114,6 +120,8 @@ Update platform settings. Replaces all provided fields. Super admin only. Both `
 | options | sometimes, array |
 
 > **`currency_selection_enabled` behavior:** when present, it is **merged** into the stored `options` (i.e. it is set to the boolean value while preserving other option keys such as `fast_shipping`), it resets the `CurrencyService` effective-currency memo, and the `settings` cache tag is flushed. Omitting the field leaves the stored value untouched.
+>
+> **Validation (`sometimes|boolean`):** accepts `true`, `false`, `0`, `1`, `"0"`, `"1"`. Values like `"not-a-boolean"` or `2` are **rejected with 422**. (Fixed 2026-08-18 — previously `in:true,false` wrongly rejected raw JSON booleans; see `changelog.md`.)
 
 **Response 200:**
 ```json

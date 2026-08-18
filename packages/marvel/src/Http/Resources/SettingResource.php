@@ -41,6 +41,8 @@ class SettingResource extends Resource
             "linkedin" => $this?->linkedin,
             "promotion_video_url" => $this?->promotion_video_url,
             'youtube' => $this?->youtube,
+            'tiktok' => $this?->tiktok,
+            'snapchat' => $this?->snapchat,
             'phone' => $this?->phone,
             'fast_shipping_page_publish' => $this->fast_shipping_page_publish,
             'minimumOrderAmount' => $this->minimum_order_amount,

@@ -83,6 +83,7 @@ class DatabaseSeeder extends Seeder
             PromotionSeeder::class,
             WishlistSeeder::class,
             ContentPageSeeder::class,
+            StaticPageSeeder::class,
             SectionSeeder::class,
             DashboardDataSeeder::class,
             NotificationSeeder::class,

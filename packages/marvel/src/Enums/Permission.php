@@ -96,6 +96,7 @@ final class Permission extends Enum
     public const VIEW_EXCHANGE_RATES = 'view-exchange-rates';
     public const CREATE_EXCHANGE_RATE = 'create-exchange-rate';
     public const UPDATE_EXCHANGE_RATE = 'update-exchange-rate';
+    public const DELETE_EXCHANGE_RATE = 'delete-exchange-rate';
     public const SET_BASE_CURRENCY = 'set-base-currency';
     public const SET_CATALOG_CURRENCY = 'set-catalog-currency';
 
@@ -210,6 +211,13 @@ final class Permission extends Enum
     public const UPDATE_SECTION_TYPES = 'update-section-types';
     public const DELETE_SECTION_TYPES = 'delete-section-types';
 
+    // 📄 Static Pages
+    public const VIEW_STATIC_PAGES = 'view-static-pages';
+    public const UPDATE_STATIC_PAGES = 'update-static-pages';
+    public const CREATE_STATIC_SECTIONS = 'create-static-sections';
+    public const UPDATE_STATIC_SECTIONS = 'update-static-sections';
+    public const DELETE_STATIC_SECTIONS = 'delete-static-sections';
+
     // 🔐 Super Admin
     public const VIEW_ADMINS = 'view-admins';
     public const VIEW_VENDORS = 'view-vendors';
@@ -229,6 +237,8 @@ final class Permission extends Enum
     public const CREATE_CATEGORY = 'create-category';
     public const UPDATE_CATEGORY = 'update-category';
     public const DELETE_CATEGORY = 'delete-category';
+    public const IMPORT_CATEGORY = 'import-category';
+    public const EXPORT_CATEGORY = 'export-category';
     public const CREATE_BRAND = 'create-brand';
     public const UPDATE_BRAND = 'update-brand';
     public const DELETE_BRAND = 'delete-brand';
@@ -272,6 +282,7 @@ final class Permission extends Enum
     // 🧾 Invoices
     public const VIEW_INVOICES = 'view-invoices';
     public const VIEW_INVOICE = 'view-invoice';
+    public const VIEW_INVOICE_DOWNLOAD = 'view-invoice-download';
     public const REGENERATE_INVOICE = 'regenerate-invoice';
     public const CORRECT_INVOICE = 'correct-invoice';
     public const CANCEL_INVOICE = 'cancel-invoice';

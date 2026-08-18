@@ -20,6 +20,8 @@
 | linkedin | varchar(255) | | LinkedIn URL |
 | promotion_video_url | varchar(255) | | Promotional video URL |
 | youtube | varchar(255) | | YouTube URL |
+| tiktok | varchar(255) | | TikTok URL (nullable) |
+| snapchat | varchar(255) | | Snapchat URL (nullable) |
 | phone | varchar(255) | | Phone number |
 | fast_shipping_page_publish | tinyint(1) | | Default: 1 |
 | options | json | | Free-form JSON |

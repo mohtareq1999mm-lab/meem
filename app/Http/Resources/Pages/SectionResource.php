@@ -19,13 +19,15 @@ class SectionResource extends JsonResource
             return $this->resolvedSettings = $this->setting;
         }
 
-        $sectionType = SectionType::where('type', $this->type)->first();
+        $sectionType = $this->relationLoaded('sectionType')
+            ? $this->sectionType
+            : SectionType::where('type', $this->type)->first();
         if (!$sectionType) {
             return $this->resolvedSettings = ['front' => [], 'back' => []];
         }
 
-        $front = $sectionType->settings()->where('setting_key', 'front')->first()?->value ?? [];
-        $back = $sectionType->settings()->where('setting_key', 'back')->first()?->value ?? [];
+        $front = $sectionType->settings->firstWhere('setting_key', 'front')?->value ?? [];
+        $back = $sectionType->settings->firstWhere('setting_key', 'back')?->value ?? [];
 
         return $this->resolvedSettings = ['front' => $front, 'back' => $back];
     }

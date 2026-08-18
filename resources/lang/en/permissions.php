@@ -190,5 +190,30 @@ return [
     'update-pickup-location' => 'Update pickup location',
     'delete-pickup-location' => 'Delete pickup location',
 
+    // 💱 Currencies
+    'view-currencies' => 'View currencies',
+    'create-currency' => 'Create currency',
+    'update-currency' => 'Update currency',
+    'delete-currency' => 'Delete currency',
+    'view-exchange-rates' => 'View exchange rates',
+    'create-exchange-rate' => 'Create exchange rate',
+    'update-exchange-rate' => 'Update exchange rate',
+    'delete-exchange-rate' => 'Delete exchange rate',
+    'set-base-currency' => 'Set base currency',
+    'set-catalog-currency' => 'Set catalog currency',
+
+    // 📄 Static Pages
+    'view-static-pages' => 'View Static Pages',
+    'update-static-pages' => 'Update Static Pages',
+    'create-static-sections' => 'Create Static Sections',
+    'update-static-sections' => 'Update Static Sections',
+    'delete-static-sections' => 'Delete Static Sections',
+
+    // 📂 Category Import / Export
+    'import-category' => 'Import categories',
+    'export-category' => 'Export categories',
+
+    // 🧾 Invoices
+    'view-invoice-download' => 'Download invoice',
 
 ];

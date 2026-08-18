@@ -192,5 +192,30 @@ return [
     'update-pickup-location' => 'تعديل موقع استلام',
     'delete-pickup-location' => 'حذف موقع استلام',
 
+    // 💱 Currencies
+    'view-currencies' => 'عرض العملات',
+    'create-currency' => 'إنشاء عملة',
+    'update-currency' => 'تعديل عملة',
+    'delete-currency' => 'حذف عملة',
+    'view-exchange-rates' => 'عرض أسعار الصرف',
+    'create-exchange-rate' => 'إضافة سعر صرف',
+    'update-exchange-rate' => 'تعديل سعر صرف',
+    'delete-exchange-rate' => 'حذف سعر صرف',
+    'set-base-currency' => 'تعيين العملة الأساسية',
+    'set-catalog-currency' => 'تعيين عملة المتجر',
+
+    // 📄 Static Pages
+    'view-static-pages' => 'عرض الصفحات الثابتة',
+    'update-static-pages' => 'تحديث الصفحات الثابتة',
+    'create-static-sections' => 'إنشاء أقسام الصفحات الثابتة',
+    'update-static-sections' => 'تحديث أقسام الصفحات الثابتة',
+    'delete-static-sections' => 'حذف أقسام الصفحات الثابتة',
+
+    // 📂 Category Import / Export
+    'import-category' => 'استيراد التصنيفات',
+    'export-category' => 'تصدير التصنيفات',
+
+    // 🧾 Invoices
+    'view-invoice-download' => 'تنزيل فاتورة PDF',
 
 ];

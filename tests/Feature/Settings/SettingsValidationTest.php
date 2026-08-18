@@ -77,6 +77,8 @@ class SettingsValidationTest extends TestCase
             'instagram' => 'https://instagram.com/store',
             'linkedin' => 'https://linkedin.com/store',
             'youtube' => 'https://youtube.com/store',
+            'tiktok' => 'https://tiktok.com/store',
+            'snapchat' => 'https://snapchat.com/store',
             'phone' => '1234567890',
             'fast_shipping_page_publish' => '1',
         ];
@@ -136,6 +138,32 @@ class SettingsValidationTest extends TestCase
 
         $payload = $this->validPayload();
         $payload['facebook'] = 'not-a-url';
+
+        $response = $this->putJson(self::PREFIX . '/settings', $payload);
+
+        $response->assertStatus(422);
+    }
+
+    /** @test */
+    public function update_returns_422_with_invalid_tiktok_url(): void
+    {
+        $this->createExistingSettings();
+
+        $payload = $this->validPayload();
+        $payload['tiktok'] = 'not-a-url';
+
+        $response = $this->putJson(self::PREFIX . '/settings', $payload);
+
+        $response->assertStatus(422);
+    }
+
+    /** @test */
+    public function update_returns_422_with_invalid_snapchat_url(): void
+    {
+        $this->createExistingSettings();
+
+        $payload = $this->validPayload();
+        $payload['snapchat'] = 'not-a-url';
 
         $response = $this->putJson(self::PREFIX . '/settings', $payload);
 

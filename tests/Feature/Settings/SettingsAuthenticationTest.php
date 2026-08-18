@@ -35,7 +35,7 @@ class SettingsAuthenticationTest extends TestCase
             'options' => ['currency' => 'USD'],
         ]);
 
-        $response = $this->getJson(self::PREFIX . '/settings');
+        $response = $this->getJson(self::PREFIX . '/general/settings');
 
         $response->assertOk();
     }

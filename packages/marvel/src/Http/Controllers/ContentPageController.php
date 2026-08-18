@@ -3,8 +3,10 @@
 namespace Marvel\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Enums\FrontendResource;
 use App\Http\Resources\Pages\ContentPageResource;
 use App\Http\Resources\Pages\SectionResource;
+use App\Traits\HasCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +20,7 @@ use Marvel\Traits\ApiResponse;
 
 class ContentPageController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse, HasCache;
 
     public function __construct()
     {
@@ -29,13 +31,21 @@ class ContentPageController extends Controller
     }
     public function index(Request $request)
     {
-        $pages = ContentPage::with('sections')->paginate(15);
+        $pages = ContentPage::with([
+            'sections' => function ($query) {
+                $query->with('sectionType.settings');
+            }
+        ])->paginate(15);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ContentPageResource::collection($pages));
     }
 
     public function show(ContentPage $content_page)
     {
-        $content_page->load('sections');
+        $content_page->load([
+            'sections' => function ($query) {
+                $query->with('sectionType.settings');
+            }
+        ]);
         return   $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ContentPageResource::make($content_page));
     }
 
@@ -56,7 +66,11 @@ class ContentPageController extends Controller
             return $this->apiResponse(NOT_FOUND, 404, false);
         }
         $content_page->update($request->only(['title', 'is_active']));
-        $content_page->load('sections');
+        $content_page->load([
+            'sections' => function ($query) {
+                $query->with('sectionType.settings');
+            }
+        ]);
 
         return  $this->apiResponse(UPDATE_DATA_SUCCESSFULLY, 200, true, ContentPageResource::make($content_page));
     }
@@ -66,6 +80,11 @@ class ContentPageController extends Controller
      */
     public function attachSections(AttachSectionsRequest $request, ContentPage $content_page)
     {
+            // invalidate the frontend content pages cache. This is required here in
+            // addition to the observers because the detach path uses a query builder
+            // update which does not fire Eloquent model events.
+            $this->flushTag(FrontendResource::CONTENT_PAGES->value);
+
             $sectionIds = $request->input('sections', []);
 
             // if empty array provided, delete the content page as requested
@@ -75,7 +94,11 @@ class ContentPageController extends Controller
             }
 
             $attached = $content_page->attachSectionsByIds($sectionIds);
-            $content_page->load('sections');
+            $content_page->load([
+                'sections' => function ($query) {
+                    $query->with('sectionType.settings');
+                }
+            ]);
             return $this->apiResponse(UPDATE_DATA_SUCCESSFULLY, 200, true, ContentPageResource::make($content_page));
         
     }

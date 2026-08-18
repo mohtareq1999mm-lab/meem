@@ -2,11 +2,45 @@
 
 ---
 
+## BUG-SETTING-ADMIN-006: `currency_selection_enabled` `in:true,false` Rejects JSON Booleans
+
+**Severity:** High
+
+**Component:** `packages/marvel/src/Http/Requests/SettingsRequest.php`
+
+**Description:** The rule was changed from `sometimes|boolean` to `sometimes|in:true,false`. Laravel's `in` rule casts the submitted value to a string (`validateIn` → `in_array((string) $value, $parameters)`), so a JSON boolean `true` becomes `"1"` and `false` becomes `""` — neither matches `"true"`/`"false"`. Result: clients sending `currency_selection_enabled: true|false` get **422**.
+
+**Affected:** `tests/Feature/Currency/CurrencySelectionEnabledTest.php` — `admin_can_enable_currency_selection`, `admin_can_disable_currency_selection`, `settings_cache_is_cleared_after_updating_currency_selection` (failed; tests send JSON booleans, which is the natural client contract).
+
+**Fix (2026-08-18):** Restored `['sometimes', 'boolean']` in `SettingsRequest.php:53`. `boolean` accepts `true/false/0/1/"0"/"1"` and still rejects `"not-a-boolean"` and `2`. All 3 affected tests now pass (verified: `tests/Feature/Currency` → 131 passed; `tests/Feature/Settings` → 26 passed).
+
+**Status:** **RESOLVED.**
+
+---
+
+## BUG-SETTING-ADMIN-007: `guests_can_view_settings` Hits the Wrong Endpoint
+
+**Severity:** Medium
+
+**Component:** `tests/Feature/Settings/SettingsAuthenticationTest.php` (line 38)
+
+**Description:** The test called `GET /api/v1/settings` (the **admin** endpoint inside the `auth:sanctum` group) but asserted `assertOk()` expecting 200. Unauthenticated access to `/api/v1/settings` correctly returns **401**. The public endpoint is `GET /api/v1/general/settings` (`settings.front`).
+
+**Affected:** `guests_can_view_settings` — failed (401).
+
+**Fix (2026-08-18):** Changed the request to `getJson('/api/v1/general/settings')`. Test now passes (verified).
+
+**Status:** **RESOLVED.**
+
+---
+
 ## BUG-SETTING-ADMIN-001: No Tests for Admin Settings Endpoints
 
 **Severity:** Medium
 
 **Description:** No feature tests exist for `PUT /api/v1/settings`, `GET /api/v1/fast-shipping/settings`, or `PUT /api/v1/fast-shipping/settings`.
+
+**Status:** **PARTIALLY RESOLVED.** `SettingsCrudTest`, `SettingsValidationTest`, `SettingsAuthenticationTest`, `SettingsRegressionTest`, and `CurrencySelectionEnabledTest` now cover `GET/PUT /settings` and auth. The **fast-shipping** GET/PUT endpoints still lack direct tests.
 
 ---
 

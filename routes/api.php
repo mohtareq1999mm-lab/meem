@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\General\CategoryController;
 use App\Http\Controllers\Api\Currency\CurrencyController;
 use App\Http\Controllers\Api\General\CityController;
 use App\Http\Controllers\Api\General\ContentPageController;
+use App\Http\Controllers\Api\General\StaticPageController;
 use App\Http\Controllers\Api\General\CountryController;
 use App\Http\Controllers\Api\General\CouponController;
 use App\Http\Controllers\Api\General\FAQController;
@@ -67,6 +68,11 @@ Route::prefix('v1/general')->group(function () {
             Route::get('content-pages', 'index')->name('general-content-page-index');
             Route::get('content-pages/{slug}', 'show')->name('general-content-page-show');
         });
+        //======================== static pages ========================/
+        Route::controller(StaticPageController::class)->group(function () {
+            Route::get('static-pages', 'index')->name('general-static-page-index');
+            Route::get('static-pages/{slug}', 'show')->name('general-static-page-show');
+        });
         //======================== products ========================/
         Route::get('products', [ProductController::class, 'index']);
         Route::get('products/{slug}', [ProductController::class, 'getProductBySlug']);
@@ -111,8 +117,8 @@ Route::prefix('v1/general')->group(function () {
         Route::get('checkout/promotions', [OrderController::class, 'eligiblePromotions']);
         Route::post('checkout', [OrderController::class, 'checkout']);
         Route::post('checkout/cod/{orderId}/mark-paid', [OrderController::class, 'markCodAsPaid'])->middleware(['permission:update-order-status']);
-        Route::post('checkout/cashier/{orderId}/mark-paid', [OrderController::class, 'markCashierPaid'])->middleware(['permission:update-order-status']);
-        Route::get('checkout/transaction-qr/{uuid}', [OrderController::class, 'getTransactionQr']);
+        Route::post('checkout/cashier/{orderId}/mark-paid', [OrderController::class, 'markCas
+        hierPaid'])->middleware(['permission:update-order-status']);
         //======================== fast shipping checkout ========================/
         Route::post('fast-shipping/checkout', [FastShippingController::class, 'checkout']);
         //======================== orders ========================//

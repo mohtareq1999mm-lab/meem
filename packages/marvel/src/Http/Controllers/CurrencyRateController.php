@@ -23,7 +23,8 @@ class CurrencyRateController extends CoreController
         $this->currencyRateService = $currencyRateService;
         $this->middleware('permission:' . Permission::VIEW_EXCHANGE_RATES, ['only' => ['index', 'show']]);
         $this->middleware('permission:' . Permission::CREATE_EXCHANGE_RATE, ['only' => ['store']]);
-        $this->middleware('permission:' . Permission::UPDATE_EXCHANGE_RATE, ['only' => ['update', 'destroy']]);
+        $this->middleware('permission:' . Permission::UPDATE_EXCHANGE_RATE, ['only' => ['update']]);
+        $this->middleware('permission:' . Permission::DELETE_EXCHANGE_RATE, ['only' => ['destroy']]);
     }
 
     public function index(Request $request): JsonResponse

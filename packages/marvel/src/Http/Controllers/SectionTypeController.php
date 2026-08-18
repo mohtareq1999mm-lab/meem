@@ -2,7 +2,9 @@
 
 namespace Marvel\Http\Controllers;
 
+use App\Enums\FrontendResource;
 use App\Services\General\SectionTypeService;
+use App\Traits\HasCache;
 use Illuminate\Http\Request;
 use Marvel\Enums\Permission;
 use Marvel\Database\Models\SectionType;
@@ -12,7 +14,7 @@ use Marvel\Traits\ApiResponse;
 
 class SectionTypeController extends CoreController
 {
-    use ApiResponse;
+    use ApiResponse, HasCache;
 
     public function __construct(
         private SectionTypeService $sectionTypeService
@@ -84,6 +86,11 @@ class SectionTypeController extends CoreController
         } catch (\Exception $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
+
+        // invalidate the frontend content pages cache. Required in addition to the
+        // SectionTypeSettingObserver because the bulk delete path uses a query
+        // builder which does not fire Eloquent model events.
+        $this->flushTag(FrontendResource::CONTENT_PAGES->value);
 
         $grouped = $this->sectionTypeService->getSettingsGrouped($type);
         return $this->apiResponse(SETTINGS_UPDATED_SUCCESSFULLY, 200, true, $grouped);

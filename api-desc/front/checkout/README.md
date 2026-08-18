@@ -14,7 +14,7 @@ User
   ├── 5. Handle result
   │       ├── Online       → redirect to payment gateway
   │       ├── COD          → show success screen
-  │       └── Pay at Cashier → show QR code
+  │       └── Pay at Cashier → show success screen
   └── 6. Track order → GET /orders
 ```
 
@@ -113,19 +113,18 @@ Returns eligible promotions and gift products for the user's current cart.
 
 ```json
 {
+  "status": 200,
+  "message": "Data fetched successfully",
   "success": true,
   "data": {
-    "promotions": [
-      { "id": 1, "code": "BUY2GET1", "type": "buy_x_get_y", "gift_product": {...} }
-    ],
-    "gift_products": [
-      { "id": 20, "name": "Free Item", "thumbnail": "..." }
+    "eligible_promotions": [
+      { "id": 1, "type": "buy_x_get_y", "title": "Buy 2 Get 1 Free", "code": "BUY2GET1", "discount": 100.0, "gift_items": [] }
     ]
   }
 }
 ```
 
-If no cart exists: `400 { "message": "Cart not found" }`
+If no cart exists: `400 { "status": 400, "message": "Cart not found", "success": false }`
 
 ### GET /api/v1/general/governorates
 
@@ -135,6 +134,8 @@ See `api-desc/front/governorate/frontend.md` for full details.
 
 ```json
 {
+  "status": 200,
+  "message": "Data fetched successfully",
   "success": true,
   "data": [
     { "id": 1, "name": "Cairo", "country_id": 1, "status": true, "is_fast_shipping_enabled": true }
@@ -150,6 +151,8 @@ See `api-desc/front/pickLocation/frontend.md` for full details.
 
 ```json
 {
+  "status": 200,
+  "message": "Data fetched successfully",
   "success": true,
   "data": [
     { "id": 1, "store_name": "Downtown Branch", "address": "...", ... }
@@ -216,29 +219,39 @@ The checkout has two independent dimensions:
 }
 ```
 
-### Validation Rules
+### Validation Rules — Required & When Required
 
-| Field | Rules |
-|-------|-------|
-| name | required, string, max:255 |
-| user_phone | required, string, max:255 |
-| user_email | required, email, max:255 |
-| address | required, array |
-| notes | nullable, string |
-| payment_method | nullable, in:online,cod,pay_at_cashier |
-| gateway | required for online, string, max:50 |
-| fulfillment_type | nullable, in:delivery,pickup |
-| governorate_id | requiredIf fulfillment=delivery, exists:governorates,id |
-| pickup_location_id | requiredIf fulfillment=pickup, exists:pickup_locations,id |
-| selected_promotion_id | nullable, exists:promotions,id |
-| selected_gift_product_id | nullable, exists:products,id |
-| type | nullable, in:web,mobile |
+| Field | Required | When required | Rules |
+|-------|----------|---------------|-------|
+| name | ✅ Always | — | string, max:255 |
+| user_phone | ✅ Always | — | string, max:255 |
+| user_email | ✅ Always | — | email, max:255 |
+| address | ✅ Always | — | array (empty `{}` allowed for pickup) |
+| notes | Optional | — | nullable, string |
+| payment_method | Optional | — | in:online,cod,pay_at_cashier — **default `online`** |
+| gateway | Optional | Only for `payment_method=online` | string, max:50 — **default `myfatoorah`** |
+| fulfillment_type | Optional | — | in:delivery,pickup — **default `delivery`**; **only `pickup` allowed when `payment_method=pay_at_cashier`** |
+| governorate_id | Conditional | **Required when `fulfillment_type=delivery`** | integer, exists:governorates,id |
+| pickup_location_id | Conditional | **Required when `fulfillment_type=pickup`** | integer, exists:pickup_locations,id |
+| selected_promotion_id | Optional | — | nullable, integer, exists:promotions,id |
+| selected_gift_product_id | Optional | — | nullable, integer, exists:products,id |
+| type | Optional | — | in:web,mobile — controls callback format |
+
+### Compatibility Matrix
+
+| Payment | Delivery | Pickup |
+|---------|:--------:|:------:|
+| online | ✅ | ✅ |
+| cod | ✅ | ❌ 422 |
+| pay_at_cashier | ❌ 422 (validation) | ✅ |
 
 ### Responses by Payment Method
 
 **Online Payment — 200:**
 ```json
 {
+  "status": 200,
+  "message": "Checkout successful",
   "success": true,
   "data": {
     "url": "https://sandbox.myfatoorah.com/pay/INV-123"
@@ -250,6 +263,8 @@ The checkout has two independent dimensions:
 **COD — 200:**
 ```json
 {
+  "status": 200,
+  "message": "Your order has been placed. You will pay upon delivery.",
   "success": true,
   "data": {
     "order_id": 42
@@ -261,23 +276,55 @@ The checkout has two independent dimensions:
 **Pay at Cashier — 200:**
 ```json
 {
+  "status": 200,
+  "message": "Checkout successful",
   "success": true,
   "data": {
-    "order_id": 42,
-    "transaction_uuid": "abc-123-def",
-    "qr_code": "data:image/svg+xml;base64,..."
+    "order_id": 42
   }
 }
 ```
-→ Frontend shows QR code immediately.
+→ Frontend shows success screen with order number. No QR code is returned or displayed; payment is settled when the cashier marks the order paid at the branch.
 
-**Error — 422 (COD + Pickup):**
+### Error Responses
+
+**400 — Cart not found:**
+```json
+{ "status": 400, "message": "Cart not found", "success": false }
+```
+
+**422 — COD + Pickup (business rule, envelope):**
+```json
+{ "status": 422, "message": "COD is not available for pickup. Use pay_at_cashier instead.", "success": false }
+```
+
+**422 — Pay at Cashier + Delivery (validation, raw errors object):**
 ```json
 {
-  "success": false,
-  "message": "COD not available for pickup"
+  "fulfillment_type": ["When choosing pay at cashier, you should choose pickup fulfillment type."]
 }
 ```
+
+**422 — Field validation errors (raw errors object, no envelope):**
+```json
+{
+  "name": ["The name field is required."],
+  "address": ["The address field is required."],
+  "governorate_id": ["The selected governorate id is invalid."]
+}
+```
+
+**422 — Minimum order amount (business rule):**
+```json
+{ "status": 422, "message": "Minimum order amount is 100", "success": false }
+```
+
+**500 — Order creation failed:**
+```json
+{ "status": 500, "message": "Error adding items to order", "success": false }
+```
+
+**401 — Unauthenticated:** `{ "message": "Unauthenticated." }`
 
 ---
 
@@ -307,13 +354,21 @@ User completes payment on gateway page
      │         └─────────────────────────────────────┘
      │              │
      │              ▼
-     │         Redirect: /payment/success?order_id=42
+     │         Redirect: /payment/success?status=success&message=Payment successful&payment_id=GTX123&order_id=42
+     │         (mobile: 200 { "status":"success", "message":"Payment successful", "payment_id":"GTX123", "order_id":42 })
      │
      └── Failure → Gateway redirects to /error-callback?paymentId=GTX123
                    │
                    ▼
-              Redirect: /payment/failed
+              Redirect: /payment/failed?status=failed&error=Payment failed&payment_id=GTX123
+              (mobile: 400 { "status":"failed", "error":"Payment failed", "payment_id":"GTX123" })
 ```
+
+**Callback details:**
+- `ANY /api/v1/general/checkout/callback` — **public**, requires query `paymentId` (missing → `400 { "message": "Missing payment ID" }`).
+- `ANY /api/v1/general/checkout/error-callback` — **public**, requires query `paymentId`.
+- Web (`type=web`, default): 302 redirect to the frontend success/failure page.
+- Mobile (`type=mobile`): JSON response instead of redirect (see payloads above).
 
 **Frontend Responsibilities:**
 - Show loading spinner during redirect
@@ -338,71 +393,71 @@ Wait delivery → pay driver → status updates via admin
 - No redirect needed
 - Order says "Payment pending" until driver collects
 
-### Pay at Cashier (QR) Flow
+### Pay at Cashier Flow
 
 ```
-POST /checkout → 200 { qr_code, transaction_uuid, order_id }
+POST /checkout → 200 { order_id }
      │
      ▼
-Display QR code on screen
+Show success screen: "Order Placed! Pay at the store."
      │
      ▼
-Customer visits store
+Customer visits the store and pays the cashier
      │
      ▼
-Cashier scans QR → marks paid
+Cashier marks order paid (backend /cashier/{orderId}/mark-paid)
      │
      ▼
-Poll order status OR wait for websocket
+Order status → completed, payment_status → payment-cash
 ```
 
 **Frontend Responsibilities:**
-- Display QR code image (data URI from `qr_code` field)
-- Save QR locally so customer can reopen it later
-- Show "Get QR" button on orders screen while payment is pending
-- Refresh periodically or use polling
+- Show order confirmation page with order number
+- No QR code is generated or displayed — there is nothing to scan
+- Order says "Payment pending" until the cashier settles it
+- Update the payment badge once the order reaches `payment-cash`
 
 ---
 
-## Step 6 — QR Code Details
+## Step 6 — Pay at Cashier Behavior
 
-### Initial QR (from checkout response)
-The `qr_code` field in the checkout response is a base64 data URI:
-```
-data:image/svg+xml;base64,PHN2ZyB4bWxucz0i...
-```
-Display it directly as an `<img src>`.
+The QR code feature was removed. Pay at Cashier no longer generates or displays any QR code, and there is no re-fetch endpoint.
 
-### GET /api/v1/general/checkout/transaction-qr/{uuid}
+### What Happens Instead
 
-Use when user needs to view QR again from orders screen.
+1. Checkout returns only `{ order_id }`.
+2. The order stores a `pay_at_cashier` transaction (pending) so it can be located by the cashier in the admin panel.
+3. The cashier marks the order paid via `POST /api/v1/general/checkout/cashier/{orderId}/mark-paid` (admin, `permission:update-order-status`).
+4. Once settled, the order's `payment_status` becomes `payment-cash`.
 
-**Auth:** `auth:sanctum`
-
-**Response:** Raw SVG (`Content-Type: image/svg+xml`)
-
-**Errors:**
-- 403 — Not your transaction
-- 404 — Transaction not found
-
-### QR Screen Content
+### Confirmation Screen Content
 
 ```
 ┌──────────────────────────┐
-│         QR Code          │
-│      [large image]       │
+│      Order Placed!       │
 │                          │
 │  Order: ORD-00000042     │
-│  Branch: Downtown Store  │
+│  Pay at the store.       │
 │  Amount: EGP 250.00      │
-│  Generated: 12:30 PM     │
 │                          │
 │  Status: Pending Payment │
 │                          │
-│  [Refresh QR] [Download] │
 │  [Back to Orders]        │
 └──────────────────────────┘
 ```
+
+### Mark-Paid Endpoints (Admin)
+
+Both endpoints are for the admin panel, **not** the customer app. They settle pending payment transactions.
+
+**`POST /api/v1/general/checkout/cod/{orderId}/mark-paid`** — mark COD order paid.
+**`POST /api/v1/general/checkout/cashier/{orderId}/mark-paid`** — mark Pay at Cashier order paid.
+
+- **Auth:** `auth:sanctum` + `permission:update-order-status`
+- **Request body:** none
+- **Response 200:** `{ "status": 200, "message": "Payment successful", "success": true }`
+- **Response 422:** `{ "status": 422, "message": "No pending COD transaction found." }` (or `"No pending Pay at Cashier transaction found."`)
+- **Response 401 / 403 / 404:** unauthenticated / missing permission / order not found
 
 ---
 
@@ -417,6 +472,8 @@ Returns paginated list of the user's orders.
 **Response:**
 ```json
 {
+  "status": 200,
+  "message": "Data fetched successfully",
   "success": true,
   "data": [
     {
@@ -469,25 +526,23 @@ Also: `order-cancelled`, `order-refunded`, `order-failed`
 │  Orders                                      │
 │                                              │
 │  ┌────────────────────────────────────────┐  │
-│  │ ORD-00000042         Jul 23, 2026      │  │
-│  │ Status: Pending                        │  │
-│  │ Payment: Pending (Pay at Cashier)      │  │
-│  │ Total: EGP 250.00                      │  │
-│  │                              [View QR] │  │
-│  └────────────────────────────────────────┘  │
-│  ┌────────────────────────────────────────┐  │
-│  │ ORD-00000041         Jul 22, 2026      │  │
-│  │ Status: Delivered                      │  │
-│  │ Payment: Paid (Online)                 │  │
-│  │ Total: EGP 150.00                      │  │
-│  │                              [Details] │  │
-│  └────────────────────────────────────────┘  │
-└──────────────────────────────────────────────┘
+  │  │ ORD-00000042         Jul 23, 2026      │  │
+  │  │ Status: Pending                        │  │
+  │  │ Payment: Pending (Pay at Cashier)      │  │
+  │  │ Total: EGP 250.00                      │  │
+  │  │                              [Details] │  │
+  │  └────────────────────────────────────────┘  │
+  │  ┌────────────────────────────────────────┐  │
+  │  │ ORD-00000041         Jul 22, 2026      │  │
+  │  │ Status: Delivered                      │  │
+  │  │ Payment: Paid (Online)                 │  │
+  │  │ Total: EGP 150.00                      │  │
+  │  │                              [Details] │  │
+  │  └────────────────────────────────────────┘  │
+  └──────────────────────────────────────────────┘
 ```
 
-Show the "View QR" button only when:
-- `payment_method === "pay_at_cashier"`
-- `payment_status === "payment-pending"`
+Pay at Cashier orders display a "Payment pending (Pay at Cashier)" badge. There is no QR button — payment is settled by the cashier at the store.
 
 ---
 
@@ -516,11 +571,10 @@ Show the "View QR" button only when:
 
 | Scenario | Frontend Action |
 |----------|----------------|
-| Checkout returns QR | Display QR immediately |
-| User closes QR page | Save QR locally (localStorage) |
-| User reopens from orders | Call GET /transaction-qr/{uuid} |
-| QR expired/not found | Show "QR not found, contact store" |
-| Payment completed | Poll updates status to "paid" |
+| Checkout returns order_id | Show success screen |
+| Order never marked paid | Shows "pending" status until cashier settles it |
+| Order cancelled by admin | Status changes to cancelled |
+| Payment completed | Badge updates to "paid at store" (`payment-cash`) |
 
 ### General Errors
 
@@ -537,7 +591,6 @@ Show the "View QR" button only when:
 
 - **Disable checkout button** while request is processing
 - **Prevent double-submit** — track a `submitting` state
-- **Cache the latest QR** in localStorage (key: `last_qr_{orderId}`)
 - **Refresh order status** every 30 seconds on order details screen
 - **Handle expired sessions** — if checkout returns 401, save form data to sessionStorage and redirect to login
 - **Mobile vs Web** — set `type: "mobile"` for mobile apps (callback returns JSON instead of redirect)
@@ -551,13 +604,17 @@ Show the "View QR" button only when:
 | # | Method | Endpoint | Auth | Purpose |
 |---|--------|----------|------|---------|
 | 1 | GET | `/api/v1/general/checkout/promotions` | sanctum | Eligible promotions |
-| 2 | GET | `/api/v1/general/governorates` | Public | Governorates dropdown |
-| 3 | GET | `/api/v1/general/pickup-locations` | Public | Pickup locations dropdown |
-| 4 | POST | `/api/v1/general/checkout` | sanctum | Place order |
+| 2 | POST | `/api/v1/general/checkout` | sanctum | Place order (online/COD/cashier) |
+| 3 | POST | `/api/v1/general/checkout/cod/{orderId}/mark-paid` | sanctum + update-order-status | Mark COD paid (admin) |
+| 4 | POST | `/api/v1/general/checkout/cashier/{orderId}/mark-paid` | sanctum + update-order-status | Mark cashier paid (admin) |
 | 5 | ANY | `/api/v1/general/checkout/callback` | Public | Gateway success callback |
 | 6 | ANY | `/api/v1/general/checkout/error-callback` | Public | Gateway failure callback |
-| 7 | GET | `/api/v1/general/checkout/transaction-qr/{uuid}` | sanctum | Get QR code image |
-| 8 | GET | `/api/v1/general/orders` | sanctum | List user's orders |
+| 7 | GET | `/api/v1/general/fast-shipping/status` | Public | Fast shipping availability |
+| 8 | POST | `/api/v1/general/fast-shipping/checkout` | sanctum | Fast shipping checkout |
+| 9 | GET | `/api/v1/general/orders` | sanctum | List user's orders |
+| 10 | GET | `/api/v1/general/orders/invoice/{uuid}` | sanctum | Order invoice |
+| 11 | GET | `/api/v1/general/governorates` | Public | Governorates dropdown |
+| 12 | GET | `/api/v1/general/pickup-locations` | Public | Pickup locations dropdown |
 
 ---
 
@@ -571,3 +628,4 @@ Show the "View QR" button only when:
 | Backend flow | `api-desc/front/checkout/flow.md` |
 | Backend details | `api-desc/front/checkout/backend.md` |
 | API reference | `api-desc/front/checkout/api.md` |
+| Full payment audit | `api-desc/front/checkout/payment-audit.md` |

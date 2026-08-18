@@ -2,7 +2,6 @@
 
 namespace App\Services\Payment;
 
-use App\Services\Gateway\CashierQrService;
 use App\Services\General\CartInventoryService;
 use App\Services\Payment\PaymentGatewayFactory;
 use Illuminate\Http\JsonResponse;
@@ -18,7 +17,6 @@ class PaymentCheckoutHandler
 
     public function __construct(
         private PaymentGatewayFactory $paymentGatewayFactory,
-        private CashierQrService $cashierQrService,
         private CartInventoryService $cartInventoryService,
     ) {}
 
@@ -117,12 +115,8 @@ $callbackUrl ??= route('api.checkout.callback');
             return $this->apiResponse(ERROR_CREATING_TRANSACTION, 500, false);
         }
 
-        $qrDataUri = $this->cashierQrService->generateBase64DataUri($transaction);
-
         return $this->apiResponse(CHECKOUT_SUCCESSFUL, 200, true, [
             'order_id' => $order->id,
-            'transaction_uuid' => $transaction->uuid,
-            'qr_code' => $qrDataUri,
         ]);
     }
 }

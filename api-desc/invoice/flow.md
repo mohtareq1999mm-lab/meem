@@ -1,5 +1,7 @@
 # Request Flows — Invoice Module
 
+> **Note:** Customer routes live under `/api/v1/general/...`. Admin routes live under `/api/v1/...` (defined in `packages/marvel/src/Rest/Routes.php`). Responses use `AdminInvoiceResource`/`AdminInvoiceCollection` for admin endpoints and `CustomerInvoiceResource`/`CustomerInvoiceCollection` for customer endpoints. `InvoiceResource` is currently disabled (see Flow 4).
+
 ## Flow 1: List Invoices (Admin)
 
 ```
@@ -15,7 +17,7 @@ Client → GET /api/v1/invoices?status=generated&sort_by=created_at&limit=15
       → orderBy('created_at', 'desc')  [default]
       → paginate(min(15, 100))
          ↓
-    InvoiceCollection($paginator)
+    AdminInvoiceCollection($paginator)
          ↓
     Return: { status:200, message, success:true, data: { data[], links{} } }
 ```
@@ -23,7 +25,7 @@ Client → GET /api/v1/invoices?status=generated&sort_by=created_at&limit=15
 ## Flow 2: My Invoices (Customer)
 
 ```
-Client → GET /api/v1/invoices/my-invoices?limit=15
+Client → GET /api/v1/general/invoices/my-invoices?limit=15
          ↓
     [auth:sanctum] middleware
          ↓
@@ -34,7 +36,7 @@ Client → GET /api/v1/invoices/my-invoices?limit=15
       → orderBy('created_at', 'desc')
       → paginate(min(15, 100))
          ↓
-    InvoiceCollection($paginator)
+    CustomerInvoiceCollection($paginator)
          ↓
     Return: { status:200, message, success:true, data }
 ```
@@ -42,25 +44,29 @@ Client → GET /api/v1/invoices/my-invoices?limit=15
 ## Flow 3: Show Invoice
 
 ```
-Client → GET /api/v1/invoices/1
+Client → GET /api/v1/invoices/1            (admin, permission: view-invoice)
+    or   GET /api/v1/general/invoices/uuid/{uuid}   (admin, permission: view-invoice)
+    or   GET /api/v1/general/orders/invoice/{uuid}  (customer, owner-only)
          ↓
-    [auth:sanctum] → [permission:view-invoice]
+    [auth:sanctum] → permission middleware (admin) OR inline owner check (customer)
          ↓
-    InvoiceController@show(1)
-         ↓
-    Invoice::with(['order.orderItems', 'transaction', 'user'])->findOrFail(1)
-         ↓
-    InvoiceResource::make($invoice)
+    admin: Invoice::with(['order.orderItems', 'transaction', 'user'])->findOrFail($id)
+           → AdminInvoiceResource::make($invoice)
+    customer: Invoice::where('uuid', $uuid)->firstOrFail()
+           → order.user_id !== auth()->id() → 403 (AuthorizationException)
+           → CustomerInvoiceResource::make($invoice)
          ↓
     Return: { status:200, message, success:true, data }
 ```
 
-## Flow 4: Verify Invoice (Public)
+## Flow 4: Verify Invoice
+
+> **Source-verified:** Requires `auth:sanctum` + `throttle:5,1`. The older docs described this as public with `throttle:60,1` — that is no longer accurate.
 
 ```
-Client → GET /api/v1/invoices/verify/550e8400-...
+Client → GET /api/v1/general/invoices/verify/550e8400-...
          ↓
-    [throttle:60,1] middleware
+    [auth:sanctum] → [throttle:5,1]
          ↓
     InvoiceController@verify($uuid)
          ↓
@@ -83,6 +89,9 @@ Client → GET /api/v1/invoices/verify/550e8400-...
       → InvoiceTimelineService::recordVerified($invoice)
          ↓
     Return: { status:200, message, success:true, data: { authentic:true, invoice, order, qr_content } }
+
+    KNOWN ISSUE: `invoice` is built from InvoiceResource::make(), but InvoiceResource::toArray()
+    is fully commented out → TypeError → HTTP 500 on this path. qr_content = verification URL string.
 ```
 
 ## Flow 5: Download PDF
@@ -96,8 +105,8 @@ Client → GET /api/v1/invoices/550e8400-.../download
          ↓
     Invoice::with('order')->where('uuid', $uuid)->firstOrFail()
          ↓
-    Authorization:
-      $invoice->user_id === auth()->id()  OR  auth()->user()->can('view-invoice')
+    Authorization (inline, NO permission middleware):
+      $invoice->user_id === auth()->id()  OR  auth()->user()->can('view-invoice-download')
       → Fail: Return 404 (privacy — don't reveal existence)
          ↓
     PDF exists? ($invoice->pdf_path)
@@ -107,7 +116,7 @@ Client → GET /api/v1/invoices/550e8400-.../download
          ↓
     Timeline: recordDownloaded
          ↓
-    Return: { status:200, message, success:true, data: { url, invoice_number } }
+    Return: { status:200, message, success:true, data: { url: url('storage/invoices/' . pdf_path), invoice_number } }
 ```
 
 ## Flow 6: Generate Invoice (Automatic — via Event)
@@ -115,7 +124,7 @@ Client → GET /api/v1/invoices/550e8400-.../download
 ```
 PaymentSucceeded event dispatched (from payment system)
          ↓
-    GenerateInvoiceListener (queued, high, 5 retries)
+    GenerateInvoiceListener (queue: meem-high, afterCommit, 5 retries, backoff [10,30,60,120,300])
          ↓
     InvoiceService::generateFromOrder($order)
          ↓
@@ -140,15 +149,17 @@ PaymentSucceeded event dispatched (from payment system)
     DB::afterCommit()
       ├─ InvoiceCreated::dispatch($invoice)
       │    ├─ LogInvoiceCreated (sync) — logs to Laravel log
-      │    └─ GenerateInvoicePdfJob (queued, low, 3 retries, 120s timeout)
+      │    └─ GenerateInvoicePdfJob (queue: meem-medium, 3 tries, backoff [30,120,300], 120s timeout)
       │         ↓
-      │       DomPDF::loadView('pdf.invoice', $invoice)
+      │       DomPDF::loadView('pdf.invoice', $invoice)  [A4 portrait, Arial, remote disabled]
       │         ↓
-      │       Save to storage/invoices/{filename}.pdf
+      │       filename = str_replace('/', '-', invoice_number) . '.pdf'
+      │       Save to storage/app/public/invoices/{filename}.pdf (public disk)
       │         ↓
-      │       Update invoice: status='ready', pdf_path, pdf_checksum, pdf_generated_at
+      │       Update invoice: status='ready', pdf_path, pdf_checksum (md5), pdf_generated_at,
+      │         generation_attempts+1, last_generation_error=null
       │         ↓
-      │       On failure: status='failed', last_generation_error, increment attempts
+      │       On failure: status='failed', last_generation_error, increment attempts, rethrow → retries
       │
       └─ Return invoice
 ```
@@ -191,7 +202,7 @@ Client → POST /api/v1/invoices/1/correct
       ├─ InvoiceCreated::dispatch(correction)
       └─ GenerateInvoicePdfJob::dispatch(correction)
          ↓
-    Return: { status:200, message, success:true, data: InvoiceResource(correction) }
+    Return: { status:200, message, success:true, data: AdminInvoiceResource(correction) }
 ```
 
 ## Flow 8: Cancel Invoice
@@ -222,7 +233,7 @@ Client → POST /api/v1/invoices/1/cancel
       ├─ Timeline: recordCancelled
       └─ DB::commit()
          ↓
-    Return: { status:200, message, success:true, data: InvoiceResource($invoice->fresh()) }
+    Return: { status:200, message, success:true, data: AdminInvoiceResource($invoice->fresh()) }
 ```
 
 ## Flow 9: Issue Debit Note

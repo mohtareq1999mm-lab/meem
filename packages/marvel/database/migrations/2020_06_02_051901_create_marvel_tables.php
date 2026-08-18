@@ -394,6 +394,8 @@ class CreateMarvelTables extends Migration
             $table->string('linkedin')->nullable();
             $table->string('promotion_video_url')->nullable();
             $table->string('youtube')->nullable();
+            $table->string('tiktok')->nullable();
+            $table->string('snapchat')->nullable();
             $table->string('phone')->nullable();
             $table->decimal('minimum_order_amount', 10, 2)->default(50);
             $table->boolean('fast_shipping_page_publish')->default(true);

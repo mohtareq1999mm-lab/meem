@@ -20,6 +20,7 @@ enum FrontendResource: string
     case BANNERS = 'banners';
     case TAGS = 'tags';
     case CONTENT_PAGES = 'content_pages';
+    case STATIC_PAGES = 'static_pages';
     case PICKUP_LOCATIONS = 'pickup_locations';
     case FAST_SHIPPING_SETTINGS = 'fast_shipping_settings';
     case SECTIONS = 'sections';

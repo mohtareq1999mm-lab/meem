@@ -62,9 +62,4 @@ class Transaction extends Model
     {
         return $query->where('status', 'failed');
     }
-
-    public function scopeByUuid(Builder $query, string $uuid): Builder
-    {
-        return $query->where('uuid', $uuid);
-    }
 }

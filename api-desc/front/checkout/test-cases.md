@@ -34,9 +34,11 @@
 | # | Test | Description |
 |---|------|-------------|
 | 1 | test_checkout_online_payment | Creates transaction, returns URL |
-| 2 | test_checkout_pay_at_cashier | Returns QR code |
+| 2 | test_checkout_pay_at_cashier | Returns order_id only (no QR) — implemented as `scheduled_checkout_with_pay_at_cashier_requires_pickup_location` in `PaymentCheckoutTest` |
 | 3 | test_mark_cod_as_paid_no_permission | 403 |
-| 4 | test_get_transaction_qr_unauthorized | 403 |
+| 4 | test_pay_at_cashier_full_lifecycle | Checkout → mark-paid → transaction paid, order completed — implemented as `pay_at_cashier_lifecycle_is_preserved_after_qr_removal` in `PaymentCheckoutTest` |
+| 5 | test_pay_at_cashier_delivery_rejected | fulfillment_type=delivery → 422 validation error |
+| 6 | test_cashier_response_has_no_qr | Assert no `qr_code`/`transaction_uuid` keys in response data |
 
 ### Callback Tests
 | # | Test | Description |
