@@ -38,6 +38,7 @@ class CategorySeeder extends Seeder
                             ['name' => ['en' => 'Color Corrector', 'ar' => 'مصححات الألوان']],
                         ],
                     ],
+                    
                     [
                         'name' => ['en' => 'Powder', 'ar' => 'بودرة'],
                         'children' => [
