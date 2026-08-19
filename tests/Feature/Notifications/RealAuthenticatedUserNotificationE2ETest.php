@@ -509,7 +509,7 @@ class RealAuthenticatedUserNotificationE2ETest extends NotificationE2ETestCase
         // C. Broadcast event emitted to the private channel.
         $broadcast = $this->assertBroadcastTo(
             'private-users.' . $user->id,
-            \Illuminate\Notifications\Events\BroadcastNotificationCreated::class
+            'order.created'
         );
 
         // D. Broadcast payload identity matches the DB row identity.

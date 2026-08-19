@@ -39,7 +39,7 @@ class CouponNotificationE2ETest extends NotificationE2ETestCase
                     $this->assertEquals($coupon->id, $n->data['resource_id']);
                 }
             );
-            $this->assertBroadcastTo('private-users.' . $user->id, BroadcastNotificationCreated::class);
+            $this->assertBroadcastTo('private-users.' . $user->id, 'coupon.available');
         }
 
         $this->assertNoDatabaseNotification($admin, 'coupon.available');
@@ -75,7 +75,7 @@ class CouponNotificationE2ETest extends NotificationE2ETestCase
                 $this->assertEquals($assignment->id, $n->data['assignment_id'] ?? $assignment->id);
             }
         );
-        $this->assertBroadcastTo('private-users.' . $user->id, BroadcastNotificationCreated::class);
+        $this->assertBroadcastTo('private-users.' . $user->id, 'coupon.assigned');
 
         $this->assertNoDatabaseNotification($other, 'coupon.assigned');
     }
@@ -108,7 +108,7 @@ class CouponNotificationE2ETest extends NotificationE2ETestCase
                 $this->assertEquals($coupon->id, $n->data['resource_id']);
             }
         );
-        $this->assertBroadcastTo('private-users.' . $user->id, BroadcastNotificationCreated::class);
+        $this->assertBroadcastTo('private-users.' . $user->id, 'coupon.used');
     }
 
     private function createCouponWithoutEvents()

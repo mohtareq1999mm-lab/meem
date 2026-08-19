@@ -172,7 +172,7 @@ class RealUserNotificationDatabasePersistenceE2ETest extends NotificationE2ETest
         // Broadcast also reached Pusher for the SAME notification.
         $broadcast = $this->assertBroadcastTo(
             'private-users.' . $user->id,
-            BroadcastNotificationCreated::class
+            'order.created'
         );
         $this->assertEquals($notificationRow->id, $broadcast['data']['id']);
     }
@@ -249,7 +249,7 @@ class RealUserNotificationDatabasePersistenceE2ETest extends NotificationE2ETest
 
         $broadcast = $this->assertBroadcastTo(
             'private-users.' . $user->id,
-            BroadcastNotificationCreated::class
+            'order.created'
         );
 
         // Same notification identity on both sides.
@@ -434,7 +434,7 @@ class RealUserNotificationDatabasePersistenceE2ETest extends NotificationE2ETest
         // Pusher STILL received the notification.
         $broadcast = $this->assertBroadcastTo(
             'private-users.' . $user->id,
-            BroadcastNotificationCreated::class
+            'order.created'
         );
         $this->assertEquals('order.created', $broadcast['data']['type']);
         $this->assertIsString($broadcast['data']['id']);

@@ -41,7 +41,7 @@ class AdminNotificationE2ETest extends NotificationE2ETestCase
                     $this->assertEquals('Test-Agent/1.0', $n->data['user_agent']);
                 }
             );
-            $this->assertBroadcastTo('private-admin.notifications', BroadcastNotificationCreated::class);
+            $this->assertBroadcastTo('private-admin.notifications', 'admin.login');
         }
 
         $this->assertNoDatabaseNotification($inactiveAdmin, 'admin.login');
@@ -75,7 +75,7 @@ class AdminNotificationE2ETest extends NotificationE2ETestCase
                 $this->assertEquals('Order Help', $n->data['subject']);
             }
         );
-        $broadcast = $this->assertBroadcastTo('private-admin.notifications', BroadcastNotificationCreated::class);
+        $broadcast = $this->assertBroadcastTo('private-admin.notifications', 'contact.message');
         $this->assertEquals('contact.message', $broadcast['data']['type']);
 
         $this->assertNoDatabaseNotification($inactiveAdmin, 'contact.message');
@@ -99,7 +99,7 @@ class AdminNotificationE2ETest extends NotificationE2ETestCase
 
         $broadcast = $this->assertBroadcastTo(
             'private-admin.notifications',
-            BroadcastNotificationCreated::class
+            'admin.login'
         );
         $this->assertEquals('admin.login', $broadcast['data']['type']);
         $this->assertSame($notification->type, $broadcast['data']['type']);

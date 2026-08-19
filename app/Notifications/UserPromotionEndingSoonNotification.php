@@ -44,7 +44,7 @@ class UserPromotionEndingSoonNotification extends Notification implements Should
 
     public function toBroadcast($notifiable): BroadcastMessage
     {
-        return new BroadcastMessage($this->toDatabase($notifiable));
+        return (new BroadcastMessage($this->toDatabase($notifiable)))->onQueue('meem-medium');
     }
 
     public function broadcastType(): string
@@ -52,8 +52,14 @@ class UserPromotionEndingSoonNotification extends Notification implements Should
         return 'promotion.ending_soon';
     }
 
+    public function broadcastAs(): string
+    {
+        return $this->broadcastType();
+    }
+
     public function databaseType($notifiable): string
     {
         return $this->broadcastType();
     }
 }
+

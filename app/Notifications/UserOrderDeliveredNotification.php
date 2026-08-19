@@ -45,7 +45,7 @@ class UserOrderDeliveredNotification extends Notification implements ShouldQueue
 
     public function toBroadcast($notifiable): BroadcastMessage
     {
-        return new BroadcastMessage($this->toDatabase($notifiable));
+        return (new BroadcastMessage($this->toDatabase($notifiable)))->onQueue('meem-medium');
     }
 
     public function broadcastType(): string
@@ -53,8 +53,14 @@ class UserOrderDeliveredNotification extends Notification implements ShouldQueue
         return 'order.delivered';
     }
 
+    public function broadcastAs(): string
+    {
+        return $this->broadcastType();
+    }
+
     public function databaseType($notifiable): string
     {
         return $this->broadcastType();
     }
 }
+

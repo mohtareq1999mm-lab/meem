@@ -130,7 +130,7 @@ class RealLoginNotificationE2ETest extends NotificationE2ETestCase
         // Broadcast payload for the owning user
         $broadcast = $this->assertBroadcastTo(
             'private-users.' . $user->id,
-            BroadcastNotificationCreated::class
+            'order.created'
         );
         $this->assertEquals('order.created', $broadcast['data']['type']);
     }

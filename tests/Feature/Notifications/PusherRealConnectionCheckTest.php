@@ -69,7 +69,7 @@ class PusherRealConnectionCheckTest extends NotificationE2ETestCase
 
         $broadcast = $this->assertBroadcastTo(
             'private-users.' . $user->id,
-            BroadcastNotificationCreated::class
+            'order.created'
         );
 
         $result = $pusher->trigger(

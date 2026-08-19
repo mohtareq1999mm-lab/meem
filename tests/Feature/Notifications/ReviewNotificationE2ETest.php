@@ -34,7 +34,7 @@ class ReviewNotificationE2ETest extends NotificationE2ETestCase
                 $this->assertEquals($review->product_id, $n->data['product_id']);
             }
         );
-        $this->assertBroadcastTo('private-users.' . $user->id, BroadcastNotificationCreated::class);
+        $this->assertBroadcastTo('private-users.' . $user->id, 'review.approved');
     }
 
     public function test_review_rejected_notifies_reviewer_in_db_and_broadcast(): void
@@ -53,7 +53,7 @@ class ReviewNotificationE2ETest extends NotificationE2ETestCase
                 $this->assertEquals($review->id, $n->data['resource_id']);
             }
         );
-        $this->assertBroadcastTo('private-users.' . $user->id, BroadcastNotificationCreated::class);
+        $this->assertBroadcastTo('private-users.' . $user->id, 'review.rejected');
     }
 
     public function test_admin_reviewer_is_not_notified_on_approval(): void

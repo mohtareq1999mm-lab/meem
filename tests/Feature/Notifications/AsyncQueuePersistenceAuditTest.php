@@ -127,7 +127,7 @@ class AsyncQueuePersistenceAuditTest extends NotificationE2ETestCase
 
         $broadcast = $this->assertBroadcastTo(
             'private-users.' . $user->id,
-            \Illuminate\Notifications\Events\BroadcastNotificationCreated::class
+            'order.created'
         );
         $this->assertEquals($row->id, $broadcast['data']['id']);
         $this->assertEquals('order.created', $broadcast['data']['type']);
@@ -161,7 +161,7 @@ class AsyncQueuePersistenceAuditTest extends NotificationE2ETestCase
             array_filter(
                 $broadcasts,
                 fn ($b) => in_array('private-users.' . $user->id, $b['channels'], true)
-                    && $b['event'] === \Illuminate\Notifications\Events\BroadcastNotificationCreated::class
+                    && $b['event'] === 'order.created'
             ),
             'Broadcast job must still deliver to Pusher even when DB persistence fails.'
         );

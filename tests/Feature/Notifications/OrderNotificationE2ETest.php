@@ -49,7 +49,7 @@ class OrderNotificationE2ETest extends NotificationE2ETestCase
         // User notification was broadcast to private-users.{id}.
         $userBroadcast = $this->assertBroadcastTo(
             'private-users.' . $user->id,
-            BroadcastNotificationCreated::class
+            'order.created'
         );
         $this->assertEquals('order.created', $userBroadcast['data']['type']);
         $this->assertEquals('en', array_key_first($userBroadcast['data']['title']));
@@ -58,7 +58,7 @@ class OrderNotificationE2ETest extends NotificationE2ETestCase
         // Admin notification was broadcast to private-admin.notifications.
         $adminBroadcast = $this->assertBroadcastTo(
             'private-admin.notifications',
-            BroadcastNotificationCreated::class
+            'order.created'
         );
         $this->assertEquals('order.created', $adminBroadcast['data']['type']);
     }
@@ -92,7 +92,7 @@ class OrderNotificationE2ETest extends NotificationE2ETestCase
 
         $broadcast = $this->assertBroadcastTo(
             'private-users.' . $user->id,
-            BroadcastNotificationCreated::class
+            'payment.succeeded'
         );
         $this->assertEquals('payment.succeeded', $broadcast['data']['type']);
         $this->assertEquals($notification->id, $broadcast['data']['id']);
@@ -108,7 +108,7 @@ class OrderNotificationE2ETest extends NotificationE2ETestCase
         $this->assertDatabaseNotification($user, 'payment.failed');
         $broadcast = $this->assertBroadcastTo(
             'private-users.' . $user->id,
-            BroadcastNotificationCreated::class
+            'payment.failed'
         );
         $this->assertEquals('payment.failed', $broadcast['data']['type']);
     }
@@ -123,7 +123,7 @@ class OrderNotificationE2ETest extends NotificationE2ETestCase
         $this->assertDatabaseNotification($user, 'order.cancelled');
         $broadcast = $this->assertBroadcastTo(
             'private-users.' . $user->id,
-            BroadcastNotificationCreated::class
+            'order.cancelled'
         );
         $this->assertEquals('order.cancelled', $broadcast['data']['type']);
     }
@@ -144,7 +144,7 @@ class OrderNotificationE2ETest extends NotificationE2ETestCase
         $this->assertDatabaseNotification($user, 'order.delivered');
         $broadcast = $this->assertBroadcastTo(
             'private-users.' . $user->id,
-            BroadcastNotificationCreated::class
+            'order.delivered'
         );
         $this->assertEquals('order.delivered', $broadcast['data']['type']);
     }
@@ -160,7 +160,7 @@ class OrderNotificationE2ETest extends NotificationE2ETestCase
         $this->assertDatabaseNotification($user, 'order.refunded');
         $broadcast = $this->assertBroadcastTo(
             'private-users.' . $user->id,
-            BroadcastNotificationCreated::class
+            'order.refunded'
         );
         $this->assertEquals('order.refunded', $broadcast['data']['type']);
     }

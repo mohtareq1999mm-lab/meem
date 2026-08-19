@@ -52,12 +52,17 @@ class UserCouponUsedNotification extends Notification implements ShouldQueue
 
     public function toBroadcast($notifiable): BroadcastMessage
     {
-        return new BroadcastMessage($this->toDatabase($notifiable));
+        return (new BroadcastMessage($this->toDatabase($notifiable)))->onQueue('meem-medium');
     }
 
     public function broadcastType(): string
     {
         return 'coupon.used';
+    }
+
+    public function broadcastAs(): string
+    {
+        return $this->broadcastType();
     }
 
     public function databaseType($notifiable): string

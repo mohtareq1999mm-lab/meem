@@ -35,7 +35,7 @@ class ProductNotificationE2ETest extends NotificationE2ETestCase
                 $this->assertEquals($product->id, $n->data['resource_id']);
             }
         );
-        $this->assertBroadcastTo('private-users.' . $user->id, BroadcastNotificationCreated::class);
+        $this->assertBroadcastTo('private-users.' . $user->id, 'price.drop');
     }
 
     public function test_price_increase_does_not_notify(): void
@@ -95,7 +95,7 @@ class ProductNotificationE2ETest extends NotificationE2ETestCase
                 $this->assertEquals($product->id, $n->data['resource_id']);
             }
         );
-        $this->assertBroadcastTo('private-users.' . $user->id, BroadcastNotificationCreated::class);
+        $this->assertBroadcastTo('private-users.' . $user->id, 'back.in.stock');
     }
 
     public function test_stock_increase_when_never_out_of_stock_does_not_notify(): void
@@ -138,6 +138,6 @@ class ProductNotificationE2ETest extends NotificationE2ETestCase
                 $this->assertEquals($product->id, $n->data['resource_id']);
             }
         );
-        $this->assertBroadcastTo('private-users.' . $user->id, BroadcastNotificationCreated::class);
+        $this->assertBroadcastTo('private-users.' . $user->id, 'discount.changed');
     }
 }

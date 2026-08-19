@@ -43,7 +43,7 @@ class UserPromotionPriceDropNotification extends Notification implements ShouldQ
 
     public function toBroadcast($notifiable): BroadcastMessage
     {
-        return new BroadcastMessage($this->toDatabase($notifiable));
+        return (new BroadcastMessage($this->toDatabase($notifiable)))->onQueue('meem-medium');
     }
 
     public function broadcastType(): string
@@ -51,8 +51,14 @@ class UserPromotionPriceDropNotification extends Notification implements ShouldQ
         return 'promotion.price.drop';
     }
 
+    public function broadcastAs(): string
+    {
+        return $this->broadcastType();
+    }
+
     public function databaseType($notifiable): string
     {
         return $this->broadcastType();
     }
 }
+

@@ -50,7 +50,7 @@ class AdminLoggedInNotification extends Notification implements ShouldQueue
 
     public function toBroadcast($notifiable): BroadcastMessage
     {
-        return new BroadcastMessage($this->toDatabase($notifiable));
+        return (new BroadcastMessage($this->toDatabase($notifiable)))->onQueue('meem-medium');
     }
 
     public function broadcastType(): string
@@ -58,8 +58,14 @@ class AdminLoggedInNotification extends Notification implements ShouldQueue
         return 'admin.login';
     }
 
+    public function broadcastAs(): string
+    {
+        return $this->broadcastType();
+    }
+
     public function databaseType($notifiable): string
     {
         return $this->broadcastType();
     }
 }
+

@@ -30,7 +30,7 @@ class PusherConnectionCheckTest extends NotificationE2ETestCase
 
         $broadcast = $this->assertBroadcastTo(
             'private-users.' . $user->id,
-            BroadcastNotificationCreated::class
+            'order.created'
         );
 
         $this->assertSame('order.created', $broadcast['data']['type']);

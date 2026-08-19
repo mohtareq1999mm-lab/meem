@@ -2,9 +2,11 @@
 
 namespace Marvel\Services\Import;
 
+use App\Events\CategoryImportProgress;
 use App\Services\General\CategoryHierarchyService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Marvel\Database\Models\Category;
@@ -30,6 +32,8 @@ class CategoryImportService
     ];
 
     protected ?int $importId = null;
+
+    protected ?int $broadcastUserId = null;
 
     protected int $successCount = 0;
 
@@ -845,12 +849,7 @@ class CategoryImportService
         $this->lastTickProcessedCount = $this->successCount + count($this->failedRows);
         $this->lastTickTime = microtime(true);
 
-        $this->writeSignal('progress', [
-            'processed_rows' => $this->successCount + count($this->failedRows),
-            'success_rows' => $this->successCount,
-            'failed_rows' => count($this->failedRows),
-            'progress' => $progress,
-        ]);
+        $this->publishProgress($progress);
     }
 
     protected function flushProgressTick(): void
@@ -861,12 +860,7 @@ class CategoryImportService
             return;
         }
 
-        $this->writeSignal('progress', [
-            'processed_rows' => $this->processedCount,
-            'success_rows' => $this->successCount,
-            'failed_rows' => count($this->failedRows),
-            'progress' => $this->currentProgress,
-        ]);
+        $this->publishProgress($this->currentProgress);
     }
 
     public function finalizeProgress(): void
@@ -886,5 +880,91 @@ class CategoryImportService
             'success_rows' => $this->successCount,
             'failed_rows' => count($this->failedRows),
         ]);
+
+        $this->publishProgress(100.0);
+    }
+
+    /**
+     * Persist the progress snapshot to the signal file and broadcast it to the
+     * importing user's private channel in real time.
+     */
+    protected function publishProgress(float $progress): void
+    {
+        $data = [
+            'processed_rows' => $this->successCount + count($this->failedRows),
+            'success_rows' => $this->successCount,
+            'failed_rows' => count($this->failedRows),
+            'progress' => $progress,
+        ];
+
+        $this->writeSignal('progress', $data);
+
+        if (!$this->shouldBroadcastProgress()) {
+            return;
+        }
+
+        $this->broadcastProgress($data);
+    }
+
+    protected function shouldBroadcastProgress(): bool
+    {
+        return config('app.env') !== 'testing';
+    }
+
+    protected function resolveBroadcastUserId(): ?int
+    {
+        if ($this->broadcastUserId !== null) {
+            return $this->broadcastUserId;
+        }
+
+        if ($this->importId === null) {
+            return null;
+        }
+
+        $this->broadcastUserId = (int) Import::where('id', $this->importId)->value('created_by') ?: null;
+
+        return $this->broadcastUserId;
+    }
+
+    protected function broadcastProgress(array $data): void
+    {
+        $userId = $this->resolveBroadcastUserId();
+
+        if ($userId === null) {
+            Log::warning('category.import.progress.skipped', [
+                'import_id' => $this->importId,
+                'reason' => 'no_creator_user',
+            ]);
+
+            return;
+        }
+
+        Log::info('category.import.progress.dispatch', [
+            'import_id' => $this->importId,
+            'user_id' => $userId,
+            'channel' => 'private-users.' . $userId,
+            'event' => 'category.import.progress',
+            'payload' => $data,
+        ]);
+
+        try {
+            CategoryImportProgress::dispatch($userId, $this->importId, $data);
+
+            Log::info('category.import.progress.dispatched', [
+                'import_id' => $this->importId,
+                'user_id' => $userId,
+                'channel' => 'private-users.' . $userId,
+                'event' => 'category.import.progress',
+                'payload' => $data,
+            ]);
+        } catch (Throwable $e) {
+            Log::error('category.import.progress.broadcast_failed', [
+                'import_id' => $this->importId,
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+            ]);
+
+            report($e);
+        }
     }
 }

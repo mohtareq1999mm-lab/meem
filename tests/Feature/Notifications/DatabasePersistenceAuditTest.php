@@ -82,7 +82,7 @@ class DatabasePersistenceAuditTest extends NotificationE2ETestCase
         // 4. Broadcast reached Pusher with the same logical identity.
         $broadcast = $this->assertBroadcastTo(
             'private-users.' . $user->id,
-            BroadcastNotificationCreated::class
+            'order.created'
         );
         $this->assertEquals('order.created', $broadcast['data']['type']);
         $this->assertEquals($row->id, $broadcast['data']['id']);

@@ -17,12 +17,12 @@ class NewOrderNotification extends Notification implements ShouldQueue
         $this->onQueue('meem-medium');
     }
 
-    public function via($notifiable): array
+    public function via(): array
     {
         return ['database', 'broadcast'];
     }
 
-    public function toDatabase($notifiable): array
+    public function toDatabase(): array
     {
         return [
             'title' => [
@@ -46,14 +46,19 @@ class NewOrderNotification extends Notification implements ShouldQueue
         ];
     }
 
-    public function toBroadcast($notifiable): BroadcastMessage
+    public function toBroadcast($notifiable)
     {
-        return new BroadcastMessage($this->toDatabase($notifiable));
+        return (new BroadcastMessage($this->toDatabase($notifiable)))->onQueue('meem-medium');
     }
 
     public function broadcastType(): string
     {
         return 'order.created';
+    }
+
+    public function broadcastAs(): string
+    {
+        return $this->broadcastType();
     }
 
     public function databaseType($notifiable): string

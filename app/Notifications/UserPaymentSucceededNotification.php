@@ -46,7 +46,7 @@ class UserPaymentSucceededNotification extends Notification implements ShouldQue
 
     public function toBroadcast($notifiable): BroadcastMessage
     {
-        return new BroadcastMessage($this->toDatabase($notifiable));
+        return (new BroadcastMessage($this->toDatabase($notifiable)))->onQueue('meem-medium');
     }
 
     public function broadcastType(): string
@@ -54,8 +54,14 @@ class UserPaymentSucceededNotification extends Notification implements ShouldQue
         return 'payment.succeeded';
     }
 
+    public function broadcastAs(): string
+    {
+        return $this->broadcastType();
+    }
+
     public function databaseType($notifiable): string
     {
         return $this->broadcastType();
     }
 }
+

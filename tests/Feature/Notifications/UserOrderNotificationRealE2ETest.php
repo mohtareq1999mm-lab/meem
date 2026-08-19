@@ -348,7 +348,7 @@ class UserOrderNotificationRealE2ETest extends NotificationE2ETestCase
 
         $broadcast = $this->assertBroadcastTo(
             'private-users.' . $user->id,
-            BroadcastNotificationCreated::class
+            'order.created'
         );
 
         $this->assertEquals('order.created', $broadcast['data']['type']);
@@ -363,7 +363,7 @@ class UserOrderNotificationRealE2ETest extends NotificationE2ETestCase
         $this->assertNotNull($row);
         $this->assertEquals($row->id, $broadcast['data']['id']);
 
-        fwrite(STDERR, "\n[REPORT K] BROADCAST OK — private-users.{$user->id} <- " . BroadcastNotificationCreated::class . " (same id as DB row)\n");
+        fwrite(STDERR, "\n[REPORT K] BROADCAST OK — private-users.{$user->id} <- " . 'order.created' . " (same id as DB row)\n");
     }
 
     // ==================== L — E2E ====================
@@ -391,7 +391,7 @@ class UserOrderNotificationRealE2ETest extends NotificationE2ETestCase
         // Pusher got it.
         $broadcast = $this->assertBroadcastTo(
             'private-users.' . $user->id,
-            BroadcastNotificationCreated::class
+            'order.created'
         );
         $this->assertEquals($row->id, $broadcast['data']['id']);
 
@@ -490,7 +490,7 @@ class UserOrderNotificationRealE2ETest extends NotificationE2ETestCase
         // Pusher received the notification for the user.
         $broadcast = $this->assertBroadcastTo(
             'private-users.' . $user->id,
-            BroadcastNotificationCreated::class
+            'order.created'
         );
         $this->assertEquals('order.created', $broadcast['data']['type']);
 

@@ -47,7 +47,7 @@ class PromotionFlashSaleNotificationE2ETest extends NotificationE2ETestCase
                     $this->assertEquals($promotion->id, $n->data['resource_id']);
                 }
             );
-            $this->assertBroadcastTo('private-users.' . $user->id, BroadcastNotificationCreated::class);
+            $this->assertBroadcastTo('private-users.' . $user->id, 'promotion.available');
         }
 
         // "price drop" fan-out reaches only wishlist users.
@@ -80,7 +80,7 @@ class PromotionFlashSaleNotificationE2ETest extends NotificationE2ETestCase
                     $this->assertEquals($flashSale->id, $n->data['resource_id']);
                 }
             );
-            $this->assertBroadcastTo('private-users.' . $user->id, BroadcastNotificationCreated::class);
+            $this->assertBroadcastTo('private-users.' . $user->id, 'flash_sale.available');
         }
 
         $this->assertDatabaseNotification($wishlistUser, 'flash_sale.price.drop');
@@ -108,7 +108,7 @@ class PromotionFlashSaleNotificationE2ETest extends NotificationE2ETestCase
                 $this->assertEquals($promotion->id, $n->data['resource_id']);
             }
         );
-        $this->assertBroadcastTo('private-users.' . $user->id, BroadcastNotificationCreated::class);
+        $this->assertBroadcastTo('private-users.' . $user->id, 'promotion.ending_soon');
 
         $this->assertEquals(
             1,

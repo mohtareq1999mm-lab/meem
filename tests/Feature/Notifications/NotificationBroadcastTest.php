@@ -25,12 +25,12 @@ class NotificationBroadcastTest extends NotificationE2ETestCase
 
         $broadcast = $this->assertBroadcastTo(
             'private-users.' . $user->id,
-            BroadcastNotificationCreated::class
+            'order.created'
         );
 
         // Channel + event name.
         $this->assertEquals(['private-users.' . $user->id], $broadcast['channels']);
-        $this->assertEquals(BroadcastNotificationCreated::class, $broadcast['event']);
+        $this->assertEquals('order.created', $broadcast['event']);
 
         // Payload: stable business type + notification id + localized maps.
         $data = $broadcast['data'];
@@ -79,11 +79,9 @@ class NotificationBroadcastTest extends NotificationE2ETestCase
                     "Invalid Pusher channel name: {$channel}"
                 );
             }
-            // Laravel emits the notification event's FQCN by default
-            // (BroadcastNotificationCreated has no broadcastAs). The only
-            // documented hard limit is 200 characters; whether the FQCN's
-            // backslashes/dots are accepted by the broker is verified against
-            // the real Pusher API in NotificationPusherIntegrationTest.
+            // Every notification broadcasts with its own stable event name
+            // (broadcastAs() returns broadcastType(), e.g. 'order.created')
+            // instead of a shared FQCN, so clients can listen per type.
             $this->assertLessThanOrEqual(200, strlen($broadcast['event']));
             $this->assertIsArray($broadcast['data']);
         }

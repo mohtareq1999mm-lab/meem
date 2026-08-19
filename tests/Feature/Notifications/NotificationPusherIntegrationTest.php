@@ -59,7 +59,7 @@ class NotificationPusherIntegrationTest extends NotificationE2ETestCase
 
         $broadcast = $this->assertBroadcastTo(
             'private-users.' . $user->id,
-            BroadcastNotificationCreated::class
+            'order.created'
         );
 
         // Push the exact recorded payload to the real broker. A non-200
