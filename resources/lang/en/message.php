@@ -468,6 +468,9 @@ return [
     'MESSAGE.FAST_SHIPPING_PRODUCT_NOT_ELIGIBLE' => 'One or more products are not eligible for fast shipping',
     'MESSAGE.FAST_SHIPPING_MIXED_CART' => 'Fast shipping and scheduled shipping cannot be mixed in the same order',
 
+    // Orders
+    'MESSAGE.ORDER_STATUS_UPDATED_SUCCESSFULLY' => 'Order status updated successfully',
+
     // Stock
     'ERROR.VARIANT_STOCK_EXCEEDED' => 'Quantity of ":product_name" exceeds available stock.',
     'ERROR.PRODUCT_STOCK_EXCEEDED' => '":product_name" exceeds available stock.',

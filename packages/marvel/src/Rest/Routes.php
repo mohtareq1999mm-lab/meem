@@ -164,6 +164,7 @@ Route::middleware(['auth:sanctum', 'throttle:admin'])->group(function () {
 
     Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('orders/{id}', [OrderController::class, 'show'])->name('orders.show');
+    Route::patch('orders/{id}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status')->whereNumber('id');
 
 //==================================== banner ========================/
     Route::put('banner/change-status', [BannerController::class, 'changeStatus']);

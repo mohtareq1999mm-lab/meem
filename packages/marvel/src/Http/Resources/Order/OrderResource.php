@@ -22,7 +22,7 @@ class OrderResource extends Resource
                 'email' => $this->user->email,
                 'phone' => $this->user->phone_number,
             ]),
-            $this->mergeWhen(request()->routeIs('orders.show'), [
+            $this->mergeWhen(request()->routeIs('orders.show', 'orders.update-status'), [
                 'customer_name' => $this->name,
                 'customer_phone' => $this->user_phone,
                 'customer_email' => $this->user_email,

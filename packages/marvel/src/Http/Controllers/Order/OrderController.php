@@ -2,11 +2,13 @@
 
 namespace Marvel\Http\Controllers\Order;
 
+use App\Services\General\OrderService;
 use Illuminate\Http\Request;
 use Marvel\Database\Models\Order;
 use Marvel\Database\Models\Promotion;
 use Marvel\Enums\Permission;
 use Marvel\Http\Controllers\CoreController;
+use Marvel\Http\Requests\OrderStatusUpdateRequest;
 use Marvel\Http\Resources\Order\OrderCollection;
 use Marvel\Http\Resources\Order\OrderResource;
 use Marvel\Traits\ApiResponse;
@@ -15,10 +17,11 @@ class OrderController extends CoreController
 {
     use ApiResponse;
 
-    public function __construct()
+    public function __construct(private OrderService $orderService)
     {
         $this->middleware('permission:'.Permission::VIEW_ORDERS)->only(['index']);
         $this->middleware('permission:'.Permission::VIEW_ORDER)->only(['show']);
+        $this->middleware('permission:'.Permission::UPDATE_ORDER_STATUS)->only(['updateStatus']);
     }
 
     public function index(Request $request)
@@ -75,6 +78,32 @@ class OrderController extends CoreController
             200,
             true,
             new OrderResource($order)
+        );
+    }
+
+    public function updateStatus(OrderStatusUpdateRequest $request, string $param)
+    {
+        $order = Order::query()->find($param);
+
+        if (!$order) {
+            return $this->apiResponse(NOT_FOUND, 404, false);
+        }
+
+        try {
+            $order = $this->orderService->changeOrderStatus(null, $request->status, $order->id);
+        } catch (\RuntimeException $e) {
+            return $this->apiResponse($e->getMessage(), 422, false);
+        }
+
+        if (!$order) {
+            return $this->apiResponse(NOT_FOUND, 404, false);
+        }
+
+        return $this->apiResponse(
+            ORDER_STATUS_UPDATED_SUCCESSFULLY,
+            200,
+            true,
+            new OrderResource($order->load($this->relations()))
         );
     }
 

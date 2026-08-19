@@ -57,10 +57,12 @@ class AdminOrderTest extends TestCase
 
         \Spatie\Permission\Models\Permission::create(['name' => Permission::VIEW_ORDERS, 'guard_name' => 'api']);
         \Spatie\Permission\Models\Permission::create(['name' => Permission::VIEW_ORDER, 'guard_name' => 'api']);
+        \Spatie\Permission\Models\Permission::create(['name' => Permission::UPDATE_ORDER_STATUS, 'guard_name' => 'api']);
 
         $this->admin->givePermissionTo([
             Permission::VIEW_ORDERS,
             Permission::VIEW_ORDER,
+            Permission::UPDATE_ORDER_STATUS,
         ]);
 
         $this->product = Product::create([
@@ -462,5 +464,201 @@ class AdminOrderTest extends TestCase
         $this->assertArrayHasKey('status', $transaction);
         $this->assertArrayHasKey('amount', $transaction);
         $this->assertArrayHasKey('created_at', $transaction);
+    }
+
+    // =========================================================================
+    // PATCH /orders/{id}/status — Update Status
+    // =========================================================================
+
+    public function test_update_status_requires_authentication()
+    {
+        $order = $this->createOrder();
+
+        $response = $this->patchJson(self::PREFIX . '/orders/' . $order->id . '/status', [
+            'status' => 'completed',
+        ]);
+
+        $response->assertStatus(401);
+    }
+
+    public function test_update_status_requires_update_order_status_permission()
+    {
+        $order = $this->createOrder();
+
+        $this->authUser();
+        $response = $this->patchJson(self::PREFIX . '/orders/' . $order->id . '/status', [
+            'status' => 'completed',
+        ]);
+
+        $response->assertStatus(403);
+    }
+
+    public function test_update_status_updates_order_to_completed()
+    {
+        $this->authAdmin();
+
+        $order = $this->createOrder();
+
+        $response = $this->patchJson(self::PREFIX . '/orders/' . $order->id . '/status', [
+            'status' => 'completed',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJsonStructure([
+            'status', 'message', 'success',
+            'data' => [
+                'id',
+                'order_number',
+                'status',
+                'payment_status',
+                'customer',
+                'created_at',
+                'updated_at',
+            ],
+        ]);
+        $this->assertTrue($response->json('success'));
+        $this->assertEquals('completed', $response->json('data.status'));
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => 'completed',
+        ]);
+
+        $fresh = $order->fresh();
+        $this->assertEquals('payment-success', $fresh->payment_status);
+        $this->assertNotNull($fresh->completed_at);
+    }
+
+    public function test_update_status_to_processing_is_supported()
+    {
+        $this->authAdmin();
+
+        $order = $this->createOrder();
+
+        $response = $this->patchJson(self::PREFIX . '/orders/' . $order->id . '/status', [
+            'status' => 'processing',
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertEquals('processing', $response->json('data.status'));
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => 'processing',
+        ]);
+    }
+
+    public function test_update_status_completed_to_delivered()
+    {
+        $this->authAdmin();
+
+        $order = $this->createOrder(['status' => 'completed']);
+
+        $response = $this->patchJson(self::PREFIX . '/orders/' . $order->id . '/status', [
+            'status' => 'delivered',
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertEquals('delivered', $response->json('data.status'));
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => 'delivered',
+        ]);
+    }
+
+    public function test_update_status_to_cancelled_sets_cancelled_at()
+    {
+        $this->authAdmin();
+
+        $order = $this->createOrder();
+
+        $response = $this->patchJson(self::PREFIX . '/orders/' . $order->id . '/status', [
+            'status' => 'cancelled',
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertEquals('cancelled', $response->json('data.status'));
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => 'cancelled',
+        ]);
+        $this->assertNotNull($order->fresh()->cancelled_at);
+    }
+
+    public function test_update_status_returns_404_for_nonexistent_order()
+    {
+        $this->authAdmin();
+
+        $response = $this->patchJson(self::PREFIX . '/orders/99999/status', [
+            'status' => 'completed',
+        ]);
+
+        $response->assertStatus(404);
+        $this->assertFalse($response->json('success'));
+    }
+
+    public function test_update_status_returns_422_for_missing_status()
+    {
+        $this->authAdmin();
+
+        $order = $this->createOrder();
+
+        $response = $this->patchJson(self::PREFIX . '/orders/' . $order->id . '/status', []);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['status']);
+    }
+
+    public function test_update_status_returns_422_for_invalid_status()
+    {
+        $this->authAdmin();
+
+        $order = $this->createOrder();
+
+        $response = $this->patchJson(self::PREFIX . '/orders/' . $order->id . '/status', [
+            'status' => 'shipped',
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['status']);
+    }
+
+    public function test_update_status_returns_422_for_invalid_transition()
+    {
+        $this->authAdmin();
+
+        $order = $this->createOrder(['status' => 'delivered']);
+
+        $response = $this->patchJson(self::PREFIX . '/orders/' . $order->id . '/status', [
+            'status' => 'pending',
+        ]);
+
+        $response->assertStatus(422);
+        $this->assertFalse($response->json('success'));
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => 'delivered',
+        ]);
+    }
+
+    public function test_update_status_response_includes_order_details()
+    {
+        $this->authAdmin();
+
+        $order = $this->createOrder();
+        $this->createOrderWithItems($order);
+        $this->createOrderWithTransaction($order);
+
+        $response = $this->patchJson(self::PREFIX . '/orders/' . $order->id . '/status', [
+            'status' => 'completed',
+        ]);
+
+        $response->assertStatus(200);
+        $data = $response->json('data');
+
+        $this->assertEquals('John Doe', $data['customer_name']);
+        $this->assertEquals('john@example.com', $data['customer_email']);
+        $this->assertCount(1, $data['order_items']);
+        $this->assertCount(1, $data['transactions']);
     }
 }
