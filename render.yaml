@@ -120,8 +120,8 @@ services:
       - key: SESSION_DRIVER
         value: redis
 
-      - key: QUEUE_CONNECTION
-        value: redis  # Queued jobs processed by Supervisor workers (meem-high/meem-medium)
+- key: QUEUE_CONNECTION
+        value: database  # Queued jobs stored in the jobs table, processed by Supervisor workers (meem-high/meem-medium)
       
       # =======================================================================
       # Migration Control
