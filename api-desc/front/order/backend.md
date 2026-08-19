@@ -48,6 +48,7 @@ The Order feature is event-driven with a complex lifecycle spanning cart → che
 | Method | Route | Description |
 |--------|-------|-------------|
 | `index()` | `GET /orders` | Returns authenticated user's orders |
+| `show()` | `GET /orders/{id}` | Returns authenticated user's own order details (owner-only, 404 otherwise) |
 | `checkout()` | `POST /checkout` | Creates order from cart |
 | `eligiblePromotions()` | `GET /checkout/promotions` | Available promotions |
 | `markCodAsPaid()` | `POST /checkout/cod/{id}/mark-paid` | Admin marks COD paid |
@@ -68,6 +69,7 @@ The Order feature is event-driven with a complex lifecycle spanning cart → che
 | Method | Description |
 |--------|-------------|
 | `paginateForUser($request)` | Lists user's orders with optional `status` and `limit` filters |
+| `getOrderForUser($request, $orderId)` | Returns a single order scoped to the authenticated user (`WHERE id AND user_id`), or `null` |
 | `addItemsInOrder($request)` | Creates order from cart |
 | `changeOrderStatus($invoice_id, $status, $user)` | Status transition with validation |
 | `syncStatus($orderId)` | Syncs legacy order_status → modern status |

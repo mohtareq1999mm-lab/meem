@@ -53,7 +53,86 @@
 
 ---
 
-### 2. Checkout (Create Order)
+### 2. Order Details (Customer)
+
+**GET** `/api/v1/general/orders/{id}`
+
+**Purpose:** Retrieve the authenticated user's **own** order details. The Order must belong to the authenticated User — another User's Order always returns `404`.
+
+#### Authentication
+
+| Aspect | Detail |
+|--------|--------|
+| Required | Yes |
+| Guard | `sanctum` |
+
+#### Route Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | `integer` | Order ID (numeric only) |
+
+#### Ownership & Security
+
+- The authenticated User is determined **exclusively** from the token — no `user_id` is accepted from the request.
+- Ownership is enforced at the query level: `WHERE id = ? AND user_id = auth()->id()`.
+- Requesting another User's Order returns `404 Not Found` (never `403`), so the existence of another User's Order is not revealed.
+- No `user_id` request parameter is read or honored.
+
+#### Success Response (200)
+
+```json
+{
+    "status": 200,
+    "message": "Data fetched successfully",
+    "success": true,
+    "data": {
+        "id": 1,
+        "order_number": "ORD-00000001",
+        "status": "pending",
+        "subtotal": 100.00,
+        "discount": 0,
+        "coupon": null,
+        "total": 120.00,
+        "converted_total": 120.00,
+        "currency": "USD",
+        "base_currency": "USD",
+        "fulfillment_type": "delivery",
+        "payment_method": "cod",
+        "shipping_price": 20.00,
+        "pickup_location": null,
+        "invoice_summary": null,
+        "created_at": "2026-08-19T14:00:00Z",
+        "order_items": [
+            {
+                "id": 1,
+                "quantity": 2,
+                "unit_price": 100.00,
+                "total_price": 200.00,
+                "product": {
+                    "id": 10,
+                    "name": "Test Product",
+                    "sku": "TP-001"
+                }
+            }
+        ],
+        "payment_gateway": null,
+        "order_has_invoice": false,
+        "invoice_id": null
+    }
+}
+```
+
+#### Error Responses
+
+| Status | When | Body |
+|--------|------|------|
+| `401` | Unauthenticated | `{ "status": 401, "success": false }` |
+| `404` | Order not found OR not owned by the authenticated User | `{ "status": 404, "message": "Not found", "success": false }` |
+
+---
+
+### 3. Checkout (Create Order)
 
 **POST** `/api/v1/general/checkout`
 
@@ -98,7 +177,7 @@
 
 ---
 
-### 3. Mark COD as Paid (Admin)
+### 4. Mark COD as Paid (Admin)
 
 **POST** `/api/v1/general/checkout/cod/{orderId}/mark-paid`
 
@@ -122,7 +201,7 @@
 
 ---
 
-### 4. Payment Callback (Public)
+### 5. Payment Callback (Public)
 
 **ANY** `/api/v1/general/checkout/callback`
 
@@ -140,7 +219,7 @@
 
 ---
 
-### 5. List Orders (Admin)
+### 6. List Orders (Admin)
 
 **GET** `/api/v1/orders`
 
@@ -169,7 +248,7 @@ Standard paginated response with full order resources.
 
 ---
 
-### 6. Order Statuses (Enum)
+### 7. Order Statuses (Enum)
 
 ```php
 OrderStatus::PENDING           = 'order-pending'

@@ -34,7 +34,8 @@
 **So that** I can see items, pricing, and delivery info
 
 **Acceptance Criteria:**
-- Fetches order detail from orders list data or dedicated endpoint
+- Fetches order detail from `GET /api/v1/general/orders/{id}` (dedicated endpoint)
+- Ownership enforced server-side: the endpoint only returns the authenticated user's own order; another user's order ID returns 404 — the frontend must treat 404 on order detail as "not accessible" and navigate back to the orders list
 - Shows: order number, date, status, items list with images
 - Price breakdown: subtotal, shipping, discount, total
 - Delivery information: address, governorate, fulfillment type
@@ -152,6 +153,9 @@ test('redirects on 401', async () => {
 | 1 | `myOrders calls GET /api/v1/general/orders with params` | Passes page, status, search |
 | 2 | `myOrders sends auth token in header` | Authorization header present |
 | 3 | `myOrders throws on non-2xx response` | Error handling |
+| 4 | `myOrder calls GET /api/v1/general/orders/{id}` | Passes the order id in the URL |
+| 5 | `myOrder sends auth token in header` | Authorization header present |
+| 6 | `myOrder handles 404 for another user's order` | Returns error / navigates back |
 
 ---
 
@@ -190,4 +194,5 @@ test('redirects on 401', async () => {
 | Method | Endpoint | Auth | Usage |
 |--------|----------|------|-------|
 | GET | `/api/v1/general/orders?status=&limit=&page=` | Sanctum | My orders (with optional filters) |
+| GET | `/api/v1/general/orders/{id}` | Sanctum | My order details (owner only) |
 

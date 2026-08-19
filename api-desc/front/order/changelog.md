@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Added
+- **Customer order details endpoint:** `GET /api/v1/general/orders/{id}` returns the authenticated user's own order via `OrderService::getOrderForUser()`. Ownership is enforced at the query level (`WHERE id AND user_id`); another user's order always returns `404`. No `user_id` is accepted from the request.
+
 ### Fixed
 - **HIGH:** `GET /api/v1/general/orders?status={status}` now correctly filters by order status. The `status` query parameter was previously completely ignored — all orders were returned regardless of the specified status.
 ### Added

@@ -26,7 +26,33 @@ OrderService::paginateForUser($request)
 Response: Paginated orders filtered by status
 ```
 
-## Flow 1: Checkout → Order Creation
+## Flow 1: View Own Order Details
+
+```
+Client (Auth)
+  |
+  GET /api/v1/general/orders/{id}
+  |
+  v
+OrderController@show(Request, $orderId)
+  |
+  v
+OrderService::getOrderForUser($request, $orderId)
+  |
+  +-- $userId = auth()->user()->id        // from token, never from request
+  |
+  +-- Order::query()
+  |     |-- forUser($userId)              // WHERE id = ? AND user_id = ?
+  |     |-- with(orderListRelations)      // Eager loads
+  |     |-- find($orderId)
+  |
+  +-- Not found (no such id OR another user's order) → null → 404
+  |
+  v
+Response: OrderResource for the owner only
+```
+
+## Flow 2: Checkout → Order Creation
 
 ```
 Client (Auth)
@@ -68,7 +94,7 @@ OrderCreationService::createOrder($request, $user)
 Response: { order_id, total, message }
 ```
 
-## Flow 2: Payment Callback (Online)
+## Flow 3: Payment Callback (Online)
 
 ```
 Payment Gateway
@@ -94,7 +120,7 @@ Gateway::verifyPayment($paymentId)
         |-- Dispatch: PaymentFailed
 ```
 
-## Flow 3: Admin Status Change
+## Flow 4: Admin Status Change
 
 ```
 Admin

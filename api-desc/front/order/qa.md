@@ -24,10 +24,17 @@
 | TC-ORD-018 | Guest cannot checkout | 401 |
 | TC-ORD-019 | Guest cannot view orders | 401 |
 | TC-ORD-020 | Cancelled order restores inventory | Stock restored |
+| TC-ORD-021 | Authenticated user views own order detail | 200 + order resource |
+| TC-ORD-022 | Authenticated user requests another user's order | 404 (no data leaked) |
+| TC-ORD-023 | Authenticated user requests nonexistent order | 404 |
+| TC-ORD-024 | Order detail ignores `user_id` query parameter | 404 (ownership from token only) |
 
 ## Manual Test Checklist
 
 - [ ] Verify customer can see only their orders
+- [ ] Verify customer can open their own order detail (200)
+- [ ] Verify customer gets 404 (not 403/200) when opening another user's order
+- [ ] Verify changing the order ID in the URL cannot reveal another user's order data
 - [ ] Verify checkout creates order with correct totals
 - [ ] Verify COD payment flow (pending → mark-paid → completed)
 - [ ] Verify online payment flow (pending → callback → completed)

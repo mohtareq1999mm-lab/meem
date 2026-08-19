@@ -2,7 +2,7 @@
 
 ## Current Coverage
 
-**43 tests across 2 files:**
+**50 tests across 3 files:**
 
 ### OrdersProductionHardenTest (25 tests)
 
@@ -26,6 +26,17 @@
 | Discount Pricing | Percentage, Fixed, Null, Computed price (4) |
 | Variant Pricing | Flash sale for variants (percentage/fixed/final), Discount for variants (percentage/fixed) (5) |
 | Edge Cases | Product without variant, Variant without price, Variant product unit price (3) |
+
+### UserOrderDetailTest (6 tests)
+
+| Category | Tests |
+|----------|-------|
+| Authentication | `show_requires_authentication` (401) |
+| Own Order | `show_returns_own_order_details` (200 + resource structure) |
+| Authorization | `show_returns_404_for_another_users_order` |
+| Not Found | `show_returns_404_for_nonexistent_order` |
+| Security Regression | `show_does_not_expose_another_users_order_by_changing_id` |
+| Input Integrity | `show_does_not_accept_user_id_from_request` |
 
 ### TC-REG-ORD-001: Status Filter on List Orders
 

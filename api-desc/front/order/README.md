@@ -14,6 +14,7 @@ The Order feature provides complete order lifecycle management — from checkout
 [Client]
     |
     |--- GET  /api/v1/general/orders                    (Auth: My Orders)
+    |--- GET  /api/v1/general/orders/{id}               (Auth: My Order Details — owner only)
     |--- POST /api/v1/general/checkout                   (Auth: Create Order)
     |--- POST /api/v1/general/checkout/cod/{id}/mark-paid (Auth: Mark COD Paid)
     |--- ANY  /api/v1/general/checkout/callback          (Public: Gateway)
@@ -47,6 +48,7 @@ The Order feature provides complete order lifecycle management — from checkout
 | Method | URI | Auth |
 |--------|-----|------|
 | GET | `/v1/general/orders` | `auth:sanctum` |
+| GET | `/v1/general/orders/{id}` | `auth:sanctum` (owner only) |
 | POST | `/v1/general/checkout` | `auth:sanctum` |
 | POST | `/v1/general/checkout/cod/{orderId}/mark-paid` | `auth:sanctum` + `update-order-status` |
 | POST | `/v1/general/checkout/cashier/{orderId}/mark-paid` | `auth:sanctum` + `update-order-status` |

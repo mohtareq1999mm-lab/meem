@@ -16,7 +16,18 @@
 - Paginated with order number, status, total, date
 - Search by order number
 
-### US-002: Checkout (Customer)
+### US-002: View My Order Details (Customer)
+**As** a customer
+**I want** to view the full details of one of my orders
+**So that** I can see items, pricing, and delivery information
+
+**Acceptance Criteria:**
+- `GET /api/v1/general/orders/{id}` returns the authenticated user's own order
+- Ownership is enforced at the query level — another user's order ID returns `404`
+- No `user_id` is accepted from the request; the user comes exclusively from the auth token
+- Returns the existing Order Resource with items, pricing, payment, and shipping info
+
+### US-003: Checkout (Customer)
 **As** a customer
 **I want** to place an order from my cart
 **So that** I can purchase products
@@ -27,7 +38,7 @@
 - Validates cart, inventory, governorate
 - Price snapshot preserves current prices
 
-### US-003: Manage Orders (Admin)
+### US-004: Manage Orders (Admin)
 **As** an admin
 **I want** to view and manage all orders
 **So that** I can process fulfillment
@@ -37,12 +48,12 @@
 - `PUT /api/v1/orders/{id}` status transitions
 - `POST /checkout/cod/{id}/mark-paid` for COD payments
 
-### US-004: Export & Invoices (Admin)
+### US-005: Export & Invoices (Admin)
 **As** an admin
 **I want** to export orders and download invoices
 **So that** I can manage accounting
 
-### US-005: Order Events & Notifications
+### US-006: Order Events & Notifications
 **As** a customer
 **I want** to receive notifications when my order status changes
 **So that** I stay informed
