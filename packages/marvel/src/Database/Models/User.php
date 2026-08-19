@@ -5,6 +5,7 @@ namespace Marvel\Database\Models;
 // DISABLED: Email verification not needed
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\UserType;
 use App\Notifications\VerifyEmailNotification;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -348,8 +349,12 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
         return method_exists($result, 'isOk') ? $result->isOk() : false;
     }
 
-    public function receivesBroadcastNotificationsOn(): string
+    public function receivesBroadcastNotificationsOn($notification = null): string
     {
+        if ($this->type === UserType::ADMIN->value) {
+            return 'admin.notifications';
+        }
+
         return 'users.' . $this->id;
     }
 

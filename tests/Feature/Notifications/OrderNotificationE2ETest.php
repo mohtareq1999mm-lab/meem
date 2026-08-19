@@ -55,9 +55,9 @@ class OrderNotificationE2ETest extends NotificationE2ETestCase
         $this->assertEquals('en', array_key_first($userBroadcast['data']['title']));
         $this->assertEquals($userNotification->id, $userBroadcast['data']['id']);
 
-        // Admin notification was broadcast to private-users.{adminId}.
+        // Admin notification was broadcast to private-admin.notifications.
         $adminBroadcast = $this->assertBroadcastTo(
-            'private-users.' . $admin->id,
+            'private-admin.notifications',
             BroadcastNotificationCreated::class
         );
         $this->assertEquals('order.created', $adminBroadcast['data']['type']);
