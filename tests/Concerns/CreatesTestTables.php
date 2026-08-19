@@ -399,6 +399,7 @@ Schema::create('categories', function (Blueprint $table) {
             $table->json('working_hours')->nullable();
             $table->boolean('status')->default(true);
             $table->integer('display_order')->default(0);
+            $table->boolean('is_default')->default(false);
             $table->timestamps();
             $table->softDeletes();
         });

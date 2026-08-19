@@ -2,7 +2,7 @@
 
 ## Current Coverage
 
-### PickupLocationTest (525 lines, 18 tests)
+### PickupLocationTest (825 lines, 29 tests)
 
 | Category | Tests | File |
 |----------|-------|------|
@@ -11,6 +11,7 @@
 | Authorization | 3 | `PickupLocationTest.php` |
 | Public API | 3 | `PickupLocationTest.php` |
 | Edge Cases | 3 | `PickupLocationTest.php` |
+| Default location | 11 | `PickupLocationTest.php` |
 
 ### PickupLocationPricingIntegrationTest (1232 lines, 40+ tests)
 
@@ -24,7 +25,7 @@
 | Order resource | 2 | `PickupLocationPricingIntegrationTest.php` |
 | Validation | 2 | `PickupLocationPricingIntegrationTest.php` |
 
-### Test Count: ~58 tests total
+### Test Count: ~69 tests total
 
 ## What's Covered
 
@@ -51,6 +52,17 @@
 ✅ Order resource excludes pickup_location for delivery orders
 ✅ Working hours validation
 ✅ Soft-deleted pickup location preserves snapshot in existing orders
+✅ Create with is_default=true resets previous default
+✅ Update setting is_default=true resets others
+✅ Updating default's other fields preserves is_default
+✅ Exactly one default at a time
+✅ Deleting default promotes next by id
+✅ Deleting non-default keeps default
+✅ Admin resource exposes is_default
+✅ Public resource exposes is_default
+✅ Service returns active default (null when none active)
+✅ Store validates is_default is boolean
+✅ Create without is_default defaults to false
 
 ## Recommended Additional Tests
 
@@ -60,3 +72,5 @@
 | FT-002 | Both active + inactive filters together | Low |
 | FT-003 | Public show returns 404 for soft-deleted | Medium |
 | FT-004 | Export/import pickup locations | Low |
+| FT-005 | Delete default when it's the only location (no promotion, no error) | Medium |
+| FT-006 | Soft-deleted default doesn't get promoted from (withTrashed reset verified) | Medium |

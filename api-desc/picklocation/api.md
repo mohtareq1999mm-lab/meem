@@ -27,6 +27,7 @@ Sorted by `display_order ASC`, then `id ASC`.
                 ],
                 "status": true,
                 "display_order": 1,
+                "is_default": true,
                 "created_at": "2026-07-20T10:00:00.000000Z"
             }
         ],
@@ -66,6 +67,9 @@ Note: Pagination metadata is manually extracted from the underlying ResourceColl
 | `working_hours.*.close` | string | With working_hours | |
 | `status` | bool | No | in:1,0 |
 | `display_order` | int | No | min:0 |
+| `is_default` | bool | No | boolean |
+
+**Default switching:** Setting `is_default: true` atomically clears the flag on every other location — exactly one default is guaranteed. Omit `is_default` (defaults to `false`).
 
 ## 3. Admin: Show Pickup Location
 
@@ -94,23 +98,30 @@ All fields are optional (`sometimes`).
 | `working_hours.*.close` | string | With working_hours | required_with:working_hours |
 | `status` | bool | No | in:1,0 |
 | `display_order` | int | No | min:0 |
+| `is_default` | bool | No | boolean |
 
 **Note:** Update uses translatable `day.ar`/`day.en` keys (strings) instead of a flat `day` string used in Create.
+
+**Default behavior:**
+- Setting `is_default: true` on any location switches the default (others reset atomically).
+- Updating other fields of the current default preserves `is_default`.
+- Setting `is_default: false` on a location just clears it (no auto-promotion).
+- Deleting the default promotes the next location by lowest `id` automatically.
 
 ## 5. Admin: Delete Pickup Location
 
 **DELETE** `/api/v1/pickup-locations/{id}`
 
-Uses SoftDeletes — record is not hard-removed.
+Uses SoftDeletes — record is not hard-removed. If the deleted location was the default, the remaining location with the lowest `id` is promoted to default.
 
 ## 6. Public: List Active Pickup Locations
 
 **GET** `/api/v1/general/pickup-locations`
 
-Returns only `status = true` locations. No auth required.
+Returns only `status = true` locations. No auth required. Each item includes `is_default` so the frontend can pre-select the default branch.
 
 ## 7. Public: Show Pickup Location
 
 **GET** `/api/v1/general/pickup-locations/{id}`
 
-Returns 404 if inactive or soft-deleted. No auth required.
+Returns 404 if inactive or soft-deleted. No auth required. Includes `is_default`.

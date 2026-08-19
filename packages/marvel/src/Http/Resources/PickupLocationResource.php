@@ -19,6 +19,7 @@ class PickupLocationResource extends Resource
             'working_hours' => $this->working_hours,
             'status' => (bool) $this->status,
             'display_order' => $this->display_order,
+            'is_default' => (bool) $this->is_default,
             'created_at' => $this->created_at,
         ];
     }

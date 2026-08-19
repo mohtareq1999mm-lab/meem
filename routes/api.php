@@ -124,6 +124,7 @@ Route::prefix('v1/general')->group(function () {
         //======================== orders ========================//
         Route::get('orders', [OrderController::class, 'index']);
         Route::get('orders/invoice/{uuid}', [OrderController::class, 'invoice']);
+        Route::get('orders/{id}', [OrderController::class, 'show'])->whereNumber('id');
         //========================= product reviews =========================//
         Route::post('products/{id}/reviews', [ProductController::class, 'addProductReview']);
         Route::put('products/reviews/{id}', [ProductController::class, 'updateProductReview']);

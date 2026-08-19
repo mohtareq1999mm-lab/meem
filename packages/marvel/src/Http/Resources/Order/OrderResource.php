@@ -2,6 +2,7 @@
 
 namespace Marvel\Http\Resources\Order;
 
+use App\Services\General\OrderService;
 use Illuminate\Http\Request;
 use Marvel\Http\Resources\Resource;
 
@@ -41,6 +42,7 @@ class OrderResource extends Resource
                 ] : null,
                 'order_items' => OrderItemResource::collection($this->whenLoaded('orderItems')),
                 'transactions' => OrderTransactionResource::collection($this->whenLoaded('transactions')),
+                'available_statuses' => OrderService::getAllowedOrderStatusTargets((string) $this->status),
             ]),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),

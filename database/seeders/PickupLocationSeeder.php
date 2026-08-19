@@ -28,6 +28,7 @@ class PickupLocationSeeder extends Seeder
                 ],
                 'status' => true,
                 'display_order' => 1,
+                'is_default' => true,
             ],
             [
                 'store_name' => 'Heliopolis Branch',
@@ -102,7 +103,10 @@ class PickupLocationSeeder extends Seeder
         ];
 
         foreach ($locations as $location) {
-            PickupLocation::create($location);
+            PickupLocation::updateOrCreate(
+                ['store_name' => $location['store_name']],
+                $location,
+            );
         }
     }
 }

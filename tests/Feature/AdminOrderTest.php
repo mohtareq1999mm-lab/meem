@@ -661,4 +661,106 @@ class AdminOrderTest extends TestCase
         $this->assertCount(1, $data['order_items']);
         $this->assertCount(1, $data['transactions']);
     }
+
+    public function test_update_status_response_includes_available_statuses()
+    {
+        $this->authAdmin();
+
+        $order = $this->createOrder(['status' => 'pending']);
+
+        $response = $this->patchJson(self::PREFIX . '/orders/' . $order->id . '/status', [
+            'status' => 'processing',
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertEqualsCanonicalizing(
+            ['processing', 'completed', 'cancelled'],
+            $response->json('data.available_statuses')
+        );
+    }
+
+    /**
+     * @dataProvider allowedTransitionsProvider
+     */
+    public function test_update_status_allows_every_matrix_transition(string $from, string $to)
+    {
+        $this->authAdmin();
+
+        $order = $this->createOrder(['status' => $from]);
+
+        $response = $this->patchJson(self::PREFIX . '/orders/' . $order->id . '/status', [
+            'status' => $to,
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertEquals($to, $response->json('data.status'));
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => $to,
+        ]);
+    }
+
+    /**
+     * @dataProvider forbiddenTransitionsProvider
+     */
+    public function test_update_status_rejects_every_matrix_forbidden_transition(string $from, string $to)
+    {
+        $this->authAdmin();
+
+        $order = $this->createOrder(['status' => $from]);
+
+        $response = $this->patchJson(self::PREFIX . '/orders/' . $order->id . '/status', [
+            'status' => $to,
+        ]);
+
+        $response->assertStatus(422);
+        $this->assertFalse($response->json('success'));
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => $from,
+        ]);
+    }
+
+    public static function allowedTransitionsProvider(): array
+    {
+        $matrix = [
+            'pending' => ['pending', 'processing', 'completed', 'cancelled'],
+            'processing' => ['processing', 'completed', 'cancelled'],
+            'completed' => ['completed', 'delivered'],
+            'delivered' => ['delivered'],
+            'cancelled' => ['cancelled'],
+        ];
+
+        $cases = [];
+        foreach ($matrix as $from => $targets) {
+            foreach ($targets as $to) {
+                $cases["$from -> $to"] = [$from, $to];
+            }
+        }
+
+        return $cases;
+    }
+
+    public static function forbiddenTransitionsProvider(): array
+    {
+        $all = ['pending', 'processing', 'completed', 'delivered', 'cancelled'];
+        $matrix = [
+            'pending' => ['pending', 'processing', 'completed', 'cancelled'],
+            'processing' => ['processing', 'completed', 'cancelled'],
+            'completed' => ['completed', 'delivered'],
+            'delivered' => ['delivered'],
+            'cancelled' => ['cancelled'],
+        ];
+
+        $cases = [];
+        foreach ($all as $from) {
+            $forbidden = array_values(array_diff($all, $matrix[$from] ?? []));
+            foreach ($forbidden as $to) {
+                $cases["$from -> $to"] = [$from, $to];
+            }
+        }
+
+        return $cases;
+    }
 }

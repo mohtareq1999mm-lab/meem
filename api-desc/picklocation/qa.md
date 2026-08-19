@@ -24,6 +24,16 @@
 | TC-PL-018 | PUT (invalid email) | 422 |
 | TC-PL-019 | PUT (negative display_order) | 422 |
 | TC-PL-020 | PUT (working_hours.day.ar + day.en) | 200, accepts translatable day names |
+| TC-PL-021 | POST (is_default: true, first default) | 200, location becomes default |
+| TC-PL-022 | POST (is_default: true, when another default exists) | 200, previous default cleared |
+| TC-PL-023 | PUT (is_default: true) switches default | 200, only one default remains |
+| TC-PL-024 | PUT (update fields of current default) | 200, is_default preserved |
+| TC-PL-025 | POST (is_default: non-boolean) | 422 |
+| TC-PL-026 | DELETE default location | 200, next-lowest-id promoted to default |
+| TC-PL-027 | DELETE non-default location | 200, current default unchanged |
+| TC-PL-028 | GET /general/pickup-locations includes is_default | 200, is_default present |
+| TC-PL-029 | GET /pickup-locations includes is_default | 200, is_default present |
+| TC-PL-030 | Concurrent default switches | Only one default after both requests |
 
 ## Manual Test Checklist
 
@@ -33,3 +43,7 @@
 - [ ] Verify checkout saves pickup snapshot to order
 - [ ] Verify pickup_location shows in order detail for pickup orders
 - [ ] Verify uploaded coordinates render on map
+- [ ] Verify setting a branch as default clears the previous default in the admin list
+- [ ] Verify the public list marks the default branch (is_default: true)
+- [ ] Verify checkout preselects the default branch
+- [ ] Verify deleting the default promotes another branch

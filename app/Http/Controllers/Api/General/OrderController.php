@@ -7,6 +7,7 @@ use App\Enums\FrontendResource;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Invoice\CustomerInvoiceResource;
 use App\Http\Resources\Order\OrderCollection;
+use App\Http\Resources\Order\OrderResource;
 use App\Models\Invoice;
 use App\Services\General\CartInventoryService;
 use App\Services\General\OrderService;
@@ -53,6 +54,22 @@ class OrderController extends Controller
             200,
             true,
             new OrderCollection($orders)
+        );
+    }
+
+    public function show(Request $request, int $orderId): JsonResponse
+    {
+        $order = $this->orderService->getOrderForUser($request, $orderId);
+
+        if (!$order) {
+            return $this->apiResponse(NOT_FOUND, 404, false);
+        }
+
+        return $this->apiResponse(
+            FETCH_DATA_SUCCESSFULLY,
+            200,
+            true,
+            OrderResource::make($order)
         );
     }
 

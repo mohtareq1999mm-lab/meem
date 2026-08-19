@@ -7,10 +7,10 @@
 | Method | Permission | Description |
 |--------|------------|-------------|
 | `index` | VIEW_PICKUP_LOCATIONS | Paginated list (default 15), optional search/active/inactive filter, ordered by display_order → id |
-| `store` | CREATE_PICKUP_LOCATION | Create with validated data |
+| `store` | CREATE_PICKUP_LOCATION | Create with validated data; flush `PICKUP_LOCATIONS` cache tag |
 | `show` | VIEW_PICKUP_LOCATIONS | Find or fail by ID |
-| `update` | UPDATE_PICKUP_LOCATION | Find, update, return refreshed |
-| `destroy` | DELETE_PICKUP_LOCATION | Find, soft delete |
+| `update` | UPDATE_PICKUP_LOCATION | Find, update, return refreshed; flush `PICKUP_LOCATIONS` cache tag |
+| `destroy` | DELETE_PICKUP_LOCATION | Find, soft delete; flush `PICKUP_LOCATIONS` cache tag |
 
 **Note:** `index()` manually extracts pagination meta from ResourceCollection (duplicate keys `page`/`current_page`).
 
@@ -42,9 +42,18 @@ protected $fieldSearchable = ['store_name' => 'like'];
 | `working_hours` | json (nullable) | |
 | `status` | boolean | true |
 | `display_order` | integer | 0 |
+| `is_default` | boolean | false |
 | `deleted_at` | timestamp (nullable) | SoftDeletes |
 
-**Scopes:** `active()` (status=true), `inactive()` (status=false), `ordered()` (display_order → id)
+**Scopes:** `active()` (status=true), `inactive()` (status=false), `ordered()` (display_order → id), `default()` (is_default=true)
+
+**Model hooks (enforce exactly-one-default invariant):**
+- `saving`: when `is_default` is set to `true` (dirty), a single atomic `UPDATE` clears the flag on all other rows (incl. soft-deleted) before the change persists.
+- `deleted`: when the deleted location was the default, the remaining location with the lowest `id` is promoted to default.
+
+**`is_default` cast:** boolean.
+
+**Service method:** `PickupLocationService::getDefaultPickupLocation()` → `PickupLocation::default()->active()->first()` (active default, or `null`).
 
 ## Form Requests
 
@@ -64,6 +73,7 @@ protected $fieldSearchable = ['store_name' => 'like'];
 | `working_hours.*.close` | string | With working_hours | |
 | `status` | bool | No | in:1,0 |
 | `display_order` | int | No | min:0 |
+| `is_default` | bool | No | sometimes, boolean |
 
 ### UpdatePickupLocationRequest
 
@@ -84,6 +94,7 @@ All fields are optional (`sometimes`). Additional behaviors vs Store:
 | `working_hours.*.close` | string | required_with:working_hours | |
 | `status` | bool | sometimes, in:1,0 | |
 | `display_order` | int | sometimes, integer, min:0 | |
+| `is_default` | bool | sometimes, boolean | |
 
 ## Resource - `PickupLocationResource`
 
@@ -99,7 +110,10 @@ All fields are optional (`sometimes`). Additional behaviors vs Store:
 | `working_hours` | `$this->working_hours` (array) |
 | `status` | `(bool) $this->status` |
 | `display_order` | `$this->display_order` |
+| `is_default` | `(bool) $this->is_default` |
 | `created_at` | `$this->created_at` |
+
+The public resource (`app/Http/Resources/PickupLocation/PickupLocationResource.php`) exposes the same fields minus `created_at`, including `is_default`.
 
 ## Permissions (4 Spatie permissions)
 

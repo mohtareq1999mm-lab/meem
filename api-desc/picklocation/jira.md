@@ -27,6 +27,20 @@
 - No authentication required
 - Location snapshot saved on order at checkout
 
+### US-003: Default Pickup Location (Branch)
+**As** an admin
+**I want** to mark one pickup location as the default branch
+**So that** customers see a preselected branch and the store has a canonical default
+
+**Acceptance Criteria:**
+- Exactly one location is `is_default = true` at any time
+- Setting a new default atomically clears the flag on all other locations
+- Updating other fields of the default preserves `is_default`
+- Deleting the default promotes the next location by lowest `id`
+- `is_default` exposed on both admin and public APIs
+- Public list includes `is_default` so checkout can preselect the default
+- No new permission required (reuses `update-pickup-location`)
+
 ## Bug Tickets
 
 | Ticket | Description | Priority | Severity |

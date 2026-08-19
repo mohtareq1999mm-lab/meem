@@ -69,6 +69,45 @@ PickupLocationController@destroy(5)
   |  -- $location->delete()  (soft delete)
   |
   v
+[Model deleted hook]
+  |  -- was the deleted location the default (is_default = true)?
+  |  -- yes → promote remaining location with lowest id
+  |         UPDATE pickup_locations SET is_default = 1 WHERE id = (lowest remaining id)
+  |
+  v
 200 + message
   -- Existing orders retain snapshot data
 ```
+
+## Flow: Switching the Default Location
+
+```
+Admin Client
+  |
+  PUT /api/v1/pickup-locations/9
+  Body: { "is_default": true }
+  |
+  v
+permission:UPDATE_PICKUP_LOCATION
+  |
+  v
+PickupLocationController@update(9)
+  |  -- $location->update({ is_default: true })
+  |
+  v
+[Model saving hook]
+  |  -- is_default dirty & true?
+  |  -- yes → single atomic UPDATE clears flag on all other rows
+  |         UPDATE pickup_locations SET is_default = 0 WHERE is_default = 1 AND id <> 9
+  |
+  v
+Location 9 persisted as the only default
+  |
+  v
+Controller flushes PICKUP_LOCATIONS cache tag
+  |
+  v
+200 + updated resource (is_default: true)
+```
+
+Updating other fields of the current default does NOT clear its flag (hook only runs when `is_default` itself changes).

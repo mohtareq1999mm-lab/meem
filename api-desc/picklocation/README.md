@@ -32,12 +32,13 @@ CRUD for pickup locations where customers can collect orders. Uses SoftDeletes. 
     v
 [PickupLocation Model]
     |--- SoftDeletes
-    |--- scopes: active, inactive, ordered
-    |--- $casts: working_hours (array), status (boolean)
+    |--- scopes: active, inactive, ordered, default
+    |--- $casts: working_hours (array), status (boolean), is_default (boolean)
+    |--- booted hooks: atomic default-switch (saving) + default promotion (deleted)
     |
     v
 [PickupLocationResource]
-    |--- id, store_name, address, phone, email, lat/lng, working_hours, status, display_order
+    |--- id, store_name, address, phone, email, lat/lng, working_hours, status, display_order, is_default
 ```
 
 ## Key Endpoints
@@ -64,6 +65,7 @@ CRUD for pickup locations where customers can collect orders. Uses SoftDeletes. 
 | Request (Store) | `packages/marvel/src/Http/Requests/StorePickupLocationRequest.php` |
 | Request (Update) | `packages/marvel/src/Http/Requests/UpdatePickupLocationRequest.php` — all fields optional (`sometimes`), `working_hours.*.day` uses translatable `ar`/`en` keys |
 | Migrations | `database/migrations/2026_07_11_000003_create_pickup_locations_table.php` |
+| Migration (is_default) | `database/migrations/2026_08_19_000002_add_is_default_to_pickup_locations_table.php` |
 | Migration (order snapshot) | `database/migrations/2026_07_11_000004_add_pickup_location_snapshot_to_orders.php` |
 | Routes (Admin) | `packages/marvel/src/Rest/Routes.php` |
 | Routes (Public) | `routes/api.php` |
@@ -82,3 +84,4 @@ CRUD for pickup locations where customers can collect orders. Uses SoftDeletes. 
 - **SoftDeletes** for safe deletion
 - **JSON casts** for `working_hours` array
 - **Active/inactive scopes** for filtering
+- **Default pickup location** (`is_default`): single default enforced atomically; exposed on both APIs; auto-promotion on delete

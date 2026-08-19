@@ -29,8 +29,15 @@ export const pickupLocationApi = {
 | `working_hours` | array | `[{ "day": { "ar": "الاثنين", "en": "Monday" }, "open": "09:00", "close": "21:00" }]` |
 | `status` | bool | `true` |
 | `display_order` | int | `1` |
+| `is_default` | bool | `false` |
 
 **Note:** `working_hours.*.day` uses translatable keys: `day.ar` (Arabic) and `day.en` (English), both strings.
+
+**Default branch behavior (admin):**
+- Toggling `is_default: true` switches the default — the backend atomically clears it on every other branch.
+- Setting a different branch as default preserves the previous default's other fields.
+- Deleting the default auto-promotes the next branch (lowest `id`).
+- Recommend showing a "Make Default" toggle/star on each row and calling `PUT /pickup-locations/{id}` with `{ "is_default": true }`. Optionally refresh the list after the switch.
 
 ## Consumption (Public/Checkout)
 
@@ -42,10 +49,12 @@ export const publicPickupApi = {
 }
 ```
 
+Each item includes `is_default: boolean`. Preselect the item with `is_default === true` as the default branch in the checkout selector. User selection is frontend-only state and never mutates `is_default` (it is admin/system configuration).
+
 ## Expected Frontend Components
 
 ```
-PickupLocationsList.vue   → admin list with search, active/inactive filter
-PickupLocationForm.vue    → admin create/edit (store_name, address, phone, hours, map)
-PickupLocationSelector.vue → public dropdown for checkout (active only)
+PickupLocationsList.vue   → admin list with search, active/inactive filter, default badge + "Make Default" action
+PickupLocationForm.vue    → admin create/edit (store_name, address, phone, hours, map, is_default)
+PickupLocationSelector.vue → public dropdown for checkout (active only, preselect default)
 ```

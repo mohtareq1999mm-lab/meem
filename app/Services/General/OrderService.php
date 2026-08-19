@@ -65,15 +65,34 @@ class OrderService
             ->paginate($limit)
             ->withQueryString();
 
-        $orders->getCollection()->each(function (Order $order) {
-            $order->orderItems->each(function ($item) {
-                if ($item->relationLoaded('product') && $item->product) {
-                    app(ProductService::class)->enrichProductWithPricing($item->product);
-                }
-            });
-        });
+        $orders->getCollection()->each(fn(Order $order) => $this->enrichOrderItemsPricing($order));
 
         return $orders;
+    }
+
+    public function getOrderForUser(Request $request, int $orderId): ?Order
+    {
+        $order = Order::query()
+            ->forUser((int) $request->user()->id)
+            ->with($this->orderListRelations())
+            ->find($orderId);
+
+        if (!$order) {
+            return null;
+        }
+
+        $this->enrichOrderItemsPricing($order);
+
+        return $order;
+    }
+
+    private function enrichOrderItemsPricing(Order $order): void
+    {
+        $order->orderItems->each(function ($item) {
+            if ($item->relationLoaded('product') && $item->product) {
+                app(ProductService::class)->enrichProductWithPricing($item->product);
+            }
+        });
     }
 
     /**
@@ -489,9 +508,14 @@ class OrderService
         'cancelled' => ['cancelled'],
     ];
 
-    private function canTransitionOrderStatus(string $from, string $to): bool
+private function canTransitionOrderStatus(string $from, string $to): bool
     {
         return in_array($to, self::$allowedOrderTransitions[$from] ?? [], true);
+    }
+
+    public static function getAllowedOrderStatusTargets(?string $currentStatus): array
+    {
+        return self::$allowedOrderTransitions[$currentStatus] ?? [];
     }
 
     private function canTransitionFulfillmentStatus(string $from, string $to): bool

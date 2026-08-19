@@ -24,4 +24,9 @@ class PickupLocationService
     {
         return PickupLocation::active()->findOrFail($id);
     }
+
+    public function getDefaultPickupLocation(): ?PickupLocation
+    {
+        return PickupLocation::default()->active()->first();
+    }
 }

@@ -29,6 +29,7 @@ class StorePickupLocationRequest extends FormRequest
             'working_hours.*.close' => ['required_with:working_hours', 'string'],
             'status' => ['sometimes', 'in:1,0'],
             'display_order' => ['sometimes', 'integer', 'min:0'],
+            'is_default' => ['sometimes', 'boolean'],
         ];
     }
 

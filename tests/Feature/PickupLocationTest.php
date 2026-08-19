@@ -68,6 +68,7 @@ class PickupLocationTest extends TestCase
             $table->json('working_hours')->nullable();
             $table->boolean('status')->default(true);
             $table->integer('display_order')->default(0);
+            $table->boolean('is_default')->default(false);
             $table->timestamps();
             $table->softDeletes();
         });
@@ -521,5 +522,304 @@ class PickupLocationTest extends TestCase
         $response->assertStatus(200);
         $response->assertJsonFragment(['store_name' => 'Downtown Branch']);
         $response->assertJsonMissing(['store_name' => 'Uptown Branch']);
+    }
+
+    // ========== Default Pickup Location Tests ==========
+
+    /** @test */
+    public function creating_pickup_location_as_default_resets_previous_default()
+    {
+        Sanctum::actingAs($this->admin);
+
+        PickupLocation::create([
+            'store_name' => 'First Branch',
+            'address' => 'Addr 1',
+            'phone' => '01000000020',
+            'status' => true,
+            'is_default' => true,
+        ]);
+
+        $response = $this->postJson(self::ADMIN_PREFIX . '/pickup-locations', [
+            'store_name' => 'New Default',
+            'address' => '456 New St',
+            'phone' => '01000000021',
+            'status' => true,
+            'is_default' => true,
+        ]);
+
+        $response->assertStatus(200);
+
+        $this->assertDatabaseHas('pickup_locations', [
+            'store_name' => 'New Default',
+            'is_default' => true,
+        ]);
+        $this->assertDatabaseHas('pickup_locations', [
+            'store_name' => 'First Branch',
+            'is_default' => false,
+        ]);
+    }
+
+    /** @test */
+    public function setting_new_default_via_update_resets_others()
+    {
+        Sanctum::actingAs($this->admin);
+
+        $first = PickupLocation::create([
+            'store_name' => 'First Branch',
+            'address' => 'Addr 1',
+            'phone' => '01000000022',
+            'status' => true,
+            'is_default' => true,
+        ]);
+        $second = PickupLocation::create([
+            'store_name' => 'Second Branch',
+            'address' => 'Addr 2',
+            'phone' => '01000000023',
+            'status' => true,
+        ]);
+
+        $response = $this->putJson(self::ADMIN_PREFIX . '/pickup-locations/' . $second->id, [
+            'is_default' => true,
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertDatabaseHas('pickup_locations', [
+            'id' => $second->id,
+            'is_default' => true,
+        ]);
+        $this->assertDatabaseHas('pickup_locations', [
+            'id' => $first->id,
+            'is_default' => false,
+        ]);
+    }
+
+    /** @test */
+    public function updating_default_location_fields_preserves_is_default()
+    {
+        Sanctum::actingAs($this->admin);
+
+        $location = PickupLocation::create([
+            'store_name' => 'Default Branch',
+            'address' => 'Addr 1',
+            'phone' => '01000000024',
+            'status' => true,
+            'is_default' => true,
+        ]);
+
+        $response = $this->putJson(self::ADMIN_PREFIX . '/pickup-locations/' . $location->id, [
+            'store_name' => 'Renamed Branch',
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertDatabaseHas('pickup_locations', [
+            'id' => $location->id,
+            'store_name' => 'Renamed Branch',
+            'is_default' => true,
+        ]);
+    }
+
+    /** @test */
+    public function only_one_default_pickup_location_exists_at_a_time()
+    {
+        Sanctum::actingAs($this->admin);
+
+        PickupLocation::create([
+            'store_name' => 'A',
+            'address' => 'Addr A',
+            'phone' => '01000000025',
+            'status' => true,
+            'is_default' => true,
+        ]);
+        PickupLocation::create([
+            'store_name' => 'B',
+            'address' => 'Addr B',
+            'phone' => '01000000026',
+            'status' => true,
+            'is_default' => true,
+        ]);
+        PickupLocation::create([
+            'store_name' => 'C',
+            'address' => 'Addr C',
+            'phone' => '01000000027',
+            'status' => true,
+            'is_default' => true,
+        ]);
+
+        $this->assertEquals(1, PickupLocation::where('is_default', true)->count());
+    }
+
+    /** @test */
+    public function deleting_default_location_promotes_next_by_id()
+    {
+        Sanctum::actingAs($this->admin);
+
+        $default = PickupLocation::create([
+            'store_name' => 'Default Branch',
+            'address' => 'Addr 1',
+            'phone' => '01000000028',
+            'status' => true,
+            'is_default' => true,
+        ]);
+        $next = PickupLocation::create([
+            'store_name' => 'Next Branch',
+            'address' => 'Addr 2',
+            'phone' => '01000000029',
+            'status' => true,
+        ]);
+
+        $response = $this->deleteJson(self::ADMIN_PREFIX . '/pickup-locations/' . $default->id);
+
+        $response->assertStatus(200);
+        $this->assertSoftDeleted('pickup_locations', ['id' => $default->id]);
+        $this->assertDatabaseHas('pickup_locations', [
+            'id' => $next->id,
+            'is_default' => true,
+        ]);
+    }
+
+    /** @test */
+    public function deleting_non_default_location_keeps_default()
+    {
+        Sanctum::actingAs($this->admin);
+
+        $default = PickupLocation::create([
+            'store_name' => 'Default Branch',
+            'address' => 'Addr 1',
+            'phone' => '01000000030',
+            'status' => true,
+            'is_default' => true,
+        ]);
+        $other = PickupLocation::create([
+            'store_name' => 'Other Branch',
+            'address' => 'Addr 2',
+            'phone' => '01000000031',
+            'status' => true,
+        ]);
+
+        $response = $this->deleteJson(self::ADMIN_PREFIX . '/pickup-locations/' . $other->id);
+
+        $response->assertStatus(200);
+        $this->assertDatabaseHas('pickup_locations', [
+            'id' => $default->id,
+            'is_default' => true,
+        ]);
+    }
+
+    /** @test */
+    public function admin_resource_exposes_is_default()
+    {
+        Sanctum::actingAs($this->admin);
+
+        PickupLocation::create([
+            'store_name' => 'Default Branch',
+            'address' => 'Addr 1',
+            'phone' => '01000000032',
+            'status' => true,
+            'is_default' => true,
+        ]);
+
+        $response = $this->getJson(self::ADMIN_PREFIX . '/pickup-locations');
+
+        $response->assertStatus(200);
+        $response->assertJsonStructure([
+            'data' => ['data' => [['is_default']]],
+        ]);
+        $response->assertJsonFragment(['is_default' => true]);
+    }
+
+    /** @test */
+    public function public_resource_exposes_is_default()
+    {
+        PickupLocation::create([
+            'store_name' => 'Default Branch',
+            'address' => 'Addr 1',
+            'phone' => '01000000033',
+            'status' => true,
+            'is_default' => true,
+        ]);
+
+        $response = $this->getJson(self::PUBLIC_PREFIX . '/pickup-locations');
+
+        $response->assertStatus(200);
+        $response->assertJsonStructure([
+            'data' => [['is_default']],
+        ]);
+        $response->assertJsonFragment(['is_default' => true]);
+    }
+
+    /** @test */
+    public function service_returns_default_pickup_location()
+    {
+        $default = PickupLocation::create([
+            'store_name' => 'Default Branch',
+            'address' => 'Addr 1',
+            'phone' => '01000000034',
+            'status' => true,
+            'is_default' => true,
+        ]);
+        PickupLocation::create([
+            'store_name' => 'Other Branch',
+            'address' => 'Addr 2',
+            'phone' => '01000000035',
+            'status' => true,
+        ]);
+
+        $service = app(\App\Services\General\PickupLocationService::class);
+        $result = $service->getDefaultPickupLocation();
+
+        $this->assertNotNull($result);
+        $this->assertEquals($default->id, $result->id);
+    }
+
+    /** @test */
+    public function service_returns_null_when_no_active_default_exists()
+    {
+        PickupLocation::create([
+            'store_name' => 'Inactive Default',
+            'address' => 'Addr 1',
+            'phone' => '01000000036',
+            'status' => false,
+            'is_default' => true,
+        ]);
+
+        $service = app(\App\Services\General\PickupLocationService::class);
+        $result = $service->getDefaultPickupLocation();
+
+        $this->assertNull($result);
+    }
+
+    /** @test */
+    public function store_validates_is_default_is_boolean()
+    {
+        Sanctum::actingAs($this->admin);
+
+        $response = $this->postJson(self::ADMIN_PREFIX . '/pickup-locations', [
+            'store_name' => 'Boolean Test',
+            'address' => '123 Bool St',
+            'phone' => '01000000037',
+            'is_default' => 'not-a-boolean',
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonStructure(['is_default']);
+    }
+
+    /** @test */
+    public function creating_pickup_location_without_is_default_is_not_default()
+    {
+        Sanctum::actingAs($this->admin);
+
+        $response = $this->postJson(self::ADMIN_PREFIX . '/pickup-locations', [
+            'store_name' => 'Plain Branch',
+            'address' => '123 Plain St',
+            'phone' => '01000000038',
+            'status' => true,
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertDatabaseHas('pickup_locations', [
+            'store_name' => 'Plain Branch',
+            'is_default' => false,
+        ]);
     }
 }

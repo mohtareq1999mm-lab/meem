@@ -73,6 +73,7 @@ class PickupLocationController extends CoreController
     {
         try {
             $pickupLocation = $this->repository->create($request->validated());
+            $this->flushTag(FrontendResource::PICKUP_LOCATIONS->value);
             return $this->apiResponse(PICKUP_LOCATION_CREATED_SUCCESSFULLY, 200, true, PickupLocationResource::make($pickupLocation));
         } catch (Exception $e) {
             throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE);
@@ -94,6 +95,7 @@ class PickupLocationController extends CoreController
         try {
             $pickupLocation = $this->repository->findOrFail($id);
             $pickupLocation->update($request->validated());
+            $this->flushTag(FrontendResource::PICKUP_LOCATIONS->value);
             return $this->apiResponse(PICKUP_LOCATION_UPDATED_SUCCESSFULLY, 200, true, PickupLocationResource::make($pickupLocation));
         } catch (Exception $e) {
             throw new MarvelException(NOT_FOUND);
@@ -104,6 +106,7 @@ class PickupLocationController extends CoreController
     {
         try {
             $this->repository->findOrFail($id)->delete();
+            $this->flushTag(FrontendResource::PICKUP_LOCATIONS->value);
             return $this->apiResponse(PICKUP_LOCATION_DELETED_SUCCESSFULLY, 200, true);
         } catch (Exception $e) {
             throw new MarvelException(NOT_FOUND);
