@@ -26,12 +26,12 @@ class UserPromotionPriceDropNotification extends Notification implements ShouldQ
     {
         return [
             'title' => [
-                'en' => __('notifications.promotion.price.drop.title', [], 'en'),
-                'ar' => __('notifications.promotion.price.drop.title', [], 'ar'),
+                'en' => __('notifications.promotion.price_drop.title', [], 'en'),
+                'ar' => __('notifications.promotion.price_drop.title', [], 'ar'),
             ],
             'message' => [
-                'en' => __('notifications.promotion.price.drop.body', ['promotion_name' => $this->promotion->name ?? ''], 'en'),
-                'ar' => __('notifications.promotion.price.drop.body', ['promotion_name' => $this->promotion->name ?? ''], 'ar'),
+                'en' => __('notifications.promotion.price_drop.body', ['promotion_name' => $this->promotion->name ?? ''], 'en'),
+                'ar' => __('notifications.promotion.price_drop.body', ['promotion_name' => $this->promotion->name ?? ''], 'ar'),
             ],
             'icon' => 'tag',
             'resource_type' => 'promotion',

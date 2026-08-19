@@ -26,12 +26,12 @@ class UserProductBackInStockNotification extends Notification implements ShouldQ
     {
         return [
             'title' => [
-                'en' => __('notifications.back.in.stock.title', [], 'en'),
-                'ar' => __('notifications.back.in.stock.title', [], 'ar'),
+                'en' => __('notifications.back.in_stock.title', [], 'en'),
+                'ar' => __('notifications.back.in_stock.title', [], 'ar'),
             ],
             'message' => [
-                'en' => __('notifications.back.in.stock.body', ['product_name' => $this->product->name ?? ''], 'en'),
-                'ar' => __('notifications.back.in.stock.body', ['product_name' => $this->product->name ?? ''], 'ar'),
+                'en' => __('notifications.back.in_stock.body', ['product_name' => $this->product->name ?? ''], 'en'),
+                'ar' => __('notifications.back.in_stock.body', ['product_name' => $this->product->name ?? ''], 'ar'),
             ],
             'icon' => 'box',
             'resource_type' => 'product',

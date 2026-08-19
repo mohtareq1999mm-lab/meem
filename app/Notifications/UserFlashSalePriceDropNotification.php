@@ -26,12 +26,12 @@ class UserFlashSalePriceDropNotification extends Notification implements ShouldQ
     {
         return [
             'title' => [
-                'en' => __('notifications.flash_sale.price.drop.title', [], 'en'),
-                'ar' => __('notifications.flash_sale.price.drop.title', [], 'ar'),
+                'en' => __('notifications.flash_sale.price_drop.title', [], 'en'),
+                'ar' => __('notifications.flash_sale.price_drop.title', [], 'ar'),
             ],
             'message' => [
-                'en' => __('notifications.flash_sale.price.drop.body', ['flash_sale_title' => $this->flashSale->title ?? ''], 'en'),
-                'ar' => __('notifications.flash_sale.price.drop.body', ['flash_sale_title' => $this->flashSale->title ?? ''], 'ar'),
+                'en' => __('notifications.flash_sale.price_drop.body', ['flash_sale_title' => $this->flashSale->title ?? ''], 'en'),
+                'ar' => __('notifications.flash_sale.price_drop.body', ['flash_sale_title' => $this->flashSale->title ?? ''], 'ar'),
             ],
             'icon' => 'bolt',
             'resource_type' => 'flash_sale',
