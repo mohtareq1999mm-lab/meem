@@ -38,7 +38,9 @@ Client → GET /api/v1/general/invoices/my-invoices?limit=15
          ↓
     CustomerInvoiceCollection($paginator)
          ↓
-    Return: { status:200, message, success:true, data }
+    CustomerInvoiceListResource per item   [v1.7.0 — summary-only, NO snapshot]
+         ↓
+    Return: { status:200, message, success:true, data:{data[], links{}} }
 ```
 
 ## Flow 3: Show Invoice

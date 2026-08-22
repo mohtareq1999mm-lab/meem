@@ -1,5 +1,18 @@
 # Invoice Module — Changelog
 
+## [1.7.0] — 2026-08-22
+
+### Changed
+- **`GET /general/invoices/my-invoices` is now a lightweight summary list.** New `CustomerInvoiceListResource` (wired via `CustomerInvoiceCollection::$collects`) exposes exactly: uuid, invoice_number, status, subtotal, shipping_price, total_discount, total, currency, payment_method, payment_gateway, generated_at, pdf_generated_at, verification_url, download_url. **No snapshot / order / customer / addresses / items / pricing / payment / metadata / audit.**
+- The new resource's `download_url` points to the **registered** route `/api/v1/invoices/{uuid}/download` (the legacy resource emitted a non-existent `/general/.../download` path — reported separately; detail endpoint untouched).
+
+### Unchanged
+- Snapshot storage & detail endpoints: `GET /orders/{orderId}/invoice` still returns the full `snapshot` via `CustomerInvoiceResource`.
+- Query/pagination (`limit` default 15 max 100), owner scoping, 401 guest behavior.
+
+### Added
+- `tests/Feature/Invoice/MyInvoicesEndpointTest.php` — 6 tests / 59 assertions (pagination, field whitelist, zero-snapshot proof incl. subfields across multiple invoices, ownership isolation, guest 401, detail & admin endpoints unchanged).
+
 ## [1.6.0] — 2026-08-22
 
 ### Fixed

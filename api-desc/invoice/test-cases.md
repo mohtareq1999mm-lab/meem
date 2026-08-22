@@ -163,7 +163,7 @@ Uses `CreatesTestTables` + `DatabaseTransactions`.
 
 | # | Test | Type | Status |
 |---|------|------|--------|
-| TC-FE-VIEW-001 | `GET /orders/invoice/{uuid}` returns CustomerInvoiceResource fields + snapshot (owner) | Feature | ✅ `OrderInvoiceEndpointTest` |
+| TC-FE-VIEW-001 | `GET /general/orders/{orderId}/invoice` returns CustomerInvoiceResource fields + snapshot (owner) | Feature | ✅ `OrderIdInvoiceEndpointTest` |
 | TC-FE-VIEW-002 | `GET /orders/invoice/{uuid}` → 403 for non-owner | Auth | ✅ `OrderInvoiceEndpointTest` |
 | TC-FE-VIEW-003 | `GET /orders/invoice/{uuid}` → 401 guest, 404 unknown | Auth | ✅ `OrderInvoiceEndpointTest` |
 | TC-FE-VIEW-004 | `GET /invoices/{id}` (admin) returns AdminInvoiceResource (no snapshot-field leak in customer resource) | Feature | ⬜ Not yet implemented |

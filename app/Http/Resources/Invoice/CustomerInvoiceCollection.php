@@ -7,7 +7,7 @@ use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class CustomerInvoiceCollection extends ResourceCollection
 {
-    public $collects = CustomerInvoiceResource::class;
+    public $collects = CustomerInvoiceListResource::class;
 
     public function toArray(Request $request): array
     {

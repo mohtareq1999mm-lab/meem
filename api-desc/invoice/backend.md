@@ -254,7 +254,7 @@ Transitions are enforced at TWO levels:
 | GET `/invoices` (list) | `AdminInvoiceCollection` |
 | GET `/invoices/{id}` | `AdminInvoiceResource` |
 | GET `/general/invoices/uuid/{uuid}` | `AdminInvoiceResource` |
-| GET `/general/invoices/my-invoices` | `CustomerInvoiceCollection` |
+| GET `/general/invoices/my-invoices` | `CustomerInvoiceCollection` → **`CustomerInvoiceListResource`** (summary-only, v1.7.0) |
 | GET `/general/orders/invoice/{uuid}` | `CustomerInvoiceResource` |
 | GET `/general/invoices/verify/{uuid}` | `InvoiceResource` (restored 2026-08-22) |
 | POST `/invoices/{id}/correct` | `AdminInvoiceResource` (correction) |

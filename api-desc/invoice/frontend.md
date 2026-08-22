@@ -20,7 +20,7 @@ Pure endpoint reference. Customer endpoints first, then the admin group. Every e
 
 **Response 200:** paginated customer items.
 
-Customer item fields: `uuid`, `invoice_number`, `status`, `subtotal`, `shipping_price`, `total_discount`, `total`, `currency`, `payment_method`, `payment_gateway`, `generated_at`, `pdf_generated_at`, `verification_url` (when uuid), `download_url` (when uuid AND pdf_path), `snapshot`.
+Customer item fields (lightweight list — **no snapshot**): `uuid`, `invoice_number`, `status`, `subtotal`, `shipping_price`, `total_discount`, `total`, `currency`, `payment_method`, `payment_gateway`, `generated_at`, `pdf_generated_at`, `verification_url` (when uuid), `download_url` (when uuid AND pdf_path — points to the registered route `/api/v1/invoices/{uuid}/download`).
 
 ```json
 {

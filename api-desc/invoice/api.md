@@ -65,7 +65,9 @@ Customer-facing list of the authenticated user's invoices.
 
 Eager loads: `order`.
 
-**Response 200**: `CustomerInvoiceCollection` → `{ data: CustomerInvoiceResource[], links: {...} }`
+**Response 200**: `CustomerInvoiceCollection` → `{ data: CustomerInvoiceListResource[], links: {...} }`
+
+**Lightweight list contract (v1.7.0):** items contain ONLY invoice-level summary fields — **no `snapshot`** and none of its sub-objects.
 
 ```json
 {
@@ -88,7 +90,7 @@ Eager loads: `order`.
         "generated_at": "2026-07-28T09:00:00+00:00",
         "pdf_generated_at": "2026-07-28T10:00:00+00:00",
         "verification_url": "http://example.com/api/v1/general/invoices/verify/550e8400-...",
-        "snapshot": { "...": "see InvoiceSnapshotResource below" }
+        "download_url": "http://example.com/api/v1/invoices/550e8400-.../download"
       }
     ],
     "links": {
@@ -108,7 +110,9 @@ Eager loads: `order`.
 }
 ```
 
-> **Note on `download_url`:** The `download_url` field emitted by `CustomerInvoiceResource` points to `/api/v1/general/invoices/{uuid}/download`, which is **NOT a registered route**. The real download route is `GET /api/v1/invoices/{uuid}/download` (no `/general/`). Frontend must build the download URL as `/api/v1/invoices/{uuid}/download` and must **not** rely on the resource-provided `download_url`. (Reported contradiction.)
+> **`download_url` note:** the list resource now emits the **registered** route `/api/v1/invoices/{uuid}/download`. (The older customer resource emitted a non-existent `/general/.../download` path — see changelog 1.7.0; detail endpoints still use the legacy resource until separately approved.)
+>
+> **Full details:** the snapshot remains available on the detail endpoint `GET /orders/{orderId}/invoice` (`CustomerInvoiceResource`, incl. snapshot) — the list is intentionally summary-only.
 
 ---
 
@@ -164,7 +168,7 @@ Source: route `routes/api.php` (`invoices` group, `show/uuid/{uuid}` + `whereUui
 }
 ```
 
-Field semantics are identical to the `my-invoices` list items (same resource class). `download_url` appears only when a PDF exists and keeps the known broken-path caveat (see note above).
+> **Detail ≠ List (since v1.7.0).** This detail response keeps the full `snapshot`; the `my-invoices` list uses the lightweight `CustomerInvoiceListResource` with no snapshot. Its `download_url` also differs: detail keeps the legacy broken path caveat, while the list emits the registered `/api/v1/invoices/{uuid}/download`.
 
 #### Error Responses
 
@@ -560,7 +564,13 @@ The `url` is `url('storage/invoices/' . $invoice->pdf_path)`. The PDF is stored 
 
 > **Note:** `AdminInvoiceResource.download_url` emits `/api/v1/general/invoices/{uuid}/download` which is **not a registered route**. Use `GET /api/v1/invoices/{uuid}/download`.
 
-### CustomerInvoiceResource — used by `myInvoices` and `GET /orders/invoice/{uuid}`
+### CustomerInvoiceListResource — used by `myInvoices` (list)
+
+Lightweight summary only (v1.7.0): `uuid, invoice_number, status, subtotal, shipping_price, total_discount, total, currency, payment_method, payment_gateway, generated_at, pdf_generated_at, verification_url, download_url`. **No snapshot.** `download_url` points to the registered `/api/v1/invoices/{uuid}/download`.
+
+### CustomerInvoiceResource — used by `GET /general/orders/{orderId}/invoice`, `GET /general/invoices/show/uuid/{uuid}` (detail endpoints)
+
+Same summary fields **plus the full `snapshot`** (`InvoiceSnapshotResource`) and no `download_url` regression — detail keeps complete data.
 
 | Field | Type | Condition |
 |-------|------|-----------|

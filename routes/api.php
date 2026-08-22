@@ -140,4 +140,3 @@ Route::prefix('v1/general')->group(function () {
         // //======================== shipments ========================/
         // Route::get('shipments/track/{trackingNumber}', [ShipmentController::class, 'trackShipment'])->name('shipments.track');
         // Route::get('shipments/{id}', [ShipmentController::class, 'show'])->middleware('auth:sanctum');
- 
