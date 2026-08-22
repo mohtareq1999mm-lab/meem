@@ -392,6 +392,7 @@ Route::prefix('invoices')->group(function () {
     Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/', [InvoiceController::class, 'index']);
         Route::get('{uuid}/download', [InvoiceController::class, 'download'])->whereUuid('uuid')->middleware('throttle:30,1');
+        Route::get('{uuid}/view', [InvoiceController::class, 'view'])->whereUuid('uuid')->middleware('throttle:30,1');
         Route::get('{id}', [InvoiceController::class, 'show'])->whereNumber('id');
         Route::post('{id}/regenerate', [InvoiceController::class, 'regenerate'])->whereNumber('id');
         Route::post('{id}/correct', [InvoiceController::class, 'correct'])->whereNumber('id');

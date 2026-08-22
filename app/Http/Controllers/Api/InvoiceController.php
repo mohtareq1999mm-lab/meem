@@ -193,7 +193,21 @@ class InvoiceController extends Controller
         );
     }
 
-    public function download(string $uuid): JsonResponse
+    public function download(string $uuid)
+    {
+        return $this->pdfFileResponse($uuid, 'attachment', recordDownload: true);
+    }
+
+    /**
+     * Stream the invoice PDF inline (browser view) — same security chain as
+     * download, but without download bookkeeping.
+     */
+    public function view(string $uuid)
+    {
+        return $this->pdfFileResponse($uuid, 'inline');
+    }
+
+    private function pdfFileResponse(string $uuid, string $disposition, bool $recordDownload = false)
     {
         $invoice = Invoice::with('order')
             ->where('uuid', $uuid)
@@ -216,14 +230,21 @@ class InvoiceController extends Controller
             );
         }
 
-        $invoice->update(['downloaded_at' => $invoice->downloaded_at ?? now()]);
+        if ($recordDownload) {
+            $invoice->update(['downloaded_at' => $invoice->downloaded_at ?? now()]);
+            $this->timelineService->recordDownloaded($invoice);
+        }
 
-        $this->timelineService->recordDownloaded($invoice);
+        $filename = str_replace('/', '-', $invoice->pdf_path);
 
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
-            'url' => url('storage/invoices/' . $invoice->pdf_path),
-            'invoice_number' => $invoice->invoice_number,
-        ]);
+        return \Illuminate\Support\Facades\Storage::disk('public')->response(
+            'invoices/' . $invoice->pdf_path,
+            $filename,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => $disposition . '; filename="' . $filename . '"',
+            ]
+        );
     }
 
     public function regenerate(int $id): JsonResponse

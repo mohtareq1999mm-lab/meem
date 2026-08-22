@@ -32,10 +32,10 @@ class CustomerInvoiceListResource extends JsonResource
                 url('/api/v1/general/invoices/verify/' . $this->uuid)
             ),
             'view_url' => $this->when($this->uuid, fn () =>
-                url('/api/v1/general/invoices/show/uuid/' . $this->uuid)
+                url('/api/v1/invoices/' . $this->uuid . '/view')
             ),
-            'download_url' => $this->when($this->uuid && $this->pdf_path, fn () =>
-                url('/api/v1/general/invoices/download/' . $this->uuid)
+            'download_url' => $this->when($this->uuid, fn () =>
+                url('/api/v1/invoices/' . $this->uuid . '/download')
             ),
         ];
     }
