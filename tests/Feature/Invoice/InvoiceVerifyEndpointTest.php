@@ -102,7 +102,7 @@ class InvoiceVerifyEndpointTest extends TestCase
 
         // Ready-made viewer link inside the invoice payload.
         $this->assertStringContainsString(
-            '/api/v1/general/orders/' . $invoice->order_id . '/invoice',
+            '/api/v1/general/invoices/show/uuid/' . $invoice->uuid,
             (string) $response->json('data.invoice.view_url')
         );
 

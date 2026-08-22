@@ -25,11 +25,11 @@ class CustomerInvoiceResource extends JsonResource
             'verification_url' => $this->when($this->uuid, fn () =>
                 url('/api/v1/general/invoices/verify/' . $this->uuid)
             ),
-            'view_url' => $this->when($this->order_id, fn () =>
-                url('/api/v1/general/orders/' . $this->order_id . '/invoice')
+            'view_url' => $this->when($this->uuid, fn () =>
+                url('/api/v1/general/invoices/show/uuid/' . $this->uuid)
             ),
             'download_url' => $this->when($this->uuid && $this->pdf_path, fn () =>
-                url('/api/v1/general/invoices/' . $this->uuid . '/download')
+                url('/api/v1/general/invoices/download/' . $this->uuid)
             ),
             'snapshot' => $this->when($this->data, fn () =>
                 InvoiceSnapshotResource::make($this->resource)

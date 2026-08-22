@@ -162,6 +162,48 @@ class MyInvoicesEndpointTest extends TestCase
         $this->assertArrayHasKey('pricing_breakdown', $detail->json('data.snapshot'));
     }
 
+    // 9b: customer download_url is callable by its owner (customer /general route)
+    public function test_customer_download_url_returns_pdf_pointer_for_owner(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+        $user = $this->createUser('dl@mi.test');
+        $order = $this->createOrderFor($user);
+        $invoice = $this->invoiceService->generateFromOrder($order);
+
+        $filename = str_replace('/', '-', $invoice->invoice_number) . '.pdf';
+        \Illuminate\Support\Facades\Storage::disk('public')->put('invoices/' . $filename, '%PDF-1.4 test');
+        $invoice->update(['pdf_path' => $filename, 'pdf_generated_at' => now(), 'status' => 'ready']);
+
+        Sanctum::actingAs($user);
+        $response = $this->getJson(self::URI)->assertOk();
+
+        // List emits the CUSTOMER routes for view + download.
+        $expectedDownload = '/api/v1/general/invoices/download/' . $invoice->uuid;
+        $this->assertStringContainsString($expectedDownload, (string) $response->json('data.data.0.download_url'));
+
+        $expectedView = '/api/v1/general/invoices/show/uuid/' . $invoice->uuid;
+        $this->assertStringContainsString($expectedView, (string) $response->json('data.data.0.view_url'));
+
+        // Following VIEW with the owner's token returns full invoice data.
+        $view = $this->getJson('/api/v1/general/invoices/show/uuid/' . $invoice->uuid)->assertOk();
+        $this->assertSame($invoice->invoice_number, $view->json('data.invoice_number'));
+        $this->assertNotNull($view->json('data.snapshot'));
+
+        // Following DOWNLOAD with the owner's token returns the storage pointer.
+        $download = $this->getJson('/api/v1/general/invoices/download/' . $invoice->uuid)->assertOk();
+        $this->assertSame($invoice->invoice_number, $download->json('data.invoice_number'));
+
+        // Foreign user gets the privacy 404 on both.
+        $intruder = $this->createUser('intruder-dl@mi.test');
+        Sanctum::actingAs($intruder);
+        $this->getJson('/api/v1/general/invoices/download/' . $invoice->uuid)
+            ->assertStatus(404)
+            ->assertJsonMissing(['invoice_number']);
+        $this->getJson('/api/v1/general/invoices/show/uuid/' . $invoice->uuid)
+            ->assertStatus(404)
+            ->assertJsonMissing(['invoice_number']);
+    }
+
     // 10: admin endpoints unchanged (admin show still exposes hashes/snapshot)
     public function test_admin_show_endpoint_remains_unchanged(): void
     {

@@ -249,9 +249,9 @@ class OrderIdInvoiceEndpointTest extends TestCase
         ]);
         $response->assertJsonPath('data.uuid', $invoice->uuid);
         $response->assertJsonPath('data.invoice_number', $invoice->invoice_number);
-        // Ready-made viewer link — frontend must not build URLs itself.
+        // Ready-made viewer link — customer show-by-uuid route.
         $this->assertStringContainsString(
-            '/api/v1/general/orders/' . $order->id . '/invoice',
+            '/api/v1/general/invoices/show/uuid/' . $invoice->uuid,
             (string) $response->json('data.view_url')
         );
     }

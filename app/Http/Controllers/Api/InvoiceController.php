@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Marvel\Enums\Permission;
+use Marvel\Database\Models\Order;
 use Marvel\Traits\ApiResponse;
 
 class InvoiceController extends Controller
@@ -106,13 +107,17 @@ class InvoiceController extends Controller
      */
     public function showByUuidForUser(Request $request, string $uuid): JsonResponse
     {
-        $invoice = Invoice::with(['order.orderItems', 'transaction', 'user'])
-            ->where('uuid', $uuid)
-            ->firstOrFail();
+        // Ownership scoped inside the query — foreign and missing uuids both
+        // yield the same clean 404 without leaking existence.
+        $order = Order::where('user_id', $request->user()->id)
+            ->whereHas('invoices', fn ($q) => $q->where('uuid', $uuid))
+            ->first();
 
-        if ($invoice->order->user_id !== $request->user()->id) {
-            throw new \Illuminate\Auth\Access\AuthorizationException(NOT_AUTHORIZED);
+        if (!$order) {
+            return $this->apiResponse(NOT_FOUND, 404, false);
         }
+
+        $invoice = $order->invoices()->where('uuid', $uuid)->firstOrFail();
 
         return $this->apiResponse(
             FETCH_DATA_SUCCESSFULLY,

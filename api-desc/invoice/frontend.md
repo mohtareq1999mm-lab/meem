@@ -1,4 +1,4 @@
-# Invoice Module — Frontend Integration Guide
+﻿# Invoice Module â€” Frontend Integration Guide
 
 Pure endpoint reference. Customer endpoints first, then the admin group. Every endpoint lists: authentication, request body/query parameters, and real response structures.
 
@@ -8,9 +8,9 @@ Pure endpoint reference. Customer endpoints first, then the admin group. Every e
 
 ---
 
-## 1. GET /api/v1/general/invoices/my-invoices — My Invoices
+## 1. GET /api/v1/general/invoices/my-invoices â€” My Invoices
 
-**Auth:** Sanctum (no permission — auto-scoped to authenticated user)
+**Auth:** Sanctum (no permission â€” auto-scoped to authenticated user)
 
 | Parameter | Type | Default | Notes |
 |-----------|------|---------|-------|
@@ -20,7 +20,7 @@ Pure endpoint reference. Customer endpoints first, then the admin group. Every e
 
 **Response 200:** paginated customer items.
 
-Customer item fields (lightweight list — **no snapshot**): `uuid`, `invoice_number`, `status`, `subtotal`, `shipping_price`, `total_discount`, `total`, `currency`, `payment_method`, `payment_gateway`, `generated_at`, `pdf_generated_at`, `verification_url` (when uuid), **`view_url`** (when order_id — ready-made link to open this invoice), `download_url` (when uuid AND pdf_path — points to the registered route `/api/v1/invoices/{uuid}/download`).
+Customer item fields (lightweight list â€” **no snapshot**): `uuid`, `invoice_number`, `status`, `subtotal`, `shipping_price`, `total_discount`, `total`, `currency`, `payment_method`, `payment_gateway`, `generated_at`, `pdf_generated_at`, `verification_url` (when uuid), **`view_url`** (when order_id â€” ready-made link to open this invoice), `download_url` (when uuid AND pdf_path â€” points to the registered route `/api/v1/invoices/{uuid}/download`).
 
 ```json
 {
@@ -42,9 +42,9 @@ Customer item fields (lightweight list — **no snapshot**): `uuid`, `invoice_nu
                 "payment_gateway": "myfatoorah",
                 "generated_at": "2026-08-22T09:14:58+00:00",
                 "pdf_generated_at": "2026-08-22T09:15:00+00:00",
-                "verification_url": "https://example.com/api/v1/general/invoices/verify/550e8400-…",
-                "view_url": "https://example.com/api/v1/general/orders/101/invoice",
-                "download_url": "…"
+                "verification_url": "https://example.com/api/v1/general/invoices/verify/550e8400-â€¦",
+                "view_url": "https://example.com/api/v1/general/invoices/show/uuid/550e8400-…",
+                "download_url": "â€¦"
             }
         ],
         "links": { "current_page": 1, "per_page": 15, "total": 4 }
@@ -58,16 +58,16 @@ Customer item fields (lightweight list — **no snapshot**): `uuid`, `invoice_nu
 
 ---
 
-## 2. GET /api/v1/general/orders/{orderId}/invoice — View One Invoice (Customer, Canonical)
+## 2. GET /api/v1/general/orders/{orderId}/invoice â€” View One Invoice (Customer, Canonical)
 
-**Auth:** Sanctum · `{orderId}` numeric-only · Ownership scoped in query
+**Auth:** Sanctum Â· `{orderId}` numeric-only Â· Ownership scoped in query
 
 **Request:** path parameter = the **Order ID** from the customer order list. No invoice uuid extraction needed.
 
 **Resolution:**
-- Pending order (no invoice yet) → **404** `{ status: 404, "message": "Not found", "success": false }`
-- Foreign / missing order → identical **404** envelope (no existence leak)
-- Found → `200` with the full customer item below (always including `snapshot`) — payload identical to the legacy uuid route; returns the correction when one exists
+- Pending order (no invoice yet) â†’ **404** `{ status: 404, "message": "Not found", "success": false }`
+- Foreign / missing order â†’ identical **404** envelope (no existence leak)
+- Found â†’ `200` with the full customer item below (always including `snapshot`) â€” payload identical to the legacy uuid route; returns the correction when one exists
 
 ```json
 {
@@ -75,7 +75,7 @@ Customer item fields (lightweight list — **no snapshot**): `uuid`, `invoice_nu
     "message": "Data fetched successfully",
     "success": true,
     "data": {
-        "uuid": "550e8400-…",
+        "uuid": "550e8400-â€¦",
         "invoice_number": "INV-2026-000012",
         "status": "ready",
         "subtotal": 150.0,
@@ -87,8 +87,8 @@ Customer item fields (lightweight list — **no snapshot**): `uuid`, `invoice_nu
         "payment_gateway": "myfatoorah",
         "generated_at": "2026-08-22T09:14:58+00:00",
         "pdf_generated_at": "2026-08-22T09:15:00+00:00",
-        "verification_url": "https://example.com/api/v1/general/invoices/verify/550e8400-…",
-        "download_url": "…",
+        "verification_url": "https://example.com/api/v1/general/invoices/verify/550e8400-â€¦",
+        "download_url": "â€¦",
         "snapshot": {
             "snapshot_version": "2.1.0",
             "order": { "id": 101, "order_number": "ORD-00000101", "status": "completed" },
@@ -102,17 +102,17 @@ Customer item fields (lightweight list — **no snapshot**): `uuid`, `invoice_nu
 }
 ```
 
-### ~~Legacy variant~~ — REMOVED
+### ~~Legacy variant~~ â€” REMOVED
 
 `GET /api/v1/general/orders/invoice/{uuid}` and its `OrderController::invoice()` method were **deleted (2026-08-22)**. Requests fail routing with 404. Use the canonical Order-ID endpoint above; locate documents by Order ID only.
 
-**Errors:** `401` guest · `403` non-owner · `404` unknown uuid.
+**Errors:** `401` guest Â· `403` non-owner Â· `404` unknown uuid.
 
 ---
 
-## 3. GET /api/v1/general/invoices/verify/{uuid} — Verify Invoice
+## 3. GET /api/v1/general/invoices/verify/{uuid} â€” Verify Invoice
 
-**Auth:** Sanctum · `throttle:5,1`
+**Auth:** Sanctum Â· `throttle:5,1`
 
 **Request:** path parameter `uuid`.
 
@@ -125,7 +125,7 @@ Customer item fields (lightweight list — **no snapshot**): `uuid`, `invoice_nu
     "data": {
         "authentic": true,
         "invoice": {
-            "uuid": "550e8400-…",
+            "uuid": "550e8400-â€¦",
             "invoice_number": "INV-2026-000012",
             "status": "ready",
             "total": 155.0,
@@ -139,7 +139,7 @@ Customer item fields (lightweight list — **no snapshot**): `uuid`, `invoice_nu
             "payment_status": "paid",
             "fulfillment_status": "fulfilled"
         },
-        "qr_content": "https://example.com/api/v1/general/invoices/verify/550e8400-…"
+        "qr_content": "https://example.com/api/v1/general/invoices/verify/550e8400-â€¦"
     }
 }
 ```
@@ -163,20 +163,20 @@ Customer item fields (lightweight list — **no snapshot**): `uuid`, `invoice_nu
 
 ---
 
-## 4. GET /api/v1/invoices — List Invoices
+## 4. GET /api/v1/invoices â€” List Invoices
 
-**Auth:** Sanctum · Permission: `view-invoices`
+**Auth:** Sanctum Â· Permission: `view-invoices`
 
 | Parameter | Type | Default | Notes |
 |-----------|------|---------|-------|
 | limit | int | 15 | Max 100 |
-| search | string | — | Matches `invoice_number` or order number |
-| status | string | — | e.g. `ready` |
-| order_id | int | — | |
-| user_id | int | — | |
-| invoice_series | string | — | |
-| currency | string | — | |
-| from / to | date | — | Filters `created_at` |
+| search | string | â€” | Matches `invoice_number` or order number |
+| status | string | â€” | e.g. `ready` |
+| order_id | int | â€” | |
+| user_id | int | â€” | |
+| invoice_series | string | â€” | |
+| currency | string | â€” | |
+| from / to | date | â€” | Filters `created_at` |
 | sort_by | enum | created_at | created_at, total, status, invoice_number |
 | sort_direction | asc/desc | desc | |
 
@@ -206,8 +206,8 @@ Customer item fields (lightweight list — **no snapshot**): `uuid`, `invoice_nu
                 "currency": "EGP",
                 "payment_method": "online",
                 "payment_gateway": "myfatoorah",
-                "snapshot_hash": "9f2a…",
-                "verification_hash": "c31b…",
+                "snapshot_hash": "9f2aâ€¦",
+                "verification_hash": "c31bâ€¦",
                 "pdf_generated_at": "2026-08-22T09:15:00+00:00",
                 "generated_at": "2026-08-22T09:14:58+00:00",
                 "generation_attempts": 1,
@@ -245,15 +245,15 @@ Customer item fields (lightweight list — **no snapshot**): `uuid`, `invoice_nu
 
 ---
 
-## 5. GET /api/v1/invoices/{id} — Show Invoice
+## 5. GET /api/v1/invoices/{id} â€” Show Invoice
 
-**Auth:** Sanctum · Permission: `view-invoice` · `{id}` numeric-only (non-numeric → route 404)
+**Auth:** Sanctum Â· Permission: `view-invoice` Â· `{id}` numeric-only (non-numeric â†’ route 404)
 
 **Request:** path parameter `id`.
 
 **Response 200:** full admin resource.
 
-Admin item fields: `id`, `uuid`, `order_id`, `invoice_number`, `status`, `subtotal`, `shipping_price`, `coupon_discount`, `promotion_discount`, `total_discount`, `total`, `amount_paid`, `currency`, `payment_method`, `payment_gateway`, `snapshot_hash`, `verification_hash`, `pdf_generated_at`, `generated_at`, `generation_attempts`, `last_generation_error`, `is_correction`, `correction_reason`, `corrected_at`, `cancelled_at`, `cancellation_reason`, `verified_at`, `downloaded_at`, `printed_at`, `archived_at`, `last_verified_at`, `verify_count`, `created_at`, plus conditionals: `verification_url`, **`view_url`** (when order_id — canonical viewer link), `qr_content {uuid, invoice_number, verification_hash, issued_at, verification_url}`, `download_url` (when pdf exists), `snapshot`.
+Admin item fields: `id`, `uuid`, `order_id`, `invoice_number`, `status`, `subtotal`, `shipping_price`, `coupon_discount`, `promotion_discount`, `total_discount`, `total`, `amount_paid`, `currency`, `payment_method`, `payment_gateway`, `snapshot_hash`, `verification_hash`, `pdf_generated_at`, `generated_at`, `generation_attempts`, `last_generation_error`, `is_correction`, `correction_reason`, `corrected_at`, `cancelled_at`, `cancellation_reason`, `verified_at`, `downloaded_at`, `printed_at`, `archived_at`, `last_verified_at`, `verify_count`, `created_at`, plus conditionals: `verification_url`, **`view_url`** (when order_id â€” canonical viewer link), `qr_content {uuid, invoice_number, verification_hash, issued_at, verification_url}`, `download_url` (when pdf exists), `snapshot`.
 
 ```json
 {
@@ -262,7 +262,7 @@ Admin item fields: `id`, `uuid`, `order_id`, `invoice_number`, `status`, `subtot
     "success": true,
     "data": {
         "id": 12,
-        "uuid": "550e8400-…",
+        "uuid": "550e8400-â€¦",
         "order_id": 101,
         "invoice_number": "INV-2026-000012",
         "status": "ready",
@@ -279,40 +279,40 @@ Admin item fields: `id`, `uuid`, `order_id`, `invoice_number`, `status`, `subtot
         "generation_attempts": 1,
         "is_correction": false,
         "verify_count": 0,
-        "verification_url": "https://example.com/api/v1/general/invoices/verify/550e8400-…",
+        "verification_url": "https://example.com/api/v1/general/invoices/verify/550e8400-â€¦",
         "qr_content": {
-            "uuid": "550e8400-…",
+            "uuid": "550e8400-â€¦",
             "invoice_number": "INV-2026-000012",
-            "verification_hash": "c31b…",
+            "verification_hash": "c31bâ€¦",
             "issued_at": "2026-08-22T09:14:58+00:00",
-            "verification_url": "https://example.com/api/v1/general/invoices/verify/550e8400-…"
+            "verification_url": "https://example.com/api/v1/general/invoices/verify/550e8400-â€¦"
         },
-        "download_url": "https://example.com/api/v1/general/invoices/550e8400-…/download",
-        "snapshot": { "…": "see endpoint 2" }
+        "download_url": "https://example.com/api/v1/general/invoices/550e8400-â€¦/download",
+        "snapshot": { "â€¦": "see endpoint 2" }
     }
 }
 ```
 
-> Same `download_url` warning as section 1 — use endpoint 7 for downloads.
+> Same `download_url` warning as section 1 â€” use endpoint 7 for downloads.
 
-**Errors:** `404` missing id (`{"message":"Resource Not Found","status":false}`) · `401` guest · `403` no permission.
+**Errors:** `404` missing id (`{"message":"Resource Not Found","status":false}`) Â· `401` guest Â· `403` no permission.
 
 ---
 
-## 6. GET /api/v1/general/invoices/uuid/{uuid} — Show Invoice by UUID
+## 6. GET /api/v1/general/invoices/uuid/{uuid} â€” Show Invoice by UUID
 
-**Auth:** Sanctum · Permission: `view-invoice`
+**Auth:** Sanctum Â· Permission: `view-invoice`
 
 **Request:** path parameter `uuid`.
 
 **Response 200:** identical shape to endpoint 5.
-**Errors:** `404` unknown uuid · `401` · `403`.
+**Errors:** `404` unknown uuid Â· `401` Â· `403`.
 
 ---
 
-## 7. GET /api/v1/invoices/{uuid}/download — Download PDF
+## 7. GET /api/v1/invoices/{uuid}/download â€” Download PDF
 
-**Auth:** Sanctum · `throttle:30,1` · Inline rule: **owner OR `view-invoice-download`** (an authenticated customer may download their own invoice here)
+**Auth:** Sanctum Â· `throttle:30,1` Â· Inline rule: **owner OR `view-invoice-download`** (an authenticated customer may download their own invoice here)
 
 **Request:** path parameter `uuid` (UUID format enforced).
 
@@ -331,10 +331,10 @@ Admin item fields: `id`, `uuid`, `order_id`, `invoice_number`, `status`, `subtot
 
 **Error responses:**
 ```json
-// 404 — unauthorized OR unknown uuid (identical body, no existence leak)
+// 404 â€” unauthorized OR unknown uuid (identical body, no existence leak)
 { "status": 404, "message": "Not found", "success": false }
 
-// 404 — PDF not generated yet
+// 404 â€” PDF not generated yet
 {
     "status": 404,
     "message": "PDF not yet generated",
@@ -348,9 +348,9 @@ Admin item fields: `id`, `uuid`, `order_id`, `invoice_number`, `status`, `subtot
 
 ---
 
-## 8. POST /api/v1/invoices/{id}/regenerate — Regenerate PDF
+## 8. POST /api/v1/invoices/{id}/regenerate â€” Regenerate PDF
 
-**Auth:** Sanctum · Permission: `regenerate-invoice` · `{id}` numeric-only
+**Auth:** Sanctum Â· Permission: `regenerate-invoice` Â· `{id}` numeric-only
 
 **Request Body:** none (empty).
 
@@ -369,13 +369,13 @@ Admin item fields: `id`, `uuid`, `order_id`, `invoice_number`, `status`, `subtot
 { "status": 422, "message": "ERROR_ADDING_ITEMS_TO_ORDER", "success": false }
 ```
 
-**Response 404:** `{"message":"Resource Not Found","status":false}` — id does not exist.
+**Response 404:** `{"message":"Resource Not Found","status":false}` â€” id does not exist.
 
 ---
 
-## 9. POST /api/v1/invoices/{id}/correct — Correct Invoice
+## 9. POST /api/v1/invoices/{id}/correct â€” Correct Invoice
 
-**Auth:** Sanctum · Permission: `correct-invoice` · `{id}` numeric-only
+**Auth:** Sanctum Â· Permission: `correct-invoice` Â· `{id}` numeric-only
 
 **Request Body:**
 ```json
@@ -397,9 +397,9 @@ Admin item fields: `id`, `uuid`, `order_id`, `invoice_number`, `status`, `subtot
 }
 ```
 
-Validation: `reason` required, max 500 · all `overrides.*` optional (`total`/`amount_paid`/`shipping_price` numeric ≥ 0 · `customer.email` valid email · addresses arrays · `notes` string).
+Validation: `reason` required, max 500 Â· all `overrides.*` optional (`total`/`amount_paid`/`shipping_price` numeric â‰¥ 0 Â· `customer.email` valid email Â· addresses arrays Â· `notes` string).
 
-**Response 200** — resource of the **new correction invoice**:
+**Response 200** â€” resource of the **new correction invoice**:
 ```json
 {
     "status": 200,
@@ -407,7 +407,7 @@ Validation: `reason` required, max 500 · all `overrides.*` optional (`total`/`a
     "success": true,
     "data": {
         "id": 13,
-        "uuid": "7c9e6679-742f-45de-…",
+        "uuid": "7c9e6679-742f-45de-â€¦",
         "order_id": 101,
         "invoice_number": "INV-2026-000013",
         "status": "generated",
@@ -418,9 +418,9 @@ Validation: `reason` required, max 500 · all `overrides.*` optional (`total`/`a
         "correction_reason": "Wrong total charged",
         "corrected_at": "2026-08-22T10:00:00+00:00",
         "generation_attempts": 0,
-        "verification_url": "https://example.com/api/v1/general/invoices/verify/7c9e6679-…",
-        "view_url": "https://example.com/api/v1/general/orders/101/invoice",
-        "snapshot": { "…": "cloned snapshot with overrides applied" }
+        "verification_url": "https://example.com/api/v1/general/invoices/verify/7c9e6679-â€¦",
+        "view_url": "https://example.com/api/v1/general/invoices/show/uuid/550e8400-…",
+        "snapshot": { "â€¦": "cloned snapshot with overrides applied" }
     }
 }
 ```
@@ -430,18 +430,18 @@ Validation: `reason` required, max 500 · all `overrides.*` optional (`total`/`a
 { "status": 422, "message": "Invoice 12 cannot be corrected from status 'cancelled'", "success": false }
 ```
 
-**Response 404:** `{"message":"Resource Not Found","status":false}` — id does not exist (no internals leaked).
+**Response 404:** `{"message":"Resource Not Found","status":false}` â€” id does not exist (no internals leaked).
 
-**Response 422 (validation)** — flat errors object:
+**Response 422 (validation)** â€” flat errors object:
 ```json
 { "reason": ["The reason field is required."], "overrides.total": ["The overrides.total must be at least 0."] }
 ```
 
 ---
 
-## 10. POST /api/v1/invoices/{id}/cancel — Cancel Invoice
+## 10. POST /api/v1/invoices/{id}/cancel â€” Cancel Invoice
 
-**Auth:** Sanctum · Permission: `cancel-invoice` · `{id}` numeric-only
+**Auth:** Sanctum Â· Permission: `cancel-invoice` Â· `{id}` numeric-only
 
 **Request Body:**
 ```json
@@ -450,7 +450,7 @@ Validation: `reason` required, max 500 · all `overrides.*` optional (`total`/`a
 
 Validation: `reason` required, string, max 500.
 
-**Response 200** — refreshed resource with terminal state:
+**Response 200** â€” refreshed resource with terminal state:
 ```json
 {
     "status": 200,
@@ -458,7 +458,7 @@ Validation: `reason` required, string, max 500.
     "success": true,
     "data": {
         "id": 12,
-        "uuid": "550e8400-…",
+        "uuid": "550e8400-â€¦",
         "invoice_number": "INV-2026-000012",
         "status": "cancelled",
         "cancelled_at": "2026-08-22T10:05:00+00:00",
@@ -481,18 +481,18 @@ Validation: `reason` required, string, max 500.
 
 ---
 
-## 11. POST /api/v1/invoices/{id}/debit-note — Issue Debit Note
+## 11. POST /api/v1/invoices/{id}/debit-note â€” Issue Debit Note
 
-**Auth:** Sanctum · Permission: `issue-debit-note` · `{id}` numeric-only
+**Auth:** Sanctum Â· Permission: `issue-debit-note` Â· `{id}` numeric-only
 
 **Request Body:**
 ```json
 { "amount": 25.50, "reason": "Additional shipping charge" }
 ```
 
-Validation: `amount` required, numeric, min 0.01 · `reason` required, max 500.
+Validation: `amount` required, numeric, min 0.01 Â· `reason` required, max 500.
 
-**Response 201** — raw DebitNote attributes (no resource wrapper):
+**Response 201** â€” raw DebitNote attributes (no resource wrapper):
 ```json
 {
     "status": 201,
@@ -500,7 +500,7 @@ Validation: `amount` required, numeric, min 0.01 · `reason` required, max 500.
     "success": true,
     "data": {
         "id": 3,
-        "uuid": "a1b2c3d4-…",
+        "uuid": "a1b2c3d4-â€¦",
         "invoice_id": 12,
         "debit_note_number": "DN-2026-000001",
         "debit_note_series": "DN",
@@ -511,7 +511,7 @@ Validation: `amount` required, numeric, min 0.01 · `reason` required, max 500.
         "amount": 25.5,
         "currency": "EGP",
         "created_by": 5,
-        "line_items": [ "…" ],
+        "line_items": [ "â€¦" ],
         "notes": "Debit note for INV-2026-000012",
         "issued_at": "2026-08-22T10:10:00+00:00",
         "updated_at": "2026-08-22T10:10:00+00:00",
@@ -536,4 +536,4 @@ Validation: `amount` required, numeric, min 0.01 · `reason` required, max 500.
 
 ## Status Values (as returned in every invoice payload)
 
-`pending` · `generating` · `generated` · `pdf_generating` · `ready` · `failed` · `verified` · `downloaded` · `printed` · `corrected` · `cancelled` · `archived`
+`pending` Â· `generating` Â· `generated` Â· `pdf_generating` Â· `ready` Â· `failed` Â· `verified` Â· `downloaded` Â· `printed` Â· `corrected` Â· `cancelled` Â· `archived`
