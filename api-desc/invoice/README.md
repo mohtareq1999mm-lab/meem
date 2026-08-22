@@ -86,11 +86,12 @@ The Invoice module manages the full invoice lifecycle for the e-commerce platfor
 | GET | `/api/v1/invoices` | Sanctum (view-invoices) | List invoices (paginated, filterable, sortable) |
 | GET | `/api/v1/invoices/{id}` | Sanctum (view-invoice) | Show invoice by ID |
 | GET | `/api/v1/invoices/{uuid}/download` | Sanctum + throttle:30,1 (owner or view-invoice-download, inline) | Download invoice PDF (JSON URL) |
+| GET | `/api/v1/invoices/verify/{uuid}` | Sanctum + throttle:5,1 (no permission) | Verify authenticity (admin prefix; same action as general) |
+| GET | `/api/v1/invoices/uuid/{uuid}` | Sanctum (view-invoice) | Show invoice by UUID (admin prefix; same action as general) |
 | GET | `/api/v1/general/invoices/my-invoices` | Sanctum | List current user's invoices |
 | GET | `/api/v1/general/invoices/uuid/{uuid}` | Sanctum (view-invoice) | Show invoice by UUID |
 | GET | `/api/v1/general/invoices/verify/{uuid}` | Sanctum + throttle:5,1 | Verify invoice authenticity |
 | GET | `/api/v1/general/orders/{orderId}/invoice` | Sanctum (owner-scoped; pending → 404) | Customer invoice by Order ID — canonical |
-| GET | `/api/v1/general/orders/invoice/{uuid}` | Sanctum (owner-only) | Customer view of one invoice — legacy compat |
 | POST | `/api/v1/invoices/{id}/regenerate` | Sanctum (regenerate-invoice) | Regenerate PDF |
 | POST | `/api/v1/invoices/{id}/correct` | Sanctum (correct-invoice) | Create corrected invoice |
 | POST | `/api/v1/invoices/{id}/cancel` | Sanctum (cancel-invoice) | Cancel invoice |

@@ -1,5 +1,21 @@
 # Invoice Module — Changelog
 
+## [1.6.0] — 2026-08-22
+
+### Fixed
+- **Verify endpoint HTTP 500 resolved.** `InvoiceResource::toArray()` restored (was fully commented out while declaring `: array` → TypeError on the authentic path). `data.invoice` now returns full invoice fields; the old broken `download_url` field was intentionally not re-added.
+- **Missing customer routes restored** in `routes/api.php`: `GET /general/invoices/verify/{uuid}` (`throttle:5,1`) and `GET /general/invoices/uuid/{uuid}` were absent from this branch's route file — only `my-invoices` survived.
+- Known issues #7 closed; #4 (contradiction list) obsolete.
+
+### Added
+- `tests/Feature/Invoice/InvoiceVerifyEndpointTest.php` — 5 tests: guest 401, authentic 200 (+ verify_count/last_verified_at/timeline side effects), tampered 409, unknown uuid 404 envelope, repeated verification counting.
+
+## [1.5.0] — 2026-08-22
+
+### Removed
+- **`GET /api/v1/general/orders/invoice/{uuid}`** (and `OrderController::invoice()`). Superseded by the canonical Order-ID endpoint introduced in 1.4.0; requests now fail routing with 404.
+- Deleted obsolete suite `tests/Feature/OrderInvoiceEndpointTest.php`; its still-relevant order-list indicator coverage was ported into `OrderIdInvoiceEndpointTest::test_order_list_exposes_invoice_indicator_fields` (suite now **10 tests / 49 assertions, PASS**).
+
 ## [1.4.0] — 2026-08-22
 
 ### Added
@@ -12,7 +28,7 @@
 - `transactions[].invoice_id` remains a gateway reference string — unrelated to the Order's Invoice.
 
 ### Documentation
-- Customer-view sections across `api.md`, `backend.md`, `frontend.md`, `flow.md`, `README.md` now list the canonical Order-ID route first and mark the UUID route as legacy compatibility.
+- Customer-view sections across `api.md`, `backend.md`, `frontend.md`, `flow.md`, `README.md` now document the canonical Order-ID route (uuid route removed in 1.5.0).
 
 ## [1.3.0] — 2026-08-22
 

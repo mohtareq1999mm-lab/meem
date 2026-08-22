@@ -117,7 +117,7 @@ GET /general/invoices/verify/{uuid}
       → Increment verify_count
       → Update last_verified_at / verified_at
       → Timeline: recordVerified
-    → KNOWN ISSUE: InvoiceResource::toArray() is commented out → TypeError → HTTP 500
+    → InvoiceResource (restored) → full invoice data in response
 
 GET /invoices/{uuid}/download
   → InvoiceController@download($uuid)
@@ -256,13 +256,13 @@ Transitions are enforced at TWO levels:
 | GET `/general/invoices/uuid/{uuid}` | `AdminInvoiceResource` |
 | GET `/general/invoices/my-invoices` | `CustomerInvoiceCollection` |
 | GET `/general/orders/invoice/{uuid}` | `CustomerInvoiceResource` |
-| GET `/general/invoices/verify/{uuid}` | `InvoiceResource` (**disabled — see note below**) |
+| GET `/general/invoices/verify/{uuid}` | `InvoiceResource` (restored 2026-08-22) |
 | POST `/invoices/{id}/correct` | `AdminInvoiceResource` (correction) |
 | POST `/invoices/{id}/cancel` | `AdminInvoiceResource` (fresh invoice) |
 | POST `/invoices/{id}/debit-note` | raw `DebitNote` model (no resource) |
 | GET `/invoices/{uuid}/download` | JSON `{ url, invoice_number }` (no resource) |
 
-> **`InvoiceResource` is disabled.** `app/Http/Resources/Invoice/InvoiceResource.php::toArray()` has its entire body commented out. Any endpoint that serializes it (`verify()`) throws `TypeError` → HTTP 500. `InvoiceCollection` (`InvoiceCollection.php`) is likewise disabled (it collects `InvoiceResource`).
+> **`InvoiceResource` restored (2026-08-22).** `toArray()` was re-enabled — `verify()` now returns full invoice data on the authentic path. Note: the restored resource intentionally omits the old broken `download_url` field. `InvoiceCollection` remains unused/disabled (not referenced by any live endpoint).
 
 ### AdminInvoiceResource (`app/Http/Resources/Invoice/AdminInvoiceResource.php`)
 

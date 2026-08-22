@@ -7,9 +7,10 @@
 ## [Unreleased] — 2026-08-22
 ### Added
 - **`GET /api/v1/general/orders/{orderId}/invoice`** — canonical customer invoice lookup by Order ID (`OrderController::invoiceByOrderId`, `whereNumber`). Ownership scoped in the query (foreign order = same clean 404, no existence leak). Resolves `latestInvoice` → identical `CustomerInvoiceResource` payload as the legacy UUID route. Pending orders return 404 (no invoice yet).
-- Feature suite `tests/Feature/Order/OrderIdInvoiceEndpointTest.php` — 9 tests / 33 assertions covering: pending→404, first-leave→200, lifecycle stability (invoice never duplicated), cancelled/completed first-leave, ownership isolation, missing order, old-vs-new payload parity, correction resolution + legacy route intact.
+- Feature suite `tests/Feature/Order/OrderIdInvoiceEndpointTest.php` — now **10 tests / 49 assertions** covering: pending→404, first-leave→200, lifecycle stability (invoice never duplicated), cancelled/completed first-leave, ownership isolation, missing order, resource-contract shape, correction resolution, order-list invoice indicators.
+### Removed
+- **`GET /orders/invoice/{uuid}`** and `OrderController::invoice()` — superseded by the canonical endpoint; obsolete suite `OrderInvoiceEndpointTest.php` deleted (list-indicator test ported).
 ### Unchanged
-- Legacy `GET /orders/invoice/{uuid}` preserved (consumed by existing clients/tests).
 - `transactions[].invoice_id` remains a gateway reference string — unrelated to the Order's Invoice (documented distinction).
 
 ### Changed (implementation v5 — invoice decoupled from payment)

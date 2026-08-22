@@ -149,8 +149,7 @@
 
 **API Endpoints:**
 - `GET /api/v1/general/invoices/my-invoices`
-- `GET /api/v1/general/orders/{orderId}/invoice` (customer view one invoice, canonical Order-ID lookup)
-- `GET /api/v1/general/orders/invoice/{uuid}` (legacy compatibility)
+- `GET /api/v1/general/orders/{orderId}/invoice` (customer view one invoice, canonical Order-ID lookup; legacy uuid route removed 2026-08-22)
 - `GET /api/v1/invoices/{uuid}/download`
 
 **Acceptance Criteria:**

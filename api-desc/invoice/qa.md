@@ -148,4 +148,4 @@
 - [ ] Large invoice data payloads (performance)
 - [ ] Concurrent generation for same order (lockForUpdate test)
 - [ ] Rate limiting: verify 5 req/min, download 30 req/min
-- [ ] `verify()` authentic-path HTTP test (blocked: `InvoiceResource` disabled → TypeError/500; see api.md known issue #4)
+- [x] `verify()` authentic-path HTTP test — **CLOSED 2026-08-22**: `InvoiceVerifyEndpointTest` (5 tests: 401 guest, 200 authentic + side effects, 409 tampered, 404 unknown, verify_count increments)

@@ -57,31 +57,9 @@ App\Http\Controllers\Api\General\OrderController@invoiceByOrderId
              (identical payload to legacy uuid route)
 ```
 
-## Flow: Customer Invoice View (invoice — legacy compatibility)
+## Flow: Customer Invoice View — REMOVED legacy route
 
-```
-Customer App
-  |
-  GET /api/v1/general/orders/invoice/{uuid}
-  Authorization: Bearer <token>
-  |
-  v
-auth:sanctum middleware + throttle:authenticated
-  |
-  v
-App\OrderController@invoice
-  |
-  +-- Invoice::where('uuid', $uuid)->firstOrFail()          → 404 if missing
-  +-- if ($invoice->order->user_id !== auth()->id())        → 403 NOT_AUTHORIZED
-  |
-  v
-new CustomerInvoiceResource($invoice)
-  |
-  v
-JSON Response (200): { status, message, success, data: { uuid, invoice_number, status,
-  subtotal, shipping_price, total_discount, total, currency, payment_method,
-  payment_gateway, generated_at, pdf_generated_at, verification_url, download_url, snapshot } }
-```
+> `GET /orders/invoice/{uuid}` and `OrderController::invoice()` were **removed 2026-08-22**. Use the canonical Order-ID flow above (`invoiceByOrderId`).
 
 ## Flow: Admin Order List (index)
 

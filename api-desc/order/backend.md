@@ -83,19 +83,15 @@ Located in `App\Http\Controllers\Api\General`. Uses `ApiResponse`, `HasCache`; d
 1. `OrderService::getOrderForUser($request, $orderId)` — query scoped to the token user; returns `null` for another user's or a nonexistent order → **404**
 2. Returns `OrderResource::make($order)`
 
-### invoice(Request $request, string $uuid): JsonResponse
-
-1. `Invoice::where('uuid', $uuid)->firstOrFail()` — legacy compatibility lookup
-2. Owner check: `$invoice->order->user_id !== $request->user()->id` → throws `AuthorizationException` (403, `NOT_AUTHORIZED`)
-3. Returns `apiResponse(..., CustomerInvoiceResource::make($invoice))`
-
 ### invoiceByOrderId(Request $request, int $orderId): JsonResponse — CANONICAL
 
 Route: `GET orders/{orderId}/invoice` + `whereNumber('orderId')`.
 
 1. `Order::where('user_id', auth id)->findOrFail($orderId)` — ownership scoped in query; missing/foreign order both → Handler JSON 404 (no existence leak)
 2. `$order->latestInvoice()->first()` — same relation behind `order_has_invoice` / `invoice_id`; `null` for pending → `404 {status:404, message:"Not found", success:false}`
-3. Returns `CustomerInvoiceResource::make($invoice)` — identical payload to the legacy route; resolves the correction when one exists (matches what `invoice_id` advertises)
+3. Returns `CustomerInvoiceResource::make($invoice)` — resolves the correction when one exists (matches what `invoice_id` advertises)
+
+> **REMOVED:** the legacy `invoice($request, string $uuid)` method and its route `orders/invoice/{uuid}` were deleted 2026-08-22 (superseded by this endpoint).
 
 ### checkout(OrderCreateRequest $request)
 
@@ -267,7 +263,6 @@ Route::post('checkout/cashier/{orderId}/mark-paid', ...)->middleware(['permissio
 Route::any('checkout/callback', ...);            // public (gateway redirect)
 Route::any('checkout/error-callback', ...);      // public (gateway error redirect)
 Route::get('orders', [OrderController::class, 'index']);
-Route::get('orders/invoice/{uuid}', [OrderController::class, 'invoice']);
 Route::get('orders/{orderId}/invoice', [OrderController::class, 'invoiceByOrderId'])->whereNumber('orderId');
 Route::get('orders/{id}', [OrderController::class, 'show'])->whereNumber('id');
 ```

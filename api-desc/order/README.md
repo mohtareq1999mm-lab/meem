@@ -11,8 +11,7 @@ Two separate endpoint groups share the name "orders" but have **different contro
 - **Customer** (`/api/v1/general/orders`, `App\Http\Controllers\Api\General\OrderController`):
   - `GET /api/v1/general/orders` — authenticated user's own orders (paginated, `App\Http\Resources\Order\OrderCollection` / `OrderResource`)
   - `GET /api/v1/general/orders/{id}` — owner-only detail (`OrderResource`), 404 for other users' orders
-  - `GET /api/v1/general/orders/{orderId}/invoice` — canonical owner-scoped invoice view by Order ID (`CustomerInvoiceResource`)
-  - `GET /api/v1/general/orders/invoice/{uuid}` — legacy compatibility invoice view
+  - `GET /api/v1/general/orders/{orderId}/invoice` — canonical owner-scoped invoice view by Order ID (`CustomerInvoiceResource`); legacy uuid route removed 2026-08-22
   - `POST /api/v1/general/checkout` + `checkout/cod|cashier/{id}/mark-paid` + public gateway callbacks
 - **Admin** (`/api/v1/orders`, `Marvel\Http\Controllers\Order\OrderController`):
   - `GET /api/v1/orders` — paginated list, permission `view-orders`
@@ -28,7 +27,7 @@ Both wrap responses in the standard envelope `{ status, message, success, data }
     |
     |--- GET  /api/v1/general/orders                    (auth:sanctum + throttle:authenticated)
     |--- GET  /api/v1/general/orders/{id}               (owner-only, 404 otherwise)
-    |--- GET  /api/v1/general/orders/invoice/{uuid}     (owner-only, legacy)
+    |--- GET  /api/v1/general/orders/{orderId}/invoice   (canonical, owner-scoped)
     |--- POST /api/v1/general/checkout
     |--- POST /api/v1/general/checkout/cod/{id}/mark-paid      (update-order-status)
     |--- POST /api/v1/general/checkout/cashier/{id}/mark-paid  (update-order-status)

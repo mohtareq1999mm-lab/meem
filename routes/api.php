@@ -133,7 +133,6 @@ Route::prefix('v1/general')->group(function () {
         //======================== invoices ========================/
         Route::prefix('invoices')->group(function () {
             Route::get('my-invoices', [InvoiceController::class, 'myInvoices']);
-            Route::get('verify/{uuid}', [InvoiceController::class, 'verify'])->middleware('throttle:5,1');
             Route::get('uuid/{uuid}', [InvoiceController::class, 'showByUuid']);
         });
     });

@@ -181,9 +181,9 @@ Identical JSON to the legacy endpoint below (`CustomerInvoiceResource`, incl. `s
 
 ---
 
-## 2b. Customer Order Invoice View (legacy — compatibility)
+## ~~2b~~. Legacy UUID Invoice View — REMOVED
 
-**GET** `/api/v1/general/orders/invoice/{uuid}`
+> **Removed (2026-08-22).** `GET /api/v1/general/orders/invoice/{uuid}` and `OrderController::invoice()` no longer exist; requests fail routing with 404. Canonical lookup: **endpoint 2** (`GET /api/v1/general/orders/{orderId}/invoice`).
 
 ### Authentication
 

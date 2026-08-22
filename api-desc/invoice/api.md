@@ -26,14 +26,27 @@ There are **three different things** a frontend can do with an invoice. They are
 | `GET /api/v1/general/invoices/my-invoices` | `auth:sanctum` |
 | `GET /api/v1/general/invoices/uuid/{uuid}` | `auth:sanctum` + `permission:view-invoice` |
 | `GET /api/v1/general/invoices/verify/{uuid}` | `auth:sanctum` + `throttle:5,1` |
-| `GET /api/v1/general/orders/{orderId}/invoice` | `auth:sanctum` (owner-scoped query; pending order → 404) — **canonical** |
-| `GET /api/v1/invoices` | `auth:sanctum` + `permission:view-invoices` |
-| `GET /api/v1/invoices/{id}` | `auth:sanctum` + `permission:view-invoice` |
+| `GET /api/v1/general/orders/{orderId}/invoice` | `auth:sanctum` (owner-scoped query; pending order -> 404) - **canonical** |
+| `GET /api/v1/invoices` | `auth:sanctum` + `permission:view-invoices` (controller) |
+| `GET /api/v1/invoices/{id}` | `auth:sanctum` + `permission:view-invoice` (controller) |
 | `GET /api/v1/invoices/{uuid}/download` | `auth:sanctum` + `throttle:30,1` (authorization is **inline** in the controller: owner OR `view-invoice-download`) |
-| `POST /api/v1/invoices/{id}/regenerate` | `auth:sanctum` + `permission:regenerate-invoice` |
-| `POST /api/v1/invoices/{id}/correct` | `auth:sanctum` + `permission:correct-invoice` |
-| `POST /api/v1/invoices/{id}/cancel` | `auth:sanctum` + `permission:cancel-invoice` |
-| `POST /api/v1/invoices/{id}/debit-note` | `auth:sanctum` + `permission:issue-debit-note` |
+| `POST /api/v1/invoices/{id}/regenerate` | `auth:sanctum` + `permission:regenerate-invoice` (controller) |
+| `POST /api/v1/invoices/{id}/correct` | `auth:sanctum` + `permission:correct-invoice` (controller) |
+| `POST /api/v1/invoices/{id}/cancel` | `auth:sanctum` + `permission:cancel-invoice` (controller) |
+| `POST /api/v1/invoices/{id}/debit-note` | `auth:sanctum` + `permission:issue-debit-note` (controller) |
+| `GET /api/v1/invoices/verify/{uuid}` | `auth:sanctum` + `throttle:5,1` (**no** permission middleware) |
+| `GET /api/v1/invoices/uuid/{uuid}` | `auth:sanctum` + `permission:view-invoice` (controller, same as `{id}` show) |
+
+## Route Registration Map (source: `packages/marvel/src/Rest/Routes.php:391-403` + `routes/api.php:133-137`)
+
+All invoice actions resolve to ONE controller: `App\Http\Controllers\Api\InvoiceController`. Two prefixes expose it:
+
+| Prefix | Source | Scope | Routes |
+|--------|--------|-------|--------|
+| `/api/v1/general/invoices` | `routes/api.php:134-138` | customer | `my-invoices`, `verify/{uuid}` (`throttle:5,1`), `uuid/{uuid}` |
+| `/api/v1/invoices` | `Routes.php:391-403`, group `auth:sanctum` | admin/staff | `/` index; `{uuid}/download` (`whereUuid`, `throttle:30,1`); `{id}` show (`whereNumber`); `{id}/regenerate|correct|cancel|debit-note` (`whereNumber`); `verify/{uuid}` (`throttle:5,1`); `uuid/{uuid}` |
+
+Constraints: UUIDs enforced by `whereUuid`, numeric IDs by `whereNumber`. No route-level `permission:` middleware exists anywhere in the group - all permission checks are controller-constructor level (see table above).
 
 ---
 
@@ -122,44 +135,58 @@ Eager loads: `order.orderItems`, `transaction`, `user`.
 |-----------|------|-------------|
 | uuid | string | Invoice UUID |
 
-**Response 200 (Authentic)**:
+**Response 200 (Authentic)** — `data.invoice` is a full `InvoiceResource` (restored 2026-08-22):
 ```json
 {
-  "status": 200,
-  "message": "Data fetched successfully",
-  "success": true,
-  "data": {
-    "authentic": true,
-    "invoice": {},
-    "order": {
-      "id": 101,
-      "order_number": "ORD-001",
-      "status": "completed",
-      "payment_status": "paid",
-      "fulfillment_status": "fulfilled"
-    },
-    "qr_content": "http://example.com/api/v1/general/invoices/verify/550e8400-..."
-  }
+    "status": 200,
+    "message": "Data fetched successfully",
+    "success": true,
+    "data": {
+        "authentic": true,
+        "invoice": {
+            "id": 1,
+            "uuid": "550e8400-…",
+            "order_id": 101,
+            "invoice_number": "INV-2026-000001",
+            "status": "ready",
+            "subtotal": 200.0,
+            "shipping_price": 30.0,
+            "total_discount": 20.0,
+            "total": 210.0,
+            "amount_paid": 210.0,
+            "currency": "EGP",
+            "is_correction": false,
+            "verify_count": 1,
+            "verification_url": "http://example.com/api/v1/general/invoices/verify/550e8400-…",
+            "created_at": "2026-07-20T10:35:00+00:00"
+        },
+        "order": {
+            "id": 101,
+            "order_number": "ORD-001",
+            "status": "completed",
+            "payment_status": "paid",
+            "fulfillment_status": "fulfilled"
+        },
+        "qr_content": "http://example.com/api/v1/general/invoices/verify/550e8400-…"
+    }
 }
 ```
-
-> **Critical known issue:** The `invoice` field is built from `InvoiceResource::make($invoice)`, but `InvoiceResource::toArray()` is **fully commented out** (returns nothing). Serializing it raises `TypeError: ...::toArray(): Return value must be of type array, none returned` → the endpoint **currently fails with HTTP 500** on the authentic path. Frontend must not depend on `data.invoice` until this resource is re-enabled. `qr_content` is the plain verification URL string.
-
-**Response 409 (Tampered)**:
-```json
-{
-  "status": 409,
-  "message": "Invoice verification failed",
-  "success": false,
-  "data": { "authentic": false, "tampered": true }
-}
-```
-
-**Response 404**: `{ "status": 404, "message": "Not found", "success": false }` (apiResponse envelope).
 
 **Business Rules** (from `InvoiceController::verify()` + `InvoiceService::verifyInvoice()`):
 - Verification compares `verification_hash` (computed as `hash('sha256', snapshot_hash . secret)` in `computeVerificationHash()`) against the stored value via `hash_equals()`.
 - Authentic path: `verify_count++`, `last_verified_at = now()`, `verified_at` set only on first verification, timeline `verified` event recorded.
+
+**Response 409 (Tampered)**:
+```json
+{
+    "status": 409,
+    "message": "Invoice verification failed",
+    "success": false,
+    "data": { "authentic": false, "tampered": true }
+}
+```
+
+**Response 404**: `{ "status": 404, "message": "Not found", "success": false }` (apiResponse envelope).
 
 ---
 
@@ -211,13 +238,37 @@ Paginated list of all invoices with filtering, searching, and sorting.
 
 **Authentication**: `auth:sanctum`, permission: `view-invoice`
 
-**Path parameter constraint:** `{id}` is numeric-only (`whereNumber`). Non-numeric ids fail routing with **404** — they never reach the controller.
+**Path parameter constraint:** `{id}` is numeric-only (`whereNumber`). Non-numeric ids fail routing with **404** - they never reach the controller.
 
 Eager loads: `order.orderItems`, `transaction`, `user`.
 
 **Response 200**: `AdminInvoiceResource`.
 
 **Response 404** (non-existent id): handler JSON envelope `{"message":"Resource Not Found","status":false}`.
+
+---
+
+### GET /api/v1/invoices/verify/{uuid} — Verify Invoice Authenticity (Admin prefix)
+
+Registered at `packages/marvel/src/Rest/Routes.php:400` inside the `auth:sanctum` group with `throttle:5,1`. Resolves to the SAME controller action as the customer route `GET /api/v1/general/invoices/verify/{uuid}` - identical request/response behavior, including the known `InvoiceResource` TypeError on the authentic path (see Reported Contradictions #4).
+
+**Authentication**: `auth:sanctum` + `throttle:5,1` (**no** permission middleware on this action).
+
+**Path parameter constraint:** `{uuid}` is UUID-only (`whereUuid`).
+
+See "GET /api/v1/general/invoices/verify/{uuid}" above for full response shapes.
+
+---
+
+### GET /api/v1/invoices/uuid/{uuid} — Show Invoice by UUID (Admin prefix)
+
+Registered at `packages/marvel/src/Rest/Routes.php:401`. Resolves to the SAME controller action (`showByUuid`) as `GET /api/v1/general/invoices/uuid/{uuid}`; permission `view-invoice` is enforced controller-level for both prefixes.
+
+Eager loads: `order.orderItems`, `transaction`, `user`.
+
+**Response 200**: `AdminInvoiceResource`.
+
+**Response 404**: default Laravel 404 from `firstOrFail()`.
 
 ---
 
@@ -476,9 +527,9 @@ Sections: `snapshot_version`, `snapshot_schema`, `order` `{id, order_number, sta
 
 ## Reported Contradictions (source is authoritative)
 
-1. **Verify is not public.** Older docs said `GET /verify/{uuid}` is public with `throttle:60,1`. Actual route: `auth:sanctum` + `throttle:5,1`.
-2. **Customer invoice URLs.** Older docs used `/api/v1/invoices/my-invoices`, `/api/v1/invoices/verify/{uuid}`, `/api/v1/invoices/uuid/{uuid}`, `/api/v1/orders/invoice/{uuid}`. Actual routes are under `/api/v1/general/...`.
+1. **Verify is not public.** Older docs said `GET /verify/{uuid}` is public with `throttle:60,1`. Actual routes (both prefixes) sit inside `auth:sanctum` groups and add `throttle:5,1`.
+2. **Dual registration resolved.** Older docs treated `/api/v1/invoices/verify/{uuid}` and `/api/v1/invoices/uuid/{uuid}` as stale customer paths that had moved under `/api/v1/general/...`. Both prefixes are currently registered and live: the admin package group (`Routes.php:391-403`) AND the customer general group (`routes/api.php:133-137`) resolve to the same controller actions. Customer-facing integrations should use `/api/v1/general/...`.
 3. **`download_url` is broken in resources.** Both `AdminInvoiceResource` and `CustomerInvoiceResource` emit `download_url` = `/api/v1/general/invoices/{uuid}/download`, which is **not a registered route**. The real download route is `/api/v1/invoices/{uuid}/download`.
 4. **`InvoiceResource` is disabled.** `InvoiceResource::toArray()` is fully commented out; `verify()` fails with `TypeError` (HTTP 500) on the authentic path.
 5. **Download authorization is inline**, not a `permission:` middleware (route shows `[auth:sanctum, throttle:30,1]` only). Behavior matches the documented owner-OR-`view-invoice-download` rule.
-6. **Admin routes live in the package**, not `routes/api.php`: `packages/marvel/src/Rest/Routes.php` (lines 390-399), loaded under `api/v1` by `RestApiServiceProvider`. Customer routes live in `routes/api.php` (lines 133-137) inside the `v1/general` prefix.
+6. **Route split (current).** Admin/staff routes live in the package: `packages/marvel/src/Rest/Routes.php` lines 391-403 (`index`, `{id}` show + mutations, `{uuid}/download`, plus `verify/{uuid}` and `uuid/{uuid}`), loaded under `api/v1`. Customer routes live in `routes/api.php` lines 133-137 inside the `v1/general` prefix (`my-invoices`, `verify/{uuid}`, `uuid/{uuid}`). Both groups bind `App\Http\Controllers\Api\InvoiceController`; permissions are enforced controller-constructor level, never route level.

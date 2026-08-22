@@ -123,7 +123,14 @@ Customer item fields: `uuid`, `invoice_number`, `status`, `subtotal`, `shipping_
     "success": true,
     "data": {
         "authentic": true,
-        "invoice": {},
+        "invoice": {
+            "uuid": "550e8400-…",
+            "invoice_number": "INV-2026-000012",
+            "status": "ready",
+            "total": 155.0,
+            "currency": "EGP",
+            "verify_count": 1
+        },
         "order": {
             "id": 101,
             "order_number": "ORD-00000101",
@@ -135,7 +142,7 @@ Customer item fields: `uuid`, `invoice_number`, `status`, `subtotal`, `shipping_
     }
 }
 ```
-> Consume only `authentic`, `order`, `qr_content`. `invoice` is currently empty (`InvoiceResource` disabled).
+> `data.invoice` now returns full invoice data (`InvoiceResource` restored 2026-08-22). Consume `authentic`, `invoice`, `order`, `qr_content`.
 
 **Response 409 (tampered):**
 ```json

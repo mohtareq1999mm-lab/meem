@@ -159,14 +159,14 @@ Route::middleware(['auth:sanctum', 'throttle:admin'])->group(function () {
 
     //======================== attributes ========================/
     Route::apiResource('attributes', AttributeController::class);
-//    Route::apiResource('attribute-values', AttributeValueController::class);
+    //    Route::apiResource('attribute-values', AttributeValueController::class);
 
 
     Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('orders/{id}', [OrderController::class, 'show'])->name('orders.show');
     Route::patch('orders/{id}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status')->whereNumber('id');
 
-//==================================== banner ========================/
+    //==================================== banner ========================/
     Route::put('banner/change-status', [BannerController::class, 'changeStatus']);
     Route::post('banner/reorder', [BannerController::class, 'reorder']);
     Route::apiResource('banners', BannerController::class);
@@ -215,7 +215,7 @@ Route::middleware(['auth:sanctum', 'throttle:admin'])->group(function () {
     Route::get('products/import/{id}/download-errors', [ProductImportController::class, 'downloadErrors'])->name('admin.products.import.download-errors');
     Route::apiResource('products', ProductController::class);
 
-//============================= flash sale ========================/
+    //============================= flash sale ========================/
     Route::put('flash-sale/reorder', [FlashSaleController::class, 'reorder']);
     Route::apiResource('flash-sale', FlashSaleController::class);
     Route::get('product-flash-sale-info', [FlashSaleController::class, 'getFlashSaleInfoByProductID']);
@@ -253,7 +253,7 @@ Route::middleware(['auth:sanctum', 'throttle:admin'])->group(function () {
     Route::delete('/roles/{id}', [RoleAndPermissionController::class, 'destroyRole']);
     Route::post('/users/{userId}/assign-role', [RoleAndPermissionController::class, 'assignRole']);
     Route::post('/users/{userId}/remove-role', [RoleAndPermissionController::class, 'removeRoleFromUser']);
-//=============================  permission ========================/
+    //=============================  permission ========================/
     Route::get('/permissions', [RoleAndPermissionController::class, 'getAllPermissions']);
     Route::post('/roles/{roleId}/permissions', [RoleAndPermissionController::class, 'assignPermissionToRole']);
     Route::post('/users/{userId}/permissions', [RoleAndPermissionController::class, 'givePermission']);
@@ -397,6 +397,8 @@ Route::prefix('invoices')->group(function () {
         Route::post('{id}/correct', [InvoiceController::class, 'correct'])->whereNumber('id');
         Route::post('{id}/cancel', [InvoiceController::class, 'cancel'])->whereNumber('id');
         Route::post('{id}/debit-note', [InvoiceController::class, 'issueDebitNote'])->whereNumber('id');
+        Route::get('verify/{uuid}', [InvoiceController::class, 'verify'])->middleware('throttle:5,1');
+        Route::get('uuid/{uuid}', [InvoiceController::class, 'showByUuid']);
     });
 });
 

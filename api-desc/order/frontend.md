@@ -85,7 +85,7 @@ cancelled  → (terminal)
 | GET | `/api/v1/general/orders` | Sanctum | My orders |
 | GET | `/api/v1/general/orders/{id}` | Sanctum + owner | Detail |
 | GET | `/api/v1/general/orders/{orderId}/invoice` | Sanctum (owner-scoped) | Invoice view — canonical |
-| GET | `/api/v1/general/orders/invoice/{uuid}` | Sanctum + owner | Invoice view — legacy compat |
+| GET | `/api/v1/general/orders/{orderId}/invoice` | Sanctum (owner-scoped) | Invoice view — canonical (uuid route removed 2026-08-22) |
 
 ### Admin
 

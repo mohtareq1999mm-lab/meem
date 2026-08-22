@@ -54,7 +54,7 @@ Complete order lifecycle management spanning a customer API (view orders, checko
 | GET | `/v1/general/orders` | `auth:sanctum` |
 | GET | `/v1/general/orders/{id}` | `auth:sanctum` (owner only) |
 | GET | `/v1/general/orders/{orderId}/invoice` | `auth:sanctum` (owner-scoped; 404 while pending) — canonical |
-| GET | `/v1/general/orders/invoice/{uuid}` | `auth:sanctum` (owner only) — legacy compat |
+| GET | `/v1/general/orders/{orderId}/invoice` | `auth:sanctum` (owner-scoped; 404 while pending) — canonical (uuid route removed 2026-08-22) |
 | POST | `/v1/general/checkout` | `auth:sanctum` |
 | POST | `/v1/general/checkout/cod/{orderId}/mark-paid` | `auth:sanctum` + `update-order-status` |
 | POST | `/v1/general/checkout/cashier/{orderId}/mark-paid` | `auth:sanctum` + `update-order-status` |
