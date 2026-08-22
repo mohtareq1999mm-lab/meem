@@ -101,29 +101,60 @@ class InvoiceController extends Controller
     }
 
     /**
-     * Customer-facing invoice view by UUID.
-     * Owner-scoped and returns the canonical CustomerInvoiceResource -
-     * identical response shape to GET /orders/{orderId}/invoice.
+     * Customer invoice VIEW via temporary signed URL.
+     * Authorization = valid signature (generated only for the owner).
      */
-    public function showByUuidForUser(Request $request, string $uuid): JsonResponse
+    public function showByUuidSigned(string $uuid): JsonResponse
     {
-        // Ownership scoped inside the query — foreign and missing uuids both
-        // yield the same clean 404 without leaking existence.
-        $order = Order::where('user_id', $request->user()->id)
-            ->whereHas('invoices', fn ($q) => $q->where('uuid', $uuid))
-            ->first();
+        $invoice = Invoice::query()->where('uuid', $uuid)->first();
 
-        if (!$order) {
+        if (!$invoice) {
             return $this->apiResponse(NOT_FOUND, 404, false);
         }
-
-        $invoice = $order->invoices()->where('uuid', $uuid)->firstOrFail();
 
         return $this->apiResponse(
             FETCH_DATA_SUCCESSFULLY,
             200,
             true,
             \App\Http\Resources\Invoice\CustomerInvoiceResource::make($invoice)
+        );
+    }
+
+    /**
+     * Customer PDF DOWNLOAD via temporary signed URL — streams the real file
+     * (never JSON). Authorization = valid signature; the physical file must
+     * exist on the configured disk.
+     */
+    public function downloadByUuidSigned(string $uuid)
+    {
+        $invoice = Invoice::query()->where('uuid', $uuid)->first();
+
+        if (!$invoice) {
+            return $this->apiResponse(NOT_FOUND, 404, false);
+        }
+
+        if (!$invoice->pdf_path) {
+            return $this->apiResponse('PDF not yet generated', 404, false);
+        }
+
+        $relativePath = 'invoices/' . $invoice->pdf_path;
+
+        if (!\Illuminate\Support\Facades\Storage::disk('public')->exists($relativePath)) {
+            return $this->apiResponse(NOT_FOUND, 404, false);
+        }
+
+        $invoice->update(['downloaded_at' => $invoice->downloaded_at ?? now()]);
+        $this->timelineService->recordDownloaded($invoice);
+
+        $filename = str_replace('/', '-', $invoice->pdf_path);
+
+        return \Illuminate\Support\Facades\Storage::disk('public')->response(
+            $relativePath,
+            $filename,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            ]
         );
     }
 
@@ -247,6 +278,11 @@ class InvoiceController extends Controller
         );
     }
 
+    /**
+     * Customer download — authenticated OWNER only, no permission involved.
+     * Streams the actual PDF (never JSON), after verifying the file really
+     * exists on the configured disk.
+     */
     public function regenerate(int $id): JsonResponse
     {
         $invoice = Invoice::query()->findOrFail($id);

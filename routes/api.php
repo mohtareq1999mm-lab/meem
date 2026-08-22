@@ -133,12 +133,19 @@ Route::prefix('v1/general')->group(function () {
         //======================== invoices ========================/
         Route::prefix('invoices')->group(function () {
             Route::get('my-invoices', [InvoiceController::class, 'myInvoices']);
-            Route::get('show/uuid/{uuid}', [InvoiceController::class, 'showByUuidForUser'])->whereUuid('uuid');
-            Route::get('download/{uuid}', [InvoiceController::class, 'download'])->whereUuid('uuid')->middleware('throttle:30,1');
             // verify route — required by InvoiceVerifyEndpointTest; do not drop on merge
             Route::get('verify/{uuid}', [InvoiceController::class, 'verify'])->middleware('throttle:5,1');
         });
     });
+});
+
+// Customer invoice VIEW/DOWNLOAD via temporary SIGNED urls (no Sanctum).
+// Ownership is enforced when the urls are generated (my-invoices / order invoice).
+Route::prefix('v1/general/invoices')->group(function () {
+    Route::get('show/uuid/{uuid}', [\App\Http\Controllers\Api\InvoiceController::class, 'showByUuidSigned'])
+        ->whereUuid('uuid')->middleware('signed')->name('general.invoices.show');
+    Route::get('download/{uuid}', [\App\Http\Controllers\Api\InvoiceController::class, 'downloadByUuidSigned'])
+        ->whereUuid('uuid')->middleware('signed')->name('general.invoices.download');
 });
         // //======================== shipments ========================/
         // Route::get('shipments/track/{trackingNumber}', [ShipmentController::class, 'trackShipment'])->name('shipments.track');
