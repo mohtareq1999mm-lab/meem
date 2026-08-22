@@ -97,7 +97,7 @@ class MyInvoicesEndpointTest extends TestCase
                 'uuid', 'invoice_number', 'status', 'subtotal', 'shipping_price',
                 'total_discount', 'total', 'currency', 'payment_method',
                 'payment_gateway', 'generated_at', 'pdf_generated_at',
-                'verification_url', 'download_url',
+                'verification_url', 'download_url', 'view_url',
             ] as $field) {
                 $this->assertArrayHasKey($field, $item);
             }

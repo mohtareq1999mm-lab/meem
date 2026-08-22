@@ -90,6 +90,7 @@ Eager loads: `order`.
         "generated_at": "2026-07-28T09:00:00+00:00",
         "pdf_generated_at": "2026-07-28T10:00:00+00:00",
         "verification_url": "http://example.com/api/v1/general/invoices/verify/550e8400-...",
+        "view_url": "http://example.com/api/v1/general/orders/101/invoice",
         "download_url": "http://example.com/api/v1/invoices/550e8400-.../download"
       }
     ],
@@ -163,6 +164,7 @@ Source: route `routes/api.php` (`invoices` group, `show/uuid/{uuid}` + `whereUui
         "generated_at": "2026-08-22T09:00:00+00:00",
         "pdf_generated_at": null,
         "verification_url": "http://example.com/api/v1/general/invoices/verify/550e8400-e29b-41d4-a716-446655440000",
+        "view_url": "http://example.com/api/v1/general/orders/101/invoice",
         "snapshot": { "...": "InvoiceSnapshotResource when invoice.data exists" }
     }
 }
@@ -231,6 +233,7 @@ Eager loads: `order.orderItems`, `transaction`, `user`.
             "is_correction": false,
             "verify_count": 1,
             "verification_url": "http://example.com/api/v1/general/invoices/verify/550e8400-…",
+            "view_url": "http://example.com/api/v1/general/orders/101/invoice",
             "created_at": "2026-07-20T10:35:00+00:00"
         },
         "order": {
@@ -272,6 +275,26 @@ Eager loads: `order.orderItems`, `transaction`, `user`.
 - Missing order **or** another user's order → identical **404** handler envelope (no existence leak)
 - Pending order (no invoice yet) → `404 { status:404, message:"Not found", success:false }`
 - Found → `200` with the same `CustomerInvoiceResource` payload as the legacy route below; returns the correction when one exists (matches what the order list's `invoice_id` advertises)
+
+**Response 200 (trimmed):**
+```json
+{
+    "status": 200,
+    "message": "Data fetched successfully",
+    "success": true,
+    "data": {
+        "uuid": "550e8400-…",
+        "invoice_number": "INV-2026-000001",
+        "status": "ready",
+        "total": 210.0,
+        "currency": "EGP",
+        "verification_url": "http://example.com/api/v1/general/invoices/verify/550e8400-…",
+        "view_url": "http://example.com/api/v1/general/orders/101/invoice",
+        "download_url": "http://example.com/api/v1/general/invoices/550e8400-…/download",
+        "snapshot": { "…": "full frozen snapshot" }
+    }
+}
+```
 
 ---
 
@@ -555,6 +578,7 @@ The `url` is `url('storage/invoices/' . $invoice->pdf_path)`. The PDF is stored 
 | verify_count | int | Always (default 0) |
 | created_at | string (ISO8601) | Always |
 | verification_url | string | When uuid |
+| view_url | string | When order_id — `/api/v1/invoices/{id}` admin viewer |
 | qr_content | object `{uuid, invoice_number, verification_hash, issued_at, verification_url}` | When uuid |
 | download_url | string | When uuid AND pdf_path |
 | snapshot | InvoiceSnapshotResource | When data |
@@ -566,7 +590,7 @@ The `url` is `url('storage/invoices/' . $invoice->pdf_path)`. The PDF is stored 
 
 ### CustomerInvoiceListResource — used by `myInvoices` (list)
 
-Lightweight summary only (v1.7.0): `uuid, invoice_number, status, subtotal, shipping_price, total_discount, total, currency, payment_method, payment_gateway, generated_at, pdf_generated_at, verification_url, download_url`. **No snapshot.** `download_url` points to the registered `/api/v1/invoices/{uuid}/download`.
+Lightweight summary only (v1.7.0): `uuid, invoice_number, status, subtotal, shipping_price, total_discount, total, currency, payment_method, payment_gateway, generated_at, pdf_generated_at, verification_url, view_url, download_url`. **No snapshot.** `download_url` points to the registered `/api/v1/invoices/{uuid}/download`; `view_url` to `/api/v1/general/orders/{order_id}/invoice`.
 
 ### CustomerInvoiceResource — used by `GET /general/orders/{orderId}/invoice`, `GET /general/invoices/show/uuid/{uuid}` (detail endpoints)
 

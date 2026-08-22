@@ -48,6 +48,7 @@ class AdminInvoiceShowTest extends TestCase
                     'verify_count',
                     'verification_url',
                     'qr_content',
+                    'view_url',
                     'snapshot',
                 ],
             ]);
@@ -55,6 +56,11 @@ class AdminInvoiceShowTest extends TestCase
         $response->assertJsonPath('data.id', $invoice->id);
         $response->assertJsonPath('data.uuid', $invoice->uuid);
         $response->assertJsonPath('data.invoice_number', $invoice->invoice_number);
+        // Admin viewer link points at the admin detail route.
+        $this->assertStringContainsString(
+            '/api/v1/invoices/' . $invoice->id,
+            (string) $response->json('data.view_url')
+        );
         // Money fields are rounded to 2 decimals by the resource.
         $this->assertEqualsWithDelta(150.0, $response->json('data.total'), 0.001);
     }

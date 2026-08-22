@@ -134,6 +134,8 @@ Route::prefix('v1/general')->group(function () {
         Route::prefix('invoices')->group(function () {
             Route::get('my-invoices', [InvoiceController::class, 'myInvoices']);
             Route::get('show/uuid/{uuid}', [InvoiceController::class, 'showByUuidForUser'])->whereUuid('uuid');
+            // verify route — required by InvoiceVerifyEndpointTest; do not drop on merge
+            Route::get('verify/{uuid}', [InvoiceController::class, 'verify'])->middleware('throttle:5,1');
         });
     });
 });

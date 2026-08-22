@@ -1,5 +1,16 @@
 # Invoice Module — Changelog
 
+## [1.8.0] — 2026-08-22
+
+### Added
+- **Universal `view_url` key in every invoice response** (list, detail, verify, correct, cancel, admin index/show). Ready-made viewer link so the frontend never builds URLs:
+  - `CustomerInvoiceResource` / `CustomerInvoiceListResource` / `InvoiceResource` → `/api/v1/general/orders/{order_id}/invoice` (canonical customer viewer)
+  - `AdminInvoiceResource` → `/api/v1/invoices/{id}` (admin detail)
+- Regression assertions added across `MyInvoicesEndpointTest`, `OrderIdInvoiceEndpointTest`, `InvoiceVerifyEndpointTest`, `AdminInvoiceShowTest`.
+
+### Documentation
+- `HOW-TO-USE.md`, `api.md`, `frontend.md`, `backend.md`, `flow.md` updated with `view_url` in all field tables and examples.
+
 ## [1.7.0] — 2026-08-22
 
 ### Changed

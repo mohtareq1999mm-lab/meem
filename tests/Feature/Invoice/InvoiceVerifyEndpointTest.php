@@ -100,6 +100,12 @@ class InvoiceVerifyEndpointTest extends TestCase
             ->assertJsonPath('data.order.id', $invoice->order_id)
             ->assertJsonPath('data.qr_content', url('/api/v1/general/invoices/verify/' . $invoice->uuid));
 
+        // Ready-made viewer link inside the invoice payload.
+        $this->assertStringContainsString(
+            '/api/v1/general/orders/' . $invoice->order_id . '/invoice',
+            (string) $response->json('data.invoice.view_url')
+        );
+
         // Side effects persisted.
         $invoice->refresh();
         $this->assertSame(1, $invoice->verify_count);

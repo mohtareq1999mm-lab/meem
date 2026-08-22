@@ -53,6 +53,9 @@ class AdminInvoiceResource extends JsonResource
                 'issued_at' => $this->generated_at?->toIso8601String(),
                 'verification_url' => url('/api/v1/general/invoices/verify/' . $this->uuid),
             ]),
+            'view_url' => $this->when($this->id, fn () =>
+                url('/api/v1/invoices/' . $this->id)
+            ),
             'download_url' => $this->when($this->uuid && $this->pdf_path, fn () =>
                 url('/api/v1/general/invoices/' . $this->uuid . '/download')
             ),

@@ -7,6 +7,10 @@ Practical usage guide for every invoice endpoint: **when** to call it, **why** i
 > - `verify/{uuid}` and `uuid/{uuid}` are registered under `/api/v1/general/invoices/*` (`auth:sanctum` + `throttle:authenticated`; verify adds `throttle:5,1`).
 >
 > All success payloads share the envelope: `{ "status": int, "message": string, "success": bool, "data": … }`.
+>
+> **Universal key — `view_url`:** every invoice payload (lists, detail, verify, mutations) now carries a ready-made **`view_url`** link so the frontend can open/render the invoice without constructing any URL:
+> - Customer resources → `/api/v1/general/orders/{order_id}/invoice`
+> - Admin resource → `/api/v1/invoices/{id}`
 
 ---
 
@@ -76,6 +80,7 @@ GET /api/v1/invoices?status=ready&search=INV-2026&from=2026-08-01&to=2026-08-31&
     "generation_attempts":1, "last_generation_error":null,
     "is_correction":false,
     "verification_url":"https://…/api/v1/general/invoices/verify/550e8400-…",
+    "view_url":"https://…/api/v1/general/orders/101/invoice",
     "qr_content":{ "uuid":"550e8400-…", "invoice_number":"INV-2026-000012",
                    "verification_hash":"c31b…", "issued_at":"2026-08-22T09:14:58+00:00",
                    "verification_url":"https://…/verify/550e8400-…" },
@@ -258,7 +263,8 @@ GET /api/v1/invoices?status=ready&search=INV-2026&from=2026-08-01&to=2026-08-31&
     "authentic":true,
     "invoice":{ "uuid":"550e8400-…", "invoice_number":"INV-2026-000012",
                 "status":"ready", "total":155.0, "currency":"EGP",
-                "verify_count":1 },
+                "verify_count":1,
+                "view_url":"https://…/api/v1/general/orders/101/invoice" },
     "order":{ "id":101, "order_number":"ORD-00000101", "status":"completed",
               "payment_status":"paid", "fulfillment_status":"fulfilled" },
     "qr_content":"https://example.com/api/v1/general/invoices/verify/550e8400-…" } }

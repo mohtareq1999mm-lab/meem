@@ -20,7 +20,7 @@ Pure endpoint reference. Customer endpoints first, then the admin group. Every e
 
 **Response 200:** paginated customer items.
 
-Customer item fields (lightweight list — **no snapshot**): `uuid`, `invoice_number`, `status`, `subtotal`, `shipping_price`, `total_discount`, `total`, `currency`, `payment_method`, `payment_gateway`, `generated_at`, `pdf_generated_at`, `verification_url` (when uuid), `download_url` (when uuid AND pdf_path — points to the registered route `/api/v1/invoices/{uuid}/download`).
+Customer item fields (lightweight list — **no snapshot**): `uuid`, `invoice_number`, `status`, `subtotal`, `shipping_price`, `total_discount`, `total`, `currency`, `payment_method`, `payment_gateway`, `generated_at`, `pdf_generated_at`, `verification_url` (when uuid), **`view_url`** (when order_id — ready-made link to open this invoice), `download_url` (when uuid AND pdf_path — points to the registered route `/api/v1/invoices/{uuid}/download`).
 
 ```json
 {
@@ -43,6 +43,7 @@ Customer item fields (lightweight list — **no snapshot**): `uuid`, `invoice_nu
                 "generated_at": "2026-08-22T09:14:58+00:00",
                 "pdf_generated_at": "2026-08-22T09:15:00+00:00",
                 "verification_url": "https://example.com/api/v1/general/invoices/verify/550e8400-…",
+                "view_url": "https://example.com/api/v1/general/orders/101/invoice",
                 "download_url": "…"
             }
         ],
@@ -252,7 +253,7 @@ Customer item fields (lightweight list — **no snapshot**): `uuid`, `invoice_nu
 
 **Response 200:** full admin resource.
 
-Admin item fields: `id`, `uuid`, `order_id`, `invoice_number`, `status`, `subtotal`, `shipping_price`, `coupon_discount`, `promotion_discount`, `total_discount`, `total`, `amount_paid`, `currency`, `payment_method`, `payment_gateway`, `snapshot_hash`, `verification_hash`, `pdf_generated_at`, `generated_at`, `generation_attempts`, `last_generation_error`, `is_correction`, `correction_reason`, `corrected_at`, `cancelled_at`, `cancellation_reason`, `verified_at`, `downloaded_at`, `printed_at`, `archived_at`, `last_verified_at`, `verify_count`, `created_at`, plus conditionals: `verification_url`, `qr_content {uuid, invoice_number, verification_hash, issued_at, verification_url}`, `download_url` (when pdf exists), `snapshot`.
+Admin item fields: `id`, `uuid`, `order_id`, `invoice_number`, `status`, `subtotal`, `shipping_price`, `coupon_discount`, `promotion_discount`, `total_discount`, `total`, `amount_paid`, `currency`, `payment_method`, `payment_gateway`, `snapshot_hash`, `verification_hash`, `pdf_generated_at`, `generated_at`, `generation_attempts`, `last_generation_error`, `is_correction`, `correction_reason`, `corrected_at`, `cancelled_at`, `cancellation_reason`, `verified_at`, `downloaded_at`, `printed_at`, `archived_at`, `last_verified_at`, `verify_count`, `created_at`, plus conditionals: `verification_url`, **`view_url`** (when order_id — canonical viewer link), `qr_content {uuid, invoice_number, verification_hash, issued_at, verification_url}`, `download_url` (when pdf exists), `snapshot`.
 
 ```json
 {
@@ -418,6 +419,7 @@ Validation: `reason` required, max 500 · all `overrides.*` optional (`total`/`a
         "corrected_at": "2026-08-22T10:00:00+00:00",
         "generation_attempts": 0,
         "verification_url": "https://example.com/api/v1/general/invoices/verify/7c9e6679-…",
+        "view_url": "https://example.com/api/v1/general/orders/101/invoice",
         "snapshot": { "…": "cloned snapshot with overrides applied" }
     }
 }

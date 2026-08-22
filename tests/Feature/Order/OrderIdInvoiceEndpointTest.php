@@ -244,10 +244,16 @@ class OrderIdInvoiceEndpointTest extends TestCase
                 'generated_at',
                 'pdf_generated_at',
                 'verification_url',
+                'view_url',
             ],
         ]);
         $response->assertJsonPath('data.uuid', $invoice->uuid);
         $response->assertJsonPath('data.invoice_number', $invoice->invoice_number);
+        // Ready-made viewer link — frontend must not build URLs itself.
+        $this->assertStringContainsString(
+            '/api/v1/general/orders/' . $order->id . '/invoice',
+            (string) $response->json('data.view_url')
+        );
     }
 
     public function test_correction_exists_still_resolves_latest_invoice(): void

@@ -302,6 +302,7 @@ Transitions are enforced at TWO levels:
 | verify_count | int | Always (default 0) |
 | created_at | string (ISO8601) | Always |
 | verification_url | string | When uuid exists |
+| view_url | string | When order_id/id exists — ready-made viewer link (customer: `/orders/{order_id}/invoice` · admin resource: `/invoices/{id}`) |
 | qr_content | object | When uuid exists |
 | download_url | string | When uuid AND pdf_path |
 | snapshot | InvoiceSnapshotResource | When data exists |
@@ -328,6 +329,7 @@ Transitions are enforced at TWO levels:
 | generated_at | string (ISO8601) | Always |
 | pdf_generated_at | string (ISO8601) | Always |
 | verification_url | string | When uuid exists |
+| view_url | string | When order_id exists — `/api/v1/general/orders/{order_id}/invoice` |
 | download_url | string | When uuid AND pdf_path |
 | snapshot | InvoiceSnapshotResource | When data exists |
 
