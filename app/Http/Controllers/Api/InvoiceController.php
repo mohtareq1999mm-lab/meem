@@ -99,6 +99,29 @@ class InvoiceController extends Controller
         );
     }
 
+    /**
+     * Customer-facing invoice view by UUID.
+     * Owner-scoped and returns the canonical CustomerInvoiceResource -
+     * identical response shape to GET /orders/{orderId}/invoice.
+     */
+    public function showByUuidForUser(Request $request, string $uuid): JsonResponse
+    {
+        $invoice = Invoice::with(['order.orderItems', 'transaction', 'user'])
+            ->where('uuid', $uuid)
+            ->firstOrFail();
+
+        if ($invoice->order->user_id !== $request->user()->id) {
+            throw new \Illuminate\Auth\Access\AuthorizationException(NOT_AUTHORIZED);
+        }
+
+        return $this->apiResponse(
+            FETCH_DATA_SUCCESSFULLY,
+            200,
+            true,
+            \App\Http\Resources\Invoice\CustomerInvoiceResource::make($invoice)
+        );
+    }
+
     public function myInvoices(Request $request): JsonResponse
     {
         $perPage = min((int) $request->get('limit', 15), 100);

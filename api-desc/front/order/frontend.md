@@ -41,21 +41,21 @@ Response:
 }
 ```
 
-### 2. My Order Details Page (Customer)
+    ### 2. My Order Details Page (Customer)
 
-```
-GET /api/v1/general/orders/{id}
+    ```
+    GET /api/v1/general/orders/{id}
 
-Ownership is enforced server-side: the order must belong to the authenticated user,
-otherwise 404 is returned (a user can never fetch another user's order by ID).
+    Ownership is enforced server-side: the order must belong to the authenticated user,
+    otherwise 404 is returned (a user can never fetch another user's order by ID).
 
-Response envelope contains the full App\OrderResource:
-status fields of interest: status (5 DB values), payment_method, fulfillment_type,
-order_items[] with price snapshots, order_has_invoice / invoice_id.
-```
+    Response envelope contains the full App\OrderResource:
+    status fields of interest: status (5 DB values), payment_method, fulfillment_type,
+    order_items[] with price snapshots, order_has_invoice / invoice_id.
+    ```
 
-Invoice download: build the URL from `invoice_id` → `GET /api/v1/invoices/{uuid}/download`.
-Do **not** follow `download_url` inside CustomerInvoiceResource (points at an unregistered route).
+    Invoice download: build the URL from `invoice_id` → `GET /api/v1/invoices/{uuid}/download`.
+    Do **not** follow `download_url` inside CustomerInvoiceResource (points at an unregistered route).
 
 ### 3. Admin Order Management
 

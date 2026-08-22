@@ -19,6 +19,13 @@ The Invoice module manages the full invoice lifecycle for the e-commerce platfor
 
 > **PDF preview is NOT provided.** There is no `/preview` route. `GET /invoices/{uuid}/download` returns a JSON body with a storage URL — the frontend then fetches the PDF from that URL. Non-owner download requires `view-invoice-download`.
 
+## 📖 Start here
+
+- **[HOW-TO-USE.md](HOW-TO-USE.md)** — per-endpoint usage guide: when to use each endpoint, why it exists, request bodies, and real responses (recommended first read for frontend/backend consumers).
+- [api.md](api.md) — full API reference contract.
+- [frontend.md](frontend.md) — integration guide grouped Customer-first then Admin.
+- [flow.md](flow.md) — execution flows and state diagrams.
+
 ## Key Files
 
 | Layer | File |
@@ -89,6 +96,7 @@ The Invoice module manages the full invoice lifecycle for the e-commerce platfor
 | GET | `/api/v1/invoices/verify/{uuid}` | Sanctum + throttle:5,1 (no permission) | Verify authenticity (admin prefix; same action as general) |
 | GET | `/api/v1/invoices/uuid/{uuid}` | Sanctum (view-invoice) | Show invoice by UUID (admin prefix; same action as general) |
 | GET | `/api/v1/general/invoices/my-invoices` | Sanctum | List current user's invoices |
+| GET | `/api/v1/general/invoices/show/uuid/{uuid}` | Sanctum (owner-scoped; 403 non-owner) | Customer invoice by UUID - canonical CustomerInvoiceResource |
 | GET | `/api/v1/general/invoices/uuid/{uuid}` | Sanctum (view-invoice) | Show invoice by UUID |
 | GET | `/api/v1/general/invoices/verify/{uuid}` | Sanctum + throttle:5,1 | Verify invoice authenticity |
 | GET | `/api/v1/general/orders/{orderId}/invoice` | Sanctum (owner-scoped; pending → 404) | Customer invoice by Order ID — canonical |

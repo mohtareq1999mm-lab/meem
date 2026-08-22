@@ -24,6 +24,7 @@ There are **three different things** a frontend can do with an invoice. They are
 | Endpoint | Middleware |
 |----------|-----------|
 | `GET /api/v1/general/invoices/my-invoices` | `auth:sanctum` |
+| `GET /api/v1/general/invoices/show/uuid/{uuid}` | `auth:sanctum` (`whereUuid`; owner-scoped, 403 non-owner) - returns canonical `CustomerInvoiceResource` |
 | `GET /api/v1/general/invoices/uuid/{uuid}` | `auth:sanctum` + `permission:view-invoice` |
 | `GET /api/v1/general/invoices/verify/{uuid}` | `auth:sanctum` + `throttle:5,1` |
 | `GET /api/v1/general/orders/{orderId}/invoice` | `auth:sanctum` (owner-scoped query; pending order -> 404) - **canonical** |
@@ -108,6 +109,74 @@ Eager loads: `order`.
 ```
 
 > **Note on `download_url`:** The `download_url` field emitted by `CustomerInvoiceResource` points to `/api/v1/general/invoices/{uuid}/download`, which is **NOT a registered route**. The real download route is `GET /api/v1/invoices/{uuid}/download` (no `/general/`). Frontend must build the download URL as `/api/v1/invoices/{uuid}/download` and must **not** rely on the resource-provided `download_url`. (Reported contradiction.)
+
+---
+
+### GET /api/v1/general/invoices/show/uuid/{uuid} — Customer Invoice by UUID
+
+Customer-facing single-invoice view. Lets the authenticated user open **her own invoice** directly by its UUID and returns the **canonical `CustomerInvoiceResource`** - byte-identical response shape to the Order-based endpoint `GET /api/v1/general/orders/{orderId}/invoice`.
+
+Source: route `routes/api.php` (`invoices` group, `show/uuid/{uuid}` + `whereUuid`) -> controller `App\Http\Controllers\Api\InvoiceController@showByUuidForUser`.
+
+#### Authentication
+
+| Aspect | Detail |
+|--------|--------|
+| Required | Yes |
+| Guard | `auth:sanctum` |
+| Permission | None (ownership enforced in-controller; no constructor entry for this action) |
+
+#### Path Parameters
+
+| Parameter | Type | Constraint | Description |
+|-----------|------|------------|-------------|
+| `uuid` | string | `whereUuid` | Invoice UUID. Malformed UUIDs fail routing with **404** and never reach the controller |
+
+#### Ownership & Security
+
+- Eager loads `order.orderItems`, `transaction`, `user`, then resolves via `firstOrFail()` -> missing uuid = **404**.
+- Non-owner: `$invoice->order->user_id !== $request->user()->id` throws `AuthorizationException` -> **403** `NOT_AUTHORIZED`.
+- No permission required - any authenticated user may open her OWN invoice; nobody else's.
+
+#### Response 200 (identical shape to `GET /general/orders/{orderId}/invoice`)
+
+```json
+{
+    "status": 200,
+    "message": "Data fetched successfully",
+    "success": true,
+    "data": {
+        "uuid": "550e8400-e29b-41d4-a716-446655440000",
+        "invoice_number": "INV-2026-000001",
+        "status": "generated",
+        "subtotal": 100.0,
+        "shipping_price": 30.0,
+        "total_discount": 0.0,
+        "total": 130.0,
+        "currency": "EGP",
+        "payment_method": "cod",
+        "payment_gateway": null,
+        "generated_at": "2026-08-22T09:00:00+00:00",
+        "pdf_generated_at": null,
+        "verification_url": "http://example.com/api/v1/general/invoices/verify/550e8400-e29b-41d4-a716-446655440000",
+        "snapshot": { "...": "InvoiceSnapshotResource when invoice.data exists" }
+    }
+}
+```
+
+Field semantics are identical to the `my-invoices` list items (same resource class). `download_url` appears only when a PDF exists and keeps the known broken-path caveat (see note above).
+
+#### Error Responses
+
+| Status | When | Body |
+|--------|------|------|
+| `401` | Unauthenticated | standard envelope |
+| `403` | Authenticated but NOT the invoice owner (`NOT_AUTHORIZED`) | standard error envelope |
+| `404` | Unknown uuid OR malformed uuid (route constraint) | Laravel 404 / default handler |
+
+#### Tests
+
+`tests/Feature/CustomerInvoiceByUuidTest.php` (5 passing): owner 200 + resource shape, non-owner 403, guest 401, unknown uuid 404, malformed uuid 404 at routing layer.
 
 ---
 
