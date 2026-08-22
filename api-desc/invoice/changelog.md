@@ -1,5 +1,38 @@
 # Invoice Module — Changelog
 
+## [1.4.0] — 2026-08-22
+
+### Added
+- **Canonical customer invoice lookup by Order ID:** `GET /api/v1/general/orders/{orderId}/invoice` (`OrderController::invoiceByOrderId`, `whereNumber`). Ownership scoped inside the query (foreign order = same clean 404, no existence leak); pending orders return 404 (no invoice yet); resolves `latestInvoice` — the same document the customer order list advertises via `invoice_id`.
+- Frontend contract simplified: Order ID in → Invoice out. No UUID extraction required.
+- Feature suite: `tests/Feature/Order/OrderIdInvoiceEndpointTest.php` — 9 tests (pending→404, first-leave→200, lifecycle stability ×1, cancelled/completed first-leave, ownership isolation, missing order, payload parity with legacy route, correction resolution).
+
+### Unchanged
+- Legacy `GET /orders/invoice/{uuid}` retained for backward compatibility.
+- `transactions[].invoice_id` remains a gateway reference string — unrelated to the Order's Invoice.
+
+### Documentation
+- Customer-view sections across `api.md`, `backend.md`, `frontend.md`, `flow.md`, `README.md` now list the canonical Order-ID route first and mark the UUID route as legacy compatibility.
+
+## [1.3.0] — 2026-08-22
+
+### Fixed (production)
+- **INV-001:** All admin invoice `{id}` routes now carry `whereNumber('id')`. Malformed ids fail routing with the standard **404** instead of surfacing a `TypeError`/500 from `show(int $id)`.
+- **INV-002:** `InvoiceStatus` state machine now permits `READY → PDF_GENERATING`, aligning the enum with the documented regenerate contract ("allowed only from `failed|ready|generated`"). Regenerating a `ready` invoice previously crashed with an unhandled `RuntimeException` (HTTP 500); it now returns 200 + `pdf_generating` and dispatches `GenerateInvoicePdfJob` on `meem-medium`.
+- **INV-003:** `correct()` and `cancel()` rethrow `ModelNotFoundException` ahead of the broad `catch (\RuntimeException)` (`ModelNotFoundException extends RuntimeException`). Missing invoices now return the handler's JSON **404** envelope without leaking the `App\Models\Invoice` FQCN; business-rule failures on existing invoices still return 422.
+
+### Added (tests)
+- Split feature suites: Auth(14), Index(7), Show+INV-001(5), Regenerate+INV-002(5), Correct(10), Cancel(6), DebitNote(7), E2E with real DomPDF execution(1)
+- Shared bootstrap trait `tests/Concerns/WithAdminInvoiceContext.php`
+- Repaired 2 stale unit expectations in `InvoiceLifecycleTest` (VERIFIED→CANCELLED is legal per enum)
+
+### Regression result
+- Invoice Feature suite **73/73** · Unit/Invoice **34/34** · Order-Invoice Endpoint **7/7**
+
+### Known Issues updated
+- Issue #2 (ModelNotFoundException → HTML page): **RESOLVED** for the API surface — the app exception handler renders all `/api/*` failures as JSON, and correct/cancel now explicitly rethrow to guarantee 404.
+- Issues #7 (disabled `InvoiceResource` / verify TypeError 500) and #8 (`download_url` broken in resources) remain **OPEN**.
+
 ## [1.2.0] — 2026-08-18
 
 ### Changed (documentation only)

@@ -46,7 +46,8 @@ Client → GET /api/v1/general/invoices/my-invoices?limit=15
 ```
 Client → GET /api/v1/invoices/1            (admin, permission: view-invoice)
     or   GET /api/v1/general/invoices/uuid/{uuid}   (admin, permission: view-invoice)
-    or   GET /api/v1/general/orders/invoice/{uuid}  (customer, owner-only)
+    or   GET /api/v1/general/orders/{orderId}/invoice (customer, canonical Order-ID lookup)
+         [legacy /orders/invoice/{uuid} removed 2026-08-22]
          ↓
     [auth:sanctum] → permission middleware (admin) OR inline owner check (customer)
          ↓

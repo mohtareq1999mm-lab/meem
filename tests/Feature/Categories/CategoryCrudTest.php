@@ -79,7 +79,8 @@ class CategoryCrudTest extends TestCase
         $response = $this->getJson(self::PREFIX . '/categories/' . $category->id);
 
         $response->assertOk();
-        $response->assertJsonPath('data.name', 'Single Cat');
+        // Current contract: show returns the localized {ar, en} object.
+        $response->assertJsonPath('data.name', ['ar' => 'Single Cat', 'en' => 'Single Cat']);
         $response->assertJsonPath('data.details', 'Detailed description');
     }
 

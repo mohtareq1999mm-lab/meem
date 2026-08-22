@@ -86,14 +86,15 @@ class CategoryAuthenticationTest extends TestCase
         $response->assertUnauthorized();
     }
 
-    public function test_unauthenticated_user_can_access_featured_categories(): void
+    public function test_removed_featured_categories_endpoint_is_not_publicly_available(): void
     {
+        // CAT-003: endpoint intentionally removed; must not resurrect implicitly.
         $response = $this->getJson(self::PREFIX . '/featured-categories');
 
-        $response->assertOk();
+        $response->assertNotFound();
     }
 
-    public function test_authenticated_user_with_permissions_can_access_all_routes(): void
+    public function test_authenticated_user_with_permissions_can_access_all_category_routes(): void
     {
         Sanctum::actingAs($this->adminUser);
 
@@ -101,9 +102,6 @@ class CategoryAuthenticationTest extends TestCase
         $response->assertOk();
 
         $response = $this->getJson(self::PREFIX . '/categories/1');
-        $response->assertOk();
-
-        $response = $this->getJson(self::PREFIX . '/featured-categories');
         $response->assertOk();
     }
 

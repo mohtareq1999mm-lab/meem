@@ -144,16 +144,8 @@ class CategoryResourceTest extends TestCase
         $this->assertIsInt($category['products_count']);
     }
 
-    public function test_featured_categories_returns_collection(): void
-    {
-        Sanctum::actingAs($this->adminUser);
-
-        Category::create(['name' => ['en' => 'Featured A'], 'slug' => 'featured-a', 'is_featured' => true]);
-        Category::create(['name' => ['en' => 'Featured B'], 'slug' => 'featured-b', 'is_featured' => true]);
-
-        $response = $this->getJson(self::PREFIX . '/featured-categories');
-        $response->assertOk();
-    }
+    // CAT-003: featured-categories endpoint removed — coverage intentionally
+    // dropped; guarded by RegressionTest B3 dead-route assertion.
 
     private function createSuperAdminUser(): User
     {

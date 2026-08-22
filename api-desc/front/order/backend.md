@@ -2,141 +2,130 @@
 
 ## Overview
 
-The Order feature is event-driven with a complex lifecycle spanning cart → checkout → payment → fulfillment → delivery → completion. It uses a dual-model system (Marvel legacy + App modern) with a `syncOrderStatusColumn()` bridge.
+The Order feature is event-driven with a lifecycle spanning cart → checkout → payment → fulfillment → delivery/cancellation. All status changes are centralized in `App\Services\General\OrderService`, which enforces the transition matrices and dispatches lifecycle events consumed by queued listeners on `meem-medium`.
 
 ## Key Files
 
 ### 1. Model - `packages/marvel/src/Database/Models/Order.php`
 
-**Table:** `orders`
+**Table:** `orders` (SoftDeletes; global scope orders by `created_at DESC`; auto-generates `order_number`)
 
-**Fillable (modern columns):**
-`user_id`, `governorate_id`, `name`, `user_phone`, `user_email`, `address`, `notes`, `shipping_method`, `fulfillment_type`, `payment_method`, `payment_gateway`, `pickup_location_id`, `pickup_location_name`, `pickup_location_address`, `pickup_location_phone`, `pickup_location_coordinates`, `price`, `shipping_price`, `total_price`, `fast_shipping_fee`, `coupon`, `coupon_discount`, `promotion_id`, `promotion_code`, `promotion_type`, `promotion_discount`, `status`, `inventory_restored_at`
+**Status constants (source of truth):**
 
-**Appended:** `order_number` — `'ORD-' . str_pad($this->id, 8, '0', STR_PAD_LEFT)`
+```php
+ORDER_STATUS_PENDING    = 'pending'
+ORDER_STATUS_PROCESSING = 'processing'
+ORDER_STATUS_COMPLETED  = 'completed'
+ORDER_STATUS_CANCELLED  = 'cancelled'
+ORDER_STATUS_DELIVERED  = 'delivered'
 
-**Relationships:**
+PAYMENT_STATUS_PENDING  = 'payment-pending'
+PAYMENT_STATUS_SUCCESS  = 'payment-success'
+PAYMENT_STATUS_FAILED   = 'payment-failed'
+PAYMENT_STATUS_REFUNDED = 'payment-refunded'
 
-| Method | Type | Related |
-|--------|------|---------|
-| `user()` | `BelongsTo` | `User` |
-| `orderItems()` | `HasMany` | `OrderProduct` |
-| `transactions()` | `HasMany` | `Transaction` |
-| `pickupLocation()` | `BelongsTo` | `PickupLocation` |
-| `children()` | `HasMany` | `Order` (sub-orders) |
+FULFILLMENT_STATUS_PENDING          = 'pending'
+FULFILLMENT_STATUS_PROCESSING       = 'processing'
+FULFILLMENT_STATUS_READY_FOR_PICKUP = 'ready_for_pickup'
+FULFILLMENT_STATUS_OUT_FOR_DELIVERY = 'out_for_delivery'
+FULFILLMENT_STATUS_DELIVERED        = 'delivered'
+FULFILLMENT_STATUS_CANCELLED        = 'cancelled'
+```
 
-**Scopes:** `forUser()`, `scheduled()`, `fast()`, `delivery()`, `pickup()`
+**Key columns:** identity (`order_number`, `user_id`, contact fields), money (`price`, `shipping_price`, `total_price`, currency snapshot columns), discounts (`coupon*`, `promotion*`), lifecycle (`status`, `payment_status`, `fulfillment_status`, `paid_at`, `completed_at`, `cancelled_at`, `inventory_restored_at`, `coupon_consumed`, `promotion_consumed`).
 
-### 2. Model - `packages/marvel/src/Database/Models/OrderProduct.php`
+**Relationships:** `user()`, `orderItems()` → OrderProduct, `transactions()`, `pickupLocation()`, `children()`, `invoices()` / `latestInvoice()`.
 
-**Table:** `order_products`
+**Scopes:** `forUser()`, `scheduled()`, `fast()`, `delivery()`, `pickup()`.
 
-**Fillable:** `order_id`, `product_id`, `product_variant_id`, `product_name`, `product_sku`, `attributes`, `product_quantity`, `product_price`, `product_total_price`, `product_discount_price`, `promotion_discount_amount`, `product_flash_sale_price`, `is_gift`, `promotion_id`
-
-**Relationships:** `order()`, `product()`, `productVariant()`, `promotion()`
-
-### 3. Model - `packages/marvel/src/Database/Models/Transaction.php`
-
-**Table:** `transactions`
-
-**Fillable:** `order_id`, `invoice_id`, `payment_method`, `user_id`, `uuid`, `status`, `amount`, `currency`, `gateway_transaction_id`, `gateway_response`, `error_message`, `qr_code_url`, `paid_at`
-
-**Auto UUID generation** on `creating` event.
-
-### 4. Controller (General) - `app/Http/Controllers/Api/General/OrderController.php`
+### 2. Controller (Customer) - `app/Http/Controllers/Api/General/OrderController.php`
 
 | Method | Route | Description |
 |--------|-------|-------------|
-| `index()` | `GET /orders` | Returns authenticated user's orders |
-| `show()` | `GET /orders/{id}` | Returns authenticated user's own order details (owner-only, 404 otherwise) |
-| `checkout()` | `POST /checkout` | Creates order from cart |
-| `eligiblePromotions()` | `GET /checkout/promotions` | Available promotions |
-| `markCodAsPaid()` | `POST /checkout/cod/{id}/mark-paid` | Admin marks COD paid |
-| `markCashierPaid()` | `POST /checkout/cashier/{id}/mark-paid` | Admin marks cashier paid |
-| `getTransactionQr()` | `GET /checkout/transaction-qr/{uuid}` | Cashier QR code |
-| `checkoutCallback()` | `ANY /checkout/callback` | Payment gateway callback |
-| `checkoutErrorCallback()` | `ANY /checkout/error-callback` | Gateway error callback |
+| `index()` | `GET /general/orders` | Authenticated user's paginated orders (+ optional status filter) |
+| `show()` | `GET /general/orders/{id}` | Owner-only detail; 404 otherwise |
+| `invoice()` | `GET /general/orders/invoice/{uuid}` | Legacy owner-only invoice view (compat) |
+| `invoiceByOrderId()` | `GET /general/orders/{orderId}/invoice` | Canonical invoice lookup by Order ID (owner-scoped query; pending → 404) |
+| `checkout()` | `POST /general/checkout` | Creates pending order from cart; delegates to payment handlers |
+| `eligiblePromotions()` | `GET /general/checkout/promotions` | Available promotions for cart |
+| `markCodAsPaid()` | `POST /general/checkout/cod/{id}/mark-paid` | Admin marks COD paid (permission required) |
+| `markCashierPaid()` | `POST /general/checkout/cashier/{id}/mark-paid` | Admin marks cashier paid (permission required) |
+| `checkoutCallback()` | `ANY /general/checkout/callback` | Public gateway success/verification callback |
+| `checkoutErrorCallback()` | `ANY /general/checkout/error-callback` | Public gateway error callback |
 
-### 5. Controller (Admin) - `packages/marvel/src/Http/Controllers/Order/OrderController.php`
+> There is **no** `getTransactionQr()` method or `transaction-qr` route in this controller — earlier documentation listed one erroneously.
+
+### 3. Controller (Admin) - `packages/marvel/src/Http/Controllers/Order/OrderController.php`
 
 | Method | Permission | Description |
 |--------|-----------|-------------|
-| `index()` | `view-orders` | Paginated list (super_admin scope) |
-| `show()` | `view-order` | Single order detail |
+| `index()` | `view-orders` | Paginated list with filters |
+| `show()` | `view-order` | Detail (ID or tracking number) |
+| `updateStatus()` | `update-order-status` | `PATCH orders/{id}/status` — validates via `OrderStatusUpdateRequest` then calls `OrderService::changeOrderStatus(null, $status, $orderId)`; 404 unknown id; 422 forbidden transition |
 
-### 6. Service - `app/Services/General/OrderService.php`
+### 4. Service - `app\Services\General\OrderService.php` (single source of truth for status)
+
+| Member | Description |
+|--------|-------------|
+| `$allowedOrderTransitions` | Authoritative transition matrix (see below) |
+| `$allowedFulfillmentTransitions` | Fulfillment matrix synced during transitions |
+| `changeOrderStatus($invoiceId, $status, $orderId)` | Locks order in DB transaction, validates transition, applies column updates + coupon/promotion/inventory effects, fires `OrderStatusChanged` (always) and `OrderCancelled` (first-time cancel) |
+| `markCodAsPaid($order)` / `markCashierPaid($order)` | Pending tx → paid; order → completed; PaymentSucceeded fired inside transaction |
+| `paginateForUser()` / `getOrderForUser()` | Owner-scoped reads with pricing enrichment |
+
+### 5. Service - `app/Services/Checkout/OrderCreationService.php`
 
 | Method | Description |
 |--------|-------------|
-| `paginateForUser($request)` | Lists user's orders with optional `status` and `limit` filters |
-| `getOrderForUser($request, $orderId)` | Returns a single order scoped to the authenticated user (`WHERE id AND user_id`), or `null` |
-| `addItemsInOrder($request)` | Creates order from cart |
-| `changeOrderStatus($invoice_id, $status, $user)` | Status transition with validation |
-| `syncStatus($orderId)` | Syncs legacy order_status → modern status |
-| `markCodAsPaid($orderId, $user)` | Mark COD paid, update transaction |
+| `createOrder(...)` | Creates the order row (`pending`, payment/fulfillment `pending`, currency snapshot) |
+| `createOrderItems(...)` | Snapshots prices incl. flash-sale/discount/promotion amounts per item |
+| `finalizeOrder(...)` | Dispatches `App\Events\OrderCreated` |
 
-### 7. Service - `app/Services/Checkout/OrderCreationService.php`
+### 6. Transition Matrices
 
-| Method | Description |
-|--------|-------------|
-| `createOrder($request, $user)` | Creates order in transaction |
-| `createOrderItems($order, $cart, $promotion)` | Snapshots product prices |
-| `finalizeOrder($order, $cart)` | Updates inventory, clears cart, dispatches events |
+```text
+ORDER STATUS
+pending    → pending, processing, completed, cancelled
+processing → processing, completed, cancelled
+completed  → completed, delivered
+delivered  → delivered            (terminal)
+cancelled  → cancelled            (terminal)
 
-### 8. Enums
+FULFILLMENT STATUS (synced automatically)
+pending          → pending, processing, cancelled
+processing       → processing, ready_for_pickup, out_for_delivery, cancelled
+ready_for_pickup → ready_for_pickup, delivered, cancelled
+out_for_delivery → out_for_delivery, delivered, cancelled
+delivered        → delivered      (terminal)
+cancelled        → cancelled      (terminal)
+```
 
-**OrderStatus:** `pending`, `processing`, `completed`, `cancelled`, `refunded`, `failed`, `at_local_facility`, `out_for_delivery`, `ready_for_pickup`
+### 7. Events — actual wiring (verified registrations)
 
-**PaymentStatus:** `pending`, `processing`, `success`, `failed`, `reversal`, `refunded`, `cash_on_delivery`, `cash`, `wallet`, `awaiting_for_approval`
+All app flows dispatch `App\Events\*` classes:
 
-**PaymentGatewayType:** 14 types (Stripe, PayPal, MyFatoorah, Razorpay, etc.)
+| Event | Fired by | Registered listeners | Queue |
+|-------|----------|----------------------|-------|
+| `OrderCreated` | `OrderCreationService::finalizeOrder` (after commit of checkout) | SendNewOrderNotification, SendUserOrderCreatedNotification | meem-medium |
+| `OrderStatusChanged` | `OrderService::changeOrderStatus` (every change) | SendOrderStatusChangedNotification (activity log) | meem-medium |
+| `OrderCancelled` | `OrderService::changeOrderStatus` (first-time cancel); CancelUnpaidOrders command | RestoreProductInventory, SendOrderCancelledNotification (activity log), SendUserOrderCancelledNotification | meem-medium |
+| `PaymentSucceeded` | markCod/markCashierPaid (in tx), checkoutCallback (after commit) | SendPaymentSucceededNotification (activity log), GenerateInvoiceListener, SendUserPaymentSucceededNotification | queued |
+| `PaymentFailed` | checkoutCallback/checkouErrorCallback failure paths; CancelUnpaidOrders | SendPaymentFailedNotification (activity log), SendUserPaymentFailedNotification | queued |
 
-**FulfillmentType:** `delivery`, `pickup`
+Legacy Marvel-package listeners exist (`Marvel\Listeners\SendOrder*Notification` incl. an SMS/email chain on `meem-high`) but are registered against `Marvel\Events\*` classes that no app code dispatches — see bug-report.
 
-**ShippingMethod:** `SCHEDULED`, `FAST`
+### 8. Permissions
 
-### 9. Permissions
-
-| Permission | Value |
-|------------|-------|
-| `VIEW_ORDERS` | `view-orders` |
-| `VIEW_ORDER` | `view-order` |
-| `CREATE_ORDER` | `create-order` |
-| `UPDATE_ORDER_STATUS` | `update-order-status` |
-| `VIEW_REFUNDS` | `view-refunds` |
-| `CREATE_REFUND` | `create-refund` |
-
-### 10. Events (11)
-
-| Event | Dispatched When | Key Listeners |
-|-------|----------------|---------------|
-| `OrderCreated` | Checkout completes | SendNewOrderNotification |
-| `OrderReceived` | Admin receives order | SendOrderReceivedNotification |
-| `OrderProcessed` | Order processing starts | (none — stock deducted synchronously) |
-| `OrderDelivered` | Order marked delivered | SendOrderDeliveredNotification |
-| `OrderCancelled` | Order cancelled | SendOrderCancelledNotification (x2) |
-| `OrderStatusChanged` | Any status change | SendOrderStatusChangedNotification (x2) |
-| `PaymentSucceeded` | Payment verified | (inventory release) |
-| `PaymentFailed` | Payment failed | (transaction update) |
-
-### 11. GraphQL
-
-**Queries:**
-- `orders(tracking_number, orderBy, customer_id, shop_id)` — Paginated
-- `order(id, tracking_number)` — Single
-
-**Mutations:**
-- `createOrder(input: CreateOrderInput!)` — `OrderMutator@store`
-- `updateOrder(input: UpdateOrderInput!)` — `OrderMutator@update`
-- `deleteOrder(id: ID!)` — `@delete` with super_admin can
-- `createOrderPayment(input)` — `OrderMutator@createOrderPayment`
-- `generateOrderExportUrl(input)` — Export URL
-- `generateInvoiceDownloadUrl(input)` — Invoice URL
+| Permission | Value | Guards |
+|------------|-------|--------|
+| `VIEW_ORDERS` | `view-orders` | Admin list |
+| `VIEW_ORDER` | `view-order` | Admin detail |
+| `UPDATE_ORDER_STATUS` | `update-order-status` | PATCH status + both mark-paid endpoints |
 
 ## Known Issues
 
-1. **Dual Model System:** Marvel legacy columns (`tracking_number`, `order_status`, `payment_status`, `amount`, `total`, `paid_total`) vs modern App columns (`status`, `price`, `total_price`). `syncOrderStatusColumn()` bridges the gap.
-2. **Commented Routes:** Standard `apiResource('orders')` routes are commented out in Routes.php.
-3. **No Base Migration Found:** `create_orders_table` migration missing (may be squashed).
-4. **inventory_restored_at** guard column prevents double-restoration on cancellation.
-5. ~~**Status filter ignored on `/api/v1/general/orders`:** The `status` query parameter was not read by `paginateForUser()`. Fixed 2026-07-23.~~
+1. **Legacy enum trap:** `Marvel\Enums\OrderStatus` values (`order-pending`, …) are not valid API statuses.
+2. **Orphaned Marvel listeners:** no dispatch sites exist for `Marvel\Events\OrderCancelled|OrderDelivered|OrderStatusChanged|PaymentSuccess|PaymentFailed`; delivery/cancel SMS-email chains are unreachable from app flows.
+3. **Events fire pre-commit:** `changeOrderStatus` dispatches inside its transaction without `DB::afterCommit()` (unlike `recordCouponUsage`, which does use it).
+4. `inventory_restored_at` guard prevents double-restoration on cancellation.
+5. ~~Status filter ignored on `/api/v1/general/orders`~~ — fixed 2026-07-23.

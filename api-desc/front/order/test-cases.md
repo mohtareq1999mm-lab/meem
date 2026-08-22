@@ -1,63 +1,53 @@
 # Test Cases - Order Feature
 
-## Current Coverage
+## Current Coverage (verified by execution)
 
-**50 tests across 3 files:**
+- **`tests/Feature/OrdersProductionHardenTest.php`** — **38 tests, all passing**
+- **`tests/Feature/OrderCreationFlowTest.php`** — **17 tests, all passing**
+- **`tests/Feature/OrderStatusLifecycleTest.php`** — **15 tests, 45 assertions, all passing** (canonical lifecycle + invoice contract: delivered event once, completion payment-success semantics, gateway opt-out, COD/cashier single-event, invoice-on-first-leave incl. cancellation and no-duplicate chain, same-status exclusion, pickup null-safety)
 
-### OrdersProductionHardenTest (25 tests)
+### OrdersProductionHardenTest coverage map (38)
 
 | Category | Tests |
 |----------|-------|
 | Authentication | `guest_cannot_checkout`, `guest_cannot_access_promotions` |
-| Checkout Flow | `checkout_creates_order_with_correct_totals`, `creates_transaction_for_cod`, `creates_order_items_with_price_snapshot`, `rejects_empty_cart`, `rejects_invalid_payment_method`, `rejects_cod_with_pickup` |
-| Status Lifecycle | `pending_to_completed_transition_succeeds`, `pending_to_cancelled_transition_succeeds`, `completed_to_cancelled_transition_rejected`, `cancelled_to_completed_transition_rejected`, `pending_to_delivered_transition_rejected` |
+| Checkout Flow | `checkout_creates_order_with_correct_totals`, `checkout_creates_transaction_for_cod`, `checkout_creates_order_items_with_price_snapshot`, `checkout_rejects_empty_cart`, `checkout_rejects_invalid_payment_method`, `checkout_rejects_cod_with_pickup` |
+| Status Lifecycle | `pending_to_completed_transition_succeeds`, `pending_to_cancelled_transition_succeeds`, `completed_to_cancelled_transition_rejected`, `cancelled_to_completed_transition_rejected`, `pending_to_delivered_transition_rejected` — via `OrderService::changeOrderStatus()` directly |
 | Payment Callback | `callback_missing_payment_id_returns_400` |
-| Coupon Integration | `checkout_with_valid_coupon_applies_discount`, `checkout_with_expired_coupon_ignores_it`, `checkout_with_free_shipping_coupon_sets_shipping_to_zero` |
-| Promotion Integration | `checkout_with_percentage_promotion_applies_discount`, `promotion_usage_increments_on_order` |
-| Inventory | `checkout_finalizes_inventory_correctly`, `inventory_not_affected_if_checkout_fails`, `cancelled_order_restores_inventory` |
+| Coupon Integration | valid / expired / free-shipping coupons |
+| Promotion Integration | percentage promotion, usage tracking |
+| Inventory | `checkout_does_not_finalize_inventory`, `inventory_not_affected_if_checkout_fails`, `cancelled_order_restores_inventory` |
 | Events | `order_created_event_dispatched_on_checkout`, `order_status_changed_event_dispatched`, `order_cancelled_event_dispatched` |
-| Mark Paid | `mark_cod_as_paid_succeeds`, `rejects_when_no_pending_transaction`, `rejects_already_paid_transaction` |
+| Mark Paid | success / no-pending-transaction / already-paid |
+| Transactions | UUID auto-generation + uniqueness; duplicate checkout behavior |
+| Security | cross-customer isolation, `mark_paid_requires_update_order_status_permission` (403), admin mark-paid success, 404 for missing order |
 
-### OrderCreationFlowTest (18 tests)
+### OrderCreationFlowTest coverage map (17)
 
-| Category | Tests |
-|----------|-------|
-| Flash Sale Pricing | Percentage, Fixed Rate, Final Price, Null cases (4) |
-| Discount Pricing | Percentage, Fixed, Null, Computed price (4) |
-| Variant Pricing | Flash sale for variants (percentage/fixed/final), Discount for variants (percentage/fixed) (5) |
-| Edge Cases | Product without variant, Variant without price, Variant product unit price (3) |
+Flash-sale pricing (4), discount pricing (4), variant flash-sale/discount pricing (5), edge cases: no-variant fallback, variant-without-price fallback, effective unit price (3). One test per documented snapshot rule.
 
-### UserOrderDetailTest (6 tests)
+## Coverage Gaps → Recommended Additional Tests
 
-| Category | Tests |
-|----------|-------|
-| Authentication | `show_requires_authentication` (401) |
-| Own Order | `show_returns_own_order_details` (200 + resource structure) |
-| Authorization | `show_returns_404_for_another_users_order` |
-| Not Found | `show_returns_404_for_nonexistent_order` |
-| Security Regression | `show_does_not_expose_another_users_order_by_changing_id` |
-| Input Integrity | `show_does_not_accept_user_id_from_request` |
+### HTTP-level status endpoint (currently uncovered at route level)
 
-### TC-REG-ORD-001: Status Filter on List Orders
+| # | Test | Type | Priority |
+|---|------|------|----------|
+| FT-ORD-S01 | PATCH `/orders/{id}/status` with admin + permission → 200 + persisted status | Feature | High |
+| FT-ORD-S02 | PATCH without permission → 403 | Auth | High |
+| FT-ORD-S03 | PATCH unauthenticated → 401 | Auth | High |
+| FT-ORD-S04 | PATCH invalid enum (`refunded`, `order-pending`) → 422 validation | Validation | High |
+| FT-ORD-S05 | PATCH forbidden transition → 422 and order unchanged | Edge | High |
+| FT-ORD-S06 | PATCH unknown id → 404 | Edge | High |
+| FT-ORD-S07 | PATCH same-status re-set succeeds (documented) | Edge | Medium |
+| FT-ORD-S08 | PATCH completed syncs payment fields + tx paid | Assertion | High |
+| FT-ORD-S09 | PATCH cancelled restores inventory once + fires OrderCancelled | Integration | High |
+| FT-ORD-S10 | Queue assertion: listeners bound to `meem-medium` | Structure | Medium |
 
-- **Bug:** Status filter completely ignored
-- **Fix Applied:** 2026-07-23
-- **Test:** `GET /api/v1/general/orders?status=pending` returns only pending orders
-- **Test:** `GET /api/v1/general/orders?status=completed` returns only completed orders
-- **Test:** `GET /api/v1/general/orders?status=invalid` returns empty result (no matching status)
-- **Test:** `GET /api/v1/general/orders` (no filter) still returns all user orders (regression)
+### Other gaps
 
----
-
-## Recommended Additional Tests
-
-| # | Test | Description |
-|---|------|-------------|
-| FT-001 | Order list returns only authenticated user's orders | Authorization |
-| FT-002 | Order detail with items and transactions | Full resource |
-| FT-003 | Admin order export | File download |
-| FT-004 | Invoice download with valid token | PDF download |
-| FT-005 | Invoice download with expired token | 401 |
-| FT-006 | Cashier payment QR code generation | QR returned |
-| FT-007 | Duplicate checkout with same cart | Error |
-| FT-008 | Refund flow after completed order | Inventory restored |
+| # | Test | Type | Priority |
+|---|------|------|----------|
+| FT-001 | Cashier mark-paid flow mirrors COD suite | Feature | High |
+| FT-002 | Callback amount/currency mismatch blocks completion | Edge | High |
+| FT-003 | Callback idempotency: second success call is a no-op | Edge | High |
+| FT-004 | Invoice download with valid/expired token | Auth | Medium |

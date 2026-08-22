@@ -4,8 +4,9 @@ namespace App\Listeners;
 
 use App\Enums\UserType;
 use App\Notifications\UserOrderDeliveredNotification;
+use App\Events\OrderDelivered;
+use App\Notifications\UserOrderDeliveredNotification;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Marvel\Events\OrderDelivered;
 
 class SendUserOrderDeliveredNotification implements ShouldQueue
 {

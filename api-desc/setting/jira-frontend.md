@@ -4,15 +4,16 @@
 
 ## Task 1: Admin Settings Page
 
-**Priority:** High
-**Component:** Admin Panel
-**Story Points:** 8
+**Priority:** High  
+**Component:** Admin Panel  
+**Story Points:** 8  
 
 **Description:** Build admin settings page with form fields for all settings.
 
 **API Endpoints:**
-- `GET /api/v1/settings` — Fetch current settings
-- `PUT /api/v1/settings` — Update settings
+- `GET /api/v1/general/settings` — Fetch current settings (public, no auth)
+- `GET /api/v1/settings` — Fetch current settings (admin, requires Sanctum + view-settings)
+- `PUT /api/v1/settings` — Update settings (admin, requires Sanctum + update-settings)
 
 **Acceptance Criteria:**
 - [ ] Form fields for site_name, site_desc, meta_desc, site_copy_right (multilingual)
@@ -33,9 +34,9 @@
 
 ## Task 2: Fast Shipping Settings Page
 
-**Priority:** Medium
-**Component:** Admin Panel
-**Story Points:** 3
+**Priority:** Medium  
+**Component:** Admin Panel  
+**Story Points:** 3  
 
 **Description:** Fast shipping configuration section within settings page.
 
@@ -48,3 +49,18 @@
 - [ ] Duration minutes input
 - [ ] Fee amount input
 - [ ] Start/end hour time pickers
+
+---
+
+## Task 3: Admin Settings Page — Public vs Admin Endpoints
+
+**Priority:** Medium  
+**Component:** Admin Panel  
+
+**Description:** Clarify the difference between the public and admin settings endpoints for the frontend team.
+
+**Key Differences:**
+- `GET /api/v1/general/settings` — No authentication required; translatable fields returned as single locale string
+- `GET /api/v1/settings` — Requires Sanctum token with `view-settings` permission; translatable fields returned as `{ar, en}` objects
+
+**Important:** Ensure the frontend correctly uses the public endpoint for unauthenticated requests and the admin endpoint for authenticated admin requests.

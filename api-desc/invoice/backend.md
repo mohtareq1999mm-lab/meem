@@ -14,7 +14,7 @@ The Invoice module is a comprehensive invoicing system with lifecycle management
 | GET | `/api/v1/general/invoices/my-invoices` | Sanctum | — | Current user's invoices (customer) |
 | GET | `/api/v1/general/invoices/uuid/{uuid}` | Sanctum | `view-invoice` | Show by UUID (admin) |
 | GET | `/api/v1/general/invoices/verify/{uuid}` | Sanctum + throttle:5,1 | — | Verify authenticity |
-| GET | `/api/v1/general/orders/invoice/{uuid}` | Sanctum | Owner-only (inline, 403 otherwise) | Customer view of one invoice |
+| GET | `/api/v1/general/orders/{orderId}/invoice` | Sanctum | Owner-scoped query (foreign/missing → 404) | Customer invoice by Order ID — **canonical** |
 | POST | `/api/v1/invoices/{id}/regenerate` | Sanctum | `regenerate-invoice` | Regenerate PDF |
 | POST | `/api/v1/invoices/{id}/correct` | Sanctum | `correct-invoice` | Create corrected invoice |
 | POST | `/api/v1/invoices/{id}/cancel` | Sanctum | `cancel-invoice` | Cancel invoice |
@@ -27,18 +27,20 @@ The Invoice module is a comprehensive invoicing system with lifecycle management
 **File:** `packages/marvel/src/Rest/Routes.php` (lines 390-399, loaded under `api/v1`)
 
 ```
-Line 390: Route::prefix('invoices')->group(function () {
-Line 391:     Route::middleware(['auth:sanctum'])->group(function () {
-Line 392:         Route::get('/', [InvoiceController::class, 'index']);
-Line 393:         Route::get('{uuid}/download', [InvoiceController::class, 'download'])->whereUuid('uuid')->middleware('throttle:30,1');
-Line 394:         Route::get('{id}', [InvoiceController::class, 'show']);
-Line 395:         Route::post('{id}/regenerate', [InvoiceController::class, 'regenerate']);
-Line 396:         Route::post('{id}/correct', [InvoiceController::class, 'correct']);
-Line 397:         Route::post('{id}/cancel', [InvoiceController::class, 'cancel']);
-Line 398:         Route::post('{id}/debit-note', [InvoiceController::class, 'issueDebitNote']);
-Line 399:     });
-Line 400: });
+Line 391: Route::prefix('invoices')->group(function () {
+Line 392:     Route::middleware(['auth:sanctum'])->group(function () {
+Line 393:         Route::get('/', [InvoiceController::class, 'index']);
+Line 394:         Route::get('{uuid}/download', [InvoiceController::class, 'download'])->whereUuid('uuid')->middleware('throttle:30,1');
+Line 395:         Route::get('{id}', [InvoiceController::class, 'show'])->whereNumber('id');
+Line 396:         Route::post('{id}/regenerate', [InvoiceController::class, 'regenerate'])->whereNumber('id');
+Line 397:         Route::post('{id}/correct', [InvoiceController::class, 'correct'])->whereNumber('id');
+Line 398:         Route::post('{id}/cancel', [InvoiceController::class, 'cancel'])->whereNumber('id');
+Line 399:         Route::post('{id}/debit-note', [InvoiceController::class, 'issueDebitNote'])->whereNumber('id');
+Line 400:     });
+Line 401: });
 ```
+
+> **INV-001 fix:** all `{id}` routes are constrained with `whereNumber('id')`. Malformed ids (non-numeric strings, UUIDs) no longer reach the controller — they fail routing and return the standard framework **404** (`{"message":"Not Found","status":false}` from the app exception handler), never a `TypeError`/500.
 
 **File:** `routes/api.php` (lines 133-137, inside `Route::prefix('v1/general')`)
 
@@ -92,9 +94,14 @@ GET /general/invoices/uuid/{uuid}
     → Invoice::with(['order.orderItems', 'transaction', 'user'])->where('uuid', $uuid)->firstOrFail()
     → AdminInvoiceResource::make($invoice)
 
-GET /general/orders/invoice/{uuid}
-  → OrderController@invoice($request, $uuid)
-    → Invoice::where('uuid', $uuid)->firstOrFail()
+GET /general/orders/{orderId}/invoice
+  → OrderController@invoiceByOrderId($orderId)
+    → Order::where('user_id', auth id)->findOrFail($orderId)
+    → $order->latestInvoice()->first()
+    → null → 404 {status:404, message:"Not found", success:false}   [pending order]
+    → CustomerInvoiceResource::make($invoice)
+
+> REMOVED: `GET /general/orders/invoice/{uuid}` (legacy `invoice($uuid)`) — deleted 2026-08-22.
     → Auth: invoice.order.user_id === auth()->id() → else AuthorizationException (403)
     → CustomerInvoiceResource::make($invoice)
 
@@ -144,6 +151,7 @@ POST /invoices/{id}/correct
           → Both timeline events (corrected + generated)
           → afterCommit: dispatch InvoiceCreated + GenerateInvoicePdfJob
         → Return correction invoice
+    → catch ModelNotFoundException → rethrown → Handler 404 {"message":"Resource Not Found","status":false}  [INV-003 fix]
     → catch RuntimeException → 422
 
 POST /invoices/{id}/cancel
@@ -157,6 +165,7 @@ POST /invoices/{id}/cancel
           → Update: status=cancelled, cancelled_at, cancellation_reason
           → Timeline: recordCancelled
         → Return fresh invoice
+    → catch ModelNotFoundException → rethrown → Handler 404 envelope  [INV-003 fix]
     → catch RuntimeException → 422
 
 POST /invoices/{id}/debit-note
@@ -220,7 +229,7 @@ pending → generating, cancelled
 generating → generated, failed
 generated → pdf_generating, ready, failed, verified, downloaded, printed, corrected, cancelled
 pdf_generating → ready, failed
-ready → downloaded, printed, verified, failed, corrected, cancelled, archived
+ready → pdf_generating, downloaded, printed, verified, failed, corrected, cancelled, archived   [pdf_generating added — INV-002 fix]
 failed → pdf_generating, cancelled
 verified → downloaded, printed, cancelled, archived
 downloaded → printed, verified, cancelled, archived
@@ -229,6 +238,8 @@ corrected → cancelled, archived
 cancelled → archived
 archived → (terminal)
 ```
+
+> **INV-002 fix:** `READY → PDF_GENERATING` is now a legal transition. The documented API contract (`api.md` regenerate section) always allowed regeneration from `ready`; the enum previously lacked the edge, causing an unhandled `RuntimeException` (HTTP 500). Controller allowlist and state machine are now aligned.
 
 Transitions are enforced at TWO levels:
 1. **Enum level:** `InvoiceStatus::canTransitionTo()`
@@ -432,6 +443,15 @@ The controller uses hardcoded English strings:
 | `app/Jobs/GenerateInvoicePdfJob.php` | PDF generation job |
 | `packages/marvel/src/Enums/Permission.php` | Permissions |
 | `resources/views/pdf/invoice.blade.php` | PDF template |
-| `tests/Unit/Invoice/InvoiceLifecycleTest.php` | Unit tests |
+| `tests/Unit/Invoice/InvoiceLifecycleTest.php` | Unit tests (34) |
 | `tests/Feature/Invoice/InvoiceDownloadPermissionTest.php` | Download permission feature tests (18) |
 | `tests/Feature/OrderInvoiceEndpointTest.php` | Customer invoice view feature tests (7) |
+| `tests/Feature/Invoice/AdminInvoiceAuthTest.php` | Auth/authorization matrix (14) — INV-001 era regression base |
+| `tests/Feature/Invoice/AdminInvoiceIndexTest.php` | List filters/sort/clamp/search (7) |
+| `tests/Feature/Invoice/AdminInvoiceShowTest.php` | Show contract + INV-001 route-constraint regressions (5) |
+| `tests/Feature/Invoice/AdminInvoiceRegenerateTest.php` | Regenerate incl. INV-002 ready-transition + queue `meem-medium` (5) |
+| `tests/Feature/Invoice/AdminInvoiceCorrectTest.php` | Correction side effects + INV-003 404-no-leak (10) |
+| `tests/Feature/Invoice/AdminInvoiceCancelTest.php` | Cancel state/idempotency + INV-003 (6) |
+| `tests/Feature/Invoice/AdminInvoiceDebitNoteEndpointTest.php` | Debit note guards/validation (7) |
+| `tests/Feature/Invoice/AdminInvoiceEndToEndTest.php` | Full lifecycle E2E with real DomPDF execution (1) |
+| `tests/Concerns/WithAdminInvoiceContext.php` | Shared invoice test bootstrap trait |

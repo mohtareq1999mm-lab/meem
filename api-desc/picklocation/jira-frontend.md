@@ -55,11 +55,6 @@
 ## API Routes
 
 | Method | Endpoint | Auth | Permission | Request Body |
-|--------|----------|------|------------|-------------|
-| GET | `/api/v1/pickup-locations` | Required | view-pickup-locations | — |
-| POST | `/api/v1/pickup-locations` | Required | create-pickup-location | `{ store_name, address, phone, email?, latitude?, longitude?, working_hours?, status?, display_order?, is_default? }` |
-| GET | `/api/v1/pickup-locations/{id}` | Required | view-pickup-locations | — |
-| PUT | `/api/v1/pickup-locations/{id}` | Required | update-pickup-location | All optional: `{ store_name?, address?, phone?, email?, latitude?, longitude?, working_hours?, status?, display_order?, is_default? }` |
-| DELETE | `/api/v1/pickup-locations/{id}` | Required | delete-pickup-location | — |
+|--------|----------|------|------------|-------------|— |
 | GET | `/api/v1/general/pickup-locations` | None | None | — |
 | GET | `/api/v1/general/pickup-locations/{id}` | None | None | — |

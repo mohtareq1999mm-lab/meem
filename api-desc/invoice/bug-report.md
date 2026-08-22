@@ -38,9 +38,7 @@
 
 **Component:** `App\Http\Controllers\Api\InvoiceController`
 
-**Description:** The `show()`, `regenerate()`, `correct()`, `cancel()`, and `issueDebitNote()` methods call `findOrFail()` which throws `Illuminate\Database\Eloquent\ModelNotFoundException` when the invoice does not exist. This exception is NOT caught, resulting in an HTML exception page instead of JSON 404.
-
-**Code Locations:**
+**Description:** The `show()`, `regenerate()`, `correct()`, `cancel()`, and `issueDebitNote()` methods call `findOrFail()` which throws `Illuminate\Database\Eloquent\ModelNotFoundException` when the invoice does not exist. This exception is NOT caught, resulting in an HTML exception page instead of JSON 404.**Code Locations:**
 - `show()` line 74 — `Invoice::with(...)->findOrFail($id)`
 - `regenerate()` line 199 — `Invoice::query()->findOrFail($id)`
 - `correct()` line 224 — via `InvoiceService::correctInvoice()` → `Invoice::lockForUpdate()->findOrFail()`
@@ -52,6 +50,30 @@
 **Production Impact:** Non-existent invoice IDs/UUIDs cause 500-level errors instead of proper 404 JSON responses.
 
 **Fix:** Add try/catch for `ModelNotFoundException` or register global handler in `App\Exceptions\Handler::register()`.
+
+**Status: RESOLVED (2026-08-22).** The app's exception handler renders every `/api/*` failure as JSON (`shouldReturnJson` path-check), so `ModelNotFoundException` maps to a JSON 404 `{"message":"Resource Not Found","status":false}`. Additionally, `correct()` and `cancel()` now **rethrow** `ModelNotFoundException` ahead of the broad `catch (\RuntimeException)` (which previously swallowed it into a 422 that leaked the `App\Models\Invoice` FQCN). Locked by regression tests: `AdminInvoiceShowTest::test_regression_inv001_*`, `AdminInvoiceCorrectTest`/`AdminInvoiceCancelTest::test_regression_inv003_*`.
+
+---
+
+## BUG-INV-002b (NEW, 2026-08-22): Malformed `{id}` Reached Controller as TypeError
+
+**Severity:** HIGH
+
+**Component:** `packages/marvel/src/Rest/Routes.php` invoice routes + `show(int $id)`
+
+**Description:** `{id}` routes had no numeric constraint. A non-numeric segment (e.g. `not-an-id`, a UUID) was bound to the `int $id` parameter → PHP `TypeError` → HTTP 500.
+
+**Status: RESOLVED (2026-08-22).** All five `{id}` routes now use `->whereNumber('id')`; malformed ids fail routing with 404.
+
+---
+
+## BUG-INV-002c (NEW, 2026-08-22): Regenerate From `ready` Crashed on State Machine
+
+**Severity:** HIGH
+
+**Description:** Controller allowlist accepted `ready`, but the `InvoiceStatus` enum forbade `READY → PDF_GENERATING`; the model saving hook threw an unhandled `RuntimeException` → HTTP 500 with no job dispatched.
+
+**Status: RESOLVED (2026-08-22).** Enum now permits the edge; documented contract ("allowed from `failed|ready|generated`", see api.md) and implementation agree. Regression: `AdminInvoiceRegenerateTest::test_regression_inv002_*`.
 
 ---
 

@@ -8,6 +8,7 @@ use Marvel\Database\Models\Order;
 use Marvel\Database\Models\Cart;
 use Marvel\Database\Models\Transaction;
 use App\Events\OrderCancelled;
+use App\Events\OrderStatusChanged;
 use App\Events\PaymentFailed;
 use App\Services\General\CartInventoryService;
 
@@ -54,6 +55,12 @@ class CancelUnpaidOrders extends Command
                     $cancelUpdateData['cancelled_at'] = now();
                 }
                 $lockedOrder->update($cancelUpdateData);
+
+                // System-initiated pre-payment cancellation: the order was never
+                // paid, so promotion usage must NOT be decremented (it was never
+                // consumed). We therefore bypass changeOrderStatus() here but keep
+                // the audit event so every status write is observable.
+                event(new OrderStatusChanged($lockedOrder));
 
                 $lockedOrder->transactions()
                     ->where('status', 'pending')

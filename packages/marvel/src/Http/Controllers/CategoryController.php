@@ -36,7 +36,7 @@ class CategoryController extends CoreController
         $this->middleware("permission:" . Permission::CREATE_CATEGORY, ["only" => ["store"]]);
         $this->middleware("permission:" . Permission::UPDATE_CATEGORY, ["only" => ["update"]]);
         $this->middleware("permission:" . Permission::DELETE_CATEGORY, ["only" => ["destroy"]]);
-        $this->middleware("permission:" . Permission::DELETE_CATEGORY, ["only" => ["bulkDelete", "bulkDeleteStatus"]]);
+        $this->middleware("permission:" . Permission::DELETE_CATEGORY, ["only" => ["bulkDelete", "bulkDeleteStatus", "cancelBulkDelete"]]);
         $this->middleware("permission:" . Permission::UPDATE_CATEGORY, ["only" => ["addOrRemoveCategoryFromFeature"]]);
     }
 

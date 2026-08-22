@@ -19,6 +19,7 @@
 | Promotions | 0 | Not Started | NO | — | — | Not Required | — | — | — |
 | Payment System | 0 | Not Started | NO | — | — | Not Required | — | — | — |
 | Currency Selection Enabled | 1 | Production Ready | YES | Settings (options), CurrencyService (base/catalog/effective), Authentication (Sanctum), UserCurrencyPreferenceService, FrontendResource settings cache | Frontend currency selector, Cart, Checkout, Orders | Passed (17/17 new; 183 pass / 2 pre-existing unrelated failures in combined Currency+Settings filter) | 2026-08-12 | 17/17 (37 assertions) | None |
+| Orders (Canonical Status Lifecycle) | 1 | Production Ready | YES | Order Model, OrderService (transitions), Invoice System (InvoiceService idempotent), Payment events, EventServiceProvider, Supervisor queues (meem-high/meem-medium/default) | Admin dashboard (PATCH status), Frontend order tracking, COD/Cashier marking, Gateway callbacks, invoices | Passed (143/143 green set; 13 failures byte-identical to clean-main baseline, stash-verified) | 2026-08-22 | 15/15 lifecycle (45 assertions) · 143/143 combined green (384) | 5 fixed (COD/Cashier missing OrderStatusChanged; delivered notification dead-path; completion lacked payment-success semantics/invoice; cancel-unpaid audit gap; delivery-address over-required for pickup) |
 
 ## Legend
 
@@ -34,3 +35,9 @@
 - **Pending** — Dependent features changed, tests not yet run
 - **Passed** — All required regression tests passed
 - **Failed** — Regression tests failed
+
+## Known Pre-Existing Suite Debt (not blocking release; verified identical on clean main)
+
+- `PaymentSystemTest` — 4 failures (missing `coupon_assignments` table in its test schema; 3 mark-paid endpoint tests hitting pre-existing 500s)
+- `EventSystemTest` — 9 failures (queue/refund/provider assertions)
+- Marvel SMS/email chains for generic status changes remain orphaned (`Marvel\Events\*` never dispatched)

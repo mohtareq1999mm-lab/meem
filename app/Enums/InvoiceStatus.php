@@ -24,7 +24,7 @@ enum InvoiceStatus: string
             self::GENERATING => [self::GENERATED, self::FAILED],
             self::GENERATED => [self::PDF_GENERATING, self::READY, self::FAILED, self::VERIFIED, self::DOWNLOADED, self::PRINTED, self::CORRECTED, self::CANCELLED],
             self::PDF_GENERATING => [self::READY, self::FAILED],
-            self::READY => [self::DOWNLOADED, self::PRINTED, self::VERIFIED, self::FAILED, self::CORRECTED, self::CANCELLED, self::ARCHIVED],
+            self::READY => [self::PDF_GENERATING, self::DOWNLOADED, self::PRINTED, self::VERIFIED, self::FAILED, self::CORRECTED, self::CANCELLED, self::ARCHIVED],
             self::FAILED => [self::PDF_GENERATING, self::CANCELLED],
             self::VERIFIED => [self::DOWNLOADED, self::PRINTED, self::CANCELLED, self::ARCHIVED],
             self::DOWNLOADED => [self::PRINTED, self::VERIFIED, self::CANCELLED, self::ARCHIVED],

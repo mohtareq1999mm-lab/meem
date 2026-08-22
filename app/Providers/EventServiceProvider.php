@@ -114,6 +114,9 @@ class EventServiceProvider extends ServiceProvider
             SendOrderCancelledNotification::class,
             SendUserOrderCancelledNotification::class,
         ],
+        OrderDelivered::class => [
+            SendUserOrderDeliveredNotification::class,
+        ],
         OrderCreated::class => [
             SendNewOrderNotification::class,
             SendUserOrderCreatedNotification::class,

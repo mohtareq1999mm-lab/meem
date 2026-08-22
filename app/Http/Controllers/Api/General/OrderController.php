@@ -392,7 +392,9 @@ class OrderController extends Controller
 
             $this->orderService->finalizePromotionUsageAfterPayment($lockedOrder);
 
-            $this->orderService->changeOrderStatus($lockedTransaction->invoice_id, 'completed');
+            // emitPaymentSuccess = false: this callback owns the PaymentSucceeded
+            // dispatch and fires it once after the transaction commits.
+            $this->orderService->changeOrderStatus($lockedTransaction->invoice_id, 'completed', null, false);
 
             $processed = true;
         });
@@ -532,12 +534,23 @@ class OrderController extends Controller
         ]));
     }
 
-    public function invoice(Request $request, string $uuid): JsonResponse
+    /**
+     * Canonical Order-ID based invoice lookup for the customer.
+     *
+     * Resolves the order's latest Invoice (the same relation the customer
+     * resource exposes as `invoice_id`). Ownership is enforced inside the
+     * query so a foreign or missing order yields the same clean 404 without
+     * leaking existence. A pending order has no invoice yet → 404.
+     */
+    public function invoiceByOrderId(Request $request, int $orderId): JsonResponse
     {
-        $invoice = Invoice::where('uuid', $uuid)->firstOrFail();
+        $order = Order::where('user_id', $request->user()->id)
+            ->findOrFail($orderId);
 
-        if ($invoice->order->user_id !== $request->user()->id) {
-            throw new \Illuminate\Auth\Access\AuthorizationException(NOT_AUTHORIZED);
+        $invoice = $order->latestInvoice()->first();
+
+        if (!$invoice) {
+            return $this->apiResponse(NOT_FOUND, 404, false);
         }
 
         return $this->apiResponse(

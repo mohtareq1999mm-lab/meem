@@ -1,38 +1,51 @@
 # Bug Report - Order Feature
 
-## Issue 1: Status Filter Completely Ignored on `/api/v1/general/orders`
+All findings below verified directly from source during the status-lifecycle audit.
+
+## Issue 1: Status Filter Completely Ignored on `/api/v1/general/orders` — FIXED
 
 - **Severity:** HIGH
 - **Status:** FIXED (2026-07-23)
 - **Component:** `app/Services/General/OrderService.php::paginateForUser()`
-- **Root Cause:** The method never read the `status` query parameter.
-- **Fix:** Added `->when($request->has('status'), ...)` to the query chain.
+- **Fix:** `->when($request->has('status'), fn($q) => $q->where('status', $request->get('status')))`
 
----
+## Issue 2 (HIGH, docs-facing): Marvel SMS/email order listeners are unreachable
 
-## Issue 2: Dual Model System
+- **Files:** `packages/marvel/src/Listeners/SendOrderStatusChangedNotification.php`, `SendPaymentSuccessNotification.php`, `SendPaymentFailedNotification.php` (all `meem-high`/`meem-medium`)
+- **Confidence:** VERIFIED
+- **Root cause:** The app layer dispatches only `App\Events\*` classes. Nothing in `app/` dispatches `Marvel\Events\OrderCancelled|OrderDelivered|OrderStatusChanged|PaymentSuccess|PaymentFailed`, and `Marvel\Providers\EventServiceProvider` registers listeners for only two of them (`OrderCancelled`, `OrderDelivered`). The generic status-change SMS/email chain therefore never runs.
+- **Production impact:** On a generic status change (e.g. admin PATCH to `processing`), customers receive NO SMS/email — only the queued activity-log entry, and on cancellation the app-level `SendUserOrderCancelledNotification`.
+- **Fix direction:** either register + dispatch the Marvel events from `changeOrderStatus()`, or port the SMS/email chain onto `App\Events\OrderStatusChanged`.
 
-- **Description:** Two separate Order model schemas coexist. Marvel package uses legacy columns (`tracking_number`, `order_status`, `payment_status`, `amount`, `total`, `paid_total`). App layer uses modern columns (`status`, `price`, `total_price`, `promotion_id`). The `syncOrderStatusColumn()` method bridges the gap but is a potential inconsistency point.
-- **Impact:** Medium — status changes must be synced explicitly or modern/legacy columns can diverge.
+## Issue 3 (MEDIUM): Events dispatched inside the DB transaction without afterCommit
 
-## Issue 2: Commented Routes
+- **File:** `app/Services/General/OrderService.php:619-623`
+- **Confidence:** VERIFIED
+- **Description:** `OrderStatusChanged` / `OrderCancelled` are fired inside `DB::transaction(...)`. Listeners are queued; a fast worker can execute before commit and read stale state or fail transiently.
+- **Impact:** Possible stale payloads in activity logs/notifications under race conditions.
+- **Note:** The codebase already uses the correct pattern elsewhere (`DB::afterCommit()` in `recordCouponUsage()`).
 
-- **File:** `packages/marvel/src/Rest/Routes.php`
-- **Description:** Standard `apiResource('orders')` routes are commented out. Only specific routes explicitly defined.
-- **Impact:** Low — suggests incomplete migration from old Marvel routing.
+## Issue 4 (LOW): Same-status transitions re-fire events
 
-## Issue 3: No Base Migration
+- **File:** `app/Services/General/OrderService.php:494-500` (self-targets allowed) and `:619`
+- **Confidence:** VERIFIED
+- **Impact:** Duplicate `order_status_changed` activity-log rows when an admin re-saves the same status. No financial duplication (idempotency flags hold).
 
-- **Description:** No `create_orders_table` migration found. Only modification migrations exist.
-- **Impact:** Low — fresh installations may fail.
+## Issue 5 (LOW): Legacy enum values conflict with API contract
 
-## Issue 4: Duplicate Route Definitions
+- **Files:** `packages/marvel/src/Enums/OrderStatus.php` vs model constants / DB enum
+- **Confidence:** VERIFIED
+- **Description:** Enum exposes `order-pending`, `order-processing`, … but validation (`OrderStatusUpdateRequest`) and storage use raw `pending`, `processing`, …. Any client sending enum-style values gets 422.
+- **Impact:** Frontend confusion risk; docs now pin the five DB values.
 
-- **File:** `routes/api.php` lines 39-45 and 84-90
-- **Description:** Checkout routes (`checkout/promotions`, `checkout`, `checkout/cod/{orderId}/mark-paid`, etc.) defined twice. Harmless but indicates copy-paste.
-- **Impact:** Low.
+## Issue 6 (INFO): Documentation previously described non-existent routes/methods
 
-## Issue 5: Missing English/Arabic Translations
+- `PUT /api/v1/orders/{id}` — never registered; real endpoint is `PATCH orders/{id}/status`.
+- `GET /general/checkout/transaction-qr/{uuid}` + `getTransactionQr()` — no such route/method exists.
+- `syncOrderStatusColumn()` / `OrderManagementTrait::changeOrderStatus($order,$status,$user)` — not present in current `OrderService`; actual signature is `changeOrderStatus($invoiceId, $status, $orderId)`.
+- **Status:** documentation corrected in this pass.
 
-- **Description:** Only German (`de`) order translation file exists in `resources/lang/`. English and Arabic translation files for order notifications are missing.
-- **Impact:** Medium — order notification texts will show key strings for EN/AR locales.
+## Legacy notes
+
+- Dual model system (legacy Marvel columns vs modern App columns) still exists in package internals; modern flows use the App columns exclusively.
+- No base `create_orders_table` migration found (likely squashed); lifecycle columns added by `2026_07_27_081603_*` and later migrations.

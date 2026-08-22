@@ -214,17 +214,38 @@ All routes require `auth:sanctum` and `throttle:cart` (20 req/min per user) midd
 
 ## Admin Orders
 
-All admin order endpoints are in `packages/marvel/src/Rest/Routes.php` (lines 476, 486). Routes are loaded via `RestAPIServiceProvider::loadRoutes()` with prefix `/api/v1` and middleware `api`.
+All admin order endpoints are in `packages/marvel/src/Rest/Routes.php` (lines 165-167). Routes are loaded via `RestAPIServiceProvider::loadRoutes()` with prefix `/api/v1`.
 
-Both routes are inside a route group (line 451) with middleware `auth:sanctum` and `email.verified`.  
-Controller-level permission middleware enforces `view-orders` and `view-order` respectively.
+All three routes are inside a route group (line 115) with middleware `auth:sanctum` and `throttle:admin`.
+Controller-level permission middleware enforces `view-orders`, `view-order`, and `update-order-status` respectively.
 
 | Method | URI | Controller | Action | Route Middleware | Controller Middleware | Permission | Purpose | Response Resource | Source Line |
 |--------|-----|------------|--------|-----------------|----------------------|------------|---------|-------------------|-------------|
-| GET | `/orders` | `Marvel\Http\Controllers\Order\OrderController` | `index` | `auth:sanctum`, `email.verified` | `permission:view-orders` | `view-orders` | List all orders with 12 filters and pagination (default 15, max 100) | `Marvel\Http\Resources\Order\OrderCollection` | 476 |
-| GET | `/orders/{id}` | `Marvel\Http\Controllers\Order\OrderController` | `show` | `auth:sanctum`, `email.verified` | `permission:view-order` | `view-order` | Get a single order with full details (items, variants, transactions, pickup location) | `Marvel\Http\Resources\Order\OrderResource` | 486 |
+| GET | `/orders` | `Marvel\Http\Controllers\Order\OrderController` | `index` | `auth:sanctum`, `throttle:admin` | `permission:view-orders` | `view-orders` | List all orders with filters and pagination (default 15, max 100) | `Marvel\Http\Resources\Order\OrderCollection` | 165 |
+| GET | `/orders/{id}` | `Marvel\Http\Controllers\Order\OrderController` | `show` | `auth:sanctum`, `throttle:admin` | `permission:view-order` | `view-order` | Get a single order with full details (items, variants, transactions, pickup location); accepts ID or tracking number | `Marvel\Http\Resources\Order\OrderResource` | 166 |
+| PATCH | `/orders/{id}/status` | `Marvel\Http\Controllers\Order\OrderController` | `updateStatus` | `auth:sanctum`, `throttle:admin` | `permission:update-order-status` | `update-order-status` | Canonical status transition (`pending|processing|completed|delivered|cancelled`); validates transition matrix; creates invoice on first leave-pending; fires lifecycle events; numeric ID only (`whereNumber`) | `Marvel\Http\Resources\Order\OrderResource` | 167 |
 
-See `docs/cms-endpoints/orders.md` for detailed documentation.
+See `docs/cms-endpoints/orders.md` and `api-desc/order/api.md` (section 5) for detailed documentation.
+
+---
+
+## Customer Orders & Checkout
+
+Customer order endpoints are in `routes/api.php` under prefix `/api/v1/general`, middleware groups: public (`api` + `throttle:public-api`) and authenticated (`api`, `auth:sanctum`, `throttle:authenticated`). Payment marking endpoints additionally require the Spatie permission below.
+
+| Method | URI | Controller | Action | Middleware | Permission | Purpose |
+|--------|-----|------------|--------|-----------|------------|---------|
+| POST | `/general/checkout` | `App\Http\Controllers\Api\General\OrderController` | `checkout` | authenticated group | - | Create pending order from active cart (COD / online / pay-at-cashier) |
+| GET | `/general/checkout/promotions` | same | `eligiblePromotions` | authenticated group | - | Promotions eligible for the active cart |
+| POST | `/general/checkout/cod/{orderId}/mark-paid` | same | `markCodAsPaid` | authenticated group | `update-order-status` | Cash received: transaction paid, canonical completion, invoice + payment events |
+| POST | `/general/checkout/cashier/{orderId}/mark-paid` | same | `markCashierPaid` | authenticated group | `update-order-status` | Same as COD for pay-at-cashier (pickup) orders |
+| ANY | `/general/checkout/callback` | same | `checkoutCallback` | public | - | Gateway verification; idempotent completion for pending online orders |
+| ANY | `/general/checkout/error-callback` | same | `checkoutErrorCallback` | public | - | Marks transaction failed; fires PaymentFailed |
+| GET | `/general/orders` | same | `index` | authenticated group | - | Authenticated user's paginated orders (status filter) |
+| GET | `/general/orders/invoice/{uuid}` | same | `invoice` | authenticated group | - | Owner-only invoice view |
+| GET | `/general/orders/{id}` | same | `show` | authenticated group | - | Owner-only order detail (404 for other users' orders) |
+
+Source: `routes/api.php` lines 109-127. Full behavior documentation: `api-desc/front/order/`.
 
 ---
 

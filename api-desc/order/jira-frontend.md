@@ -2,7 +2,7 @@
 
 ## Epic: Order Management UI — Customer App + Admin Dashboard
 
-### Story Points Estimate: 8
+### Story Points Estimate: 10
 
 ---
 
@@ -16,7 +16,7 @@
 **Acceptance Criteria:**
 - Fetches `GET /api/v1/orders` with query params
 - Columns: Order #, Customer, Status, Date
-- Filters: status dropdown, date range, text search
+- Filters: status dropdown (`pending|processing|completed|delivered|cancelled`), date range, text search
 - Pagination controls
 - Loading skeleton + error state
 
@@ -31,24 +31,36 @@
 - Pickup location details if applicable
 - Back to list navigation
 
-### FE-US-003 (Customer): My Orders List
+### FE-US-003 (Admin): Status Change Control
+**As** an admin
+**I want** a status action on the detail page
+**So that** I can progress orders
+
+**Acceptance Criteria:**
+- Dropdown shows ONLY legal next statuses per the matrix below
+- Submits `PATCH /api/v1/orders/{id}/status`
+- On 422 show the backend message (transition violation) and refresh current state
+- After 200, refetch order; note that notifications/activity happen asynchronously
+
+```text
+Legal next statuses (frontend guard):
+pending    → processing | completed | cancelled
+processing → completed  | cancelled
+completed  → delivered
+delivered  → (terminal)
+cancelled  → (terminal)
+```
+
+### FE-US-004 (Customer): My Orders List & Invoice View
 **As** a customer
-**I want** to see my orders
+**I want** to see my orders and open an invoice
 **So that** I can track my purchases
 
 **Acceptance Criteria:**
-- Fetches `GET /api/v1/general/orders`
-- Shows order number, status, totals, and invoice link (from `order_has_invoice` / `invoice_id`)
-
-### FE-US-004 (Customer): Order Invoice View
-**As** a customer
-**I want** to view my order's invoice
-**So that** I can review and verify it
-
-**Acceptance Criteria:**
-- Fetches `GET /api/v1/general/orders/invoice/{uuid}` using `invoice_id` from the list
-- Shows invoice fields + snapshot + verification link
-- Handles 403 (not owner) and 404
+- Fetches `GET /api/v1/general/orders` (filter by status tabs using DB status values)
+- Shows order number, status, totals, invoice indicator (from `order_has_invoice`)
+- **Invoice page fetches `GET /api/v1/general/orders/{orderId}/invoice`** (canonical) — handle 404 (pending order or foreign order)
+- Download button must build its URL from the returned invoice payload's uuid (`GET /api/v1/invoices/{uuid}/download`) — do NOT follow `download_url`
 
 ---
 
@@ -62,6 +74,7 @@
 | FE-T-004 | Create filter components | 3 | `OrderFilters.vue` |
 | FE-T-005 | Create customer My Orders page | 4 | `MyOrders.vue` |
 | FE-T-006 | Create customer invoice view page | 4 | `OrderInvoiceView.vue` |
+| FE-T-007 | Create StatusChangeControl with transition guard + 422 handling | 3 | `OrderStatusControl.vue` |
 
 ## API Routes
 
@@ -70,11 +83,16 @@
 | Method | Endpoint | Auth | Usage |
 |--------|----------|------|-------|
 | GET | `/api/v1/general/orders` | Sanctum | My orders |
-| GET | `/api/v1/general/orders/invoice/{uuid}` | Sanctum + owner | Invoice view |
+| GET | `/api/v1/general/orders/{id}` | Sanctum + owner | Detail |
+| GET | `/api/v1/general/orders/{orderId}/invoice` | Sanctum (owner-scoped) | Invoice view — canonical |
+| GET | `/api/v1/general/orders/invoice/{uuid}` | Sanctum + owner | Invoice view — legacy compat |
 
 ### Admin
 
 | Method | Endpoint | Permission | Usage |
-|--------|----------|-----------|-------|
+|--------|----------|------------|-------|
 | GET | `/api/v1/orders` | view-orders | Data table |
 | GET | `/api/v1/orders/{id}` | view-order | Detail page |
+| PATCH | `/api/v1/orders/{id}/status` | update-order-status | Status change |
+
+> There is **no** `PUT /api/v1/orders/{id}` endpoint. Status changes go exclusively through `PATCH .../status`.

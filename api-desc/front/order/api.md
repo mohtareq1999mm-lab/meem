@@ -16,6 +16,7 @@
 |--------|--------|
 | Required | Yes |
 | Guard | `sanctum` |
+| Throttle | `throttle:authenticated` |
 
 #### Query Parameters
 
@@ -23,30 +24,41 @@
 |-----------|------|-------------|
 | `page` | `integer` | Page number |
 | `limit` | `integer` | Items per page (default: 15, max: 100) |
-| `status` | `string` | Filter by order status (`pending`, `processing`, `completed`, `cancelled`, `delivered`, `refunded`, `failed`, `at_local_facility`, `out_for_delivery`, `ready_for_pickup`) |
-| `search` | `string` | Search by order ID or status |
+| `status` | `string` | Filter by order status — one of: `pending`, `processing`, `completed`, `delivered`, `cancelled` |
+
+> Only these five values exist. Values like `refunded`, `failed`, `at_local_facility`, `out_for_delivery`, `ready_for_pickup` are NOT order statuses and will simply match nothing.
 
 #### Success Response (200)
 
 ```json
 {
-    "data": [
-        {
-            "id": 1,
-            "order_number": "ORD-00000001",
-            "status": "pending",
-            "total_price": 150.00,
-            "payment_method": "cod",
-            "shipping_method": "SCHEDULED",
-            "created_at": "2026-07-20T10:00:00Z",
-            "items_count": 3
-        }
-    ],
-    "meta": {
-        "current_page": 1,
-        "last_page": 5,
-        "per_page": 15,
-        "total": 75
+    "status": 200,
+    "message": "Data fetched successfully",
+    "success": true,
+    "data": {
+        "data": [
+            {
+                "id": 1,
+                "order_number": "ORD-00000001",
+                "status": "pending",
+                "subtotal": 100.0,
+                "discount": 0,
+                "coupon": null,
+                "total": 120.00,
+                "converted_total": 120.00,
+                "currency": "EGP",
+                "base_currency": "EGP",
+                "fulfillment_type": "delivery",
+                "payment_method": "cod",
+                "shipping_price": 20.00,
+                "created_at": "2026-08-19T14:00:00+00:00",
+                "order_items": [],
+                "payment_gateway": null,
+                "order_has_invoice": false,
+                "invoice_id": null
+            }
+        ],
+        "links": { "current_page": 1, "per_page": 15, "total": 75, "last_page": 5 }
     }
 }
 ```
@@ -70,58 +82,17 @@
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `id` | `integer` | Order ID (numeric only) |
+| `id` | `integer` | Order ID (numeric only, `whereNumber`) |
 
 #### Ownership & Security
 
 - The authenticated User is determined **exclusively** from the token — no `user_id` is accepted from the request.
-- Ownership is enforced at the query level: `WHERE id = ? AND user_id = auth()->id()`.
+- Ownership is enforced at the query level (`forUser` scope).
 - Requesting another User's Order returns `404 Not Found` (never `403`), so the existence of another User's Order is not revealed.
-- No `user_id` request parameter is read or honored.
 
 #### Success Response (200)
 
-```json
-{
-    "status": 200,
-    "message": "Data fetched successfully",
-    "success": true,
-    "data": {
-        "id": 1,
-        "order_number": "ORD-00000001",
-        "status": "pending",
-        "subtotal": 100.00,
-        "discount": 0,
-        "coupon": null,
-        "total": 120.00,
-        "converted_total": 120.00,
-        "currency": "USD",
-        "base_currency": "USD",
-        "fulfillment_type": "delivery",
-        "payment_method": "cod",
-        "shipping_price": 20.00,
-        "pickup_location": null,
-        "invoice_summary": null,
-        "created_at": "2026-08-19T14:00:00Z",
-        "order_items": [
-            {
-                "id": 1,
-                "quantity": 2,
-                "unit_price": 100.00,
-                "total_price": 200.00,
-                "product": {
-                    "id": 10,
-                    "name": "Test Product",
-                    "sku": "TP-001"
-                }
-            }
-        ],
-        "payment_gateway": null,
-        "order_has_invoice": false,
-        "invoice_id": null
-    }
-}
-```
+Same structure as list item, plus full `order_items`, `pickup_location` (pickup orders), `invoice_summary` indicator fields.
 
 #### Error Responses
 
@@ -153,27 +124,27 @@
 | `user_phone` | `string` | Yes | Customer phone |
 | `user_email` | `string` | Yes | Customer email |
 | `address` | `array` | Yes | Delivery address |
-| `payment_method` | `string` | No | `online`, `cod`, `pay_at_cashier` |
-| `fulfillment_type` | `string` | No | `delivery`, `pickup` |
+| `payment_method` | `string` | No | `online` (default), `cod`, `pay_at_cashier` |
+| `fulfillment_type` | `string` | No | `delivery` (default), `pickup` |
 | `governorate_id` | `integer` | Required if delivery | Governorate ID |
 | `pickup_location_id` | `integer` | Required if pickup | Pickup location ID |
-| `selected_promotion_id` | `integer` | No | Applied promotion ID |
-| `selected_gift_product_id` | `integer` | No | Gift product ID |
-| `gateway` | `string` | No | Payment gateway name |
+| `gateway` | `string` | No | Payment gateway name (online only; default `myfatoorah`) |
 | `notes` | `string` | No | Order notes |
 
-#### Success Response (201)
+Validation notes:
 
-```json
-{
-    "success": true,
-    "message": "Order created successfully",
-    "data": {
-        "order_id": 1,
-        "total": 150.00
-    }
-}
-```
+- COD + pickup combination → **422**
+- Empty/missing active cart → **400**
+
+#### Response Behavior
+
+The response depends on the payment method and comes from the payment handlers:
+
+- **COD:** creates a pending transaction; handler-specific JSON payload.
+- **Online:** delegates to gateway checkout (redirect/session payload).
+- **Cashier:** creates a pending transaction with QR data.
+
+> The order is created with `status = "pending"`. It does NOT become `completed` at checkout time — completion happens via payment success paths below.
 
 ---
 
@@ -181,113 +152,183 @@
 
 **POST** `/api/v1/general/checkout/cod/{orderId}/mark-paid`
 
-**Purpose:** Mark a COD order as paid by the admin/staff.
+**Purpose:** Mark a COD order as paid by admin/staff. Moves order `pending → completed`.
 
-#### Authentication
+#### Authentication & Permission
 
 | Aspect | Detail |
 |--------|--------|
 | Required | Yes |
+| Guard | `sanctum` |
 | Permission | `update-order-status` |
 
-#### Success Response (200)
+#### Side Effects (one DB transaction)
 
-```json
-{
-    "success": true,
-    "message": "Order marked as paid successfully"
-}
-```
+- Latest pending COD transaction → `paid` + `paid_at`
+- Order → `completed`, `payment_status → payment-success`, `completed_at`
+- Coupon usage recorded, promotion usage finalized, inventory finalized
+- `PaymentSucceeded` event dispatched (queued listeners follow)
+
+#### Responses
+
+| Status | When |
+|--------|------|
+| `200` | Success — `{ "success": true, "message": "...payment..." }` |
+| `403` | Missing permission |
+| `404` | Order not found |
+| `422` | No pending COD transaction / already paid |
+
+### 4b. Mark Cashier as Paid (Admin)
+
+**POST** `/api/v1/general/checkout/cashier/{orderId}/mark-paid` — identical contract for `pay_at_cashier` orders.
 
 ---
 
-### 5. Payment Callback (Public)
+### 5. Payment Callbacks (Public)
 
 **ANY** `/api/v1/general/checkout/callback`
+**ANY** `/api/v1/general/checkout/error-callback`
 
-**Purpose:** Payment gateway callback endpoint. Verifies payment with gateway, updates transaction and order status.
-
-| Aspect | Detail |
-|--------|--------|
-| Required | No |
-
-#### Query Parameters
+**Purpose:** Gateway-facing endpoints (no auth). Verify payment with the gateway, update transaction + order status, fire events.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `paymentId` | `string` | Gateway payment ID |
+| `paymentId` | `string` | Gateway payment ID (query or body) |
+
+Behavior summary:
+
+- Verified failure → transaction `failed`, `PaymentFailed` event, redirect/JSON per client type.
+- Verified success (idempotent — only while order is `pending`) → transaction `paid`, order `payment-status success`, inventory + promotion finalized, status transitioned to `completed` through `OrderService::changeOrderStatus()` (fires `OrderStatusChanged`), then `PaymentSucceeded` after commit.
 
 ---
 
-### 6. List Orders (Admin)
+### 6. Change Order Status (Admin)
 
-**GET** `/api/v1/orders`
+**PATCH** `/api/v1/orders/{id}/status`
 
-**Purpose:** Retrieve paginated list of all orders (super admin scope).
+**Purpose:** Admin-driven lifecycle transitions (the ONLY endpoint for arbitrary status changes).
 
-#### Authentication
+#### Authentication & Permission
 
 | Aspect | Detail |
 |--------|--------|
 | Required | Yes |
-| Role | `super_admin` |
-| Permission | `view-orders` |
+| Guard | `sanctum` + `throttle:admin` |
+| Permission | `update-order-status` |
 
-#### Query Parameters
+#### Path Parameters
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `page` | `integer` | Page number |
-| `search` | `string` | Search |
-| `status` | `string` | Filter by status |
-| `date_range` | `string` | Date range filter |
+| `id` | `integer` | Numeric Order ID |
 
-#### Success Response (200)
+#### Request Body
 
-Standard paginated response with full order resources.
+```json
+{ "status": "processing" }
+```
+
+Valid values (exactly these five): `pending`, `processing`, `completed`, `delivered`, `cancelled`.
+
+#### Transition Rules (enforced server-side)
+
+```text
+pending    ──→ processing | completed | cancelled
+processing ──→ completed   | cancelled
+completed  ──→ delivered
+delivered     (terminal)
+cancelled     (terminal)
+```
+
+Same-status re-set is allowed. Anything else → `422`.
+
+#### Side Effects by Target Status
+
+| Target | What happens |
+|--------|--------------|
+| `processing` (from `pending`) | fulfillment_status → `processing`; **Invoice created (first leave-pending)**; payment status untouched (`payment-pending`); NO payment event |
+| `completed` | **Invoice if not already existing**; payment_status forced to `payment-success`, `paid_at` + `completed_at`, transaction→`paid`, coupon usage consumed, promotion usage finalized, `PaymentSucceeded` fired exactly once → invoice listener no-ops + payment notification |
+| `cancelled` | **Invoice (if first transition)**; `cancelled_at`, transaction→`failed`, promotion usage decremented, inventory restored once (paid orders), customer notified asynchronously (DB + Pusher); NO `PaymentSucceeded` |
+| `delivered` | fulfillment_status → `delivered`, `OrderDelivered` fired → customer delivery notification (DB + Pusher); invoice never duplicated |
+
+#### Invoice Contract
+
+```text
+pending ──(first VALID different status)──→ Invoice created exactly once
+```
+
+- Applies whether the first transition is `processing`, `completed`, or `cancelled`.
+- Same-status re-set (`pending→pending`) is NOT a leave — no invoice.
+- All later transitions never duplicate the invoice.
+- Invoice ≠ PaymentSuccess: an unpaid-but-processing order is fully invoiced.
+
+#### Queue Inventory (verified from deploy/supervisor/)
+
+| Queue | Connection | Worker | Order-related jobs |
+|-------|-----------|--------|--------------------|
+| `meem-high` | database | 2 procs, tries=5, timeout=90 | GenerateInvoiceListener, SendPasswordResetEmailJob, frontend webhooks |
+| `meem-medium` | database | 2 procs, tries=3, timeout=900 | all order lifecycle listeners, LogActivityJob, GenerateInvoicePdfJob, notifications |
+| `default` | database | consumed by meem-medium worker (`--queue=meem-medium,default`) | framework fallback only |
+
+> A 200 response means status + invoice are committed synchronously; notifications/invoice PDF/webhooks are asynchronous on these queues.
+
+#### Asynchronous Behavior (important for frontend)
+
+```text
+PATCH 200 returned
+   ↓ (already committed: new status visible on next fetch)
+queued listeners run on meem-medium:
+   - activity log entry
+   - on cancel: inventory restore + customer notification
+```
+
+A 200 means the database state changed — it does NOT mean notifications were already delivered.
+
+#### Responses
+
+| Status | When | Body |
+|--------|------|------|
+| `200` | Transition applied | envelope with updated Marvel `OrderResource` in `data` |
+| `401` | Unauthenticated | error envelope |
+| `403` | Missing `update-order-status` | error envelope |
+| `404` | Unknown order id | `{ "status": 404, "message": "Not found", "success": false }` |
+| `422` | Invalid value OR forbidden transition | `{ "status": 422, "message": "<transition/validation message>", "success": false }` |
 
 ---
 
-### 7. Order Statuses (Enum)
+## Enum Reference (actual stored values)
 
-```php
-OrderStatus::PENDING           = 'order-pending'
-OrderStatus::PROCESSING        = 'order-processing'
-OrderStatus::COMPLETED         = 'order-completed'
-OrderStatus::CANCELLED         = 'order-cancelled'
-OrderStatus::REFUNDED          = 'order-refunded'
-OrderStatus::FAILED            = 'order-failed'
-OrderStatus::AT_LOCAL_FACILITY = 'order-at-local-facility'
-OrderStatus::OUT_FOR_DELIVERY  = 'order-out-for-delivery'
-OrderStatus::READY_FOR_PICKUP  = 'order-ready-for-pickup'
+### Order Statuses (DB enum)
+
+```text
+pending | processing | completed | delivered | cancelled
 ```
 
-### Payment Statuses (Enum)
+> ⚠️ The legacy PHP enum class `Marvel\Enums\OrderStatus` uses display strings like `order-pending`. Those are **not valid** request/response values. Always use the raw values above.
 
-```php
-PaymentStatus::PENDING               = 'payment-pending'
-PaymentStatus::PROCESSING            = 'payment-processing'
-PaymentStatus::SUCCESS               = 'payment-success'
-PaymentStatus::FAILED                = 'payment-failed'
-PaymentStatus::REVERSAL              = 'payment-reversal'
-PaymentStatus::REFUNDED              = 'payment-refunded'
-PaymentStatus::CASH_ON_DELIVERY      = 'payment-cash-on-delivery'
-PaymentStatus::CASH                  = 'payment-cash'
-PaymentStatus::WALLET                = 'payment-wallet'
-PaymentStatus::AWAITING_FOR_APPROVAL = 'payment-awaiting-for-approval'
+### Fulfillment Statuses
+
+```text
+pending | processing | ready_for_pickup | out_for_delivery | delivered | cancelled
+```
+
+(Internal sync during order-status changes; exposed indirectly.)
+
+### Payment Statuses (stored on orders)
+
+```text
+payment-pending | payment-success | payment-failed | payment-refunded
 ```
 
 ---
 
 ## Business Rules
 
-1. **Status Transition:** `pending → processing → completed → delivered` (strict chain). Cancelled is terminal
-2. **Inventory Lock:** Items locked during checkout, restored on cancellation via `RestoreInventoryOnRefund`
-3. **Payment Verification:** Online payments verified via gateway callback; COD/Cashier marked by staff
-4. **Coupon + Promotion:** Both can be applied; promotion discounts and coupon discounts stack
-5. **Price Snapshots:** Order items preserve product prices at time of order (immutable)
-6. **Order Number:** Auto-generated as `ORD-{id}` (zero-padded to 8 digits)
-7. **Tracking Number:** Format `YYYYMMDD` + 6 random digits
-8. **Export:** Background export with signed URL for download
-9. **Invoice Download:** Token-based secure download with expiry
-10. **Events:** 11 events dispatched throughout lifecycle with queued notifications
+1. **Status machine:** strict matrix above; enforced in `App\Services\General\OrderService`. Cancelled and Delivered are terminal.
+2. **Single authority:** every status change path (admin PATCH, mark-paid endpoints, gateway callbacks) passes through the same service validation — no direct DB writes from controllers.
+3. **Inventory lock:** items reserved at checkout; stock decremented when payment succeeds; restored exactly once on first cancellation (`inventory_restored_at` guard).
+4. **Payment verification:** online payments verified via public gateway callbacks; COD/Cashier marked by staff with `update-order-status`.
+5. **Coupon + promotion consumption:** consumed when an order reaches `completed`; promotion usage decremented on first-time cancellation; coupon quota is never returned (anti-abuse policy).
+6. **Price snapshots:** order items preserve prices at time of order (immutable).
+7. **Order number:** auto-generated `ORD-{id}` zero-padded to 8 digits.
+8. **Idempotency:** repeated callbacks/mark-paid are guarded by transaction states and `coupon_consumed`/`promotion_consumed` flags; same-status PATCH re-fires events but performs no financial side effects twice.

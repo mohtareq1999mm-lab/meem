@@ -33,7 +33,11 @@ class OrderCreateRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'user_phone' => ['required', 'string', 'max:255'],
             'user_email' => ['required', 'email', 'max:255'],
-            'address' => ['required', 'array'],
+            'address' => [
+                Rule::requiredIf(fn () => $this->input('fulfillment_type') !== FulfillmentType::PICKUP),
+                'nullable',
+                'array',
+            ],
             'notes' => ['nullable', 'string'],
             'selected_promotion_id' => ['nullable', 'integer', 'exists:promotions,id'],
             'selected_gift_product_id' => ['nullable', 'integer', 'exists:products,id'],

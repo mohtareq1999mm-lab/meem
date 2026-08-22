@@ -4,9 +4,10 @@
 
 ## Task 1: Cache Public Settings Endpoint
 
-**Priority:** Medium
-**Component:** SettingService
-**Effort:** Small
+**Priority:** Medium  
+**Component:** SettingService  
+**Effort:** Small  
+
 **Files:**
 - `app/Services/General/SettingService.php`
 
@@ -18,9 +19,10 @@
 
 ## Task 5: Expose `currency_selection_enabled` in Settings
 
-**Priority:** High
-**Component:** Settings
-**Effort:** Small
+**Priority:** High  
+**Component:** Settings  
+**Effort:** Small  
+
 **Files:**
 - `packages/marvel/src/Http/Resources/SettingResource.php`
 - `packages/marvel/src/Http/Requests/SettingsRequest.php`
@@ -41,9 +43,10 @@
 
 ## Task 6: Add `tiktok` / `snapchat` Social Fields
 
-**Priority:** Medium
-**Component:** Settings
-**Effort:** Small
+**Priority:** Medium  
+**Component:** Settings  
+**Effort:** Small  
+
 **Files:**
 - `packages/marvel/src/Database/Models/Settings.php`
 - `packages/marvel/src/Http/Controllers/SettingsController.php`
@@ -60,9 +63,10 @@
 
 ## Task 2: Write Tests for PUT /settings
 
-**Priority:** High
-**Component:** Tests
-**Effort:** Medium
+**Priority:** High  
+**Component:** Tests  
+**Effort:** Medium  
+
 **Files:**
 - `tests/Feature/Settings/`
 
@@ -73,15 +77,16 @@
 - [ ] Test PUT without auth returns 401
 - [ ] Test PUT without permission returns 403
 - [ ] Test PUT with invalid data returns 422
-- [ ] Test minimumOrderAmount updates correctly
+- [ ] Test `minimumOrderAmount` updates correctly
 
 ---
 
 ## Task 3: Write Tests for Fast Shipping Endpoints
 
-**Priority:** Medium
-**Component:** Tests
-**Effort:** Medium
+**Priority:** Medium  
+**Component:** Tests  
+**Effort:** Medium  
+
 **Files:**
 - `tests/Feature/Settings/`
 
@@ -91,12 +96,13 @@
 - [ ] Test GET returns settings with defaults
 - [ ] Test PUT updates and returns 200
 - [ ] Test cache invalidation after update
-- [ ] Test validation rules (duration_minutes max 1440, fee min 0, date_format)
+- [ ] Test validation rules (`duration_minutes` max 1440, `fee` min 0, `date_format`)
+- [ ] Test defaults (`enabled: false`, `120min`, `0 fee`)
 
 ---
 
-## Task 4: Validate minimumOrderAmount on Checkout
+## Task 4: Validate `minimumOrderAmount` on Checkout
 
-**Status:** DONE
+**Status:** DONE  
 
 **Description:** `CheckoutRepository::verify()` already enforces minimum order amount (line 61-63). The value is read from `settings.options.minimumOrderAmount` (line 39).

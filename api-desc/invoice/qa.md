@@ -97,6 +97,7 @@
 | generated | cancelled | ✓ OK |
 | pdf_generating | ready | ✓ OK |
 | pdf_generating | failed | ✓ OK |
+| ready | **pdf_generating** | ✓ OK — **INV-002 fix**: regenerate-from-ready is documented contract and now legal in the enum |
 | ready | downloaded | ✓ OK |
 | ready | archived | ✓ OK |
 | ready | corrected | ✓ OK |
@@ -104,6 +105,26 @@
 | failed | pdf_generating | ✓ OK |
 | cancelled | anything except archived | ✗ 422 |
 | archived | anything | ✗ 422 |
+
+---
+
+## Executed Regression Results (2026-08-22)
+
+| Suite | Tests | Result |
+|-------|------:|--------|
+| AdminInvoiceAuthTest (auth 401 ×6, permission 403 ×7, cross-permission isolation) | 14 | PASS |
+| AdminInvoiceIndexTest (filters, search incl. order_number, sort whitelist fallback, limit clamp 100) | 7 | PASS |
+| AdminInvoiceShowTest (+ INV-001 route-constraint regressions) | 5 | PASS |
+| AdminInvoiceRegenerateTest (+ INV-002 ready→pdf_generating→job→real PDF→ready; queue meem-medium asserted) | 5 | PASS |
+| AdminInvoiceCorrectTest (correction chain side effects + INV-003 404-no-leak) | 10 | PASS |
+| AdminInvoiceCancelTest (terminal state, idempotency, INV-003) | 6 | PASS |
+| AdminInvoiceDebitNoteEndpointTest (DN series, guards, validation) | 7 | PASS |
+| AdminInvoiceEndToEndTest (index→correct→queued job executed via DomPDF→ready→cancel→timeline order) | 1 | PASS |
+| InvoiceDownloadPermissionTest (pre-existing) | 18 | PASS |
+| OrderInvoiceEndpointTest (pre-existing) | 7 | PASS |
+| Unit/Invoice (2 stale expectations repaired against enum) | 34 | PASS |
+
+**Total: 114 invoice-scope tests passing, 0 failures.**
 
 ---
 
@@ -121,9 +142,10 @@
 
 ## Missing Coverage
 
-- [ ] PDF generation job execution (dispatched but not actually run in test)
+- [x] PDF generation job execution — **CLOSED**: E2E executes the real DomPDF job (`AdminInvoiceEndToEndTest`, `AdminInvoiceRegenerateTest::test_regression_inv002_*`)
 - [ ] Storage disk availability check
 - [ ] Snapshot version migration (current: 2.1.0, schema: 3)
 - [ ] Large invoice data payloads (performance)
 - [ ] Concurrent generation for same order (lockForUpdate test)
 - [ ] Rate limiting: verify 5 req/min, download 30 req/min
+- [ ] `verify()` authentic-path HTTP test (blocked: `InvoiceResource` disabled → TypeError/500; see api.md known issue #4)

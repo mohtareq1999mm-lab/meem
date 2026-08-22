@@ -186,10 +186,32 @@ Uses `CreatesTestTables` + `DatabaseTransactions`.
 - [x] PDF download flow tests with real PDF file on public disk
 - [x] Timeline event count/order assertions (downloaded event)
 - [x] Customer invoice view endpoint tests (`OrderInvoiceEndpointTest.php` — 7 tests)
-- [ ] No PDF generation flow tests (job is dispatched but not executed in test)
+- [x] PDF generation flow tests — **CLOSED 2026-08-22**: E2E executes the real DomPDF job (`AdminInvoiceEndToEndTest`; `AdminInvoiceRegenerateTest::test_regression_inv002_*`)
 - [ ] No snapshot override field format validation
-- [ ] No debit note number series isolation
-- [ ] No archived → terminal state enforcement
+- [x] Debit note number series isolation (`DN` sequence asserted, sequential numbers) — `AdminInvoiceDebitNoteEndpointTest`
+- [x] Archived → terminal state enforcement (regenerate rejected) — `AdminInvoiceRegenerateTest`
 - [ ] No rate limiting test for verify (5/min) and download (30/min)
 - [ ] No test asserting PDF preview endpoint absence (TC-FE-PREVIEW-001)
 - [ ] No test for verify authentic-path 500 (disabled `InvoiceResource`) — TC-FE-VERIFY-002 blocked
+- [x] **INV-001 regression:** malformed `{id}` (non-numeric / uuid) → 404 route-level, no TypeError/500; valid-missing numeric id → 404 — `AdminInvoiceShowTest`
+- [x] **INV-002 regression:** regenerate from `ready` → 200 pdf_generating + job on `meem-medium` + timeline + real PDF execution → ready — `AdminInvoiceRegenerateTest`
+- [x] **INV-003 regression:** correct/cancel missing invoice → 404 with NO `App\Models\Invoice` FQCN; existing-invoice business rules still 422 — Correct/Cancel suites
+- [x] Index sort whitelist fallback + `limit` clamp to 100 — `AdminInvoiceIndexTest`
+- [x] Cross-permission isolation (view-only cannot mutate) — `AdminInvoiceAuthTest`
+
+---
+
+## Regression Suites Added 2026-08-22 (production fixes INV-001/002/003)
+
+| Suite | Tests | Notes |
+|-------|------:|-------|
+| `tests/Feature/Invoice/AdminInvoiceAuthTest.php` | 14 | 401 ×6 endpoints, 403 without permission, wrong-permission cannot unlock mutations |
+| `tests/Feature/Invoice/AdminInvoiceIndexTest.php` | 7 | Contract shape `{data[],links{}}`, filters, search, sort whitelist fallback |
+| `tests/Feature/Invoice/AdminInvoiceShowTest.php` | 5 | Resource contract, conditional download_url, INV-001 regressions |
+| `tests/Feature/Invoice/AdminInvoiceRegenerateTest.php` | 5 | State transitions, attempts counter, queue `meem-medium`, INV-002 full chain |
+| `tests/Feature/Invoice/AdminInvoiceCorrectTest.php` | 10 | Correction chain DB side effects, event+job after commit, validations, INV-003 |
+| `tests/Feature/Invoice/AdminInvoiceCancelTest.php` | 6 | Persisted terminal state, idempotency, timeline count, INV-003 |
+| `tests/Feature/Invoice/AdminInvoiceDebitNoteEndpointTest.php` | 7 | DN series/sequence, status guard, amount/reason validation |
+| `tests/Feature/Invoice/AdminInvoiceEndToEndTest.php` | 1 | index→correct→real DomPDF→ready→cancel→timeline order→final states |
+
+Shared bootstrap: `tests/Concerns/WithAdminInvoiceContext.php`.

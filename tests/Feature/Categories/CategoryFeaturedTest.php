@@ -33,11 +33,8 @@ class CategoryFeaturedTest extends TestCase
         $this->adminUser = $this->createSuperAdminUser();
     }
 
-    public function test_featured_categories_endpoint_is_public(): void
-    {
-        $response = $this->getJson(self::PREFIX . '/featured-categories');
-        $response->assertOk();
-    }
+    // CAT-003: the public /featured-categories endpoint was intentionally
+    // removed (see CategoryRegressionTest::test_b3_featured_categories_is_public).
 
     public function test_toggle_featured_requires_update_permission(): void
     {

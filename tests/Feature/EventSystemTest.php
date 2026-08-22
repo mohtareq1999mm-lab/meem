@@ -380,6 +380,7 @@ class EventSystemTest extends TestCase
         $order = Order::create([
             'user_id' => $this->user->id,
             'name' => 'Test Order',
+            'price' => 100.00,
             'total_price' => 100.00,
             'payment_method' => $paymentMethod,
             'status' => 'pending',

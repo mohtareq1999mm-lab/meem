@@ -89,7 +89,8 @@ The Invoice module manages the full invoice lifecycle for the e-commerce platfor
 | GET | `/api/v1/general/invoices/my-invoices` | Sanctum | List current user's invoices |
 | GET | `/api/v1/general/invoices/uuid/{uuid}` | Sanctum (view-invoice) | Show invoice by UUID |
 | GET | `/api/v1/general/invoices/verify/{uuid}` | Sanctum + throttle:5,1 | Verify invoice authenticity |
-| GET | `/api/v1/general/orders/invoice/{uuid}` | Sanctum (owner-only) | Customer view of one invoice |
+| GET | `/api/v1/general/orders/{orderId}/invoice` | Sanctum (owner-scoped; pending → 404) | Customer invoice by Order ID — canonical |
+| GET | `/api/v1/general/orders/invoice/{uuid}` | Sanctum (owner-only) | Customer view of one invoice — legacy compat |
 | POST | `/api/v1/invoices/{id}/regenerate` | Sanctum (regenerate-invoice) | Regenerate PDF |
 | POST | `/api/v1/invoices/{id}/correct` | Sanctum (correct-invoice) | Create corrected invoice |
 | POST | `/api/v1/invoices/{id}/cancel` | Sanctum (cancel-invoice) | Cancel invoice |

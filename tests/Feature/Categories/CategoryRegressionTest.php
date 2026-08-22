@@ -48,7 +48,7 @@ class CategoryRegressionTest extends TestCase
         $this->assertNotNull(Category::withTrashed()->find($categoryId)->deleted_at);
     }
 
-    /** @test B2: Resource returns translated name string, not raw JSON */
+    /** @test B2: Resource returns translated name as {ar, en} object (current contract) */
     public function test_b2_resource_returns_translated_name(): void
     {
         Sanctum::actingAs($this->adminUser);
@@ -62,7 +62,9 @@ class CategoryRegressionTest extends TestCase
         $response->assertOk();
 
         $name = $response->json('data.name');
-        $this->assertIsString($name);
+        $this->assertIsArray($name);
+        $this->assertSame('English Name', $name['en']);
+        $this->assertSame('الاسم العربي', $name['ar']);
     }
 
     /** @test B2: Resource details also returns translated string */
@@ -83,11 +85,13 @@ class CategoryRegressionTest extends TestCase
         $this->assertIsString($details);
     }
 
-    /** @test B3: Featured categories endpoint is public (no auth required) */
+    /** @test B3: featured-categories endpoint was removed — must stay gone (CAT-003) */
     public function test_b3_featured_categories_is_public(): void
     {
+        // Mirrors B5's dead-route guard: the endpoint was intentionally removed;
+        // assert it does NOT silently reappear without a contract decision.
         $response = $this->getJson(self::PREFIX . '/featured-categories');
-        $response->assertOk();
+        $response->assertNotFound();
     }
 
     /** @test B4: Category translation keys exist */

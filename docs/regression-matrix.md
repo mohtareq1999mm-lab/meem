@@ -512,3 +512,26 @@ Coupon Assignments (Admin CRUD)
 - Created `CouponAssignmentValidationTest.php`: 13 tests covering validation rules
 | AttributeCombinedSuite | PASS (48/48) | 2026-07-19 | All Attribute + Attribute Values tests pass (16 existing + 32 new) after 3 bug fixes |
 | CartBulkItemsSuite | PASS (6/6 new, 61/65 full suite) | 2026-07-29 | 4 pre-existing failures unrelated (gift promotion, finalization, resource structure) |
+
+--------------------------------------------------
+
+Changed Feature:
+Orders (Canonical Status Lifecycle) — Revision 1 — 2026-08-22
+
+Affected Features:
+
+| Suite | Status | Reason |
+|-------|--------|--------|
+| OrderStatusLifecycleTest | PASS (15/15, 45 assertions) | New canonical lifecycle coverage: transitions matrix, delivered event ×1, completion payment-success semantics, gateway opt-out, COD/Cashier single-event, invoice-on-first-leave (processing/completed/cancelled + no-duplicate chain + same-status exclusion + COD single invoice), pickup null-safety |
+| OrdersProductionHardenTest | PASS (38/38) | Full harden suite after refactor |
+| OrderCreationFlowTest | PASS (17/17) | Creation/pricing snapshots unaffected |
+| CheckoutApiTest | PASS | Checkout regression clean |
+| CheckoutPendingOrderRedesignTest | PASS | Pending-order flow clean |
+| PaymentCheckoutTest | PASS | Payment checkout delegation clean |
+| PaymentCallbackStressTest | PASS | Idempotent callback behavior preserved |
+| PaymentProductionHardenTest | PASS (fixtures: price consistency added for invoice-generating paths) | All previously-green tests remain green |
+| PaymentSystemTest | NOT RUN CLEAN (4 failures PRE-EXISTING on main) | Missing coupon_assignments test schema; 3 endpoint 500s — byte-identical to stash-verified baseline |
+| EventSystemTest | NOT RUN CLEAN (9 failures PRE-EXISTING on main) | Queue/refund/provider assertions — byte-identical to baseline |
+
+Result:
+PASS — zero regressions introduced; all failures in untouched suites are pre-existing and documented in production-status.md.

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Read-only order management for the admin panel. Both endpoints are within the Marvel package.
+Order management for the admin panel: read-only list/detail plus the canonical status-change endpoint. All endpoints are within the Marvel package.
 
 ---
 
@@ -199,6 +199,44 @@ Get a single order with full details.
 
 ---
 
+## PATCH /orders/{id}/status
+
+Canonical status transition. Route: `packages/marvel/src/Rest/Routes.php:167` (name `orders.update-status`, `whereNumber('id')`).
+
+**Middleware:** group `auth:sanctum` + `throttle:admin` (Routes.php:115); controller constructor adds `permission:update-order-status`.
+
+### Request
+
+```json
+{ "status": "processing" }
+```
+
+Validation (`Marvel\Http\Requests\OrderStatusUpdateRequest`): `status` required|string, one of `pending|processing|completed|delivered|cancelled`.
+
+### Transition Matrix (`App\Services\General\OrderService::$allowedOrderTransitions`)
+
+```text
+pending    -> pending, processing, completed, cancelled
+processing -> processing, completed, cancelled
+completed  -> completed, delivered
+delivered  -> delivered   (terminal)
+cancelled  -> cancelled   (terminal)
+```
+
+Forbidden transition or unknown order -> handled by the controller as **422** (translated `checkout.invalid_order_status_transition`) / **404**.
+
+### Side Effects Summary (one DB transaction via `OrderService::changeOrderStatus`)
+
+- **Invoice x1** on the first valid transition away from `pending` (any target; same-status excluded) - idempotent via `InvoiceService`.
+- `completed`: `payment_status=payment-success`, `paid_at`+`completed_at`, transaction paid, coupon usage consumed, promotion finalized, `PaymentSucceeded` fired exactly once (invoice listener no-ops), fulfillment advanced.
+- `cancelled` (first time): `cancelled_at`, transaction failed, promotion usage decremented, inventory restored once for paid orders.
+- `processing`/`delivered`: fulfillment status synced per matrix.
+- Events always: `OrderStatusChanged`; conditional: `OrderCancelled`, `OrderDelivered`, `PaymentSucceeded`.
+
+Full details: `api-desc/order/api.md` section 5.
+
+---
+
 ## Business Logic
 
 ### Order Number
@@ -228,17 +266,20 @@ Computed attribute `getPaymentStatusAttribute()`:
 | Component | Source File | Line |
 |-----------|-------------|------|
 | Controller | `packages/marvel/src/Http/Controllers/Order/OrderController.php` | 14 |
-| Route definition | `packages/marvel/src/Rest/Routes.php` | 476, 486 |
-| Permission enum | `packages/marvel/src/Enums/Permission.php` | 106-107 |
-| Order model | `packages/marvel/src/Database/Models/Order.php` | 13 |
-| OrderProduct model | `packages/marvel/src/Database/Models/OrderProduct.php` | — |
-| Transaction model | `packages/marvel/src/Database/Models/Transaction.php` | — |
-| PickupLocation model | `packages/marvel/src/Database/Models/PickupLocation.php` | — |
+| Route definition | `packages/marvel/src/Rest/Routes.php` | 165-167 |
+| Status FormRequest | `packages/marvel/src/Http/Requests/OrderStatusUpdateRequest.php` | 9 |
+| OrderService (transitions/invoice/events) | `app/Services/General/OrderService.php` | 526+ |
+| InvoiceService (idempotent generation) | `app/Services/Invoice/InvoiceService.php` | 22 |
+| Permission enum | `packages/marvel/src/Enums/Permission.php` | VIEW_ORDERS / VIEW_ORDER / UPDATE_ORDER_STATUS |
+| Order model | `packages/marvel/src/Database/Models/Order.php` | 14 |
+| OrderProduct model | `packages/marvel/src/Database/Models/OrderProduct.php` | - |
+| Transaction model | `packages/marvel/src/Database/Models/Transaction.php` | - |
+| PickupLocation model | `packages/marvel/src/Database/Models/PickupLocation.php` | - |
 | Order resource | `packages/marvel/src/Http/Resources/Order/OrderResource.php` | 8 |
 | Order collection | `packages/marvel/src/Http/Resources/Order/OrderCollection.php` | 8 |
 | Order item resource | `packages/marvel/src/Http/Resources/Order/OrderItemResource.php` | 8 |
 | Order transaction resource | `packages/marvel/src/Http/Resources/Order/OrderTransactionResource.php` | 8 |
 | ApiResponse trait | `packages/marvel/src/Traits/ApiResponse.php` | 7 |
-| Auth middleware | `auth:sanctum` (Laravel Sanctum) | — |
-| Email verification | `email.verified` (Laravel built-in) | — |
-| Test file | `tests/Feature/AdminOrderTest.php` | — |
+| Auth middleware | `auth:sanctum` (Laravel Sanctum) | - |
+| Throttle | `throttle:admin` (Route group, Routes.php:115) | - |
+| Lifecycle tests | `tests/Feature/OrderStatusLifecycleTest.php` (15), `OrdersProductionHardenTest.php` (38) | - |

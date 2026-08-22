@@ -51,6 +51,7 @@ class OrderService
         private PromotionService $promotionService,
         private OrderCreationService $orderCreationService,
         private CartInventoryService $cartInventoryService,
+        private \App\Services\Invoice\InvoiceService $invoiceService,
     ) {}
 
     public function paginateForUser(Request $request): LengthAwarePaginator
@@ -523,9 +524,9 @@ private function canTransitionOrderStatus(string $from, string $to): bool
         return in_array($to, self::$allowedFulfillmentTransitions[$from] ?? [], true);
     }
 
-    public function changeOrderStatus($invoiceId, $status, $orderId = null)
+    public function changeOrderStatus($invoiceId, $status, $orderId = null, bool $emitPaymentSuccess = true)
     {
-        return DB::transaction(function () use ($invoiceId, $status, $orderId) {
+        return DB::transaction(function () use ($invoiceId, $status, $orderId, $emitPaymentSuccess) {
             $order = null;
             $transaction = null;
 
@@ -560,8 +561,14 @@ private function canTransitionOrderStatus(string $from, string $to): bool
 
             $updateData = ['status' => $status];
 
-            if ($status === 'completed' && Schema::hasColumn('orders', 'payment_status')) {
-                $updateData['payment_status'] = $order->getRawOriginal('payment_status') ?? Order::PAYMENT_STATUS_SUCCESS;
+            if ($status === 'completed') {
+                // Business contract: completed => payment succeeded.
+                if (Schema::hasColumn('orders', 'payment_status')) {
+                    $updateData['payment_status'] = Order::PAYMENT_STATUS_SUCCESS;
+                }
+                if (Schema::hasColumn('orders', 'paid_at')) {
+                    $updateData['paid_at'] = $order->getRawOriginal('paid_at') ?? now();
+                }
             }
             if ($status === 'completed' && Schema::hasColumn('orders', 'completed_at')) {
                 $updateData['completed_at'] = now();
@@ -593,6 +600,23 @@ private function canTransitionOrderStatus(string $from, string $to): bool
                 return false;
             }
 
+            // Business contract: an Invoice is generated exactly once, when the
+            // Order performs its FIRST VALID transition AWAY from `pending` —
+            // regardless of the target status (processing / completed /
+            // cancelled). Same-status re-sets are NOT "leaving pending".
+            // Reuses the idempotent InvoiceService (existing-invoice lock),
+            // so completion paths that also fire PaymentSucceeded still end
+            // with ONE invoice. Failures never block the operational status.
+            if ($previousStatus === 'pending'
+                && $status !== 'pending'
+                && Schema::hasTable('invoices')) {
+                try {
+                    $this->invoiceService->generateFromOrder($order);
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+            }
+
             if ($status === 'completed') {
                 $this->recordCouponUsage($order);
             }
@@ -622,6 +646,17 @@ private function canTransitionOrderStatus(string $from, string $to): bool
                 event(new OrderCancelled($order));
             }
 
+            if ($status === 'delivered' && $previousStatus !== 'delivered') {
+                event(new \App\Events\OrderDelivered($order));
+            }
+
+            // completed => payment succeeded: emit the payment-success lifecycle
+            // exactly once per completion. Callers that already own the payment
+            // event (gateway callback) pass $emitPaymentSuccess = false.
+            if ($status === 'completed' && $emitPaymentSuccess) {
+                event(new \App\Events\PaymentSucceeded($order));
+            }
+
             return $order;
         });
     }
@@ -645,28 +680,13 @@ private function canTransitionOrderStatus(string $from, string $to): bool
                 'paid_at' => now(),
             ]);
 
-            $orderUpdateData = ['status' => 'completed'];
-            if (Schema::hasColumn('orders', 'payment_status')) {
-                $orderUpdateData['payment_status'] = Order::PAYMENT_STATUS_SUCCESS;
-            }
-            if (Schema::hasColumn('orders', 'completed_at')) {
-                $orderUpdateData['completed_at'] = now();
-            }
-            if (Schema::hasColumn('orders', 'fulfillment_status')) {
-                $currentFulfillment = $order->getRawOriginal('fulfillment_status') ?? Order::FULFILLMENT_STATUS_PENDING;
-                if ($currentFulfillment === Order::FULFILLMENT_STATUS_PENDING) {
-                    $orderUpdateData['fulfillment_status'] = Order::FULFILLMENT_STATUS_PROCESSING;
-                }
-            }
-            $order->update($orderUpdateData);
-
-            $this->recordCouponUsage($order);
-
             $this->finalizePromotionUsageAfterPayment($order);
 
             $this->finalizeInventoryAfterPayment($order);
 
-            event(new \App\Events\PaymentSucceeded($order));
+            // Canonical transition: validation, column sync, coupon usage,
+            // OrderStatusChanged, and the single PaymentSucceeded emission.
+            $this->changeOrderStatus(null, 'completed', $order->id);
         });
     }
 
@@ -689,28 +709,13 @@ private function canTransitionOrderStatus(string $from, string $to): bool
                 'paid_at' => now(),
             ]);
 
-            $orderUpdateData = ['status' => 'completed'];
-            if (Schema::hasColumn('orders', 'payment_status')) {
-                $orderUpdateData['payment_status'] = Order::PAYMENT_STATUS_SUCCESS;
-            }
-            if (Schema::hasColumn('orders', 'completed_at')) {
-                $orderUpdateData['completed_at'] = now();
-            }
-            if (Schema::hasColumn('orders', 'fulfillment_status')) {
-                $currentFulfillment = $order->getRawOriginal('fulfillment_status') ?? Order::FULFILLMENT_STATUS_PENDING;
-                if ($currentFulfillment === Order::FULFILLMENT_STATUS_PENDING) {
-                    $orderUpdateData['fulfillment_status'] = Order::FULFILLMENT_STATUS_PROCESSING;
-                }
-            }
-            $order->update($orderUpdateData);
-
-            $this->recordCouponUsage($order);
-
             $this->finalizePromotionUsageAfterPayment($order);
 
             $this->finalizeInventoryAfterPayment($order);
 
-            event(new \App\Events\PaymentSucceeded($order));
+            // Canonical transition: validation, column sync, coupon usage,
+            // OrderStatusChanged, and the single PaymentSucceeded emission.
+            $this->changeOrderStatus(null, 'completed', $order->id);
         });
     }
 

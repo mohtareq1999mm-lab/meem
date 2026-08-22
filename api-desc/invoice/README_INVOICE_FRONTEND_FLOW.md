@@ -807,7 +807,7 @@ archived
 - `generating` → `generated`, `failed`
 - `generated` → `pdf_generating`, `ready`, `failed`, `verified`, `downloaded`, `printed`, `corrected`, `cancelled`
 - `pdf_generating` → `ready`, `failed`
-- `ready` → `downloaded`, `printed`, `verified`, `failed`, `corrected`, `cancelled`, `archived`
+- `ready` → `pdf_generating`, `downloaded`, `printed`, `verified`, `failed`, `corrected`, `cancelled`, `archived` *(pdf_generating added 2026-08-22 — INV-002: regenerate-from-ready is documented contract)*
 - `failed` → `pdf_generating`, `cancelled`
 - `verified` → `downloaded`, `printed`, `cancelled`, `archived`
 - `downloaded` → `printed`, `verified`, `cancelled`, `archived`

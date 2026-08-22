@@ -2,43 +2,47 @@
 
 ## Feature Name
 
-Order Management
+Order Management — full lifecycle: checkout → payment → status transitions → fulfillment/delivery or cancellation.
 
 ## Description
 
-The Order feature provides complete order lifecycle management — from checkout through payment, fulfillment, and delivery. It spans two domains: a public/authenticated API for customers to view and manage orders, and an admin API for staff to manage the full order lifecycle, process payments, handle refunds, and export data. Includes rich event-driven architecture with notifications, inventory management, and payment gateway integration.
+Complete order lifecycle management spanning a customer API (view orders, checkout, view invoices) and an admin API (list, detail, **status transitions**, payment marking). Status changes are centralized in `App\Services\General\OrderService` with enforced transition matrices, lifecycle events, and queued listeners on `meem-medium`.
 
 ## Architecture Overview
 
 ```
-[Client]
+[Customer App]
+    |--- GET  /api/v1/general/orders                       (Auth: My Orders)
+    |--- GET  /api/v1/general/orders/{id}                  (Auth: owner-only detail)
+    |--- GET  /api/v1/general/orders/{orderId}/invoice     (Auth: canonical invoice by Order ID)
+    |--- POST /api/v1/general/checkout                     (Auth: Create Order, pending)
+    |--- ANY  /api/v1/general/checkout/callback            (Public: gateway success)
+    |--- ANY  /api/v1/general/checkout/error-callback      (Public: gateway failure)
     |
-    |--- GET  /api/v1/general/orders                    (Auth: My Orders)
-    |--- GET  /api/v1/general/orders/{id}               (Auth: My Order Details — owner only)
-    |--- POST /api/v1/general/checkout                   (Auth: Create Order)
-    |--- POST /api/v1/general/checkout/cod/{id}/mark-paid (Auth: Mark COD Paid)
-    |--- ANY  /api/v1/general/checkout/callback          (Public: Gateway)
-    |
-    |--- GET    /api/v1/orders                           (Admin: List)
-    |--- GET    /api/v1/orders/{id}                      (Admin: Detail)
-    |--- PUT    /api/v1/orders/{id}                      (Admin: Update Status)
-    |--- GET    /api/v1/export-order-url/{shop_id?}      (Admin: Export)
-    |--- POST   /api/v1/download-invoice-url             (Admin: Invoice)
-    |
-    |--- GraphQL: orders, order                         (Queries)
-    |--- GraphQL: createOrder, updateOrder, deleteOrder  (Mutations)
+[Admin Dashboard]
+    |--- GET   /api/v1/orders                              (view-orders)
+    |--- GET   /api/v1/orders/{id}                         (view-order)
+    |--- PATCH /api/v1/orders/{id}/status                   (update-order-status)
+    |--- POST  /api/v1/general/checkout/cod/{id}/mark-paid      (update-order-status)
+    |--- POST  /api/v1/general/checkout/cashier/{id}/mark-paid  (update-order-status)
     |
     v
-[OrderController (General)] or [OrderController (Marvel Admin)]
+[OrderController (General)] / [Marvel OrderController (admin)]
     |
     v
-[OrderService / OrderCreationService / OrderRepository]
+[App\Services\General\OrderService]         ← single source of truth for status
+    |-- $allowedOrderTransitions / $allowedFulfillmentTransitions
+    |-- changeOrderStatus(): transaction + validation + events
+    |-- markCodAsPaid() / markCashierPaid()
     |
     v
-[Order Model + OrderProduct + Transaction + Refund]
+[Events: OrderCreated, OrderStatusChanged, OrderCancelled, PaymentSucceeded, PaymentFailed]
     |
     v
-[orders, order_products, transactions, refunds tables]
+[Queued listeners meem-medium: activity logs, customer notifications, RestoreProductInventory]
+    |
+    v
+[orders, order_products, transactions tables + activity_log]
 ```
 
 ## Key Endpoints
@@ -49,66 +53,60 @@ The Order feature provides complete order lifecycle management — from checkout
 |--------|-----|------|
 | GET | `/v1/general/orders` | `auth:sanctum` |
 | GET | `/v1/general/orders/{id}` | `auth:sanctum` (owner only) |
+| GET | `/v1/general/orders/{orderId}/invoice` | `auth:sanctum` (owner-scoped; 404 while pending) — canonical |
+| GET | `/v1/general/orders/invoice/{uuid}` | `auth:sanctum` (owner only) — legacy compat |
 | POST | `/v1/general/checkout` | `auth:sanctum` |
 | POST | `/v1/general/checkout/cod/{orderId}/mark-paid` | `auth:sanctum` + `update-order-status` |
 | POST | `/v1/general/checkout/cashier/{orderId}/mark-paid` | `auth:sanctum` + `update-order-status` |
-| GET | `/v1/general/checkout/transaction-qr/{uuid}` | `auth:sanctum` |
-| ANY | `/v1/general/checkout/callback` | Public |
+| ANY | `/v1/general/checkout/callback` | Public (gateway) |
+| ANY | `/v1/general/checkout/error-callback` | Public (gateway) |
 | GET | `/v1/general/checkout/promotions` | `auth:sanctum` |
 
 ### Admin API
 
 | Method | URI | Permission |
 |--------|-----|-----------|
-| GET | `/v1/orders` | `view-orders` (+ `role:super_admin`) |
+| GET | `/v1/orders` | `view-orders` |
 | GET | `/v1/orders/{id}` | `view-order` |
-| GET | `/v1/orders/tracking-number/{tracking_number}` | Auth |
-| POST | `/v1/orders/payment` | Public |
-| POST | `/v1/orders/checkout/verify` | Public |
-| GET | `/v1/export-order-url/{shop_id?}` | Auth |
-| POST | `/v1/download-invoice-url` | Auth |
+| PATCH | `/v1/orders/{id}/status` | `update-order-status` |
 
-### GraphQL
+> No `PUT /v1/orders/{id}` and no `/v1/general/checkout/transaction-qr/*` route exists.
 
-| Operation | Resolver |
-|-----------|----------|
-| `orders` (query) | `OrderQuery@fetchOrders` (paginated) |
-| `order` (query) | `OrderQuery@fetchSingleOrder` |
-| `createOrder` (mutation) | `OrderMutator@store` |
-| `updateOrder` (mutation) | `OrderMutator@update` |
-| `deleteOrder` (mutation) | `@delete` with `@can(ability: "super_admin")` |
-| `createOrderPayment` (mutation) | `OrderMutator@createOrderPayment` |
+## Order Status Machine (verified)
+
+```text
+pending ──→ processing ──→ completed ──→ delivered (terminal)
+   │             │              │
+   └─────────────┴──────────────┴──→ cancelled (terminal)
+
+Same-status re-set allowed. All other transitions rejected with 422.
+```
+
+Payment-driven completions reuse the same service (`mark-paid`, gateway callbacks).
 
 ## Key Files
 
 | Layer | Path |
 |-------|------|
-| Controller (General) | `app/Http/Controllers/Api/General/OrderController.php` |
-| Controller (Admin) | `packages/marvel/src/Http/Controllers/OrderController.php` |
-| Controller (Admin Scoped) | `packages/marvel/src/Http/Controllers/Order/OrderController.php` |
+| Controller (General/customer) | `app/Http/Controllers/Api/General/OrderController.php` |
+| Controller (Admin) | `packages/marvel/src/Http/Controllers/Order/OrderController.php` |
 | Model (Order) | `packages/marvel/src/Database/Models/Order.php` |
 | Model (OrderProduct) | `packages/marvel/src/Database/Models/OrderProduct.php` |
 | Model (Transaction) | `packages/marvel/src/Database/Models/Transaction.php` |
-| Model (Refund) | `packages/marvel/src/Database/Models/Refund.php` |
-| Repository | `packages/marvel/src/Database/Repositories/OrderRepository.php` |
-| Service (Order) | `app/Services/General/OrderService.php` |
+| Service (status authority) | `app/Services/General/OrderService.php` |
 | Service (Creation) | `app/Services/Checkout/OrderCreationService.php` |
-| Enums (5) | `packages/marvel/src/Enums/OrderStatus.php`, `PaymentStatus.php`, `PaymentGatewayType.php`, `FulfillmentType.php`, `ShippingMethod.php` |
-| Events (11) | `packages/marvel/src/Events/` + `app/Events/` |
-| Listeners (10) | `packages/marvel/src/Listeners/` + `app/Listeners/` |
-| Notifications (4) | `packages/marvel/src/Notifications/` |
-| GraphQL Schema | `packages/marvel/src/GraphQL/Schema/models/order.graphql` |
-| Export | `packages/marvel/src/Exports/OrderExport.php` |
-| Tests | `tests/Feature/OrdersProductionHardenTest.php` (25 tests) |
-| Tests | `tests/Feature/OrderCreationFlowTest.php` (18 tests) |
+| FormRequest (status) | `packages/marvel/src/Http/Requests/OrderStatusUpdateRequest.php` |
+| Routes (admin) | `packages/marvel/src/Rest/Routes.php:165-167` (under `api/v1`) |
+| Routes (customer) | `routes/api.php` (under `v1/general`) |
+| Event wiring | `app/Providers/EventServiceProvider.php` |
+| Tests | `tests/Feature/OrdersProductionHardenTest.php` (38 tests, passing) |
+| Tests | `tests/Feature/OrderCreationFlowTest.php` (17 tests, passing) |
 
 ## Tech Stack
 
 - **Laravel** with Eloquent ORM
-- **Event-Driven Architecture** — 11 events, 10 listeners (queued)
-- **Payment Gateway Integration** — 14 gateway types (Stripe, PayPal, MyFatoorah, etc.)
-- **Soft Deletes** for safe order removal
-- **Lighthouse PHP** for GraphQL
-- **Laravel Excel** for order export
-- **Broadcasting** — private channels for real-time order updates
-- **Transaction-based checkout** — inventory locking, atomic operations
+- **Event-Driven Architecture** — verified registrations in `app/Providers/EventServiceProvider.php`; listeners queued
+- **Queues:** `meem-medium` for all active order listeners (`meem-high` referenced only by unreachable legacy Marvel listeners)
+- **Payment Gateway Integration** — MyFatoorah via factory + callbacks; COD & cashier QR flows
+- **Soft Deletes** on orders
+- **Transaction-based checkout** — inventory reservation, row locks, idempotency flags

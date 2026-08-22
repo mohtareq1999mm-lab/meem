@@ -13,58 +13,54 @@
 
 **Acceptance Criteria:**
 - `GET /api/v1/general/orders` returns authenticated user's orders
-- Paginated with order number, status, total, date
-- Search by order number
+- Paginated; status filter accepts `pending|processing|completed|delivered|cancelled`
+- Shows order number, status, total, date, invoice indicator
 
 ### US-002: View My Order Details (Customer)
 **As** a customer
-**I want** to view the full details of one of my orders
-**So that** I can see items, pricing, and delivery information
+**I want** full details of one of my orders
 
 **Acceptance Criteria:**
-- `GET /api/v1/general/orders/{id}` returns the authenticated user's own order
-- Ownership is enforced at the query level — another user's order ID returns `404`
-- No `user_id` is accepted from the request; the user comes exclusively from the auth token
-- Returns the existing Order Resource with items, pricing, payment, and shipping info
+- `GET /api/v1/general/orders/{id}` returns own order only
+- Ownership enforced at query level — another user's order ID returns `404`
+- No `user_id` accepted from request
 
 ### US-003: Checkout (Customer)
 **As** a customer
 **I want** to place an order from my cart
-**So that** I can purchase products
 
 **Acceptance Criteria:**
-- `POST /api/v1/general/checkout` with customer info
-- Supports COD, online payment, pay-at-cashier
-- Validates cart, inventory, governorate
-- Price snapshot preserves current prices
+- `POST /api/v1/general/checkout`
+- COD, online, pay-at-cashier supported; COD+pickup rejected (422)
+- Order created as `pending` with price snapshots; completion happens via payment paths
 
-### US-004: Manage Orders (Admin)
+### US-004: Change Order Status (Admin)
 **As** an admin
-**I want** to view and manage all orders
-**So that** I can process fulfillment
+**I want** to progress orders through their lifecycle
 
 **Acceptance Criteria:**
-- `GET /api/v1/orders` with filters
-- `PUT /api/v1/orders/{id}` status transitions
-- `POST /checkout/cod/{id}/mark-paid` for COD payments
+- `PATCH /api/v1/orders/{id}/status` body `{ "status": "<db-status>" }`
+- Permission `update-order-status`; valid values: `pending|processing|completed|delivered|cancelled`
+- Forbidden transitions → 422 (`checkout.invalid_order_status_transition`); terminal states locked
+- Completion syncs payment data + consumes coupon/promotion usage; cancellation stamps time, fails transaction, decrements promotion, restores inventory once
+- COD/cashier marking via `POST /general/checkout/cod|cashier/{orderId}/mark-paid`
+- Notifications/activity run asynchronously on `meem-medium` after the 200
 
-### US-005: Export & Invoices (Admin)
-**As** an admin
-**I want** to export orders and download invoices
-**So that** I can manage accounting
-
-### US-006: Order Events & Notifications
+### US-005: Order Event Notifications
 **As** a customer
-**I want** to receive notifications when my order status changes
-**So that** I stay informed
+**I want** notifications on order updates
+
+**Current reality (verified):**
+- Cancellation → customer notification (queued)
+- Generic transitions → activity log only; SMS/email chain currently unreachable (BUG-002)
 
 ## Bug Tickets
 
 | Ticket | Description | Priority | Severity | Status |
 |--------|-------------|----------|----------|--------|
-| BUG-000 | Status filter ignored on `/api/v1/general/orders` — all statuses returned regardless of query param | High | High | **FIXED** |
-| BUG-001 | Dual model system: legacy vs modern columns | Medium | Medium | Open |
-| BUG-002 | Commented apiResource routes in Routes.php | Low | Low | Open |
-| BUG-003 | No base orders migration found | Low | Low | Open |
-| BUG-004 | Duplicate route definitions for checkout endpoints | Low | Low | Open |
-| BUG-005 | Missing EN/AR translation files (only DE exists) | Medium | Medium | Open |
+| BUG-000 | Status filter ignored on list endpoint | High | High | **FIXED** 2026-07-23 |
+| BUG-001 | Events fired inside status transaction without afterCommit | Medium | Medium | Open |
+| BUG-002 | Marvel SMS/email listeners for generic transitions unreachable | High | Medium | Open |
+| BUG-003 | Same-status PATCH duplicates activity-log entries | Low | Low | Open |
+| BUG-004 | Legacy `Marvel\Enums\OrderStatus` strings (`order-*`) invalid as API values | Low | Low | Open (docs pinned) |
+| BUG-005 | Docs drift: PUT route / transaction-qr route / old trait references | Medium | Medium | **Fixed** (docs v3) |

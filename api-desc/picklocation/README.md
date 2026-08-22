@@ -20,14 +20,15 @@ CRUD for pickup locations where customers can collect orders. Uses SoftDeletes. 
     |--- DELETE /pickup-locations/{id}
     |
     v
-[PickupLocationController (admin)]   [GeneralPickupLocationController (public)]
-    |--- DI of PickupLocationRepository
-    |--- Permission middleware (Spatie)
+[PickupLocationController (admin)]   [PickupLocationController (public)]
+    |--- DI of PickupLocationRepository          |--- DI of PickupLocationService
+    |--- Permission middleware (Spatie)          |--- active-only reads, no auth
     |
-    v
-[PickupLocationRepository]
-    |--- extends BaseRepository (Prettus)
-    |--- $fieldSearchable ('store_name' => 'like')
+    v                                            v
+[PickupLocationRepository]              [PickupLocationService]
+    |--- extends BaseRepository (Prettus)       |--- getPickupLocations (limit 10)
+    |--- $fieldSearchable ('store_name' => 'like')  |--- getPickupLocationById
+                                                |--- getDefaultPickupLocation
     |
     v
 [PickupLocation Model]
@@ -58,14 +59,16 @@ CRUD for pickup locations where customers can collect orders. Uses SoftDeletes. 
 | Layer | Path |
 |-------|------|
 | Controller (Admin) | `packages/marvel/src/Http/Controllers/PickupLocationController.php` |
-| Controller (Public) | `app/Http/Controllers/Api/General/GeneralPickupLocationController.php` |
+| Controller (Public) | `app/Http/Controllers/Api/General/PickupLocationController.php` |
+| Service (Public) | `app/Services/General/PickupLocationService.php` |
+| Observer | `app/Observers/PickupLocationObserver.php` (queued LogActivityJob on created/updated/deleted) |
 | Model | `packages/marvel/src/Database/Models/PickupLocation.php` |
 | Repository | `packages/marvel/src/Database/Repositories/PickupLocationRepository.php` |
-| Resource | `packages/marvel/src/Http/Resources/PickupLocationResource.php` |
-| Request (Store) | `packages/marvel/src/Http/Requests/StorePickupLocationRequest.php` |
-| Request (Update) | `packages/marvel/src/Http/Requests/UpdatePickupLocationRequest.php` — all fields optional (`sometimes`), `working_hours.*.day` uses translatable `ar`/`en` keys |
-| Migrations | `database/migrations/2026_07_11_000003_create_pickup_locations_table.php` |
-| Migration (is_default) | `database/migrations/2026_08_19_000002_add_is_default_to_pickup_locations_table.php` |
+| Resource (Admin) | `packages/marvel/src/Http/Resources/PickupLocationResource.php` (includes `created_at`) |
+| Resource (Public) | `app/Http/Resources/PickupLocation/PickupLocationResource.php` (no `created_at`) |
+| Request (Store) | `packages/marvel/src/Http/Requests/StorePickupLocationRequest.php` — `working_hours.*.day` is an **array** of strings |
+| Request (Update) | `packages/marvel/src/Http/Requests/UpdatePickupLocationRequest.php` — all fields optional (`sometimes`), `working_hours.*.day.ar`/`.en` string keys |
+| Migrations | `database/migrations/2026_07_11_000003_create_pickup_locations_table.php` (**includes** `is_default` column; no separate add-is-default migration exists) |
 | Migration (order snapshot) | `database/migrations/2026_07_11_000004_add_pickup_location_snapshot_to_orders.php` |
 | Routes (Admin) | `packages/marvel/src/Rest/Routes.php` |
 | Routes (Public) | `routes/api.php` |

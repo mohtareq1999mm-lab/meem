@@ -16,6 +16,7 @@ use App\Jobs\GenerateInvoicePdfJob;
 use App\Services\Invoice\InvoiceService;
 use App\Services\Invoice\InvoiceTimelineService;
 use App\Services\Invoice\DebitNoteService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Marvel\Enums\Permission;
@@ -237,6 +238,8 @@ class InvoiceController extends Controller
                 true,
                 AdminInvoiceResource::make($correction)
             );
+        } catch (ModelNotFoundException $e) {
+            throw $e;
         } catch (\RuntimeException $e) {
             return $this->apiResponse($e->getMessage(), 422, false);
         }
@@ -259,6 +262,8 @@ class InvoiceController extends Controller
                 true,
                 AdminInvoiceResource::make($invoice)
             );
+        } catch (ModelNotFoundException $e) {
+            throw $e;
         } catch (\RuntimeException $e) {
             return $this->apiResponse($e->getMessage(), 422, false);
         }

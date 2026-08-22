@@ -14,7 +14,7 @@
 | `working_hours` | json | nullable |
 | `status` | boolean | default true |
 | `display_order` | integer | default 0 |
-| `is_default` | boolean | default false (added by `2026_08_19_000002_add_is_default_to_pickup_locations_table`) |
+| `is_default` | boolean | default false (included in create migration `2026_07_11_000003_create_pickup_locations_table`) |
 | `created_at` | timestamp | |
 | `updated_at` | timestamp | |
 | `deleted_at` | timestamp | nullable (SoftDeletes) |

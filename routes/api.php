@@ -123,7 +123,7 @@ Route::prefix('v1/general')->group(function () {
         Route::post('fast-shipping/checkout', [FastShippingController::class, 'checkout']);
         //======================== orders ========================//
         Route::get('orders', [OrderController::class, 'index']);
-        Route::get('orders/invoice/{uuid}', [OrderController::class, 'invoice']);
+        Route::get('orders/{orderId}/invoice', [OrderController::class, 'invoiceByOrderId'])->whereNumber('orderId');
         Route::get('orders/{id}', [OrderController::class, 'show'])->whereNumber('id');
         //========================= product reviews =========================//
         Route::post('products/{id}/reviews', [ProductController::class, 'addProductReview']);

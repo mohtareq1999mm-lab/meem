@@ -579,3 +579,38 @@ None
 
 **Current Status:**
 Not Started
+
+--------------------------------------------------
+
+Feature:
+Orders (Canonical Status Lifecycle)
+
+Purpose:
+Single authoritative status transition (validation, locking, column sync, lifecycle events) behind PATCH /api/v1/orders/{id}/status; payment-success semantics on completion; once-only invoice on first leave-pending; delivery/cancellation notification chains; fulfillment-conditional validation.
+
+Depends On:
+- Order Model + constants (Verified)
+- InvoiceService idempotent generation (Verified)
+- Payment events PaymentSucceeded/PaymentFailed + GenerateInvoiceListener meem-high (Verified)
+- App EventServiceProvider registrations incl. new OrderDelivered (Verified)
+- Supervisor workers meem-high / meem-medium(+default), connection database (Verified via deploy/supervisor/)
+- FulfillmentType enum + PickupLocation snapshot (Verified)
+
+Used By:
+- Admin dashboard status control (Verified - PATCH endpoint)
+- Gateway online-payment callback (Verified)
+- COD / Cashier mark-paid endpoints (Verified)
+- orders:cancel-unpaid scheduled command (Verified, intentional partial bypass documented)
+- Frontend order tracking via notifications/pusher (Verified)
+
+Regression Required When Changed:
+- Orders (all suites), Payments (System/Harden/CallbackStress/Checkout), Checkout (Api/PendingOrderRedesign), Events (EventSystemTest), Invoices (InvoiceLifecycle)
+
+Blocking Dependencies:
+None
+
+Current Status:
+Production Ready
+
+Dependency Confidence:
+Verified

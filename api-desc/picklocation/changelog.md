@@ -14,7 +14,7 @@
 - 58+ test methods covering CRUD, validation, authorization, checkout integration
 - `UpdatePickupLocationRequest` with per-field validation rules (all optional, `sometimes`)
 - Update request supports translatable `working_hours.*.day.ar`/`.en` keys (Arabic + English)
-- Default pickup location (`is_default` boolean column, migration `2026_08_19_000002`):
+- Default pickup location (`is_default` boolean column, included in create migration `2026_07_11_000003_create_pickup_locations_table`):
   - Single default enforced atomically — setting `is_default: true` clears the flag on all other locations
   - Updating other fields of the default preserves `is_default`
   - Deleting the default auto-promotes the next location by lowest `id`

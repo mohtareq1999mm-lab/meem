@@ -26,7 +26,7 @@ There are **three different things** a frontend can do with an invoice. They are
 | `GET /api/v1/general/invoices/my-invoices` | `auth:sanctum` |
 | `GET /api/v1/general/invoices/uuid/{uuid}` | `auth:sanctum` + `permission:view-invoice` |
 | `GET /api/v1/general/invoices/verify/{uuid}` | `auth:sanctum` + `throttle:5,1` |
-| `GET /api/v1/general/orders/invoice/{uuid}` | `auth:sanctum` (owner-only, 403 otherwise) |
+| `GET /api/v1/general/orders/{orderId}/invoice` | `auth:sanctum` (owner-scoped query; pending order → 404) — **canonical** |
 | `GET /api/v1/invoices` | `auth:sanctum` + `permission:view-invoices` |
 | `GET /api/v1/invoices/{id}` | `auth:sanctum` + `permission:view-invoice` |
 | `GET /api/v1/invoices/{uuid}/download` | `auth:sanctum` + `throttle:30,1` (authorization is **inline** in the controller: owner OR `view-invoice-download`) |
@@ -163,15 +163,21 @@ Eager loads: `order.orderItems`, `transaction`, `user`.
 
 ---
 
-### GET /api/v1/general/orders/invoice/{uuid} — Customer Invoice (via Order)
+### GET /api/v1/general/orders/{orderId}/invoice — Customer Invoice by Order ID (canonical)
 
-Customer-facing invoice view. This is the recommended "view invoice data" endpoint for the storefront.
+**Authentication:** `auth:sanctum`. `{orderId}` numeric-only (`whereNumber`).
 
-**Authentication**: `auth:sanctum`. Authorization is inline: throws `AuthorizationException` (403) when `invoice.order.user_id !== auth()->id()`.
+**Resolution:** ownership is enforced inside the query — `Order::where('user_id', auth id)->findOrFail($orderId)` — then `latestInvoice()`.
 
-**Response 200**: `CustomerInvoiceResource` (same shape as my-invoices item, incl. `snapshot`).
+- Missing order **or** another user's order → identical **404** handler envelope (no existence leak)
+- Pending order (no invoice yet) → `404 { status:404, message:"Not found", success:false }`
+- Found → `200` with the same `CustomerInvoiceResource` payload as the legacy route below; returns the correction when one exists (matches what the order list's `invoice_id` advertises)
 
-**Response 401** (guest), **403** (non-owner), **404** (non-existent uuid via `firstOrFail()`).
+---
+
+### ~~GET /api/v1/general/orders/invoice/{uuid}~~ — REMOVED
+
+> **Removed (2026-08-22).** Superseded by the canonical Order-ID endpoint above. The route and its `OrderController::invoice()` method no longer exist; requests now fail routing with **404**. Frontends must use `GET /api/v1/general/orders/{orderId}/invoice`.
 
 ---
 
@@ -205,11 +211,13 @@ Paginated list of all invoices with filtering, searching, and sorting.
 
 **Authentication**: `auth:sanctum`, permission: `view-invoice`
 
+**Path parameter constraint:** `{id}` is numeric-only (`whereNumber`). Non-numeric ids fail routing with **404** — they never reach the controller.
+
 Eager loads: `order.orderItems`, `transaction`, `user`.
 
 **Response 200**: `AdminInvoiceResource`.
 
-**Response 404** (non-existent id): default Laravel 404 (`findOrFail()`; not the `apiResponse` envelope).
+**Response 404** (non-existent id): handler JSON envelope `{"message":"Resource Not Found","status":false}`.
 
 ---
 
@@ -305,6 +313,10 @@ The `url` is `url('storage/invoices/' . $invoice->pdf_path)`. The PDF is stored 
 - Records timeline `pdf_regenerated`.
 - Dispatches `GenerateInvoicePdfJob` (queue `meem-medium`, tries 3, backoff [30,120,300], timeout 120s).
 
+> **State machine note:** `READY → PDF_GENERATING` is legal (`InvoiceStatus` enum). The controller allowlist and enum agree — regenerating a `ready` invoice is fully supported end-to-end.
+>
+> **404 behavior:** non-existent id → `{"message":"Resource Not Found","status":false}` (HTTP 404). Malformed (non-numeric) id → route-level 404.
+
 ---
 
 ### POST /api/v1/invoices/{id}/correct — Correct Invoice (Admin)
@@ -331,6 +343,8 @@ The `url` is `url('storage/invoices/' . $invoice->pdf_path)`. The PDF is stored 
 
 **Response 422** (invalid status): `{ status: 422, message: "Invoice 1 cannot be corrected from status 'cancelled'", success: false }`
 
+**Response 404** (non-existent id): `{"message":"Resource Not Found","status":false}` — no internal class names are exposed.
+
 **Business Rules**:
 - Allowed only from `generated`, `ready`, `verified`, `downloaded`, `printed`.
 - Creates a **new** invoice (correction) with a new invoice number, `is_correction = true`, `correction_to_id = original.id`, status `generated`.
@@ -350,6 +364,8 @@ The `url` is `url('storage/invoices/' . $invoice->pdf_path)`. The PDF is stored 
 **Response 200**: `{ status, message: "Invoice cancelled successfully", success, data: AdminInvoiceResource(fresh) }`
 
 **Response 422** (invalid status): `{ status: 422, message: "Invoice 1 cannot be cancelled from status 'archived'", success: false }`
+
+**Response 404** (non-existent id): `{"message":"Resource Not Found","status":false}` — no internal class names are exposed.
 
 **Business Rules**:
 - Allowed only from `generated`, `ready`, `failed`, `corrected`, `verified`, `downloaded`, `printed`.

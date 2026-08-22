@@ -33,9 +33,12 @@
 
 **Description:** `findOrFail()` / `firstOrFail()` in `show()`, `showByUuid()`, `download()`, `regenerate()`, `correct()`, `cancel()`, `issueDebitNote()` are not caught — results in HTML 500 instead of JSON 404.
 
+**Status: DONE (2026-08-22).** The app exception handler renders all `/api/*` failures as JSON (Handler::shouldReturnJson path check) mapping `ModelNotFoundException` → 404 `{"message":"Resource Not Found","status":false}`. `correct()`/`cancel()` additionally rethrow `ModelNotFoundException` ahead of the broad `RuntimeException` catch (INV-003), which previously converted a missing invoice into a 422 leaking the model FQCN. Locked by `AdminInvoiceShowTest::test_regression_inv001_*`, `AdminInvoiceCorrectTest` / `AdminInvoiceCancelTest::test_regression_inv003_*`.
+
 **Acceptance Criteria:**
-- [ ] All findOrFail/firstOrFail calls return JSON 404 on ModelNotFoundException
-- [ ] Response format: `{ status: 404, message: "Not found", success: false }`
+- [x] All findOrFail/firstOrFail calls return JSON 404 on ModelNotFoundException
+- [x] No internal FQCN in any error response
+- [x] Business-rule failures on EXISTING invoices still return 422
 
 ---
 

@@ -1059,3 +1059,53 @@ YES
 Notes:
 Backward compatible — additive setting, no schema/migration/route changes. The existing `POST /api/v1/general/currencies/select` endpoint is intentionally left unchanged: it may still store a preference, but the stored preference is ignored for effective-currency resolution while the flag is `false` (the frontend hides the selector based on the public setting). Existing orders remain immutable; disabling the setting does not modify base/catalog codes, user preferences, exchange rates, or order snapshots. LSP diagnostics on Marvel package files are pre-existing false positives — all modified files pass `php -l`.
 
+
+--------------------------------------------------
+
+Date:
+2026-08-22
+
+Feature:
+Orders (Canonical Status Lifecycle)
+
+Revision:
+1
+
+Summary:
+Unified every status-changing path onto OrderService::changeOrderStatus(); completion now carries full payment-success semantics (single PaymentSucceeded + payment_status=payment-success + paid_at); delivered dispatches new App\Events\OrderDelivered with customer DB+Pusher notification; COD/Cashier marking refactored onto canonical transition; cancel-unpaid emits OrderStatusChanged audit event (intentionally bypasses promotion decrement for never-paid orders); Invoice decoupled from payment and generated exactly once on first valid leave of pending via idempotent InvoiceService; checkout validation no longer requires delivery address for pickup orders; full queue inventory documented from deploy/supervisor (meem-high, meem-medium, default all worker-consumed).
+
+Verified Bugs Fixed:
+- B1: markCodAsPaid/markCashierPaid wrote status directly without transition validation or OrderStatusChanged
+- B2: completed->delivered produced no delivery event/notification (dead listener path)
+- B3: Admin PATCH completion skipped PaymentSucceeded semantics (no invoice, no payment notification)
+- B4: orders:cancel-unpaid left no order_status_changed audit trail
+- B5: Pickup orders were forced to submit a delivery address
+
+Files Modified:
+- app/Events/OrderDelivered.php (new)
+- app/Services/General/OrderService.php
+- app/Http/Controllers/Api/General/OrderController.php
+- app/Providers/EventServiceProvider.php
+- app/Listeners/SendUserOrderDeliveredNotification.php
+- app/Console/Commands/CancelUnpaidOrders.php
+- packages/marvel/src/Http/Requests/OrderCreateRequest.php
+- tests/Feature/OrderStatusLifecycleTest.php (new, 15 tests)
+- tests/Feature/PaymentProductionHardenTest.php, PaymentSystemTest.php, EventSystemTest.php (fixture price consistency only)
+
+Documentation Updated:
+YES (api-desc/order: api/backend/flow/README/changelog/bug-report/qa/test-cases/jira/jira-frontend/frontend/database; api-desc/front/order: same 12 files; docs/production-status.md, feature-dependencies.md, regression-matrix.md, production-history.md)
+
+Routes Updated:
+NO (existing PATCH /api/v1/orders/{id}/status preserved as sole public entry point)
+
+Regression Executed:
+YES
+
+Regression Result:
+PASS (OrderStatusLifecycleTest 15/15; combined green set 143/143, 384 assertions incl. OrdersProductionHarden 38, OrderCreationFlow 17, CheckoutApi, CheckoutPendingOrderRedesign, PaymentCheckout, PaymentCallbackStress. Remaining failures in PaymentSystemTest x4 / EventSystemTest x9 are byte-identical to clean-main baseline, verified via git-stash runs.)
+
+Production Ready:
+YES
+
+Notes:
+Known deviations documented inline: system cancel-unpaid intentionally bypasses canonical transition (promotion-safety) and therefore creates no invoice; Marvel SMS/email chains remain orphaned (pre-existing). Worker consumption verified from deploy/supervisor/*.conf.

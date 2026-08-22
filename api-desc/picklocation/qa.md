@@ -34,6 +34,13 @@
 | TC-PL-028 | GET /general/pickup-locations includes is_default | 200, is_default present |
 | TC-PL-029 | GET /pickup-locations includes is_default | 200, is_default present |
 | TC-PL-030 | Concurrent default switches | Only one default after both requests |
+| TC-PL-031 | Public show soft-deleted location | 404 envelope `{status:404, success:false}` (plain apiResponse, not exception handler) |
+| TC-PL-032 | Create/update/delete dispatches LogActivityJob | Queued job with correct action (`created`/`updated`/`deleted`) |
+| TC-PL-033 | Status-only change dispatches `statusChanged` job with old/new values | Job payload contains old + new status |
+| TC-PL-034 | Admin list cache flushed after create/update/delete | Immediate fresh read reflects write |
+| TC-PL-035 | Public list `?default=1` | 200, paginator containing only the `is_default = true` branch |
+| TC-PL-036 | Public list `?default=0` / omitted | 200, all active branches (filter ignored) |
+| TC-PL-037 | Public list `?default=1` with no active default | 200, empty `data.data[]` (no error) |
 
 ## Manual Test Checklist
 

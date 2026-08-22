@@ -207,8 +207,11 @@ class InvoiceLifecycleTest extends TestCase
         $this->assertEquals('Test reason', $cancelled->cancellation_reason);
     }
 
-    public function test_prevents_cancellation_of_verified_invoice(): void
+    public function test_prevents_cancellation_from_pdf_generating_invoice(): void
     {
+        // VERIFIED → CANCELLED is a legal transition per InvoiceStatus, so the
+        // service correctly ALLOWS it (the previous expectation here was stale).
+        // The real guard: 'pdf_generating' is NOT in the cancelInvoice allowlist.
         $invoice = Invoice::create([
             'order_id' => $this->order->id,
             'user_id' => 1,
@@ -220,7 +223,7 @@ class InvoiceLifecycleTest extends TestCase
             'subtotal' => 100,
             'total' => 100,
             'amount_paid' => 100,
-            'status' => 'verified',
+            'status' => 'pdf_generating',
             'data' => ['test' => true],
             'generated_at' => now(),
         ]);
@@ -306,7 +309,11 @@ class InvoiceLifecycleTest extends TestCase
     {
         $this->assertFalse(InvoiceStatus::CANCELLED->canTransitionTo(InvoiceStatus::GENERATED));
         $this->assertFalse(InvoiceStatus::ARCHIVED->canTransitionTo(InvoiceStatus::READY));
-        $this->assertFalse(InvoiceStatus::VERIFIED->canTransitionTo(InvoiceStatus::CANCELLED));
+        // VERIFIED → CANCELLED is LEGAL per InvoiceStatus::allowedTransitions()
+        // (and the cancelInvoice allowlist agrees). Assert a genuinely illegal
+        // terminal-state escape instead.
+        $this->assertFalse(InvoiceStatus::CANCELLED->canTransitionTo(InvoiceStatus::READY));
+        $this->assertFalse(InvoiceStatus::CORRECTED->canTransitionTo(InvoiceStatus::GENERATED));
     }
 
     // ─── Invoice Status Transition Validation (Model Saving) ───────────────
