@@ -4,12 +4,15 @@ namespace App\Http\Resources\Invoice;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\URL;
 
 /**
  * Lightweight invoice summary for LIST endpoints (my-invoices).
  *
  * Deliberately excludes the immutable snapshot — it stays available on the
  * detail endpoints via CustomerInvoiceResource / InvoiceSnapshotResource.
+ * view_url / download_url are temporary SIGNED urls (10 min) so the frontend
+ * can open them without a Sanctum header.
  */
 class CustomerInvoiceListResource extends JsonResource
 {
@@ -32,10 +35,10 @@ class CustomerInvoiceListResource extends JsonResource
                 url('/api/v1/general/invoices/verify/' . $this->uuid)
             ),
             'view_url' => $this->when($this->uuid, fn () =>
-                url('/api/v1/invoices/' . $this->uuid . '/view')
+                URL::temporarySignedRoute('general.invoices.show', now()->addMinutes(10), ['uuid' => $this->uuid])
             ),
             'download_url' => $this->when($this->uuid, fn () =>
-                url('/api/v1/invoices/' . $this->uuid . '/download')
+                URL::temporarySignedRoute('general.invoices.download', now()->addMinutes(10), ['uuid' => $this->uuid])
             ),
         ];
     }

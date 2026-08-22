@@ -142,9 +142,9 @@ Route::prefix('v1/general')->group(function () {
 // Customer invoice VIEW/DOWNLOAD via temporary SIGNED urls (no Sanctum).
 // Ownership is enforced when the urls are generated (my-invoices / order invoice).
 Route::prefix('v1/general/invoices')->group(function () {
-    Route::get('show/uuid/{uuid}', [\App\Http\Controllers\Api\InvoiceController::class, 'showByUuidSigned'])
+    Route::get('show/uuid/{uuid}', [InvoiceController::class, 'showByUuidSigned'])
         ->whereUuid('uuid')->middleware('signed')->name('general.invoices.show');
-    Route::get('download/{uuid}', [\App\Http\Controllers\Api\InvoiceController::class, 'downloadByUuidSigned'])
+    Route::get('download/{uuid}', [InvoiceController::class, 'downloadByUuidSigned'])
         ->whereUuid('uuid')->middleware('signed')->name('general.invoices.download');
 });
         // //======================== shipments ========================/
