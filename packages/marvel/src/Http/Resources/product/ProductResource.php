@@ -28,6 +28,7 @@ class ProductResource extends Resource
             'in_stock'               => $this->in_stock,
             'status'                 => $this->status,
             'product_type'           => $this->product_type,
+            'item_type'              => $this->item_type,
             'height'                 => $this->height,
             'width'                  => $this->width,
             'length'                 => $this->length,

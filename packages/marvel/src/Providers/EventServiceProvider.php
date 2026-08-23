@@ -10,7 +10,6 @@ use App\Listeners\RatingRemoved;
 use App\Listeners\SendReviewNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Marvel\Events\CommissionRateUpdateEvent;
-use Marvel\Events\DigitalProductUpdateEvent;
 use Marvel\Events\FlashSaleProcessed;
 use Marvel\Events\OrderCancelled;
 use Marvel\Events\Maintenance;
@@ -35,7 +34,6 @@ use Marvel\Listeners\ShopMaintenanceListener;
 use Marvel\Listeners\StoreNoticeListener;
 use Marvel\Listeners\AppDataListener;
 use Marvel\Listeners\CheckAndSetDefaultCard;
-use Marvel\Listeners\DigitalProductNotifyLogsListener;
 use Marvel\Listeners\FlashSaleProductProcess;
 use Marvel\Listeners\MaintenanceNotification;
 use Marvel\Listeners\OwnershipTransferStatusControlListener;
@@ -59,9 +57,6 @@ class EventServiceProvider extends ServiceProvider
      * @var array
      */
     protected $listen = [
-        DigitalProductUpdateEvent::class => [
-            DigitalProductNotifyLogsListener::class
-        ],
         FlashSaleProcessed::class => [
             FlashSaleProductProcess::class
         ],

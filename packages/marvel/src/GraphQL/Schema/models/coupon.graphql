@@ -1,4 +1,4 @@
-extend type Query {
+﻿extend type Query {
     coupons(
         search: String
         orderBy: String
@@ -98,7 +98,6 @@ input VerifyCouponItemInput {
     price: Float
     language: String
     in_flash_sale: Int
-    is_digital: Boolean
     shop_id: ID
     quantity: Int
     itemTotal: Float

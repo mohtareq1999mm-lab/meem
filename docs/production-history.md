@@ -1109,3 +1109,44 @@ YES
 
 Notes:
 Known deviations documented inline: system cancel-unpaid intentionally bypasses canonical transition (promotion-safety) and therefore creates no invoice; Marvel SMS/email chains remain orphaned (pre-existing). Worker consumption verified from deploy/supervisor/*.conf.
+
+--------------------------------------------------
+
+Date:
+2026-08-23
+
+Feature:
+Products (Product Item Type - PHYSICAL/DIGITAL/SERVICE)
+
+Revision:
+2
+
+Summary:
+Added product-level item_type classification (PHYSICAL/DIGITAL/SERVICE) as a new sibling field to the existing product_type (simple/variable variant structure, which could not be repurposed because it is server-derived from variants and consumed by Cart/Orders/FlashSales/Import). Implemented via new Marvel\Enums\ItemType enum (BenSampo convention), enum DB column with default PHYSICAL + index, Product model fillable, create/update request validation (sometimes + Rule::in), serialization in 3 resources (package ProductResource, app ProductResource, app ProductMiniResource), ShopServiceProvider enum registration, and shared test schema. Documentation updated in api-desc/product/api.md and api-desc/front/product/api.md.
+
+Verified Bugs Fixed:
+- None (new feature; no verified production bugs found in the item_type implementation)
+
+Pre-existing issues reported (NOT fixed, out of scope):
+- CheckoutRepository::calculateShippingCharge queries non-existent products.is_digital column; SQL error is swallowed by catch-all returning shipping charge 0 on that path
+- Legacy is_digital/is_rental references in OrderRepository, Iyzico gateway, ProductInventoryRestore listener, calculateRentalPrice endpoint (columns do not exist in any migration)
+- api-desc/product export tests target dead endpoints (no /products/export route); ProductFilterTest detail-view filters assertion fails because general-product-show route name does not exist
+
+Documentation Updated:
+YES
+
+Routes Updated:
+NO (no route changes required)
+
+Regression Executed:
+YES
+
+Regression Result:
+PASS for all suites exercising the changed components: ProductItemTypeTest 13/13 (31 assertions), ProductsEndpointTest 57/57, ProductCrudTest 63/63, ProductAdminTest 17/17, ProductCacheTest 5/5, ProductImportTest 34/34, ProductCurrencyTest 8/8, CartExpirationTest 8/8, FlashSalesEndpointTest PASS.
+Observed failures in WishlistApiTest/CartApiTest(coupon)/AttributesProductionHardenTest/PricingProductionHardenTest/CouponValidatorTest/DimensionFilterTest are VERIFIED pre-existing and unrelated: (1) Driver [fcm] not supported caused by uncommitted FCM notification workstream in working tree (app/Notifications/*.php via() additions), (2) SQLite lacks REGEXP_REPLACE used by dimension range filters, (3) wishlist/attribute-value route drift predating this session (verified absent in HEAD).
+
+Production Ready:
+YES
+
+Notes:
+This feature adds classification and API exposure ONLY. No digital delivery infrastructure (code/license delivery) and no service fulfillment workflow exists in the backend. The legacy is_digital/is_rental code paths are non-functional and were intentionally NOT rewritten per scope rules.

@@ -249,9 +249,9 @@ class OrderIdInvoiceEndpointTest extends TestCase
         ]);
         $response->assertJsonPath('data.uuid', $invoice->uuid);
         $response->assertJsonPath('data.invoice_number', $invoice->invoice_number);
-        // Ready-made viewer link — customer show-by-uuid SIGNED route.
+        // Ready-made viewer link — customer signed PDF-view route.
         $this->assertStringContainsString(
-            '/api/v1/general/invoices/show/uuid/' . $invoice->uuid,
+            '/api/v1/general/invoices/view/' . $invoice->uuid,
             (string) $response->json('data.view_url')
         );
         $this->assertStringContainsString('signature=', (string) $response->json('data.view_url'));

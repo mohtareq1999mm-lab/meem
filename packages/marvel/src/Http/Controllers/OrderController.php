@@ -14,7 +14,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
-use Marvel\Database\Models\DownloadToken;
 use Marvel\Database\Models\Order;
 use Marvel\Database\Models\Settings;
 use Marvel\Database\Repositories\OrderRepository;
@@ -462,121 +461,6 @@ class OrderController extends CoreController
     {
         try {
             return $this->repository->findOrFail($id)->delete();
-        } catch (MarvelException $e) {
-            throw new MarvelException(NOT_FOUND);
-        }
-    }
-
-    /**
-     * Export order dynamic url
-     *
-     * @param Request $request
-     * @param int $shop_id
-     * @return string
-     */
-    public function exportOrderUrl(Request $request, $shop_id = null)
-    {
-        try {
-            $user = $request->user();
-
-            if ($user && !$this->repository->hasPermission($user, $request->shop_id)) {
-                throw new AuthorizationException(NOT_AUTHORIZED);
-            }
-
-            $dataArray = [
-                'user_id' => $user->id,
-                'token' => Str::random(16),
-                'payload' => $request->shop_id
-            ];
-            $newToken = DownloadToken::create($dataArray);
-
-            return route('export_order.token', ['token' => $newToken->token]);
-        } catch (MarvelException $e) {
-            throw new MarvelException(SOMETHING_WENT_WRONG, $e->getMessage());
-        }
-    }
-
-    /**
-     * Export order dynamic url
-     *
-     * @param Request $request
-     * @param int $shop_id
-     * @return string
-     */
-    public function downloadInvoiceUrl(Request $request)
-    {
-
-        try {
-            $user = $request->user();
-            if ($user && !$this->repository->hasPermission($user, $request->shop_id)) {
-                throw new AuthorizationException(NOT_AUTHORIZED);
-            }
-            if (empty($request->order_id)) {
-                throw new NotFoundHttpException(NOT_FOUND);
-            }
-            $language = $request->language ?? DEFAULT_LANGUAGE;
-            $isRTL = $request->is_rtl ?? false;
-
-            $translatedText = $this->formatInvoiceTranslateText($request->translated_text);
-
-            $payload = [
-                'user_id' => $user->id,
-                'order_id' => intval($request->order_id),
-                'language' => $language,
-                'translated_text' => $translatedText,
-                'is_rtl' => $isRTL
-            ];
-
-            $data = [
-                'user_id' => $user->id,
-                'token' => Str::random(16),
-                'payload' => serialize($payload)
-            ];
-
-            $newToken = DownloadToken::create($data);
-
-            return route('download_invoice.token', ['token' => $newToken->token]);
-        } catch (MarvelException $e) {
-            throw new MarvelException($e->getMessage());
-        }
-    }
-
-    /**
-     * Export order to excel sheet
-     *
-     * @param string $token
-     * @return void
-     */
-    public function downloadInvoice($token)
-    {
-        $payloads = [];
-        try {
-            $downloadToken = DownloadToken::where('token', $token)->firstOrFail();
-            $payloads = unserialize($downloadToken->payload);
-            $downloadToken->delete();
-        } catch (MarvelException $e) {
-            throw new MarvelException(TOKEN_NOT_FOUND);
-        }
-
-        try {
-            $settings = Settings::getData($payloads['language']) ?? DEFAULT_LANGUAGE;
-            $order = $this->repository->with(['products', 'children.shop', 'parent_order', 'wallet_point'])->where('id', $payloads['order_id'])->orWhere('tracking_number', $payloads['order_id'])->firstOrFail();
-            $invoiceData = [
-                'order' => $order,
-                'settings' => $settings,
-                'translated_text' => $payloads['translated_text'],
-                'is_rtl' => $payloads['is_rtl'],
-                'language' => $payloads['language'],
-            ];
-            $pdf = PDF::loadView('pdf.order-invoice', $invoiceData);
-            $options = new Options();
-            $options->setIsPhpEnabled(true);
-            $options->setIsJavascriptEnabled(true);
-            $pdf->getDomPDF()->setOptions($options);
-
-            $filename = 'invoice-order-' . $payloads['order_id'] . '.pdf';
-
-            return $pdf->download($filename);
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
         }

@@ -65,7 +65,6 @@ use const Dom\NOT_FOUND_ERR;
  *     @OA\Property(property="height", type="string", nullable=true),
  *     @OA\Property(property="width", type="string", nullable=true),
  *     @OA\Property(property="length", type="string", nullable=true),
- *     @OA\Property(property="is_digital", type="boolean", example=false),
  *     @OA\Property(property="is_external", type="boolean", example=false),
  *     @OA\Property(property="is_rental", type="boolean", example=false),
  *     @OA\Property(property="ratings", type="number", format="float", example=4.5),
@@ -676,42 +675,6 @@ class ProductController extends CoreController
                 }
             }
             return true;
-        }
-    }
-
-
-    /**
-     * fetchDigitalFilesForProduct
-     *
-     * @param Request $request
-     * @return void
-     */
-    public function fetchDigitalFilesForProduct(Request $request)
-    {
-        $user = $request->user();
-        if ($user) {
-            $product = $this->repository->with(['digital_file'])->findOrFail($request->parent_id);
-            if ($this->repository->hasPermission($user, $product->shop_id)) {
-                return $product->digital_file;
-            }
-        }
-    }
-
-
-    /**
-     * fetchDigitalFilesForVariation
-     *
-     * @param Request $request
-     * @return void
-     */
-    public function fetchDigitalFilesForVariation(Request $request)
-    {
-        $user = $request->user();
-        if ($user) {
-            $variation_option = Variation::with(['digital_file', 'product'])->findOrFail($request->parent_id);
-            if ($this->repository->hasPermission($user, $variation_option->product->shop_id)) {
-                return $variation_option->digital_file;
-            }
         }
     }
 

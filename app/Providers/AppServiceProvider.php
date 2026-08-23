@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Notifications\ChannelManager;
+use App\Notifications\Channels\FcmChannel;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,6 +26,11 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(\App\Contexts\ChannelContext::class);
         $this->app->singleton(\App\Services\Currency\CurrencyService::class);
+
+        // Register the custom FCM notification channel so via('fcm') resolves.
+        $this->app->make(ChannelManager::class)->extend('fcm', function () {
+            return new FcmChannel();
+        });
 
         $this->app->bind(FrontendWebhookDispatcher::class, FrontendWebhookService::class);
 

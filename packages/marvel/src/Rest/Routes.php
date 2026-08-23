@@ -215,6 +215,12 @@ Route::middleware(['auth:sanctum', 'throttle:admin'])->group(function () {
     Route::get('products/import/{id}/download-errors', [ProductImportController::class, 'downloadErrors'])->name('admin.products.import.download-errors');
     Route::apiResource('products', ProductController::class);
 
+    //==================== digital assets (product files) ====================/
+    Route::get('products/{product}/digital-assets', [\Marvel\Http\Controllers\DigitalAssetController::class, 'index'])->whereNumber('product');
+    Route::post('products/{product}/digital-assets', [\Marvel\Http\Controllers\DigitalAssetController::class, 'store'])->whereNumber('product')->name('admin.products.digital-assets.store');
+    Route::put('digital-assets/{uuid}', [\Marvel\Http\Controllers\DigitalAssetController::class, 'update'])->whereUuid('uuid')->name('admin.digital-assets.update');
+    Route::delete('digital-assets/{uuid}', [\Marvel\Http\Controllers\DigitalAssetController::class, 'destroy'])->whereUuid('uuid')->name('admin.digital-assets.destroy');
+
     //============================= flash sale ========================/
     Route::put('flash-sale/reorder', [FlashSaleController::class, 'reorder']);
     Route::apiResource('flash-sale', FlashSaleController::class);

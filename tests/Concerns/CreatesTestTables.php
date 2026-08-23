@@ -128,6 +128,7 @@ Schema::create('social_login_codes', function (Blueprint $table) {
             $table->decimal('price_after_discount', 10, 2)->nullable();
             $table->decimal('price_after_flash_sale', 10, 2)->nullable();
             $table->string('product_type')->default('simple');
+            $table->string('item_type')->default('PHYSICAL');
             $table->decimal('height', 8, 2)->nullable();
             $table->decimal('width', 8, 2)->nullable();
             $table->decimal('length', 8, 2)->nullable();
@@ -490,6 +491,7 @@ Schema::create('categories', function (Blueprint $table) {
             $table->decimal('product_discount_price', 10, 2)->nullable();
             $table->decimal('product_flash_sale_price', 10, 2)->nullable();
             $table->boolean('is_gift')->default(false);
+            $table->string('item_type', 16)->default('PHYSICAL');
             $table->unsignedBigInteger('promotion_id')->nullable();
             $table->decimal('promotion_discount_amount', 10, 2)->default(0);
             $table->timestamps();

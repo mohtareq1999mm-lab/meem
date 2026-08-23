@@ -31,7 +31,9 @@ class CartInventoryService
             $desiredQuantity = $existingQuantity + $quantity;
             $delta = $desiredQuantity - $reservedQuantity;
 
-            if ($delta > 0) {
+            // D1 — DIGITAL products have unlimited availability and never
+            // touch physical reservation counters.
+            if (!$this->isDigital($product) && $delta > 0) {
                 $stock = $variant
                     ? ProductVariant::query()->whereKey($variant->id)->lockForUpdate()->firstOrFail()
                     : Product::query()->whereKey($product->id)->lockForUpdate()->firstOrFail();
@@ -64,11 +66,13 @@ class CartInventoryService
                 return $this->reserveItem($cart, $product, $variant, $targetQuantity, 'set', $item->attributes ?: [], $shippingMethod);
             }
 
-            $stock = $variant
-                ? ProductVariant::query()->whereKey($variant->id)->lockForUpdate()->firstOrFail()
-                : Product::query()->whereKey($product->id)->lockForUpdate()->firstOrFail();
+            if (!$this->isDigital($product)) {
+                $stock = $variant
+                    ? ProductVariant::query()->whereKey($variant->id)->lockForUpdate()->firstOrFail()
+                    : Product::query()->whereKey($product->id)->lockForUpdate()->firstOrFail();
 
-            $this->releaseStock($stock, (int) $item->reserved_quantity);
+                $this->releaseStock($stock, (int) $item->reserved_quantity);
+            }
 
             $item->delete();
 
@@ -100,10 +104,14 @@ class CartInventoryService
             $reservedQuantity = (int) ($item?->reserved_quantity ?? 0);
             $delta = $desiredQuantity - $reservedQuantity;
 
-            if ($delta > 0) {
-                $this->reserveStock($stock, $delta);
-            } elseif ($delta < 0) {
-                $this->releaseStock($stock, abs($delta));
+            $digital = $this->isDigital($product);
+
+            if (!$digital) {
+                if ($delta > 0) {
+                    $this->reserveStock($stock, $delta);
+                } elseif ($delta < 0) {
+                    $this->releaseStock($stock, abs($delta));
+                }
             }
 
             $price = $variant
@@ -118,7 +126,8 @@ class CartInventoryService
                 'product_id' => $product->id,
                 'product_variant_id' => $variant?->id,
                 'quantity' => $desiredQuantity,
-                'reserved_quantity' => $desiredQuantity,
+                // Digital lines never hold a physical reservation.
+                'reserved_quantity' => $digital ? 0 : $desiredQuantity,
                 'price' => $price,
                 'total_price' => round($price * $desiredQuantity, 2),
                 'attributes' => $variant ? $this->getVariantAttributes($variant) : ($attributes ?: null),
@@ -231,7 +240,7 @@ class CartInventoryService
     {
         return DB::transaction(function () use ($item, $deleteItem) {
             $item = CartItem::whereKey($item->id)->lockForUpdate()->firstOrFail();
-            if ($item->reserved_quantity > 0) {
+            if ($item->reserved_quantity > 0 && !$this->isDigital($item->product)) {
                 $stock = $this->lockInventoryRowByItem($item);
                 $this->releaseStock($stock, (int) $item->reserved_quantity);
             }
@@ -278,7 +287,7 @@ class CartInventoryService
             $cart = Cart::whereKey($cart->id)->lockForUpdate()->with('items')->firstOrFail();
 
             foreach ($cart->items as $item) {
-                if ($item->reserved_quantity > 0) {
+                if ($item->reserved_quantity > 0 && !$this->isDigital($item->product)) {
                     $stock = $this->lockInventoryRowByItem($item);
                     $this->finalizeStock($stock, (int) $item->reserved_quantity);
                 }
@@ -308,7 +317,7 @@ class CartInventoryService
                 ->get();
 
             foreach ($items as $item) {
-                if ($item->reserved_quantity > 0) {
+                if ($item->reserved_quantity > 0 && !$this->isDigital($item->product)) {
                     $stock = $this->lockInventoryRowByItem($item);
                     $this->finalizeStock($stock, (int) $item->reserved_quantity);
                 }
@@ -350,7 +359,24 @@ $remainingItems = CartItem::where('cart_id', $cart->id)
                     continue;
                 }
 
+                // D1 — digital order lines never deduct physical stock.
+                $snapshotType = null;
+                try {
+                    $snapshotType = \Illuminate\Support\Facades\Schema::hasColumn('order_products', 'item_type')
+                        ? $orderItem->item_type
+                        : null;
+                } catch (\Throwable $e) {
+                    $snapshotType = null;
+                }
+
+                if ($snapshotType === \Marvel\Enums\ItemType::DIGITAL) {
+                    continue;
+                }
+
                 $product = $orderItem->product;
+                if ($product && ($product->item_type ?? \Marvel\Enums\ItemType::PHYSICAL) === \Marvel\Enums\ItemType::DIGITAL) {
+                    continue;
+                }
                 if ($orderItem->product_variant_id && $orderItem->productVariant) {
                     $variant = ProductVariant::query()
                         ->whereKey($orderItem->product_variant_id)
@@ -437,6 +463,15 @@ $remainingItems = CartItem::where('cart_id', $cart->id)
     private function syncCartItemReservation(CartItem $item): void
     {
         $item = CartItem::whereKey($item->id)->lockForUpdate()->firstOrFail();
+
+        // D1 — digital lines hold no reservation and pass unlimited stock.
+        if ($this->isDigital($item->product)) {
+            if ($item->reserved_quantity !== 0) {
+                $item->update(['reserved_quantity' => 0]);
+            }
+            return;
+        }
+
         $stock = $this->lockInventoryRowByItem($item);
         $desiredQuantity = (int) $item->quantity;
         $reservedQuantity = (int) $item->reserved_quantity;
@@ -473,7 +508,7 @@ $remainingItems = CartItem::where('cart_id', $cart->id)
             }
 
             foreach ($cart->items as $item) {
-                if ($item->reserved_quantity > 0) {
+                if ($item->reserved_quantity > 0 && !$this->isDigital($item->product)) {
                     $stock = $this->lockInventoryRowByItem($item);
                     $this->releaseStock($stock, (int) $item->reserved_quantity);
                 }
@@ -585,6 +620,12 @@ $remainingItems = CartItem::where('cart_id', $cart->id)
             'reserved_at' => now(),
             'expires_at' => Carbon::now()->addDays(self::CART_TTL_DAYS),
         ]);
+    }
+
+    private function isDigital(?Product $product): bool
+    {
+        return $product !== null
+            && ($product->item_type ?? \Marvel\Enums\ItemType::PHYSICAL) === \Marvel\Enums\ItemType::DIGITAL;
     }
 
     private function getAvailableStock($stock): int

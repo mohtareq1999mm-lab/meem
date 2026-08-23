@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Events\AdminLoggedIn;
 use App\Events\ContactMessageReceived;
+use App\Events\DigitalProductsDelivered;
 use App\Events\FrontendCacheInvalidation;
 use App\Events\InvoiceCreated;
 use App\Events\AssignedCouponConsumed;
@@ -24,6 +25,8 @@ use App\Events\ReviewRejected;
 use App\Events\UserRolesUpdated;
 use App\Listeners\SendUserFlashSaleAvailableNotification;
 use App\Listeners\SendUserPromotionAvailableNotification;
+use App\Listeners\SendUserDigitalProductsAvailableNotification;
+use App\Listeners\FulfillDigitalProducts;
 use App\Listeners\DispatchFrontendCacheInvalidation;
 use App\Listeners\LogInvoiceCreated;
 use App\Listeners\LogUserRolesUpdated;
@@ -132,6 +135,10 @@ class EventServiceProvider extends ServiceProvider
             SendPaymentSucceededNotification::class,
             GenerateInvoiceListener::class,
             SendUserPaymentSucceededNotification::class,
+            FulfillDigitalProducts::class,
+        ],
+        DigitalProductsDelivered::class => [
+            SendUserDigitalProductsAvailableNotification::class,
         ],
         AssignedCouponConsumed::class => [
             SendUserCouponUsedNotification::class,

@@ -2,6 +2,27 @@
 
 ---
 
+## Product Type (`item_type`)
+
+Every product carries an **`item_type`** field that describes the nature of the product and its fulfillment behavior.
+
+| Value | Meaning | Examples | Inventory Implication | Fulfillment Implication |
+|-------|---------|----------|----------------------|------------------------|
+| `PHYSICAL` | Physical/tangible product (default) | Phone, clothes, laptop, accessories | May have physical stock quantity | May require shipping or pickup |
+| `DIGITAL` | Digital product delivered electronically after purchase | Windows license, PlayStation gift card, activation code, downloadable file | May have digital inventory such as codes/licenses | Delivered electronically; no physical shipping |
+| `SERVICE` | A service provided to the customer | Installation, maintenance, consulting, setup service | Normally no physical stock | Service fulfillment / manual completion |
+
+**Important rules:**
+
+- `item_type` is a **PRODUCT-level attribute**. It is NOT the product category.
+- Do NOT treat `DIGITAL` as `SERVICE`: `DIGITAL` means the customer receives a digital asset (code/license/file); `SERVICE` means the customer receives a service.
+- Defaults to `PHYSICAL` when omitted (all existing products resolve to `PHYSICAL`).
+- Invalid values are rejected with `422`.
+
+> Note: `product_type` is a DIFFERENT field. It holds the variant structure of the product (`simple` or `variable`) and is derived server-side from whether variants are present. It must not be confused with `item_type`.
+
+---
+
 ## Routes Overview
 
 | Method | URI | Controller@function | Permission |
@@ -71,6 +92,7 @@ List paginated products with search, filter, sort.
         "price_after_flash_sale": null,
         "sku": "PRD-001",
         "product_type": "simple",
+        "item_type": "PHYSICAL",
         "in_stock": true,
         "status": "publish",
         "has_discount": true,
@@ -126,6 +148,7 @@ Show single product by ID or slug.
     "price": 29.99,
     "current_price": 19.99,
     "product_type": "variable",
+    "item_type": "PHYSICAL",
     "sku": "PRD-001",
     "in_stock": true,
     "status": "publish",
@@ -183,7 +206,8 @@ Create a new product.
 |-------|------|----------|-------------|
 | `name` | object | **Yes** | `{ "en": "...", "ar": "..." }` |
 | `description` | object | **Yes** | `{ "en": "...", "ar": "..." }` |
-| `product_type` | string | **Yes** | `simple` or `variable` |
+| `product_type` | string | **Yes** | `simple` or `variable` (variant structure; derived server-side from `variants`) |
+| `item_type` | string | No | Product nature: `PHYSICAL` (default), `DIGITAL`, or `SERVICE`. See [Product Type](#product-type-item_type) |
 | `price` | float | sometimes | Required if `product_type=simple` |
 | `categories` | array | **Yes** | Array of category IDs |
 | `images` | array | **Yes** | Array of uploaded image files |
@@ -230,6 +254,7 @@ Create a new product.
     "name": "New Product",
     "slug": "new-product",
     "product_type": "simple",
+    "item_type": "PHYSICAL",
     "price": 49.99,
     "current_price": 49.99,
     "in_stock": true,
@@ -245,6 +270,14 @@ Create a new product.
   "name.en": ["The name.en field is required."],
   "categories": ["The categories field is required."],
   "images": ["The images field is required."]
+}
+```
+
+Invalid `item_type` (e.g. `"item_type": "VIRTUAL"`):
+
+```json
+{
+  "item_type": ["The selected item type is invalid."]
 }
 ```
 
@@ -271,6 +304,8 @@ Same fields as POST but all are optional (`sometimes`). Only include fields that
 The `name.*` unique validation ignores the current product's own name.
 
 `tags` can be included to update product-tag associations (replaces existing tags).
+
+`item_type` can be updated (e.g. change `PHYSICAL` → `DIGITAL`). Invalid values return `422`.
 
 ### Response 200
 

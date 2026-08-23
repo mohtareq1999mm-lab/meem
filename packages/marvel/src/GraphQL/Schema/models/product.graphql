@@ -1,4 +1,4 @@
-extend type Query {
+﻿extend type Query {
     products(
         search: String
         date_range: String
@@ -111,28 +111,12 @@ type Variation {
     price: Float
     image: Attachment
     blocked_dates: [String]
-    digital_file: DigitalFile
-        @field(
-            resolver: "Marvel\\GraphQL\\Queries\\ProductQuery@fetchDigitalFilesForVariation"
-        )
     sku: String
     is_disable: Boolean
-    is_digital: Boolean
     sale_price: Float
     quantity: Int
     sold_quantity: Int
     options: [VariationOption]
-}
-
-union Fileable = Product | Variation
-
-type DigitalFile {
-    id: ID!
-    attachment_id: ID!
-    fileable: Fileable @morphTo
-    url: String!
-    created_at: DateTime
-    updated_at: DateTime
 }
 
 type VariationOption {
@@ -167,10 +151,6 @@ type Product {
     categories: [Category] @belongsToMany
     tags: [Tag] @belongsToMany
     metas: [MetaData] @hasMany
-    digital_file: DigitalFile
-        @field(
-            resolver: "Marvel\\GraphQL\\Queries\\ProductQuery@fetchDigitalFilesForProduct"
-        )
     variations: [AttributeValue] @belongsToMany
     variation_options: [Variation] @hasMany
     pivot: OrderProductPivot
@@ -189,7 +169,6 @@ type Product {
     description: String
     in_stock: Boolean
     is_taxable: Boolean
-    is_digital: Boolean
     is_external: Boolean
     external_product_url: String
     external_product_button_text: String
@@ -223,11 +202,6 @@ input UpsertVariationsHasMany {
     delete: [ID!]
 }
 
-input DigitalFileInput {
-    id: ID
-    attachment_id: ID!
-    url: String!
-}
 input VideoInput {
     url: String
 }
@@ -238,8 +212,6 @@ input VariationInput {
     image: AttachmentInput
     sku: String!
     language: String
-    digital_file: DigitalFileInput
-    is_digital: Boolean
     is_disable: Boolean
     sale_price: Float
     price: Float!
@@ -288,12 +260,10 @@ input CreateProductInput {
         )
     categories: [ID!]
     tags: [ID!]
-    digital_file: DigitalFileInput
     variations: [AttributeProductPivot]
     variation_options: UpsertVariationsHasMany
     in_stock: Boolean
     is_taxable: Boolean
-    is_digital: Boolean
     is_external: Boolean
     external_product_url: String
     external_product_button_text: String
@@ -331,12 +301,10 @@ input UpdateProductInput {
         )
     categories: [ID!]
     tags: [ID!]
-    digital_file: DigitalFileInput
     variations: [AttributeProductPivot]
     variation_options: UpsertVariationsHasMany
     in_stock: Boolean
     is_taxable: Boolean
-    is_digital: Boolean
     is_external: Boolean
     external_product_url: String
     external_product_button_text: String

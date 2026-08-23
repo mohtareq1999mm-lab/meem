@@ -29,6 +29,16 @@ return [
             'body' => 'فشل الدفع لطلبك رقم :order_number. يرجى المحاولة مرة أخرى.',
         ],
     ],
+    'digital' => [
+        'available' => [
+            'title' => 'منتجك الرقمي جاهز',
+            'body' => 'منتجاتك الرقمية للطلب رقم :order_number متاحة الآن للتنزيل.',
+        ],
+        'delivery_failed' => [
+            'title' => 'فشل التسليم الرقمي',
+            'body' => 'فشل التسليم الرقمي للطلب رقم :order_number. السبب: :reason',
+        ],
+    ],
     'coupon' => [
         'assigned' => [
             'title' => 'تم إسناد قسيمة إليك',
@@ -109,6 +119,10 @@ return [
         'new_order' => [
             'title' => 'طلب جديد',
             'body' => 'تم تقديم طلب جديد رقم :order_number.',
+        ],
+        'digital_delivery_failed' => [
+            'title' => 'فشل التسليم الرقمي',
+            'body' => 'فشل التسليم الرقمي للطلب رقم :order_number. السبب: :reason',
         ],
         'contact_message' => [
             'title' => 'رسالة تواصل جديدة',

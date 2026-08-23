@@ -48,7 +48,7 @@ class RestoreInventoryOnRefund implements ShouldQueue
                         }
                     } else {
                         $product = Product::lockForUpdate()->find($item->product_id);
-                        if ($product && !$product->is_rental && !$product->is_digital) {
+                        if ($product && !$product->is_rental) {
                             $product->stock_quantity = max(0, (int) $product->stock_quantity + (int) $item->product_quantity);
                             $product->sold_quantity = max(0, (int) $product->sold_quantity - (int) $item->product_quantity);
                             $product->save();

@@ -127,14 +127,6 @@ input CreateOrderInput {
     isFullWalletPayment: Boolean
 }
 
-input generateOrderExportUrlInput {
-    shop_id: ID
-        @rules(
-            apply: []
-            messages: { exists: "Sorry! The file doesn't exists." }
-        )
-}
-
 input TranslatedLanguage {
     subtotal: String
     discount: String
@@ -147,13 +139,6 @@ input TranslatedLanguage {
     date: String
     paid_from_wallet: String
     amount_due: String
-}
-
-input GenerateInvoiceDownloadUrlInput {
-    order_id: String!
-    translated_languages: TranslatedLanguage
-    is_rtl: Boolean!
-    language: String!
 }
 
 input PaymentInput {
@@ -197,9 +182,4 @@ extend type Mutation {
         @field(resolver: "OrderMutator@createOrderPayment")
     updateOrder(input: UpdateOrderInput! @spread): Order
         @field(resolver: "OrderMutator@update")
-    generateOrderExportUrl(input: generateOrderExportUrlInput! @spread): String
-        @field(resolver: "AuthMutator@generateOrderExportUrl")
-    generateInvoiceDownloadUrl(
-        input: GenerateInvoiceDownloadUrlInput! @spread
-    ): String @field(resolver: "OrderMutator@generateInvoiceDownloadUrl")
 }

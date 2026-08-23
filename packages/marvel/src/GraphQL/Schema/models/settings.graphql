@@ -1,4 +1,4 @@
-extend type Query {
+﻿extend type Query {
     settings(language: String): Settings!
         @field(
             resolver: "Marvel\\GraphQL\\Queries\\SettingsQuery@fetchSettings"
@@ -143,7 +143,6 @@ type SettingsOptions {
     enableCoupons: Boolean
     isPromoPopUp: Boolean
     promoPopup: PromoPopup
-    enableEmailForDigitalProduct: Boolean
     isMultiCommissionRate: Boolean
     enableReviewPopup: Boolean
     reviewSystem: ReviewSystem
@@ -348,7 +347,6 @@ input SettingsOptionsInput {
     enableCoupons: Boolean
     isPromoPopUp: Boolean
     promoPopup: PromoPopupInput
-    enableEmailForDigitalProduct: Boolean
     enableReviewPopup: Boolean
     reviewSystem: ReviewSystemInput
     isMultiCommissionRate: Boolean

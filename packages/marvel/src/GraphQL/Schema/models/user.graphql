@@ -8,11 +8,6 @@ extend type Query {
     ): [User!]! @paginate(defaultCount: 10) @can(ability: "super_admin")
     user(id: ID @eq): User @find @can(ability: "super_admin")
     me: User @ensureEmailIsVerified @field(resolver: "UserQuery@me")
-    downloads: [OrderedFile]
-        @paginate(
-            builder: "Marvel\\GraphQL\\Queries\\UserQuery@fetchDownloadableFiles"
-            defaultCount: 15
-        )
     usersByPermission(
         searchJoin: String = "AND"
         orderBy: String
@@ -133,18 +128,6 @@ type OtpResponse {
     is_contact_exist: Boolean
 }
 
-type OrderedFile {
-    id: ID!
-    purchase_key: String!
-    digital_file_id: ID!
-    customer_id: ID!
-    file: DigitalFile @hasOne
-    order: Order
-    tracking_number: String
-    created_at: DateTime
-    updated_at: DateTime
-}
-
 input NotificationsInput {
     email: String
     enable: Boolean
@@ -232,14 +215,6 @@ input MakeOrRevokeAdminInput {
         )
 }
 
-input GenerateDownloadableUrlInput {
-    digital_file_id: ID!
-        @rules(
-            apply: ["required", "exists:digital_files,id"]
-            messages: { exists: "Sorry! The file doesn't exists." }
-        )
-}
-
 extend type Mutation {
     login(input: LoginInput! @spread): AuthResponse
         @field(resolver: "AuthMutator@token")
@@ -277,9 +252,6 @@ extend type Mutation {
         @can(ability: "customer")
     makeOrRevokeAdmin(input: MakeOrRevokeAdminInput! @spread): Boolean
         @field(resolver: "AuthMutator@makeOrRevokeAdmin")
-    generateDownloadableUrl(
-        input: GenerateDownloadableUrlInput! @spread
-    ): String @field(resolver: "AuthMutator@generateDownloadableUrl")
     subscribeToNewsletter(email: String!): Boolean
         @field(resolver: "AuthMutator@subscribeToNewsletter")
     updateUserEmail(input: UpdateEmailUserInput! @spread): SuccessResponse

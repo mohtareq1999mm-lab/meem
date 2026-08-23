@@ -29,12 +29,15 @@ class OrderCreateRequest extends FormRequest
     {
         $fulfillmentValues = [FulfillmentType::DELIVERY, FulfillmentType::PICKUP];
 
+        // D4 — a cart with no physical lines does not require delivery data.
+        $requiresShipping = $this->cartHasPhysicalItems();
+
         return [
             'name' => ['required', 'string', 'max:255'],
             'user_phone' => ['required', 'string', 'max:255'],
             'user_email' => ['required', 'email', 'max:255'],
             'address' => [
-                Rule::requiredIf(fn () => $this->input('fulfillment_type') !== FulfillmentType::PICKUP),
+                Rule::requiredIf(fn () => $requiresShipping && $this->input('fulfillment_type') !== FulfillmentType::PICKUP),
                 'nullable',
                 'array',
             ],
@@ -53,7 +56,7 @@ class OrderCreateRequest extends FormRequest
             'payment_method' => ['nullable', 'string', 'in:online,cod,pay_at_cashier'],
             'gateway' => ['nullable', 'string', 'max:50'],
             'governorate_id' => [
-                Rule::requiredIf(fn () => $this->input('fulfillment_type') === FulfillmentType::DELIVERY),
+                Rule::requiredIf(fn () => $requiresShipping && $this->input('fulfillment_type') === FulfillmentType::DELIVERY),
                 'integer',
                 'exists:governorates,id',
             ],
@@ -64,6 +67,26 @@ class OrderCreateRequest extends FormRequest
                 'exists:pickup_locations,id',
             ],
         ];
+    }
+
+    /**
+     * D4 — true when the active cart contains at least one PHYSICAL line
+     * (including gifts). Digital-only carts ship nothing.
+     */
+    private function cartHasPhysicalItems(): bool
+    {
+        $user = $this->user();
+
+        if (!$user) {
+            return true;
+        }
+
+        return \Marvel\Database\Models\CartItem::query()
+            ->whereHas('cart', fn ($q) => $q->where('user_id', $user->id)->where('status', 'active'))
+            ->whereHas('product', fn ($q) => $q->where(function ($inner) {
+                $inner->whereNull('item_type')->orWhere('item_type', '!=', \Marvel\Enums\ItemType::DIGITAL);
+            }))
+            ->exists();
     }
 
 

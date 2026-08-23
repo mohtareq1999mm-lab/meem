@@ -210,6 +210,11 @@ $quantity = max(1, (int) ($item->quantity ?? 0));
                     'promotion_id' => $item->promotion_id,
                 ];
 
+                // Rolling-deploy safety: only snapshot when the column exists.
+                if (\Illuminate\Support\Facades\Schema::hasColumn('order_products', 'item_type')) {
+                    $orderItemData['item_type'] = $product?->item_type ?? \Marvel\Enums\ItemType::PHYSICAL;
+                }
+
                 if (Schema::hasColumn('order_products', 'currency_code')) {
                     $orderItemData = array_merge($orderItemData, [
                         'currency_code' => $order->currency_code ?? $this->currencyService->getEffectiveCode(),

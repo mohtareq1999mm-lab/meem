@@ -71,6 +71,57 @@ Flash Sales
 
 ---
 
+## Products (Item Type — Rev 2, 2026-08-23)
+
+**Changed Feature:**
+Products — added `item_type` classification (PHYSICAL/DIGITAL/SERVICE)
+
+**Affected Features:**
+- Cart — CartItem belongsTo Product
+- Orders — order items reference products
+- Search — search index includes products
+- Home — homepage strategies use ProductMiniResource
+- Wishlist — wishlist items reference products
+- Flash Sales — flash sale products reference products
+- Promotions — promotion rules apply to products
+- Coupons — coupon conditions apply to products
+
+**Regression:**
+
+| Suite | Status | Reason |
+|-------|--------|--------|
+| ProductItemTypeTest | PASS | 13/13 tests, 31 assertions (new feature suite) |
+| ProductCrudTest | PASS | 63/63 |
+| ProductAdminTest | PASS | 17/17 |
+| ProductsEndpointTest (General/Search/Home strategies) | PASS | 57/57 |
+| ProductCacheTest | PASS | 5/5 |
+| ProductImportTest | PASS | 34/34 |
+| ProductCurrencyTest | PASS | 8/8 |
+| CartExpirationTest | PASS | 8/8 |
+| FlashSalesEndpointTest | PASS | All green |
+| ProductExportTest | NOT VERIFIED | Pre-existing failure: `/products/export` route does not exist in HEAD (dead endpoint); unrelated to item_type |
+| ProductFilterTest | FAIL (pre-existing) | Detail-view `filters` suppression relies on non-existent `general-product-show` route name; verified absent in HEAD. Unrelated to item_type |
+| CartApiTest (coupon cases) | NOT VERIFIED | Fails on uncommitted FCM workstream: `Driver [fcm] not supported` from modified Notifications; unrelated to item_type |
+| WishlistApiTest | NOT VERIFIED | Route-definition drift predating this change (toggle PATCH vs test POST expectations); unrelated to item_type |
+| AttributesProductionHardenTest (attribute-value routes) | NOT VERIFIED | Routes commented out in Rest/Routes.php since before this change; unrelated to item_type |
+| DimensionFilterTest | NOT VERIFIED | SQLite lacks REGEXP_REPLACE (MySQL-only) used by range filters; pre-existing platform limitation |
+| Orders / Checkout / Promotions / Coupons suites | NOT RUN | Blocked by same pre-existing FCM notification failures; product-facing code paths unchanged for these consumers |
+
+**Changes Applied (Revision 2):**
+- NEW `packages/marvel/src/Enums/ItemType.php` — BenSampo enum PHYSICAL/DIGITAL/SERVICE
+- NEW `database/migrations/2026_08_23_105834_add_item_type_to_products_table.php` — enum column, default PHYSICAL, indexed, after product_type
+- `Product.php` — fillable += item_type
+- `ShopServiceProvider.php` — registered ItemType enum
+- `ProductCreateRequest.php` / `ProductUpdateRequest.php` — `sometimes + Rule::in(ItemType::getValues())`
+- `Marvel Http/Resources/product/ProductResource.php`, `App ProductResource.php`, `App ProductMiniResource.php` — serialize item_type
+- `tests/Concerns/CreatesTestTables.php` — shared schema += item_type default PHYSICAL
+- NEW `tests/Feature/ProductItemTypeTest.php`
+- Docs: `api-desc/product/api.md`, `api-desc/front/product/api.md`
+
+**Backward Compatibility:** Existing products resolve to PHYSICAL via DB default; clients omitting item_type are unaffected; product_type semantics untouched.
+
+---
+
 ## Products
 
 **Changed Feature:**

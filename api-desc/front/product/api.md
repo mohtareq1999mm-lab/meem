@@ -1,5 +1,74 @@
 # API Documentation - Product Feature
 
+## Product Type (`item_type`)
+
+Products expose an **`item_type`** field describing the nature of the product.
+
+| Value | Meaning |
+|-------|---------|
+| `PHYSICAL` | Physical item. May require stock. May use delivery or pickup. |
+| `DIGITAL` | Digitally delivered item. No physical shipping. May deliver a code, license, card, file, or similar digital asset. |
+| `SERVICE` | Service provided to the customer. Not a physical shipped item. Not a digital code/license/file. |
+
+### Where `item_type` appears
+
+- **List products** (`GET /api/v1/general/products`): each object in `data.data` includes `"item_type"`.
+- **Product by slug** (`GET /api/v1/general/products/{slug}`): included at the top level of `data`.
+- **Admin create/update** (`POST|PUT /api/v1/products`): send `item_type` to set it; omit it to default to `PHYSICAL`.
+
+```json
+{ "id": 123, "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx", "name": "Windows 11 Pro License", "item_type": "DIGITAL" }
+```
+
+### Creating/updating a Product (Admin)
+
+Send one of:
+
+```json
+{ "item_type": "PHYSICAL" }
+```
+
+```json
+{ "item_type": "DIGITAL" }
+```
+
+```json
+{ "item_type": "SERVICE" }
+```
+
+Omitting the field defaults new products to `PHYSICAL`. Unsupported values are rejected with `422`.
+
+### Important: `item_type` is NOT the Product Category
+
+Category and product nature are independent concepts. Example — Category: **Gaming**:
+
+| Product | item_type |
+|---------|-----------|
+| PlayStation Controller | `PHYSICAL` |
+| PlayStation Gift Card | `DIGITAL` |
+| Gaming Setup Service | `SERVICE` |
+
+> Note: `product_type` is a DIFFERENT existing field (`simple`/`variable`) describing variant structure. Do not confuse it with `item_type`.
+
+### Product Type Behavior
+
+**PHYSICAL**
+- Physical item.
+- May require stock.
+- May use delivery or pickup.
+
+**DIGITAL**
+- Digitally delivered item.
+- No physical shipping.
+- May deliver a code, license, card, file, or similar digital asset.
+
+**SERVICE**
+- Service provided to the customer.
+- Not a physical shipped item.
+- Not a digital code/license/file.
+
+---
+
 ## Endpoints
 
 ---
@@ -65,6 +134,7 @@
                 "slug": "wireless-headphones",
                 "price": 99.99,
                 "has_variants": false,
+                "item_type": "PHYSICAL",
                 "current_price": 79.99,
                 "quantity": 50,
                 "in_stock": true,
@@ -135,6 +205,7 @@
         "sold_quantity": 25,
         "in_stock": true,
         "product_type": "simple",
+        "item_type": "PHYSICAL",
         "height": null,
         "width": null,
         "length": null,
@@ -178,7 +249,7 @@
             { "id": 1, "rating": 5, "comment": "Great product!", "user": { "name": "John" }, "images": [], "created_at": "2026-07-15T10:00:00Z" }
         ],
         "related_products": [
-            { "id": 2, "name": "Earbuds", "slug": "earbuds", "price": 49.99, "has_variants": false, "current_price": 49.99, "quantity": 30, "in_stock": true, "discount_active": false, "flash_sale_active": false, "is_fast_shipping_available": false, "ratings": 4.0, "image": { "thumbnail": null, "original": [] } }
+            { "id": 2, "name": "Earbuds", "slug": "earbuds", "price": 49.99, "has_variants": false, "item_type": "PHYSICAL", "current_price": 49.99, "quantity": 30, "in_stock": true, "discount_active": false, "flash_sale_active": false, "is_fast_shipping_available": false, "ratings": 4.0, "image": { "thumbnail": null, "original": [] } }
         ],
         "filters": { "brands": [], "categories": [], "attributes": [], "ratings": {}, "dimensions": {} }
     }
@@ -267,7 +338,8 @@
 |-----------|------|----------|-------------|
 | `name` | `array` | Yes | Translatable name (`{ en, ar }`) |
 | `description` | `array` | Yes | Translatable description (max 10000) |
-| `product_type` | `string` | Yes | `simple` or `variable` |
+| `product_type` | `string` | Yes | `simple` or `variable` (variant structure) |
+| `item_type` | `string` | No | Product nature: `PHYSICAL` (default), `DIGITAL`, or `SERVICE`. See [Product Type](#product-type-item_type) |
 | `categories` | `array` | Yes | Array of category IDs |
 | `images` | `array` | Yes | Array of image files (jpeg,png,jpg, max 2MB) |
 | `in_stock` | `boolean` | Yes | Stock availability |
@@ -295,6 +367,7 @@
         "price": 99.99,
         "current_price": 79.99,
         "product_type": "simple",
+        "item_type": "PHYSICAL",
         "status": "publish"
     }
 }

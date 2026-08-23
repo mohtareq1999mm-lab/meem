@@ -8,6 +8,7 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
 use Marvel\Enums\DiscountType;
+use Marvel\Enums\ItemType;
 use Marvel\Enums\ProductStatus;
 use Marvel\Enums\ProductType;
 
@@ -57,6 +58,7 @@ class ProductUpdateRequest extends FormRequest
         ];
 
         $productType = ProductType::getValues();
+        $itemTypes = ItemType::getValues();
         $discountTypes = DiscountType::getValues();
 
         return [
@@ -65,6 +67,7 @@ class ProductUpdateRequest extends FormRequest
             'description'                  => ['sometimes', 'array'],
             'description.*'                => ['sometimes', 'string', 'max:10000'],
             'product_type'                 => ['sometimes', Rule::in($productType)],
+            'item_type'                    => ['sometimes', 'string', Rule::in($itemTypes)],
             'price'                        => ['sometimes', 'numeric', 'min:0', 'required_if:product_type,' . ProductType::SIMPLE],
             'shop_id'                      => ['sometimes', 'exists:shops,id'],
             'categories'                   => ['sometimes', 'array'],

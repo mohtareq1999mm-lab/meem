@@ -23,6 +23,7 @@ class CartItemResource extends Resource
             'promotion_id' => $this->promotion_id,
             'discount_amount' => $this->convertPrice($this->discount_amount),
             'is_gift' => $this->is_gift ?? false,
+            'item_type' => $this->product?->item_type ?? \Marvel\Enums\ItemType::PHYSICAL,
             'product' => $this->product ? [
                 'id' => $this->product->id,
                 'name' => $this->product->name,

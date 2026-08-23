@@ -58,6 +58,7 @@ class OrderResource extends JsonResource
             }),
             'created_at' => $this->created_at?->toIso8601String(),
             'order_items' => OrderItemResource::collection($this->whenLoaded('orderItems')),
+            'digital_downloads' => $this->when($this->relationLoaded('digitalEntitlements') && $this->digitalEntitlements->isNotEmpty(), fn() => $this->resolveDigitalDownloads()),
             // 'pickup_location_id' => $this->pickup_location_id,
             'payment_gateway' => $this->payment_gateway,
             'order_has_invoice' => $this->latestInvoice !== null,
@@ -68,6 +69,34 @@ class OrderResource extends JsonResource
     private function fallbackBaseCode(): ?string
     {
         return app(CurrencyService::class)->getBaseCode();
+    }
+
+    /**
+     * Digital entitlement summary for delivered digital lines.
+     * Never exposes storage paths or physical filenames of stored assets —
+     * downloads happen through short-lived signed URLs issued separately.
+     */
+    private function resolveDigitalDownloads(): array
+    {
+        return $this->digitalEntitlements
+            ->filter(fn ($e) => $e->status === \App\Models\DigitalEntitlement::STATUS_DELIVERED)
+            ->map(function ($entitlement) {
+                return [
+                    'uuid' => $entitlement->uuid,
+                    'order_item_id' => $entitlement->order_product_id,
+                    'status' => $entitlement->status,
+                    'download_limit' => (int) $entitlement->download_limit,
+                    'download_count' => (int) $entitlement->download_count,
+                    'delivered_at' => $entitlement->delivered_at?->toIso8601String(),
+                    'assets' => $entitlement->assets->map(fn ($asset) => [
+                        'uuid' => $asset->uuid,
+                        'type' => $asset->type,
+                        'original_name' => $asset->original_name,
+                        'mime' => $asset->mime,
+                        'size' => (int) $asset->size,
+                    ])->values()->all(),
+                ];
+            })->values()->all();
     }
 
     private function resolvePickupLocation(): ?array

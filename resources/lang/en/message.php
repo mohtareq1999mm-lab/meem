@@ -474,6 +474,14 @@ return [
     // Stock
     'ERROR.VARIANT_STOCK_EXCEEDED' => 'Quantity of ":product_name" exceeds available stock.',
     'ERROR.PRODUCT_STOCK_EXCEEDED' => '":product_name" exceeds available stock.',
+    'ERROR.ITEM_TYPE_IMMUTABLE_ORDERED' => 'This product has existing orders, so its type (PHYSICAL/DIGITAL) can no longer be changed.',
+    'ERROR.ITEM_TYPE_IMMUTABLE_ASSETS' => 'This product has digital assets attached, so its type (PHYSICAL/DIGITAL) can no longer be changed.',
+    'ERROR.DIGITAL_ASSET_INVALID_FILE' => 'The uploaded file must be a valid PDF document.',
+    'ERROR.DIGITAL_ASSET_INVALID_MIME' => 'The file MIME type is not allowed. Only PDF files are accepted.',
+    'ERROR.DIGITAL_ASSET_TOO_LARGE' => 'The file exceeds the maximum upload size of :max KB.',
+    'ERROR.DIGITAL_ASSET_UPLOAD_FAILED' => 'Digital asset could not be stored. Please try again.',
+    'ERROR.DIGITAL_ENTITLEMENT_NOT_ACCESSIBLE' => 'This download is not available.',
+    'ERROR.DIGITAL_DOWNLOAD_LIMIT_REACHED' => 'The download limit for this item has been reached.',
 
     // Contact
     'MESSAGE.CONTACT_UPDATE_SUCCESSFUL' => 'Contact information updated successfully',

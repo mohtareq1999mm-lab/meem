@@ -41,6 +41,7 @@ class ProductResource extends JsonResource
             'sold_quantity'          => (int) ($this->sold_quantity ?? 0),
             'in_stock'               => $this->in_stock,
             'product_type'           => $this->product_type,
+            'item_type'              => $this->item_type,
             'height'                 => $this->height,
             'width'                  => $this->width,
             'length'                 => $this->length,

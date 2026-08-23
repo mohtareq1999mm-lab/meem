@@ -38,6 +38,7 @@ use Marvel\Console\TestMailSendCommand;
 use Marvel\Console\TranslationEnabledCommand;
 use Marvel\Database\Models\Settings;
 use Marvel\Enums\EventType;
+use Marvel\Enums\ItemType;
 use Marvel\Enums\ManufacturerType;
 use Marvel\Enums\OrderStatus;
 use Marvel\Enums\ProductType;
@@ -80,6 +81,7 @@ class ShopServiceProvider extends ServiceProvider
         StoreNoticePriority::class,
         ShippingType::class,
         ProductType::class,
+        ItemType::class,
         WithdrawStatus::class,
         RefundStatus::class,
         PaymentGatewayType::class,

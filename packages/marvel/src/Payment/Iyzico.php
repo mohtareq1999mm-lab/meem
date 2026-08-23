@@ -280,7 +280,7 @@ class Iyzico extends Base implements PaymentInterface
         /* Creating a new instance of the class `BasketItem` and setting the values of the properties. */
         $basketItems = Arr::map(collect($order->products)->toArray(), function ($product) {
             $product = (object) $product;
-            $type = $product->is_digital ? BasketItemType::VIRTUAL : BasketItemType::PHYSICAL;
+            $type = BasketItemType::PHYSICAL;
             $basketItem = new BasketItem();
             $basketItem->setId($product->id);
             $basketItem->setName($product->name);

@@ -149,7 +149,7 @@ class OrderService
             );
 
             $shippingInfo = $this->resolveShippingPrice((int) $request->input('governorate_id') ?: null);
-            $shippingPrice = $this->resolveFreeShippingByThreshold($checkoutTotals->subtotal, $shippingInfo['free_shipping_over'], $shippingInfo['price']);
+            $shippingPrice = $this->resolveShippingChargeForCart($cart, $checkoutTotals, $shippingInfo);
             $shippingPrice = $this->resolveFreeShippingByCoupon($checkoutTotals->couponDiscountType, $shippingPrice);
 
             $finalTotal = round((float) $checkoutTotals->finalTotal + $shippingPrice, 2);
@@ -231,7 +231,7 @@ class OrderService
             $orderData['user_id'] = $request->user()->id;
 
             $shippingInfo = $this->resolveShippingPrice((int) ($orderData['governorate_id'] ?? null));
-            $shippingPrice = $this->resolveFreeShippingByThreshold($checkoutTotals->subtotal, $shippingInfo['free_shipping_over'], $shippingInfo['price']);
+            $shippingPrice = $this->resolveShippingChargeForCart($cart, $checkoutTotals, $shippingInfo);
             if ($freeShippingCoupon) {
                 $shippingPrice = 0;
             }
@@ -302,6 +302,36 @@ class OrderService
             return 0;
         }
         return $shippingPrice;
+    }
+
+    /**
+     * D4 — shipping exists only for PHYSICAL lines.
+     * Digital-only carts ship nothing; mixed carts apply the normal
+     * governorate price, with the free-shipping threshold evaluated against
+     * the physical-lines subtotal only.
+     */
+    public function resolveShippingChargeForCart(Cart $cart, CheckoutTotals $checkoutTotals, array $shippingInfo): float
+    {
+        $physicalSubtotal = $this->physicalLinesSubtotal($cart);
+
+        if ($physicalSubtotal <= 0) {
+            return 0;
+        }
+
+        return $this->resolveFreeShippingByThreshold($physicalSubtotal, $shippingInfo['free_shipping_over'], $shippingInfo['price']);
+    }
+
+    private function physicalLinesSubtotal(Cart $cart): float
+    {
+        $cart->loadMissing(['items.product']);
+
+        return round((float) $cart->items->sum(function ($item) {
+            if (($item->product?->item_type ?? \Marvel\Enums\ItemType::PHYSICAL) === \Marvel\Enums\ItemType::DIGITAL) {
+                return 0;
+            }
+
+            return (float) ($item->total_price ?? 0);
+        }), 2);
     }
 
     public function resolveFreeShippingByCoupon(?string $couponDiscountType, float $shippingPrice): float

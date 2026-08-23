@@ -19,7 +19,8 @@ class NewOrderNotification extends Notification implements ShouldQueue
 
     public function via(): array
     {
-        return ['database', 'broadcast'];
+        return ['database',
+            'fcm', 'broadcast'];
     }
 
     public function toDatabase(): array

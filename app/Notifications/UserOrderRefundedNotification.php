@@ -19,7 +19,8 @@ class UserOrderRefundedNotification extends Notification implements ShouldQueue
 
     public function via($notifiable): array
     {
-        return ['database', 'broadcast'];
+        return ['database',
+            'fcm', 'broadcast'];
     }
 
     public function toDatabase($notifiable): array

@@ -104,7 +104,7 @@ class CheckoutRepository
     {
         try {
             $ordered_products = $request['products'];
-            $physical_products = Product::whereIn('id', Arr::pluck($ordered_products, 'product_id'))->where('is_digital', false)->get();
+            $physical_products = Product::whereIn('id', Arr::pluck($ordered_products, 'product_id'))->get();
             if (!count($physical_products)) {
                 return 0;
             }

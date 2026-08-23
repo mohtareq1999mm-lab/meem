@@ -129,6 +129,11 @@ class ProductRepository extends BaseRepository
             ]);
             $data = $request->except(['images', 'categories', 'variants', 'brands', 'banners', 'sliders']);
 
+            // D5 — item_type immutability once commercial history exists.
+            if (array_key_exists('item_type', $data)) {
+                app(\App\Services\Digital\ItemTypePolicy::class)->assertChangeable($product, $data['item_type']);
+            }
+
             $data['slug'] = $this->makeSlug($request, 'slug', $product->id);
             $hasFlashSale = array_key_exists('has_flash_sale', $data) ? (bool) $data['has_flash_sale'] : $product->has_flash_sale;
             $flashSaleId = $data['flash_sale_id'] ?? null;
@@ -167,6 +172,9 @@ class ProductRepository extends BaseRepository
             DB::commit();
 
             return $product->load('variations', 'categories', 'tags', 'brands', 'banners', 'sliders', 'flash_sales');
+        } catch (HttpException $e) {
+            DB::rollBack();
+            throw $e;
         } catch (Exception $e) {
             DB::rollBack();
             throw new HttpException(500, $e->getMessage());

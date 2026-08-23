@@ -62,10 +62,6 @@ class Variation extends Model
     return  Availability::where('bookable_id', $this->id)->where('bookable_type', 'Marvel\Database\Models\Variation')->whereDate('to', '>=', Carbon::now())->get();
   }
 
-  public function digital_file()
-  {
-    return $this->morphOne(DigitalFile::class, 'fileable');
-  }
 
   public function availabilities()
   {

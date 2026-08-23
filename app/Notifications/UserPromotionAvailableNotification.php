@@ -19,7 +19,8 @@ class UserPromotionAvailableNotification extends Notification implements ShouldQ
 
     public function via($notifiable): array
     {
-        return ['database', 'broadcast'];
+        return ['database',
+            'fcm', 'broadcast'];
     }
 
     public function toDatabase($notifiable): array

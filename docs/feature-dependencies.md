@@ -165,7 +165,7 @@ Production Ready
 ## Products
 
 **Purpose:**
-Manage product catalog — create, update, delete, search, filter.
+Manage product catalog — create, update, delete, search, filter. Includes the product-level Item Type classification (`item_type`: PHYSICAL/DIGITAL/SERVICE) describing fulfillment nature, distinct from `product_type` (simple/variable variant structure, server-derived).
 
 **Dependency Confidence:**
 Dependencies partially verified from source code.
@@ -176,6 +176,7 @@ Dependencies partially verified from source code.
 - Brands — belongsTo Brand (Verified)
 - Media Lifecycle — Spatie MediaLibrary on Product model (Verified)
 - Pricing — Runtime Pricing Architecture via `ProductPricingService` (Verified)
+- Item Type enum — `Marvel\Enums\ItemType` (PHYSICAL/DIGITAL/SERVICE), registered in ShopServiceProvider (Verified)
 
 **Used By:**
 - Cart — CartItem belongsTo Product (Verified)
@@ -201,7 +202,11 @@ Dependencies partially verified from source code.
 None
 
 **Current Status:**
-Production Ready (Phase 1)
+Production Ready
+
+**Revision History:**
+- Rev 1 (2026-07-17): Phase 1 production audit — 76/76 tests passing
+- Rev 2 (2026-08-23): Added `item_type` (PHYSICAL/DIGITAL/SERVICE): new ItemType enum + DB column (default PHYSICAL, indexed), fillable, create/update validation, serialization in package ProductResource + app ProductResource + ProductMiniResource; api-desc docs updated. Existing `product_type` (simple/variable) intentionally NOT repurposed — server-derived variant structure consumed by Cart/Orders/FlashSales/Import.
 
 ---
 

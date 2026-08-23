@@ -246,14 +246,6 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
     }
 
     /**
-     * @return HasMany
-     */
-    public function ordered_files(): HasMany
-    {
-        return $this->hasMany(OrderedFile::class, 'customer_id');
-    }
-
-    /**
      * Follow shop
      *
      * @return BelongsToMany

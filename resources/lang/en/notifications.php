@@ -29,6 +29,16 @@ return [
             'body' => 'Your payment for order #:order_number failed. Please try again.',
         ],
     ],
+    'digital' => [
+        'available' => [
+            'title' => 'Digital product ready',
+            'body' => 'Your digital products for order #:order_number are now available to download.',
+        ],
+        'delivery_failed' => [
+            'title' => 'Digital delivery failed',
+            'body' => 'Digital delivery failed for order #:order_number. Reason: :reason',
+        ],
+    ],
     'coupon' => [
         'assigned' => [
             'title' => 'Coupon assigned to you',
@@ -109,6 +119,10 @@ return [
         'new_order' => [
             'title' => 'New order received',
             'body' => 'New order #:order_number has been placed.',
+        ],
+        'digital_delivery_failed' => [
+            'title' => 'Digital delivery failed',
+            'body' => 'Digital delivery failed for order #:order_number. Reason: :reason',
         ],
         'contact_message' => [
             'title' => 'New contact message',

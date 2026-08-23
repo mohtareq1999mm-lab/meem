@@ -25,6 +25,7 @@ class ProductMiniResource extends JsonResource
             'slug' => $this->slug,
             'price' => $this->convertCatalogPrice($this->price),
             'has_variants' => $this->product_type !== 'simple' ? true : false,
+            'item_type' => $this->item_type,
             'current_price' => $convertedCurrentPrice,
             'currency' => $this->effectiveCurrency(),
             'quantity' => (int) $this->stock_quantity,

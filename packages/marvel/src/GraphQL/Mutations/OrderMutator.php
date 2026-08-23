@@ -18,10 +18,6 @@ class OrderMutator
     {
         return Shop::call('Marvel\Http\Controllers\OrderController@updateOrder', $args);
     }
-    public function generateInvoiceDownloadUrl($rootValue, array $args, GraphQLContext $context)
-    {
-        return Shop::call('Marvel\Http\Controllers\OrderController@downloadInvoiceUrl', $args);
-    }
     public function createOrderPayment($rootValue, array $args, GraphQLContext $context)
     {
         return Shop::call('Marvel\Http\Controllers\OrderController@submitPayment', $args);

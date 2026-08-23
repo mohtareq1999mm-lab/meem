@@ -22,6 +22,8 @@ class OrderItemResource extends JsonResource
             'converted_total_price' => $this->convertWithOrderRate($this->product_total_price),
             'promotion_discount_amount' => $this->roundMoney($this->promotion_discount_amount),
             'is_gift' => (bool) ($this->is_gift ?? false),
+            // Historical snapshot — never resolved from the current Product.
+            'item_type' => $this->item_type ?? \Marvel\Enums\ItemType::PHYSICAL,
             'promotion_id' => $this->promotion_id,
             'product' => $this->resolveProduct($request),
             'variant' => $this->resolveVariant($request),

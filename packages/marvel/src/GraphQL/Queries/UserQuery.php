@@ -17,10 +17,6 @@ class UserQuery
     {
         return Shop::call('Marvel\Http\Controllers\UserController@me', $args);
     }
-    public function fetchDownloadableFiles($rootValue, array $args, GraphQLContext $context)
-    {
-        return Shop::call('Marvel\Http\Controllers\DownloadController@fetchFiles', $args);
-    }
 
     public function fetchWishlists($rootValue, array $args, GraphQLContext $context)
     {

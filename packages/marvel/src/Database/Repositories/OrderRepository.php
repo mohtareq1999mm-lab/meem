@@ -16,7 +16,6 @@ use Marvel\Database\Models\Balance;
 use Marvel\Database\Models\Coupon;
 use Marvel\Database\Models\CouponUsage;
 use Marvel\Database\Models\Order;
-use Marvel\Database\Models\OrderedFile;
 use Marvel\Database\Models\OrderWalletPoint;
 use Marvel\Database\Models\Wallet;
 use Marvel\Database\Models\Product;
@@ -287,8 +286,8 @@ class OrderRepository extends BaseRepository
                 throw new MarvelBadRequestException("Product not found: {$productId}");
             }
 
-            // Check if product is a rental or digital product (no stock check needed)
-            if ($product->is_rental || $product->is_digital) {
+            // Check if product is a rental product (no stock check needed)
+            if ($product->is_rental) {
                 continue;
             }
 
@@ -335,8 +334,8 @@ class OrderRepository extends BaseRepository
 
             $product = Product::find($productId);
 
-            // Skip stock deduction for rental or digital products
-            if (!$product || $product->is_rental || $product->is_digital) {
+            // Skip stock deduction for rental products
+            if (!$product || $product->is_rental) {
                 continue;
             }
 
@@ -601,20 +600,12 @@ class OrderRepository extends BaseRepository
             }
             try {
                 if ($order->parent_id === null) {
-                    $productData = Product::with('digital_file')->findOrFail($product['product_id']);
+                    $productData = Product::findOrFail($product['product_id']);
 
                     // if rental product
                     $isRentalProduct = $productData->is_rental;
                     if ($isRentalProduct) {
                         $this->processRentalProduct($product, $order->id);
-                    }
-
-
-                    if ($productData->product_type === ProductType::SIMPLE) {
-                        $this->storeOrderedFile($productData, $product['order_quantity'], $customer_id, $order->tracking_number);
-                    } else if ($productData->product_type === ProductType::VARIABLE) {
-                        $variation_option = Variation::with('digital_file')->findOrFail($product['variation_option_id']);
-                        $this->storeOrderedFile($variation_option, $product['order_quantity'], $customer_id, $order->tracking_number);
                     }
                 }
             } catch (Exception $e) {
@@ -622,30 +613,6 @@ class OrderRepository extends BaseRepository
             }
         }
         return $products;
-    }
-
-
-    /**
-     * storeOrderedFile
-     *
-     * @param  mixed $item
-     * @param  mixed $order_quantity
-     * @param  mixed $customer_id
-     * @return void
-     */
-    public function storeOrderedFile($item, $order_quantity, $customer_id, $order_tracking_number)
-    {
-        if ($item->is_digital) {
-            $digital_file = $item->digital_file;
-            for ($i = 0; $i < $order_quantity; $i++) {
-                OrderedFile::create([
-                    'purchase_key' => Str::random(16),
-                    'digital_file_id' => $digital_file->id,
-                    'customer_id' => $customer_id,
-                    'tracking_number' => $order_tracking_number
-                ]);
-            }
-        }
     }
 
     /**

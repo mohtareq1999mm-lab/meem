@@ -33,6 +33,7 @@ class Product extends Model implements HasMedia
         'description',
         'price',
         'product_type',
+        'item_type',
         'type_id',
         'sku',
         'stock_quantity',
@@ -394,11 +395,6 @@ class Product extends Model implements HasMedia
             return true;
         }
         return false;
-    }
-
-    public function digital_file()
-    {
-        return $this->morphOne(DigitalFile::class, 'fileable');
     }
 
     public function availabilities()

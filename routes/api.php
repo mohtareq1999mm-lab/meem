@@ -128,6 +128,9 @@ Route::prefix('v1/general')->group(function () {
         //========================= product reviews =========================//
         Route::post('products/{id}/reviews', [ProductController::class, 'addProductReview']);
         Route::put('products/reviews/{id}', [ProductController::class, 'updateProductReview']);
+        //========================= device tokens (FCM) =========================//
+        Route::post('device-tokens', [\App\Http\Controllers\Api\General\DeviceTokenController::class, 'store']);
+        Route::delete('device-tokens', [\App\Http\Controllers\Api\General\DeviceTokenController::class, 'destroy']);
         //========================= site reviews =========================//
         Route::post('site-reviews', [SiteReviewController::class, 'store']);
         //======================== invoices ========================/

@@ -34,3 +34,4 @@ docker-compose.yml
 .DOCS/
 .agents/
 .api-docs/
+storage/app/firebase/*

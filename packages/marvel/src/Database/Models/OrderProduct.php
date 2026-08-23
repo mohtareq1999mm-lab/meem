@@ -23,6 +23,7 @@ public $fillable = [
         'promotion_discount_amount',
         'product_flash_sale_price',
         'is_gift',
+        'item_type',
         'promotion_id',
         'currency_code',
         'catalog_currency_code',
