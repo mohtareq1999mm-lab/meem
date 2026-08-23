@@ -125,6 +125,8 @@ Route::prefix('v1/general')->group(function () {
         Route::get('orders', [OrderController::class, 'index']);
         Route::get('orders/{orderId}/invoice', [OrderController::class, 'invoiceByOrderId'])->whereNumber('orderId');
         Route::get('orders/{id}', [OrderController::class, 'show'])->whereNumber('id');
+        //======================== digital downloads ========================//
+        Route::get('digital/downloads', [\App\Http\Controllers\Api\General\DigitalDownloadController::class, 'index']);
         //========================= product reviews =========================//
         Route::post('products/{id}/reviews', [ProductController::class, 'addProductReview']);
         Route::put('products/reviews/{id}', [ProductController::class, 'updateProductReview']);
@@ -150,6 +152,14 @@ Route::prefix('v1/general/invoices')->middleware('signed')->group(function () {
     Route::get('download/{uuid}', [\App\Http\Controllers\Api\InvoiceController::class, 'downloadByUuidSigned'])
         ->whereUuid('uuid')->name('general.invoices.download');
 });
+
+// Digital product downloads via temporary SIGNED urls (no Sanctum at
+// redemption). Ownership is enforced when the URL is issued; the controller
+// re-checks entitlement status, asset ownership and the download limit.
+Route::get('v1/general/digital/download/{entitlement}/{asset}', [\App\Http\Controllers\Api\General\DigitalDownloadController::class, 'download'])
+    ->middleware(['signed', 'throttle:30,1'])
+    ->whereUuid('entitlement')->whereUuid('asset')
+    ->name('general.digital.download');
         // //======================== shipments ========================/
         // Route::get('shipments/track/{trackingNumber}', [ShipmentController::class, 'trackShipment'])->name('shipments.track');
         // Route::get('shipments/{id}', [ShipmentController::class, 'show'])->middleware('auth:sanctum');

@@ -96,6 +96,17 @@ class RefundRepository extends BaseRepository
         if ($refund->shop_id !==  null) {
             throw new MarvelException(WRONG_REFUND);
         }
+
+        // D7 — delivered digital entitlements are NOT refundable.
+        $hasDeliveredDigital = \App\Models\DigitalEntitlement::query()
+            ->where('order_id', $refund->order_id)
+            ->where('status', \App\Models\DigitalEntitlement::STATUS_DELIVERED)
+            ->exists();
+
+        if ($hasDeliveredDigital && isset($request->status) && $request->status == RefundStatus::APPROVED) {
+            throw new MarvelException(__('message.ERROR.DIGITAL_NOT_REFUNDABLE_AFTER_DELIVERY'));
+        }
+
         $data = $request->only(['status']);
         $refund->update($data);
         $this->changeShopSpecificRefundStatus($refund->order_id, $data);

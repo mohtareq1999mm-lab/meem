@@ -482,6 +482,7 @@ return [
     'ERROR.DIGITAL_ASSET_UPLOAD_FAILED' => 'Digital asset could not be stored. Please try again.',
     'ERROR.DIGITAL_ENTITLEMENT_NOT_ACCESSIBLE' => 'This download is not available.',
     'ERROR.DIGITAL_DOWNLOAD_LIMIT_REACHED' => 'The download limit for this item has been reached.',
+    'ERROR.DIGITAL_NOT_REFUNDABLE_AFTER_DELIVERY' => 'Delivered digital products cannot be refunded.',
 
     // Contact
     'MESSAGE.CONTACT_UPDATE_SUCCESSFUL' => 'Contact information updated successfully',

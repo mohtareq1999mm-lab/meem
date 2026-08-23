@@ -23,6 +23,7 @@ use App\Events\PromotionActivated;
 use App\Events\ReviewApproved;
 use App\Events\ReviewRejected;
 use App\Events\UserRolesUpdated;
+use App\Listeners\RevokePendingDigitalEntitlements;
 use App\Listeners\SendUserFlashSaleAvailableNotification;
 use App\Listeners\SendUserPromotionAvailableNotification;
 use App\Listeners\SendUserDigitalProductsAvailableNotification;

@@ -109,6 +109,7 @@ class EventServiceProvider extends ServiceProvider
             RatingRemoved::class,
             \App\Listeners\RestoreInventoryOnRefund::class,
             \App\Listeners\GenerateCreditNoteOnRefund::class,
+            \App\Listeners\RevokePendingDigitalEntitlements::class,
             \App\Listeners\SendUserOrderRefundedNotification::class,
         ],
         ReviewCreated::class => [
