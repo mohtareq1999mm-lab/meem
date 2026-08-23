@@ -147,10 +147,12 @@ class InvoiceDownloadPermissionTest extends TestCase
 
         $response = $this->getJson(sprintf(self::DOWNLOAD_URL, $invoice->uuid));
 
-        $response->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('data.invoice_number', $invoice->invoice_number)
-            ->assertJsonPath('data.url', url('storage/invoices/' . $invoice->pdf_path));
+        $response->assertOk();
+        $this->assertSame('application/pdf', $response->headers->get('Content-Type'));
+        $this->assertStringContainsString(
+            'attachment; filename="' . $invoice->pdf_path . '"',
+            (string) $response->headers->get('Content-Disposition')
+        );
     }
 
     // ─── TC-DL-003: Non-owner WITH view-invoice-download → allowed ─────────
@@ -165,9 +167,12 @@ class InvoiceDownloadPermissionTest extends TestCase
         $this->actingAsUser($operator);
         $response = $this->getJson(sprintf(self::DOWNLOAD_URL, $invoice->uuid));
 
-        $response->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('data.invoice_number', $invoice->invoice_number);
+        $response->assertOk();
+        $this->assertSame('application/pdf', $response->headers->get('Content-Type'));
+        $this->assertStringContainsString(
+            $invoice->pdf_path,
+            (string) $response->headers->get('Content-Disposition')
+        );
     }
 
     // ─── TC-DL-004 (CRITICAL): Non-owner with view-invoice ONLY → denied ───
@@ -220,12 +225,11 @@ class InvoiceDownloadPermissionTest extends TestCase
         $this->actingAsUser($superAdmin);
         $response = $this->getJson(sprintf(self::DOWNLOAD_URL, $invoice->uuid));
 
-        $response->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('data.invoice_number', $invoice->invoice_number);
+        $response->assertOk();
+        $this->assertSame('application/pdf', $response->headers->get('Content-Type'));
     }
 
-    // ─── TC-DL-007: Real file verified (exists, readable, url, number) ─────
+    // ─── TC-DL-007: Real file verified (exists, readable, streamed as PDF) ──
 
     public function test_real_pdf_file_exists_and_is_readable(): void
     {
@@ -243,8 +247,11 @@ class InvoiceDownloadPermissionTest extends TestCase
         $this->assertTrue(is_readable(Storage::disk('public')->path('invoices/' . $filename)));
         $this->assertStringContainsString('%PDF-', Storage::disk('public')->get('invoices/' . $filename));
 
-        $response->assertJsonPath('data.url', url('storage/invoices/' . $filename));
-        $response->assertJsonPath('data.invoice_number', $invoice->invoice_number);
+        $this->assertSame('application/pdf', $response->headers->get('Content-Type'));
+        $this->assertStringContainsString(
+            'attachment; filename="' . $filename . '"',
+            (string) $response->headers->get('Content-Disposition')
+        );
     }
 
     // ─── TC-DL-008: Invoice exists but PDF missing → 404 ───────────────────
@@ -405,7 +412,7 @@ class InvoiceDownloadPermissionTest extends TestCase
         $allowedResponse = $this->getJson(sprintf(self::DOWNLOAD_URL, $invoice->uuid));
 
         $deniedResponse->assertStatus(404)->assertJsonPath('success', false);
-        $allowedResponse->assertOk()->assertJsonPath('success', true);
+        $allowedResponse->assertOk();
     }
 
     // ─── TC-DL-018: Owner with permission still works (no regression) ──────
@@ -419,6 +426,6 @@ class InvoiceDownloadPermissionTest extends TestCase
         $this->actingAsUser($this->owner);
         $response = $this->getJson(sprintf(self::DOWNLOAD_URL, $invoice->uuid));
 
-        $response->assertOk()->assertJsonPath('success', true);
+        $response->assertOk();
     }
 }

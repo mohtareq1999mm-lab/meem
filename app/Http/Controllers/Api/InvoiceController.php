@@ -101,31 +101,25 @@ class InvoiceController extends Controller
     }
 
     /**
-     * Customer invoice VIEW via temporary signed URL.
-     * Authorization = valid signature (generated only for the owner).
+     * Customer invoice PDF VIEW via temporary signed URL — streams the real
+     * PDF inline (browser renders it). Authorization = valid signature.
      */
-    public function showByUuidSigned(string $uuid): JsonResponse
+    public function viewByUuidSigned(string $uuid)
     {
-        $invoice = Invoice::query()->where('uuid', $uuid)->first();
-
-        if (!$invoice) {
-            return $this->apiResponse(NOT_FOUND, 404, false);
-        }
-
-        return $this->apiResponse(
-            FETCH_DATA_SUCCESSFULLY,
-            200,
-            true,
-            \App\Http\Resources\Invoice\CustomerInvoiceResource::make($invoice)
-        );
+        return $this->streamCustomerInvoicePdf($uuid, 'inline');
     }
 
     /**
-     * Customer PDF DOWNLOAD via temporary signed URL — streams the real file
-     * (never JSON). Authorization = valid signature; the physical file must
-     * exist on the configured disk.
+     * Customer PDF DOWNLOAD via temporary signed URL — streams the real PDF
+     * as an attachment. Authorization = valid signature.
      */
     public function downloadByUuidSigned(string $uuid)
+    {
+        return $this->streamCustomerInvoicePdf($uuid, 'attachment', recordDownload: true);
+    }
+
+    /** Shared lookup + disk check + streaming for both signed customer flows. */
+    private function streamCustomerInvoicePdf(string $uuid, string $disposition, bool $recordDownload = false)
     {
         $invoice = Invoice::query()->where('uuid', $uuid)->first();
 
@@ -143,8 +137,10 @@ class InvoiceController extends Controller
             return $this->apiResponse(NOT_FOUND, 404, false);
         }
 
-        $invoice->update(['downloaded_at' => $invoice->downloaded_at ?? now()]);
-        $this->timelineService->recordDownloaded($invoice);
+        if ($recordDownload) {
+            $invoice->update(['downloaded_at' => $invoice->downloaded_at ?? now()]);
+            $this->timelineService->recordDownloaded($invoice);
+        }
 
         $filename = str_replace('/', '-', $invoice->pdf_path);
 
@@ -153,7 +149,7 @@ class InvoiceController extends Controller
             $filename,
             [
                 'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                'Content-Disposition' => $disposition . '; filename="' . $filename . '"',
             ]
         );
     }

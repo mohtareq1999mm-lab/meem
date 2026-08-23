@@ -25,6 +25,7 @@
         "marvel/shop": "dev-main",
         "meilisearch/meilisearch-php": "^1.17",
         "messagebird/php-rest-api": "3.1.4",
+        "mpdf/mpdf": "8.2",
         "predis/predis": "^3.6",
         "psr/log": "3.0.0",
         "resend/resend-php": "^1.5",

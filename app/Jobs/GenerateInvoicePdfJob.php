@@ -40,18 +40,35 @@ class GenerateInvoicePdfJob implements ShouldQueue
                 $disk->makeDirectory('invoices');
             }
 
-            $pdf = Pdf::loadView('pdf.invoice', [
-                'invoice' => $this->invoice,
+            // mPDF engine — proper Arabic shaping/RTL + mixed Arabic/English.
+            $fontDir = storage_path('app/fonts');
+            $defaultFontConfig = new \Mpdf\Config\ConfigVariables();
+            $fontDirs = array_merge($defaultFontConfig->getDefaults()['fontDir'], [$fontDir]);
+            $fontVariables = new \Mpdf\Config\FontVariables();
+            $fontData = $fontVariables->getDefaults()['fontdata'] + [
+                'segoeui' => [
+                    'R' => 'segoeui.ttf',
+                    'B' => 'segoeuib.ttf',
+                    'useOTL' => 0xFF,
+                    'useKashida' => 75,
+                ],
+            ];
+
+            $mpdf = new \Mpdf\Mpdf([
+                'mode' => 'utf-8',
+                'format' => 'A4',
+                'orientation' => 'P',
+                'fontDir' => $fontDirs,
+                'fontdata' => $fontData,
+                'default_font' => 'segoeui',
+                'tempDir' => storage_path('app/mpdf-temp'),
             ]);
 
-            $pdf->setPaper('A4', 'portrait');
-            $pdf->setOptions([
-                'isHtml5ParserEnabled' => true,
-                'isRemoteEnabled' => false,
-                'defaultFont' => 'Arial',
-            ]);
+            $mpdf->WriteHTML(
+                view('pdf.invoice', ['invoice' => $this->invoice])->render()
+            );
 
-            $pdfContent = $pdf->output();
+            $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
             $disk->put('invoices/' . $filename, $pdfContent);
             $pdfChecksum = md5($pdfContent);
 

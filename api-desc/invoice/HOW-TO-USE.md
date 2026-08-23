@@ -1,4 +1,4 @@
-﻿# Invoice Endpoints â€” How To Use Guide
+# Invoice Endpoints â€” How To Use Guide
 
 Practical usage guide for every invoice endpoint: **when** to call it, **why** it exists, exact **request**, and real **response**.
 
@@ -80,7 +80,7 @@ GET /api/v1/invoices?status=ready&search=INV-2026&from=2026-08-01&to=2026-08-31&
     "generation_attempts":1, "last_generation_error":null,
     "is_correction":false,
     "verification_url":"https://â€¦/api/v1/general/invoices/verify/550e8400-â€¦",
-    "view_url":"https://â€¦/api/v1/general/orders/101/invoice",
+    "view_url":"https://.../api/v1/general/invoices/view/UUID?expires=...&signature=...",
     "qr_content":{ "uuid":"550e8400-â€¦", "invoice_number":"INV-2026-000012",
                    "verification_hash":"c31bâ€¦", "issued_at":"2026-08-22T09:14:58+00:00",
                    "verification_url":"https://â€¦/verify/550e8400-â€¦" },
@@ -264,7 +264,7 @@ GET /api/v1/invoices?status=ready&search=INV-2026&from=2026-08-01&to=2026-08-31&
     "invoice":{ "uuid":"550e8400-â€¦", "invoice_number":"INV-2026-000012",
                 "status":"ready", "total":155.0, "currency":"EGP",
                 "verify_count":1,
-                "view_url":"https://â€¦/api/v1/general/orders/101/invoice" },
+                "view_url":"https://.../api/v1/general/invoices/view/UUID?expires=...&signature=..." },
     "order":{ "id":101, "order_number":"ORD-00000101", "status":"completed",
               "payment_status":"paid", "fulfillment_status":"fulfilled" },
     "qr_content":"https://example.com/api/v1/general/invoices/verify/550e8400-â€¦" } }

@@ -43,7 +43,8 @@ Customer item fields (lightweight list — **no snapshot**): `uuid`, `invoice_nu
                 "generated_at": "2026-08-22T09:14:58+00:00",
                 "pdf_generated_at": "2026-08-22T09:15:00+00:00",
                 "verification_url": "https://example.com/api/v1/general/invoices/verify/550e8400-…",
-                "view_url": "https://example.com/api/v1/general/invoices/show/uuid/550e8400-�",
+                "view_url": "https://example.com/api/v1/general/invoices/view/UUID?expires=1787410926&signature=SIGNATURE",
+                "download_url": "https://example.com/api/v1/general/invoices/download/UUID?expires=1787410926&signature=SIGNATURE",
                 "download_url": "…"
             }
         ],
@@ -419,7 +420,8 @@ Validation: `reason` required, max 500 · all `overrides.*` optional (`total`/`a
         "corrected_at": "2026-08-22T10:00:00+00:00",
         "generation_attempts": 0,
         "verification_url": "https://example.com/api/v1/general/invoices/verify/7c9e6679-…",
-        "view_url": "https://example.com/api/v1/general/invoices/show/uuid/550e8400-�",
+        "view_url": "https://example.com/api/v1/general/invoices/view/UUID?expires=1787410926&signature=SIGNATURE",
+                "download_url": "https://example.com/api/v1/general/invoices/download/UUID?expires=1787410926&signature=SIGNATURE",
         "snapshot": { "…": "cloned snapshot with overrides applied" }
     }
 }

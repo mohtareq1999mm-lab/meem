@@ -249,11 +249,12 @@ class OrderIdInvoiceEndpointTest extends TestCase
         ]);
         $response->assertJsonPath('data.uuid', $invoice->uuid);
         $response->assertJsonPath('data.invoice_number', $invoice->invoice_number);
-        // Ready-made viewer link — customer show-by-uuid route.
+        // Ready-made viewer link — customer show-by-uuid SIGNED route.
         $this->assertStringContainsString(
             '/api/v1/general/invoices/show/uuid/' . $invoice->uuid,
             (string) $response->json('data.view_url')
         );
+        $this->assertStringContainsString('signature=', (string) $response->json('data.view_url'));
     }
 
     public function test_correction_exists_still_resolves_latest_invoice(): void

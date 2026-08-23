@@ -24,7 +24,7 @@ There are **three different things** a frontend can do with an invoice. They are
 | Endpoint | Middleware |
 |----------|-----------|
 | `GET /api/v1/general/invoices/my-invoices` | `auth:sanctum` |
-| `GET /api/v1/general/invoices/show/uuid/{uuid}` | `auth:sanctum` (`whereUuid`; owner-scoped, 403 non-owner) - returns canonical `CustomerInvoiceResource` |
+| `GET /api/v1/general/invoices/show/uuid/{uuid}` | **signed URL only** (`signed` middleware; generated as `view_url` in invoice payloads) - returns the actual PDF inline |
 | `GET /api/v1/general/invoices/uuid/{uuid}` | `auth:sanctum` + `permission:view-invoice` |
 | `GET /api/v1/general/invoices/verify/{uuid}` | `auth:sanctum` + `throttle:5,1` |
 | `GET /api/v1/general/orders/{orderId}/invoice` | `auth:sanctum` (owner-scoped query; pending order -> 404) - **canonical** |
@@ -90,7 +90,8 @@ Eager loads: `order`.
         "generated_at": "2026-07-28T09:00:00+00:00",
         "pdf_generated_at": "2026-07-28T10:00:00+00:00",
         "verification_url": "http://example.com/api/v1/general/invoices/verify/550e8400-...",
-        "view_url": "http://example.com/api/v1/general/invoices/show/uuid/550e8400-...",
+        "view_url": "http://example.com/api/v1/general/invoices/view/550e8400-...?expires=1787410926&signature=SIGNATURE",
+        "download_url": "http://example.com/api/v1/general/invoices/download/550e8400-...?expires=1787410926&signature=SIGNATURE",
         "download_url": "http://example.com/api/v1/invoices/550e8400-.../download"
       }
     ],
@@ -164,7 +165,8 @@ Source: route `routes/api.php` (`invoices` group, `show/uuid/{uuid}` + `whereUui
         "generated_at": "2026-08-22T09:00:00+00:00",
         "pdf_generated_at": null,
         "verification_url": "http://example.com/api/v1/general/invoices/verify/550e8400-e29b-41d4-a716-446655440000",
-        "view_url": "http://example.com/api/v1/general/invoices/show/uuid/550e8400-...",
+        "view_url": "http://example.com/api/v1/general/invoices/view/550e8400-...?expires=1787410926&signature=SIGNATURE",
+        "download_url": "http://example.com/api/v1/general/invoices/download/550e8400-...?expires=1787410926&signature=SIGNATURE",
         "snapshot": { "...": "InvoiceSnapshotResource when invoice.data exists" }
     }
 }
@@ -233,7 +235,8 @@ Eager loads: `order.orderItems`, `transaction`, `user`.
             "is_correction": false,
             "verify_count": 1,
             "verification_url": "http://example.com/api/v1/general/invoices/verify/550e8400-…",
-            "view_url": "http://example.com/api/v1/general/invoices/show/uuid/550e8400-...",
+            "view_url": "http://example.com/api/v1/general/invoices/view/550e8400-...?expires=1787410926&signature=SIGNATURE",
+        "download_url": "http://example.com/api/v1/general/invoices/download/550e8400-...?expires=1787410926&signature=SIGNATURE",
             "created_at": "2026-07-20T10:35:00+00:00"
         },
         "order": {
@@ -289,7 +292,8 @@ Eager loads: `order.orderItems`, `transaction`, `user`.
         "total": 210.0,
         "currency": "EGP",
         "verification_url": "http://example.com/api/v1/general/invoices/verify/550e8400-…",
-        "view_url": "http://example.com/api/v1/general/invoices/show/uuid/550e8400-...",
+        "view_url": "http://example.com/api/v1/general/invoices/view/550e8400-...?expires=1787410926&signature=SIGNATURE",
+        "download_url": "http://example.com/api/v1/general/invoices/download/550e8400-...?expires=1787410926&signature=SIGNATURE",
         "download_url": "http://example.com/api/v1/general/invoices/550e8400-…/download",
         "snapshot": { "…": "full frozen snapshot" }
     }

@@ -35,7 +35,7 @@ class CustomerInvoiceListResource extends JsonResource
                 url('/api/v1/general/invoices/verify/' . $this->uuid)
             ),
             'view_url' => $this->when($this->uuid, fn () =>
-                URL::temporarySignedRoute('general.invoices.show', now()->addMinutes(10), ['uuid' => $this->uuid])
+                URL::temporarySignedRoute('general.invoices.view', now()->addMinutes(10), ['uuid' => $this->uuid])
             ),
             'download_url' => $this->when($this->uuid, fn () =>
                 URL::temporarySignedRoute('general.invoices.download', now()->addMinutes(10), ['uuid' => $this->uuid])

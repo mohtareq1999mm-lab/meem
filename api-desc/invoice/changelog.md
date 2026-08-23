@@ -1,5 +1,19 @@
 # Invoice Module — Changelog
 
+## [1.9.0] — 2026-08-22
+
+### Changed (customer PDF flow — signed URLs)
+- **`view_url` / `download_url` are now temporary SIGNED URLs** (`URL::temporarySignedRoute`, 10 min TTL, names `general.invoices.view` / `general.invoices.download`). Frontend opens them directly in a browser — no `Authorization` header required. Ownership is enforced when the URLs are generated (owner-scoped endpoints only).
+- Routes moved out of the Sanctum group and now use `signed` middleware: `GET /general/invoices/view/{uuid}` → streams the PDF **inline**; `GET /general/invoices/download/{uuid}` → streams it as an **attachment**. Tampered/expired/missing signatures → 403 (`InvalidSignatureException` mapped in the app handler).
+- Both signed endpoints stream the **actual PDF binary** (`application/pdf`) — never a JSON pointer.
+
+### Fixed
+- Removed the "Scan to verify this invoice" + verification-URL block from the generated PDF blade. API verification (`verify/{uuid}`, verification hashes/URLs) is untouched.
+- Physical-disk existence check added before streaming (DB path without file → clean 404).
+
+### Changed (PDF engine)
+- **DomPDF → mPDF 8.2** for invoice generation: correct Arabic shaping/RTL + mixed Arabic/English via Segoe UI fonts registered from `storage/app/fonts` (deployments must supply an Arabic-capable TTF there). Job/storage architecture unchanged.
+
 ## [1.8.0] — 2026-08-22
 
 ### Added

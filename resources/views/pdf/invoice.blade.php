@@ -31,8 +31,6 @@
         .totals .value { text-align: right; }
         .totals .grand-total td { font-weight: bold; font-size: 14px; border-top: 2px solid #1a1a1a; padding-top: 8px; }
         .footer { margin-top: 40px; padding-top: 10px; border-top: 1px solid #d4d4d4; font-size: 10px; color: #999; text-align: center; }
-        .qr { text-align: center; margin-bottom: 20px; }
-        .qr img { width: 100px; height: 100px; }
         .badge { display: inline-block; padding: 3px 8px; border-radius: 3px; font-size: 11px; font-weight: bold; }
         .badge-correction { background-color: #fff3cd; color: #856404; }
         .status { margin-top: 10px; }
@@ -195,11 +193,6 @@
         <p>{{ $invoice->correction_reason }}</p>
     </div>
     @endif
-
-    <div class="qr">
-        <p>{{ __('Scan to verify this invoice') }}</p>
-        <p style="font-size: 10px; color: #999;">{{ url('/api/v1/general/invoices/verify/' . $invoice->uuid) }}</p>
-    </div>
 
     <div class="footer">
         <p>{{ config('app.name') }} - {{ __('Invoice') }} {{ $invoice->invoice_number }}</p>

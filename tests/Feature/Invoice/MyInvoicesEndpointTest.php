@@ -162,8 +162,8 @@ class MyInvoicesEndpointTest extends TestCase
         $this->assertArrayHasKey('pricing_breakdown', $detail->json('data.snapshot'));
     }
 
-    // 9b: customer download_url is callable by its owner (customer /general route)
-    public function test_customer_download_url_returns_pdf_pointer_for_owner(): void
+    // 9b: view/download URLs are temporary SIGNED links usable WITHOUT Sanctum
+    public function test_view_and_download_urls_are_signed(): void
     {
         \Illuminate\Support\Facades\Storage::fake('public');
         $user = $this->createUser('dl@mi.test');
@@ -177,31 +177,91 @@ class MyInvoicesEndpointTest extends TestCase
         Sanctum::actingAs($user);
         $response = $this->getJson(self::URI)->assertOk();
 
-        // List emits the CUSTOMER routes for view + download.
-        $expectedDownload = '/api/v1/general/invoices/download/' . $invoice->uuid;
-        $this->assertStringContainsString($expectedDownload, (string) $response->json('data.data.0.download_url'));
+        $viewUrl = $response->json('data.data.0.view_url');
+        $downloadUrl = $response->json('data.data.0.download_url');
 
-        $expectedView = '/api/v1/general/invoices/show/uuid/' . $invoice->uuid;
-        $this->assertStringContainsString($expectedView, (string) $response->json('data.data.0.view_url'));
+        foreach ([
+            ['/api/v1/general/invoices/view/', $viewUrl],
+            ['/api/v1/general/invoices/download/', $downloadUrl],
+        ] as [$segment, $url]) {
+            $this->assertStringContainsString($segment, $url);
+            $this->assertStringContainsString('expires=', $url);
+            $this->assertStringContainsString('signature=', $url);
+        }
+    }
 
-        // Following VIEW with the owner's token returns full invoice data.
-        $view = $this->getJson('/api/v1/general/invoices/show/uuid/' . $invoice->uuid)->assertOk();
-        $this->assertSame($invoice->invoice_number, $view->json('data.invoice_number'));
-        $this->assertNotNull($view->json('data.snapshot'));
+    // 9b-guest: signed URLs open WITHOUT any authentication (fresh guest context)
+    public function test_guest_can_follow_signed_view_and_download_urls(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+        $user = $this->createUser('guest@mi.test');
+        $order = $this->createOrderFor($user);
+        $invoice = $this->invoiceService->generateFromOrder($order);
+        $filename = str_replace('/', '-', $invoice->invoice_number) . '.pdf';
+        \Illuminate\Support\Facades\Storage::disk('public')->put('invoices/' . $filename, '%PDF-1.4 test');
+        $invoice->update(['pdf_path' => $filename, 'pdf_generated_at' => now(), 'status' => 'ready']);
 
-        // Following DOWNLOAD with the owner's token returns the storage pointer.
-        $download = $this->getJson('/api/v1/general/invoices/download/' . $invoice->uuid)->assertOk();
-        $this->assertSame($invoice->invoice_number, $download->json('data.invoice_number'));
+        // Generate the same urls the resource emits — no actingAs anywhere.
+        $viewUrl = \Illuminate\Support\Facades\URL::temporarySignedRoute(
+            'general.invoices.view', now()->addMinutes(10), ['uuid' => $invoice->uuid]
+        );
+        $downloadUrl = \Illuminate\Support\Facades\URL::temporarySignedRoute(
+            'general.invoices.download', now()->addMinutes(10), ['uuid' => $invoice->uuid]
+        );
 
-        // Foreign user gets the privacy 404 on both.
-        $intruder = $this->createUser('intruder-dl@mi.test');
-        Sanctum::actingAs($intruder);
-        $this->getJson('/api/v1/general/invoices/download/' . $invoice->uuid)
-            ->assertStatus(404)
-            ->assertJsonMissing(['invoice_number']);
-        $this->getJson('/api/v1/general/invoices/show/uuid/' . $invoice->uuid)
-            ->assertStatus(404)
-            ->assertJsonMissing(['invoice_number']);
+        // VIEW streams the PDF inline.
+        $viewPath = parse_url($viewUrl, PHP_URL_PATH) . '?' . parse_url($viewUrl, PHP_URL_QUERY);
+        $view = $this->get($viewPath)->assertOk();
+        $this->assertSame('application/pdf', $view->headers->get('Content-Type'));
+        $this->assertStringContainsString('inline', (string) $view->headers->get('Content-Disposition'));
+
+        // DOWNLOAD streams the PDF as attachment + records bookkeeping.
+        $downloadPath = parse_url($downloadUrl, PHP_URL_PATH) . '?' . parse_url($downloadUrl, PHP_URL_QUERY);
+        $download = $this->get($downloadPath)->assertOk();
+        $this->assertSame('application/pdf', $download->headers->get('Content-Type'));
+        $this->assertStringContainsString('attachment', (string) $download->headers->get('Content-Disposition'));
+        $this->assertNotNull($invoice->refresh()->downloaded_at);
+
+        // Guest hitting my-invoices itself stays protected.
+        $this->getJson(self::URI)->assertStatus(401);
+    }
+
+    // 9c: signature tampering is rejected with 403
+    public function test_tampered_signed_urls_are_rejected(): void
+    {
+        $user = $this->createUser('tamper@mi.test');
+        $order = $this->createOrderFor($user);
+        $invoice = $this->invoiceService->generateFromOrder($order);
+
+        $viewUrl = \Illuminate\Support\Facades\URL::temporarySignedRoute(
+            'general.invoices.view', now()->addMinutes(10), ['uuid' => $invoice->uuid]
+        );
+        $path = parse_url($viewUrl, PHP_URL_PATH);
+        parse_str(parse_url($viewUrl, PHP_URL_QUERY), $params);
+
+        // modified uuid
+        $this->get($path . '?' . http_build_query(array_merge($params, [
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+        ])))->assertStatus(403);
+
+        // modified expiration
+        $this->get($path . '?' . preg_replace('/expires=\d+/', 'expires=9999999999', http_build_query($params)))
+            ->assertStatus(403);
+
+        // invalid signature
+        $this->get($path . '?' . preg_replace('/signature=[a-f0-9]+/', 'signature=' . str_repeat('a', 64), http_build_query($params)))
+            ->assertStatus(403);
+
+        // missing signature
+        $this->get($path . '?' . http_build_query(array_diff_key($params, ['signature' => ''])))
+            ->assertStatus(403);
+
+        // expired
+        $expired = \Illuminate\Support\Facades\URL::temporarySignedRoute(
+            'general.invoices.view', now()->subMinutes(5), ['uuid' => $invoice->uuid]
+        );
+        $this->get(parse_url($expired, PHP_URL_PATH) . '?' . parse_url($expired, PHP_URL_QUERY))
+            ->assertStatus(403);
     }
 
     // 10: admin endpoints unchanged (admin show still exposes hashes/snapshot)

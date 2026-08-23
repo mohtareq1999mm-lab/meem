@@ -22,6 +22,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Illuminate\Database\QueryException;
+use Illuminate\Routing\Exceptions\InvalidSignatureException;
 use Throwable;
 use Illuminate\Http\Response;
 
@@ -116,6 +117,11 @@ class Handler extends ExceptionHandler
         elseif ($exception instanceof MethodNotAllowedHttpException) {
             $statusCode = 405;
             $message = 'Method Not Allowed';
+        }
+        // Handle invalid/expired/missing signed-URL signatures (customer view/download)
+        elseif ($exception instanceof InvalidSignatureException) {
+            $statusCode = 403;
+            $message = 'Invalid signature';
         }
         // Handle Spatie permission exceptions
         elseif ($exception instanceof SpatieUnauthorizedException) {
