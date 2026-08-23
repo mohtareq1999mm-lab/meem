@@ -114,7 +114,7 @@ class DigitalDownloadController extends Controller
             'downloaded_at' => now(),
         ]);
 
-        $disk = Storage_disk($asset->disk);
+        $disk = \Illuminate\Support\Facades\Storage::disk($asset->disk);
 
         if (!$disk->exists($asset->path)) {
             return $this->apiResponse(NOT_FOUND, 404, false);
