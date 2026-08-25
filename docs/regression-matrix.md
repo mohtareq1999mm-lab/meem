@@ -712,3 +712,36 @@ Realtime File Operations (ADR-002): FileOperationEvent + shared broadcast trait;
 
 Result:
 PASS - zero regressions introduced; residual notification failures proven pre-existing.
+
+---
+
+## Dashboard Analytics Closure (2026-08-25, Rev 2)
+
+**Changed Feature:**
+Dashboard analytics correctness: data-driven order-status counts (processing), digital/physical product separation, base-currency-safe revenue aggregation, payments:reconcile scheduling, sqlite test-schema parity.
+
+**Affected Features:**
+- Dashboard (all 16 endpoints)
+- Order status lifecycle reporting
+- Digital products / entitlements / licenses analytics
+- Multi-currency orders & finance
+- Payment reconciliation operations
+- Test fixture schema (CreatesTestTables)
+
+**Regression:**
+
+| Suite | Status | Reason |
+|-------|--------|--------|
+| DashboardClosureTest (new) | PASS 13/13, 95 assertions | processing counted; legacy keys kept; zero/nesting consistency; digital excluded from inventory_value/out_of_stock/low-stock; digital block incl. entitlements/downloads/licenses w/o secrets; multi-currency not mixed (6000 not 1100); by-currency breakdowns; reconciliation contract; scheduler registrations incl. hourly payments:reconcile withoutOverlapping |
+| DashboardTest (legacy) | PASS 33/33, 236 assertions | Full backward compatibility of all endpoint contracts |
+| WorkerConfigPolicyTest (new) | PASS 4/4 | meem-high 1200/5/sleep1; meem-medium 900/3; no timeout=90; retry_after>=1500 |
+| ProductionClosureAuditRegressionTest | PASS 15/15 | view-analytics gating + all prior closure proofs |
+| FileOperations suite | PASS 25/25 | Realtime file ops unaffected |
+| QueueStandardizationStaticTest | PASS 134/134 | W8 queue policy intact |
+| Digital suites | PASS 151/151 | W1-W8 remain closed |
+| Categories + Brands | PASS 165/165 | Import/export/bulk-delete unaffected |
+| ProductImport/ExportTest | PASS 34/34 | |
+| Notifications dir | BASELINE-IDENTICAL | 135 run: 1E/4F exactly matching pre-change baseline (fixture currency columns restored to production parity during verification) |
+
+Result:
+PASS - zero regressions; two stale-fixture defects (missing FX snapshot columns, missing processing status) found and fixed in the test infrastructure itself.

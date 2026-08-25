@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Marvel\Enums\DiscountType;
+use Marvel\Enums\ItemType;
 use Marvel\Enums\ProductStatus;
 use Marvel\Traits\Excludable;
 use Marvel\Services\Pricing\ProductPricingService;
@@ -529,6 +530,25 @@ class Product extends Model implements HasMedia
     public function scopeFastShippingAvailable($query)
     {
         return $query->where('is_fast_shipping_available', true);
+    }
+
+    /**
+     * Physical products only. Rows created before the item_type feature
+     * (NULL item_type) are legacy physical products.
+     */
+    public function scopePhysical($query)
+    {
+        return $query->where(function ($q) {
+            $q->where('item_type', ItemType::PHYSICAL)->orWhereNull('item_type');
+        });
+    }
+
+    /**
+     * Digital products only (ItemType::DIGITAL).
+     */
+    public function scopeDigital($query)
+    {
+        return $query->where('item_type', ItemType::DIGITAL);
     }
 
     public function scopeFlashSaleWithinOneWeek($query)

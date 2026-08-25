@@ -1805,3 +1805,38 @@ YES
 
 Notes:
 Deferred by explicit scope decision: G3 product-export async conversion (sync download unchanged, dead ExportProductsJob left dormant), G4 ownership scoping of status/cancel/download endpoints, G7 signal-file local-disk scaling constraint. Supervisor values verified current on disk: meem-high --timeout=1200 / stopwaitsecs=1230 / retry_after=1560; residual note documented for job-level timeout=1500 imports.
+
+========================================================================
+DASHBOARD ANALYTICS CLOSURE (REV 2) - PROCESSING / DIGITAL / FX / CRON
+Date: 2026-08-25
+Feature: Dashboard Analytics
+Revision: 2
+
+Summary:
+Closed the remaining dashboard gaps from the full project audit. (1) order-stats status counts are now derived from real data using Order model constants as the canonical key set - processing is counted, legacy response keys preserved, unknown statuses flow through dynamically. (2) Product analytics split by ItemType via new Product::physical()/digital() scopes: inventory_value, out_of_stock and low-stock are PHYSICAL-only; additive digital block reports digital products/units sold, active/revoked/expired entitlements, download totals (30d window) and license pool counts by status - no license secrets or PII exposed. (3) All order monetary aggregates now use COALESCE(converted_total_price, total_price) (base-currency safe); category/coupon line revenues multiply by COALESCE(currency_rate,1); finance/shipping converted; additive revenue_by_currency + gross_by_currency breakdowns expose raw per-currency splits. (4) payments:reconcile scheduled hourly with withoutOverlapping (dispatches existing idempotent meem-medium PaymentReconciliationJob). (5) Test-infrastructure parity fixes: sqlite orders.status CHECK widened to include processing (sqlite rebuild path added to the 2026_08_19 migration), CreatesTestTables orders given production FX snapshot columns incl. catalog_currency_code, payment_reconciliation_results table added.
+
+Verified Bugs Fixed:
+- D1: dashboard order-stats hardcoded processing=0 (ignored the new canonical status)
+- D2: digital products inflated physical inventory_value and appeared in out_of_stock/low-stock
+- D3: multi-currency revenue mixed raw totals across currencies (EGP1000+USD100 = 1100 bug; now base-converted 6000-style correctness with per-currency breakdown)
+- D4: payments:reconcile existed but was never scheduled
+- T1: sqlite test schema could not represent processing orders (hid D1 from tests)
+- T2: CreatesTestTables orders lacked FX snapshot columns (caused 409 on overview in fixture-based suites)
+
+Documentation Updated:
+YES (this file, production-status, regression-matrix, feature-dependencies)
+
+Routes Updated:
+NO (no endpoint additions/removals; responses are backward-compatible additive)
+
+Regression Executed:
+YES
+
+Regression Result:
+PASS - DashboardClosure 13/13(95a), WorkerConfigPolicy 4/4(16a), DashboardTest 33/33(236a), ClosureAudit 15/15(30a), FileOps 25/25(121a), Queue policy 134/134(294a), Digital 151/151(746a), Categories+Brands 165/165(510a), ProductImportExport 34/34(111a), Notifications dir byte-identical to pre-change baseline (135: 1E/4F pre-existing).
+
+Production Ready:
+YES (code config verified; live worker process NOT verified from repo - requires server ps/pgrep check per closure gate)
+
+Notes:
+ExpireAbandonedCarts ('cart:expire') confirmed dead (no scheduler/test/reference usage) - retained intentionally, deletion deferred to a cleanup decision. Invoice regeneration commands referenced in older docs remain unregistered in Kernel::schedule - carried as documented observation.

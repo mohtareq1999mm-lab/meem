@@ -456,6 +456,15 @@ Schema::create('categories', function (Blueprint $table) {
             $table->timestamp('cancelled_at')->nullable();
             $table->decimal('price', 10, 2)->default(0);
             $table->decimal('total_price', 10, 2)->default(0);
+            // Production parity: per-order FX snapshot columns (see the
+            // 2026_08 currency migrations). converted_total_price is the
+            // order total denominated in the store base currency.
+            $table->string('currency_code', 3)->nullable();
+            $table->string('base_currency_code', 3)->nullable();
+            $table->string('catalog_currency_code', 3)->nullable();
+            $table->decimal('currency_rate', 20, 10)->nullable();
+            $table->date('currency_rate_date')->nullable();
+            $table->decimal('converted_total_price', 10, 3)->nullable();
             $table->decimal('shipping_price', 10, 2)->nullable();
             $table->string('coupon')->nullable();
             $table->decimal('coupon_discount', 10, 2)->nullable();
@@ -920,6 +929,22 @@ Schema::create('categories', function (Blueprint $table) {
             $table->string('email')->index();
             $table->string('token');
             $table->timestamp('created_at')->nullable();
+        });
+
+        // Payment reconciliation results (dashboard/reconciliation endpoint).
+        Schema::create('payment_reconciliation_results', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('transaction_id')->constrained('transactions');
+            $table->foreignId('order_id')->constrained('orders');
+            $table->string('gateway', 50);
+            $table->string('mismatch_type', 50);
+            $table->text('expected_value')->nullable();
+            $table->text('actual_value')->nullable();
+            $table->text('notes')->nullable();
+            $table->timestamp('resolved_at')->nullable();
+            $table->timestamps();
+            $table->index('mismatch_type');
+            $table->index('resolved_at');
         });
     }
 }

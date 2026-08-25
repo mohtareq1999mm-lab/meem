@@ -3,6 +3,9 @@
 namespace App\Services\Dashboard;
 
 use App\Enums\UserType;
+use App\Models\DigitalDownloadLog;
+use App\Models\DigitalEntitlement;
+use App\Models\DigitalLicenseKey;
 use App\Models\PaymentReconciliationResult;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -15,6 +18,15 @@ use Marvel\Database\Models\User;
 
 class DashboardService
 {
+    /**
+     * Base-currency-safe revenue expression. Orders created after the
+     * currency feature carry `converted_total_price` (order total expressed
+     * in the store base currency at purchase-time rate); legacy orders have
+     * NULL there and their `total_price` is already base-denominated.
+     * NEVER raw-SUM `total_price` across currencies.
+     */
+    private const BASE_REVENUE_RAW = 'COALESCE(converted_total_price, total_price)';
+
     // =========================================================================
     // Existing Endpoints
     // =========================================================================
@@ -24,11 +36,13 @@ class DashboardService
         return Cache::remember('dashboard_overview', 300, function () {
             $totalRevenue = (float) Order::where('status', 'completed')
                 ->whereDate('created_at', '<=', Carbon::now())
-                ->sum('total_price');
+                ->selectRaw('SUM(' . self::BASE_REVENUE_RAW . ') as agg')
+                ->value('agg');
 
             $todaysRevenue = (float) Order::where('status', 'completed')
                 ->whereDate('created_at', '>', Carbon::now()->subDays(1))
-                ->sum('total_price');
+                ->selectRaw('SUM(' . self::BASE_REVENUE_RAW . ') as agg')
+                ->value('agg');
 
             $totalRefunds = (float) DB::table('refunds')
                 ->whereDate('created_at', '<', Carbon::now())
@@ -60,11 +74,13 @@ class DashboardService
         return Cache::remember('dashboard_revenue', 300, function () {
             $totalRevenue = (float) Order::where('status', 'completed')
                 ->whereDate('created_at', '<=', Carbon::now())
-                ->sum('total_price');
+                ->selectRaw('SUM(' . self::BASE_REVENUE_RAW . ') as agg')
+                ->value('agg');
 
             $todaysRevenue = (float) Order::where('status', 'completed')
                 ->whereDate('created_at', '>', Carbon::now()->subDays(1))
-                ->sum('total_price');
+                ->selectRaw('SUM(' . self::BASE_REVENUE_RAW . ') as agg')
+                ->value('agg');
 
             $months = [
                 'January', 'February', 'March', 'April', 'May', 'June',
@@ -72,7 +88,7 @@ class DashboardService
             ];
 
             $salesByMonth = Order::select(
-                    DB::raw("SUM(total_price) as total"),
+                    DB::raw('SUM(' . self::BASE_REVENUE_RAW . ') as total'),
                     DB::raw($this->dateFormat('%c') . " as month_num")
                 )
                 ->where('status', 'completed')
@@ -90,6 +106,9 @@ class DashboardService
                 'total_revenue'      => round($totalRevenue, 2),
                 'todays_revenue'     => round($todaysRevenue, 2),
                 'monthly_breakdown'  => $monthlyBreakdown,
+                'revenue_by_currency' => $this->revenueByCurrency(
+                    Order::where('status', 'completed')->whereYear('created_at', Carbon::now()->year)
+                ),
             ];
         });
     }
@@ -103,15 +122,31 @@ class DashboardService
                     ->groupBy('status')
                     ->pluck('order_count', 'status');
 
-                return [
-                    'pending'           => (int) ($results['pending'] ?? 0),
-                    'processing'        => 0,
-                    'completed'         => (int) ($results['completed'] ?? 0),
-                    'cancelled'         => (int) ($results['cancelled'] ?? 0),
-                    'refunded'          => 0,
-                    'failed'            => 0,
-                    'local_facility'    => 0,
-                    'out_for_delivery'  => 0,
+                // Canonical statuses come from the Order model itself (the
+                // single source of truth). Counts are derived from the
+                // actual data; unknown/future statuses flow through
+                // dynamically instead of being silently dropped.
+                $counts = [
+                    Order::ORDER_STATUS_PENDING => 0,
+                    Order::ORDER_STATUS_PROCESSING => 0,
+                    Order::ORDER_STATUS_COMPLETED => 0,
+                    Order::ORDER_STATUS_CANCELLED => 0,
+                    Order::ORDER_STATUS_DELIVERED => 0,
+                ];
+
+                foreach ($results as $status => $count) {
+                    $counts[$status] = (int) $count;
+                }
+
+                // Legacy response keys kept for backward client
+                // compatibility. These are payment/fulfillment concepts and
+                // are not stored as order.status values; they remain zero
+                // unless the data layer ever contains them.
+                return $counts + [
+                    'refunded'         => 0,
+                    'failed'           => 0,
+                    'local_facility'   => 0,
+                    'out_for_delivery' => 0,
                 ];
             };
 
@@ -185,7 +220,10 @@ class DashboardService
     public function getLowStockProducts(Request $request, int $limit = 10)
     {
         return Cache::remember("dashboard_low_stock_{$limit}", 300, function () use ($limit) {
+            // Low stock is a PHYSICAL-inventory concept; digital products
+            // have no stock semantics and must not appear here.
             return Product::with('type')
+                ->physical()
                 ->where('stock_quantity', '<', 10)
                 ->take($limit)
                 ->get();
@@ -203,48 +241,48 @@ class DashboardService
 
             $today = (float) Order::where('status', 'completed')
                 ->whereDate('created_at', $now->toDateString())
-                ->sum('total_price');
+                ->sum(DB::raw(self::BASE_REVENUE_RAW));
 
             $yesterday = (float) Order::where('status', 'completed')
                 ->whereDate('created_at', $now->copy()->subDay()->toDateString())
-                ->sum('total_price');
+                ->sum(DB::raw(self::BASE_REVENUE_RAW));
 
             $last7Days = (float) Order::where('status', 'completed')
                 ->whereDate('created_at', '>', $now->copy()->subDays(7))
-                ->sum('total_price');
+                ->sum(DB::raw(self::BASE_REVENUE_RAW));
 
             $last30Days = (float) Order::where('status', 'completed')
                 ->whereDate('created_at', '>', $now->copy()->subDays(30))
-                ->sum('total_price');
+                ->sum(DB::raw(self::BASE_REVENUE_RAW));
 
             $todayVsYesterday = $this->percentageChange($yesterday, $today);
 
             $thisMonth = (float) Order::where('status', 'completed')
                 ->whereYear('created_at', $now->year)
                 ->whereMonth('created_at', $now->month)
-                ->sum('total_price');
+                ->sum(DB::raw(self::BASE_REVENUE_RAW));
 
             $lastMonth = (float) Order::where('status', 'completed')
                 ->whereYear('created_at', $now->copy()->subMonth()->year)
                 ->whereMonth('created_at', $now->copy()->subMonth()->month)
-                ->sum('total_price');
+                ->sum(DB::raw(self::BASE_REVENUE_RAW));
 
             $thisYear = (float) Order::where('status', 'completed')
                 ->whereYear('created_at', $now->year)
-                ->sum('total_price');
+                ->sum(DB::raw(self::BASE_REVENUE_RAW));
 
             $lastYear = (float) Order::where('status', 'completed')
                 ->whereYear('created_at', $now->copy()->subYear()->year)
-                ->sum('total_price');
+                ->sum(DB::raw(self::BASE_REVENUE_RAW));
 
             $completedOrders = Order::where('status', 'completed')->count();
-            $completedRevenue = (float) Order::where('status', 'completed')->sum('total_price');
+            $completedRevenue = (float) Order::where('status', 'completed')->sum(DB::raw(self::BASE_REVENUE_RAW));
             $aov = $completedOrders > 0 ? round($completedRevenue / $completedOrders, 2) : 0;
 
             $revenueByPayment = DB::table('transactions')
                 ->join('orders', 'transactions.order_id', '=', 'orders.id')
                 ->where('orders.status', 'completed')
-                ->select('transactions.payment_method', DB::raw('SUM(orders.total_price) as total'))
+                ->select('transactions.payment_method', DB::raw('SUM(COALESCE(orders.converted_total_price, orders.total_price)) as total'))
                 ->groupBy('transactions.payment_method')
                 ->pluck('total', 'payment_method');
 
@@ -253,7 +291,7 @@ class DashboardService
             })->values();
 
             $revenueByFulfillment = Order::where('status', 'completed')
-                ->select('fulfillment_type', DB::raw('SUM(total_price) as total'))
+                ->select('fulfillment_type', DB::raw('SUM(COALESCE(converted_total_price, total_price)) as total'))
                 ->groupBy('fulfillment_type')
                 ->pluck('total', 'fulfillment_type');
 
@@ -433,11 +471,15 @@ class DashboardService
                 $q->where('sold_quantity', 0)->orWhereNull('sold_quantity');
             })->take($limit)->get(['id', 'name', 'slug', 'price', 'sold_quantity']);
 
-            $outOfStock = Product::where('stock_quantity', 0)
+            $outOfStock = Product::physical()
+                ->where('stock_quantity', 0)
                 ->take($limit)
                 ->get(['id', 'name', 'slug', 'price', 'quantity']);
 
-            $inventoryValue = (float) Product::selectRaw('SUM(price * stock_quantity) as total')
+            // Inventory value is a PHYSICAL-stock concept. Digital products
+            // have no stock semantics and must not inflate this figure.
+            $inventoryValue = (float) Product::physical()
+                ->selectRaw('SUM(price * stock_quantity) as total')
                 ->where('stock_quantity', '>', 0)
                 ->value('total');
 
@@ -447,6 +489,8 @@ class DashboardService
                 'never_sold'      => $neverSold,
                 'out_of_stock'    => $outOfStock,
                 'inventory_value' => round($inventoryValue, 2),
+                // Additive digital-goods block (counts only).
+                'digital'         => $this->getDigitalAnalytics(),
             ];
         });
     }
@@ -463,7 +507,7 @@ class DashboardService
             $timelineDaily = Order::select(
                     DB::raw("DATE(created_at) as date"),
                     DB::raw('COUNT(*) as count'),
-                    DB::raw('SUM(total_price) as revenue')
+                    DB::raw('SUM(COALESCE(converted_total_price, total_price)) as revenue')
                 )
                 ->whereDate('created_at', '>', $now->copy()->subDays(30))
                 ->groupBy('date')
@@ -478,7 +522,7 @@ class DashboardService
             $timelineWeekly = Order::select(
                     DB::raw($this->dateFormat('%Y-%u') . " as week"),
                     DB::raw('COUNT(*) as count'),
-                    DB::raw('SUM(total_price) as revenue')
+                    DB::raw('SUM(COALESCE(converted_total_price, total_price)) as revenue')
                 )
                 ->whereDate('created_at', '>', $now->copy()->subMonths(6))
                 ->groupBy('week')
@@ -493,7 +537,7 @@ class DashboardService
             $timelineMonthly = Order::select(
                     DB::raw($this->dateFormat('%Y-%m') . " as month"),
                     DB::raw('COUNT(*) as count'),
-                    DB::raw('SUM(total_price) as revenue')
+                    DB::raw('SUM(COALESCE(converted_total_price, total_price)) as revenue')
                 )
                 ->whereDate('created_at', '>', $now->copy()->subYears(2))
                 ->groupBy('month')
@@ -561,7 +605,7 @@ class DashboardService
                 ->select(
                     'categories.id as category_id',
                     'categories.name as category_name',
-                    DB::raw('COALESCE(SUM(order_products.product_quantity * order_products.product_price), 0) as revenue')
+                    DB::raw('COALESCE(SUM(order_products.product_quantity * order_products.product_price * COALESCE(orders.currency_rate, 1)), 0) as revenue')
                 )
                 ->leftJoin('category_product', 'category_product.category_id', '=', 'categories.id')
                 ->leftJoin('products', 'category_product.product_id', '=', 'products.id')
@@ -582,7 +626,7 @@ class DashboardService
                 ->select(
                     'categories.id as category_id',
                     'categories.name as category_name',
-                    DB::raw('COALESCE(SUM(order_products.product_quantity * order_products.product_price), 0) as revenue')
+                    DB::raw('COALESCE(SUM(order_products.product_quantity * order_products.product_price * COALESCE(orders.currency_rate, 1)), 0) as revenue')
                 )
                 ->leftJoin('category_product', 'category_product.category_id', '=', 'categories.id')
                 ->leftJoin('products', 'category_product.product_id', '=', 'products.id')
@@ -597,7 +641,7 @@ class DashboardService
             $prevMonthRevenue = DB::table('categories')
                 ->select(
                     'categories.id as category_id',
-                    DB::raw('COALESCE(SUM(order_products.product_quantity * order_products.product_price), 0) as revenue')
+                    DB::raw('COALESCE(SUM(order_products.product_quantity * order_products.product_price * COALESCE(orders.currency_rate, 1)), 0) as revenue')
                 )
                 ->leftJoin('category_product', 'category_product.category_id', '=', 'categories.id')
                 ->leftJoin('products', 'category_product.product_id', '=', 'products.id')
@@ -653,7 +697,7 @@ class DashboardService
             $revenueByCoupon = DB::table('orders')
                 ->whereNotNull('coupon')
                 ->where('status', 'completed')
-                ->select('coupon', DB::raw('SUM(total_price) as revenue'))
+                ->select('coupon', DB::raw('SUM(COALESCE(converted_total_price, total_price)) as revenue'))
                 ->groupBy('coupon')
                 ->orderBy('revenue', 'desc')
                 ->take(10)
@@ -737,7 +781,8 @@ class DashboardService
     {
         return Cache::remember('dashboard_finance_analytics', 300, function () {
             $grossRevenue = (float) Order::where('status', 'completed')
-                ->sum('total_price');
+                ->selectRaw('SUM(' . self::BASE_REVENUE_RAW . ') as agg')
+                ->value('agg');
 
             $refundAmount = (float) DB::table('refunds')
                 ->where('status', 'approved')
@@ -752,7 +797,7 @@ class DashboardService
             $netRevenue = $grossRevenue - $refundAmount;
 
             $shippingRevenue = (float) Order::where('status', 'completed')
-                ->selectRaw('COALESCE(SUM(shipping_price), 0) + COALESCE(SUM(fast_shipping_fee), 0) as total')
+                ->selectRaw('COALESCE(SUM(shipping_price * COALESCE(currency_rate, 1)), 0) + COALESCE(SUM(fast_shipping_fee * COALESCE(currency_rate, 1)), 0) as total')
                 ->value('total');
 
             return [
@@ -761,6 +806,11 @@ class DashboardService
                 'refund_amount'    => round($refundAmount, 2),
                 'total_discount'   => round($totalDiscount, 2),
                 'shipping_revenue' => round($shippingRevenue, 2),
+                // Additive: per-currency gross breakdown so multi-currency
+                // stores can see the raw split that feeds net_revenue.
+                'gross_by_currency' => $this->revenueByCurrency(
+                    Order::where('status', 'completed')
+                ),
             ];
         });
     }
@@ -817,5 +867,60 @@ class DashboardService
             return $current > 0 ? 100 : 0;
         }
         return round((($current - $previous) / $previous) * 100, 2);
+    }
+
+    /**
+     * Base-currency-safe revenue expression helper (see BASE_REVENUE_RAW).
+     * Orders created after the currency feature carry converted_total_price
+     * (base-denominated at purchase-time rate); legacy orders are already
+     * base-denominated in total_price.
+     */
+    private function revenueByCurrency($orderQuery): array
+    {
+        return (clone $orderQuery)
+            ->selectRaw("COALESCE(currency_code, 'BASE') as currency_code, SUM(total_price) as total")
+            ->groupBy('currency_code')
+            ->orderBy('currency_code')
+            ->pluck('total', 'currency_code')
+            ->map(fn ($total) => round((float) $total, 2))
+            ->all();
+    }
+
+    /**
+     * Aggregated digital-goods analytics (counts only — no license
+     * secrets, no customer PII).
+     */
+    private function getDigitalAnalytics(): array
+    {
+        $now = Carbon::now();
+
+        return [
+            'digital_products' => (int) Product::digital()->count(),
+            'digital_units_sold' => (int) Product::digital()->sum('sold_quantity'),
+            'entitlements' => [
+                'active' => (int) DigitalEntitlement::query()
+                    ->where('status', DigitalEntitlement::STATUS_DELIVERED)
+                    ->whereNull('revoked_at')
+                    ->where(function ($q) use ($now) {
+                        $q->whereNull('expires_at')->orWhere('expires_at', '>', $now);
+                    })
+                    ->count(),
+                'revoked' => (int) DigitalEntitlement::whereNotNull('revoked_at')->count(),
+                'expired' => (int) DigitalEntitlement::query()
+                    ->whereNull('revoked_at')
+                    ->whereNotNull('expires_at')
+                    ->where('expires_at', '<=', $now)
+                    ->count(),
+            ],
+            'downloads' => [
+                'total' => (int) DigitalDownloadLog::count(),
+                'last_30_days' => (int) DigitalDownloadLog::where('downloaded_at', '>', $now->copy()->subDays(30))->count(),
+            ],
+            'licenses' => DigitalLicenseKey::select('status', DB::raw('count(*) as total'))
+                ->groupBy('status')
+                ->pluck('total', 'status')
+                ->map(fn ($c) => (int) $c)
+                ->all(),
+        ];
     }
 }

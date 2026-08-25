@@ -29,6 +29,11 @@ class Kernel extends ConsoleKernel
         $schedule->command('flash-sales:notify-ending-soon')->daily()->withoutOverlapping();
         // Permanently remove products soft-deleted more than 30 days ago.
         $schedule->command('products:purge-old-deleted --days=30')->dailyAt('02:30')->withoutOverlapping();
+
+        // Payment gateway reconciliation: dispatches the existing
+        // PaymentReconciliationJob (meem-medium, tries=1). withoutOverlapping
+        // prevents concurrent reconciliation runs.
+        $schedule->command('payments:reconcile')->hourly()->withoutOverlapping();
     }
 
     /**
