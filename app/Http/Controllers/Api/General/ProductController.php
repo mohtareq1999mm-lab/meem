@@ -211,7 +211,7 @@ class ProductController extends Controller
     public function getProductBySlug(Request $request): JsonResponse
     {
         $slug = trim((string) $request->route('slug'));
-        $limit = $request->integer('limit', 10);
+        $limit = min(100, max(1, $request->integer('limit', 10)));
         $product = $this->productService->getProductBySlug($slug, $limit);
 
         if (!$product) {

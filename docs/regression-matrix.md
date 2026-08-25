@@ -586,3 +586,129 @@ Affected Features:
 
 Result:
 PASS — zero regressions introduced; all failures in untouched suites are pre-existing and documented in production-status.md.
+
+---
+
+## Digital Product System (Rev 1, 2026-08-23)
+
+**Changed Feature:**
+Products + new Digital Product System (PHYSICAL/DIGITAL implementation)
+
+**Affected Features:**
+- Cart (inventory bypass)
+- Checkout (shipping rules)
+- Orders (item snapshot)
+- Payments (fulfillment trigger)
+- Downloads (new)
+- Notifications (new)
+- Import/Export
+- Admin product list
+
+**Regression:**
+
+| Suite | Status | Reason |
+|-------|--------|--------|
+| DigitalFulfillmentTest | PASS | 5/5 - exactly-once, mixed/physical-only, revocation |
+| DigitalCartCheckoutTest | PASS | 9/9 - zero-stock add, no reservation, shipping rules |
+| DigitalDownloadSecurityTest | PASS | 10/10 - signed URLs, limits, IDOR, revoked, filename safety |
+| ProductItemTypeTest | PASS | 16/16 incl. SERVICE rejection + immutability |
+| ProductsEndpointTest / ProductCrudTest / ProductAdminTest / ProductCacheTest / ProductImportTest | PASS | all green in combined run |
+| CartExpirationTest | PASS | 8/8 (RefreshDatabase migrations OK) |
+| FlashSalesEndpointTest / ProductCurrencyTest | PASS | green |
+| CartApiTest | NOT VERIFIED | 3 failures: device_tokens missing-table from uncommitted FCM workstream |
+| CheckoutApiTest | NOT VERIFIED | 1 failure: same FCM device_tokens cause |
+| OrderStatusLifecycleTest | NOT VERIFIED | 2 failures: same FCM device_tokens cause |
+| WishlistApiTest / AttributesProductionHardenTest | NOT VERIFIED | route drift predating this change (documented Rev 2) |
+| DimensionFilterTest | NOT VERIFIED | SQLite REGEXP_REPLACE limitation (documented Rev 2) |
+| ProductExportTest / ProductFilterTest | FAIL (pre-existing) | dead export route + missing general-product-show route name; unchanged since HEAD |
+
+**Changes Applied:** See production-history entry dated 2026-08-23 (Digital Product System).
+
+---
+
+## Full API Closure Audit (2026-08-23)
+
+**Changed Feature:**
+Cross-cutting audit fixes: routes/api.php + Marvel Routes.php (duplicate names, cashier action string, refunds auth, dashboard gate, whereNumber constraints), RefundController/Repository, ReviewController, PermissionSeeder (+create-review/update-review), constants.php (+11 message constants), ShipmentController, AdminMiddleware, OneTimePasswordNotification, DeviceTokenController, InvoiceController, FastShipping controllers (app+Marvel), FlashSaleVendorRequestController, BulkDeleteCategoriesRequest, FlashSale create/update requests, CouponController inline approval guard, limit caps in 6 public services, en/ar message.php (+19 keys), SendUserOrderDeliveredNotification duplicate-import fatal.
+
+**Affected Features:**
+- Checkout/Payments (cashier mark-paid endpoint restored)
+- Dashboard analytics (now permission-gated)
+- Shipments (translated messages)
+- Reviews admin endpoints (permission-gated)
+- Coupons apply (validation added)
+- Flash sales (date-range validation)
+- All public list endpoints (limit caps)
+
+**Regression:**
+
+| Suite | Status | Reason |
+|-------|--------|--------|
+| ProductionClosureAuditRegressionTest | PASS (15/15) | NEW - covers every fix: refunds auth/scoping/authorization, review gates, dashboard gate, flash-sale dates, whereNumber 404s, translated shipment messages, coupon-apply validation |
+| ProductionClosureAuditRegressionTest + DashboardTest + ProductCrudTest | PASS (110/110) | Combined run |
+| FlashSalesEndpointTest + SiteReviews suites + OrderStatusLifecycleTest + Settings suites | PASS (124/126) | Only failures: OrderStatusLifecycleTest x2 device_tokens (pre-existing uncommitted FCM workstream) |
+| PaymentSystemTest | PASS for cashier endpoint tests (26/29) | mark-paid 500s FIXED by this audit; remaining 3 errors pre-existing (1 coupon_assignments schema gap + 2 FCM device_tokens) |
+| Full suite | RUN | 3363 tests / 9973 assertions; all remaining errors/failures attributed to pre-existing causes: FCM workstream device_tokens (dominant signature), FinancialInvariant fixtures, documented route drift (WishlistApiTest, AttributesProductionHardenTest, FlashSaleApproveRequestTest dead routes), SQLite REGEXP limits (DimensionFilterTest). Clean-HEAD stash check confirmed CouponSystemTest fails identically without any session changes |
+| route:cache | PASS | Was FAILING (duplicate names orders.index / pickup-locations.index) - deployment blocker resolved |
+
+Result:
+PASS - zero regressions introduced by audit fixes; all residual failures verified pre-existing.
+
+---
+
+## Full API Closure Audit - Pass 2 (2026-08-23)
+
+**Changed Feature:**
+Invoice response contract links: InvoiceResource::view_url + AdminInvoiceResource::download_url now emit registered routes (previously dead links matching no route).
+
+**Affected Features:**
+- Invoice verification (QR scan response payload)
+- Admin invoice list/detail/correct/cancel payloads
+- Customer invoices UNAFFECTED (already correct signed URLs)
+
+**Regression:**
+
+| Suite | Status | Reason |
+|-------|--------|--------|
+| InvoiceVerifyEndpointTest | PASS (5/5) | view_url assertion updated to registered /api/v1/invoices/uuid/{uuid} |
+| AdminInvoiceShowTest | PASS | download_url assertion updated to registered /api/v1/invoices/{uuid}/download |
+| InvoicePdfViewDownloadTest + InvoiceDownloadPermissionTest + MyInvoicesEndpointTest | PASS | Confirms target routes work; customer signed URLs untouched |
+| Combined invoice filter | PASS (47/47, 214 assertions) | |
+| ProductionClosureAuditRegressionTest + DashboardTest + ProductCrudTest re-run | PASS (110/110) | Pass 1 fixes intact |
+| route:cache | PASS | |
+
+Result:
+PASS - two contract repairs, zero regressions.
+
+---
+
+## Realtime File Operations (2026-08-25)
+
+**Changed Feature:**
+Realtime File Operations (ADR-002): FileOperationEvent + shared broadcast trait; terminal/progress wiring across import jobs, export jobs, bulk-delete job, cancel endpoints; /test-pusher debug route removed.
+
+**Affected Features:**
+- Product Import (progress + terminal events)
+- Category Import (terminal additive; legacy progress contract preserved)
+- Brand Import (real dispatch replacing false log)
+- Category Export / Brand Export (completed/failed terminals)
+- Category Bulk Delete (chunk progress + completed/cancelled/failed)
+- Product Export (UNTOUCHED by design - G3 deferred; sync path regression-proven)
+- Queue policy (must remain meem-high for all 7 producers)
+
+**Regression:**
+
+| Suite | Status | Reason |
+|-------|--------|--------|
+| FileOperationEventContractTest (new) | PASS 4/4, 27 assertions | Channel/event-name/payload contract pinned |
+| tests/Feature/FileOperations (new) | PASS 25/25, 121 assertions | Progress/terminal/once-only/no-owner/failure-isolation/security incl. /test-pusher 404 and channel IDOR |
+| ProductImportTest + ProductExportTest | PASS 34/34, 111 assertions | Sync export + import endpoint contracts unchanged |
+| tests/Feature/Categories + tests/Feature/Brands | PASS 165/165, 510 assertions | Includes legacy CategoryImportProgressBroadcast/RealPusher, CategoryExport, CategoryBulkDelete*, BrandImportExport |
+| QueueStandardizationStaticTest + Digital/QueueRoutingRuntimeTest | PASS 134/134, 294 assertions | W8 queue policy intact; ShouldBroadcastNow adds zero queued jobs |
+| tests/Feature/Digital | PASS 151/151, 746 assertions | W1-W8 remain CLOSED / Production Ready |
+| ProductionClosureAuditRegressionTest | PASS 15/15 | Cross-cutting closure proofs green |
+| tests/Feature/Notifications | PRE-EXISTING | 135 run: 1 error + 4 failures verified BYTE-IDENTICAL with all implementation files stashed (path-limited stash baseline); unrelated to broadcasting |
+| Full application suite | NOT RUN | Out of scope for this pass; targeted + affected-feature coverage executed |
+
+Result:
+PASS - zero regressions introduced; residual notification failures proven pre-existing.

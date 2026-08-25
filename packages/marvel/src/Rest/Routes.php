@@ -21,6 +21,7 @@ use Marvel\Http\Controllers\FlashSaleController;
 use Marvel\Http\Controllers\Order\OrderController;
 use Marvel\Http\Controllers\ProductController;
 use Marvel\Http\Controllers\ProductImportController;
+use Marvel\Http\Controllers\ProductExportController;
 use Marvel\Http\Controllers\PromotionController;
 use Marvel\Http\Controllers\RefundController;
 use Marvel\Http\Controllers\ReviewController;
@@ -130,6 +131,16 @@ Route::middleware(['auth:sanctum', 'throttle:admin'])->group(function () {
     Route::delete('admin-users/delete-forever/{id}', [UserController::class, 'adminDeleteUsersForever']);
 
     //======================== brands ========================/
+    // Custom import/export routes MUST precede apiResource('brands') so
+    // single-segment GETs (e.g. /brands/export) are not captured by brands/{brand}.
+    Route::post('brands/import', [\Marvel\Http\Controllers\BrandImportController::class, 'import'])->name('admin.brands.import');
+    Route::get('brands/import/sample', [\Marvel\Http\Controllers\BrandImportController::class, 'downloadSample'])->name('admin.brands.import.sample');
+    Route::get('brands/import/{id}', [\Marvel\Http\Controllers\BrandImportController::class, 'status'])->name('admin.brands.import.status');
+    Route::post('brands/import/{id}/cancel', [\Marvel\Http\Controllers\BrandImportController::class, 'cancel'])->name('admin.brands.import.cancel');
+    Route::get('brands/import/{id}/download-errors', [\Marvel\Http\Controllers\BrandImportController::class, 'downloadErrors'])->name('admin.brands.import.download-errors');
+    Route::get('brands/export', [\Marvel\Http\Controllers\BrandExportController::class, 'export'])->name('admin.brands.export');
+    Route::get('brands/export/{id}', [\Marvel\Http\Controllers\BrandExportController::class, 'status'])->name('admin.brands.export.status');
+    Route::get('brands/export/{id}/download', [\Marvel\Http\Controllers\BrandExportController::class, 'download'])->name('admin.brands.export.download');
     Route::put('brands/reorder', [BrandController::class, 'reorder']);
     Route::apiResource('brands', BrandController::class);
 
@@ -174,11 +185,11 @@ Route::middleware(['auth:sanctum', 'throttle:admin'])->group(function () {
     //======================== countries ========================/
     Route::apiResource('countries', CountryController::class);
     Route::get('countries/{id}/governorates', [CountryController::class, 'governorates'])->middleware('auth:sanctum');
-    Route::post('countries/change-status', [CountryController::class, 'bulkStatus'])->middleware('auth:sanctum');
+    Route::post('countries/change-status', [CountryController::class, 'bulkStatus'])->middleware(['auth:sanctum', 'permission:' . \Marvel\Enums\Permission::UPDATE_COUNTRY]);
 
     //======================== governorates ========================/
-    Route::put('governorates/change-status', [GovernorateController::class, 'bulkStatus'])->middleware('auth:sanctum');
-    Route::put('governorates/{id}/fast-shipping', [GovernorateController::class, 'toggleFastShipping'])->middleware('auth:sanctum');
+    Route::put('governorates/change-status', [GovernorateController::class, 'bulkStatus'])->middleware(['auth:sanctum', 'permission:' . \Marvel\Enums\Permission::UPDATE_GOVERNORATE]);
+    Route::put('governorates/{id}/fast-shipping', [GovernorateController::class, 'toggleFastShipping'])->middleware(['auth:sanctum', 'permission:' . \Marvel\Enums\Permission::UPDATE_GOVERNORATE]);
     Route::get('governorates/{id}/cities', [GovernorateController::class, 'cities'])->middleware('auth:sanctum');
     Route::apiResource('governorates', GovernorateController::class);
 
@@ -206,9 +217,13 @@ Route::middleware(['auth:sanctum', 'throttle:admin'])->group(function () {
     //======================== currency rates ========================/
     Route::apiResource('currency-rates', CurrencyRateController::class)->whereNumber('currency_rate');
 
-    //======================== products ========================/
+    //============================= products ========================/
     Route::post('products/bulk-delete', [ProductController::class, 'destroyBulk']);
     Route::delete('products/all', [ProductController::class, 'destroyAll']);
+    // Sample/export routes precede apiResource so single-segment GETs are
+    // not captured by products/{product}.
+    Route::get('products/import/sample', [ProductImportController::class, 'downloadSample'])->name('admin.products.import.sample');
+    Route::get('products/export', [ProductExportController::class, 'export'])->name('admin.products.export');
     Route::post('products/import', [ProductImportController::class, 'import'])->name('admin.products.import');
     Route::get('products/import/{id}', [ProductImportController::class, 'status'])->name('admin.products.import.status');
     Route::post('products/import/{id}/cancel', [ProductImportController::class, 'cancel'])->name('admin.products.import.cancel');
@@ -218,8 +233,19 @@ Route::middleware(['auth:sanctum', 'throttle:admin'])->group(function () {
     //==================== digital assets (product files) ====================/
     Route::get('products/{product}/digital-assets', [\Marvel\Http\Controllers\DigitalAssetController::class, 'index'])->whereNumber('product');
     Route::post('products/{product}/digital-assets', [\Marvel\Http\Controllers\DigitalAssetController::class, 'store'])->whereNumber('product')->name('admin.products.digital-assets.store');
+    Route::get('digital-assets/{uuid}', [\Marvel\Http\Controllers\DigitalAssetController::class, 'show'])->whereUuid('uuid')->name('admin.digital-assets.show');
     Route::put('digital-assets/{uuid}', [\Marvel\Http\Controllers\DigitalAssetController::class, 'update'])->whereUuid('uuid')->name('admin.digital-assets.update');
     Route::delete('digital-assets/{uuid}', [\Marvel\Http\Controllers\DigitalAssetController::class, 'destroy'])->whereUuid('uuid')->name('admin.digital-assets.destroy');
+    Route::post('digital-assets/{uuid}/replace', [\Marvel\Http\Controllers\DigitalAssetController::class, 'replace'])->whereUuid('uuid')->name('admin.digital-assets.replace');
+    // W5 — bulk-provision encrypted keys into a LICENSE pool (A2/A4).
+    Route::post('digital-assets/{uuid}/license-keys', [\Marvel\Http\Controllers\DigitalAssetController::class, 'storeLicenseKeys'])->whereUuid('uuid')->name('admin.digital-assets.license-keys.store');
+
+    //==================== digital entitlement management (W6) ====================/
+    Route::get('digital-entitlements', [\Marvel\Http\Controllers\DigitalEntitlementController::class, 'index'])->name('admin.digital-entitlements.index');
+    Route::get('digital-entitlements/{uuid}', [\Marvel\Http\Controllers\DigitalEntitlementController::class, 'show'])->whereUuid('uuid')->name('admin.digital-entitlements.show');
+    Route::patch('digital-entitlements/{uuid}/limit', [\Marvel\Http\Controllers\DigitalEntitlementController::class, 'setLimit'])->whereUuid('uuid')->name('admin.digital-entitlements.limit');
+    Route::post('digital-entitlements/{uuid}/revoke', [\Marvel\Http\Controllers\DigitalEntitlementController::class, 'revoke'])->whereUuid('uuid')->name('admin.digital-entitlements.revoke');
+    Route::post('digital-entitlements/{uuid}/restore', [\Marvel\Http\Controllers\DigitalEntitlementController::class, 'restore'])->whereUuid('uuid')->name('admin.digital-entitlements.restore');
 
     //============================= flash sale ========================/
     Route::put('flash-sale/reorder', [FlashSaleController::class, 'reorder']);
@@ -328,7 +354,7 @@ Route::middleware(['auth:sanctum', "throttle:cart"])->group(function () {
 });
 
 
-Route::middleware(['auth:sanctum', 'throttle:analytics'])->prefix('dashboard')->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:analytics', 'permission:' . \Marvel\Enums\Permission::VIEW_ANALYTICS])->prefix('dashboard')->group(function () {
     Route::get('overview', [DashboardController::class, 'overview']);
     Route::get('revenue', [DashboardController::class, 'revenue']);
     Route::get('order-stats', [DashboardController::class, 'orderStats']);
@@ -377,21 +403,19 @@ Route::middleware(['auth:sanctum'])->group(function () {
  * Refund Routes - Rate Limited (5/min per user)
  * Protects against refund fraud attempts
  */
-Route::middleware(['throttle:refunds'])->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:refunds'])->group(function () {
     Route::apiResource('refunds', RefundController::class);
 });
 
 
 Route::prefix('shipments')->middleware('auth:sanctum')->group(function () {
     Route::get('/', [ShipmentController::class, 'index']);
-    Route::get('uuid/{uuid}', [ShipmentController::class, 'showByUuid']);
-    Route::get('{id}', [ShipmentController::class, 'show']);
+    Route::get('uuid/{uuid}', [ShipmentController::class, 'showByUuid'])->whereUuid('uuid');
+    Route::get('{id}', [ShipmentController::class, 'show'])->whereNumber('id');
     Route::post('/', [ShipmentController::class, 'store']);
-    Route::put('{id}/status', [ShipmentController::class, 'updateStatus']);
-    Route::put('{id}', [ShipmentController::class, 'update']);
+    Route::put('{id}/status', [ShipmentController::class, 'updateStatus'])->whereNumber('id');
+    Route::put('{id}', [ShipmentController::class, 'update'])->whereNumber('id');
 });
-
-Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
 
 
 Route::prefix('invoices')->group(function () {

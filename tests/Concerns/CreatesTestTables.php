@@ -497,6 +497,119 @@ Schema::create('categories', function (Blueprint $table) {
             $table->timestamps();
         });
 
+        // W8 queue-standardization parity: database queue driver tables so
+        // runtime queue-routing tests can dispatch and inspect real jobs.
+        Schema::create('jobs', function (Blueprint $table) {
+            $table->id();
+            $table->string('queue')->index();
+            $table->longText('payload');
+            $table->unsignedTinyInteger('attempts');
+            $table->unsignedInteger('reserved_at')->nullable();
+            $table->unsignedInteger('available_at');
+            $table->unsignedInteger('created_at');
+        });
+
+        Schema::create('failed_jobs', function (Blueprint $table) {
+            $table->id();
+            $table->string('uuid')->unique();
+            $table->text('connection');
+            $table->text('queue');
+            $table->longText('payload');
+            $table->longText('exception');
+            $table->timestamp('failed_at')->useCurrent();
+        });
+
+        // W8 parity: device tokens exist in production (2026_08_23_073810)
+        // and are swept by notification/listener paths.
+        Schema::create('device_tokens', function (Blueprint $table) {
+            $table->id();
+            $table->uuid('uuid')->unique();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->string('token', 512)->unique();
+            $table->string('client', 32);
+            $table->string('platform', 16)->default('android');
+            $table->timestamp('last_used_at')->nullable();
+            $table->timestamps();
+
+            $table->index(['user_id', 'client']);
+        });
+
+        Schema::create('digital_assets', function (Blueprint $table) {            $table->id();
+            $table->uuid('uuid')->unique();
+            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
+            $table->string('type', 20)->default('FILE');
+            $table->string('disk', 30)->default('private');
+            $table->string('path')->nullable();
+            $table->text('external_url')->nullable();
+            $table->string('original_name');
+            $table->string('display_name')->nullable();
+            $table->string('mime', 100);
+            $table->string('extension', 16)->nullable();
+            $table->unsignedBigInteger('size');
+            $table->string('checksum', 64)->nullable();
+            $table->string('status', 20)->default('active');
+            $table->json('metadata')->nullable();
+            $table->text('secret')->nullable();
+            $table->unsignedInteger('sort_order')->default(0);
+            $table->timestamp('expires_at')->nullable();
+            $table->timestamps();
+
+            // Mirrors production migration contract (W3).
+            $table->index(['product_id', 'sort_order'], 'digital_assets_product_sort_idx');
+            $table->index(['product_id', 'status'], 'digital_assets_product_status_idx');
+        });
+
+        Schema::create('digital_entitlements', function (Blueprint $table) {
+            $table->id();
+            $table->uuid('uuid')->unique();
+            $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
+            $table->foreignId('order_product_id')->unique()->constrained('order_products')->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->string('status', 20)->default('pending');
+            $table->timestamp('delivered_at')->nullable();
+            $table->unsignedInteger('download_limit')->default(5);
+            $table->unsignedInteger('download_count')->default(0);
+            $table->timestamp('revoked_at')->nullable();
+            $table->timestamp('expires_at')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('digital_license_keys', function (Blueprint $table) {
+            $table->id();
+            $table->uuid('uuid')->unique();
+            $table->foreignId('asset_id')->constrained('digital_assets')->cascadeOnDelete();
+            $table->text('encrypted_key');
+            $table->string('status', 20)->default('available');
+            $table->foreignId('allocated_entitlement_id')
+                ->nullable()
+                ->constrained('digital_entitlements')
+                ->nullOnDelete();
+            $table->timestamp('assigned_at')->nullable();
+            $table->timestamp('revealed_at')->nullable();
+            $table->timestamp('consumed_at')->nullable();
+            $table->timestamp('revoked_at')->nullable();
+            $table->timestamps();
+
+            $table->index(['asset_id', 'status'], 'digital_license_keys_asset_status_idx');
+            $table->index('allocated_entitlement_id', 'digital_license_keys_allocation_idx');
+        });
+
+        Schema::create('digital_asset_entitlement', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('digital_entitlement_id')->constrained('digital_entitlements')->cascadeOnDelete();
+            $table->foreignId('digital_asset_id')->constrained('digital_assets')->cascadeOnDelete();
+            $table->timestamp('granted_at')->useCurrent();
+        });
+
+        Schema::create('digital_download_logs', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('entitlement_id')->constrained('digital_entitlements')->cascadeOnDelete();
+            $table->foreignId('asset_id')->constrained('digital_assets')->cascadeOnDelete();
+            $table->string('ip_hash', 64)->nullable();
+            $table->string('ua_hash', 64)->nullable();
+            $table->timestamp('downloaded_at');
+        });
+
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->nullable()->unique();

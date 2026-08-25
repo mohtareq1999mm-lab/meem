@@ -39,6 +39,8 @@ class ReviewController extends CoreController
     public function __construct(ReviewRepository $repository)
     {
         $this->repository = $repository;
+        $this->middleware('permission:' . Permission::CREATE_REVIEW, ['only' => ['store']]);
+        $this->middleware('permission:' . Permission::UPDATE_REVIEW, ['only' => ['update']]);
         $this->middleware('permission:' . Permission::APPROVE_REVIEWS, ['only' => ['toggleApproveReview']]);
         $this->middleware('permission:' . Permission::DELETE_REVIEWS, ['only' => ['destroy']]);
     }

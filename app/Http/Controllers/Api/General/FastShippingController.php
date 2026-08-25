@@ -43,7 +43,7 @@ class FastShippingController extends Controller
 
         $cart = $this->cartInventoryService->getActiveCartForUser($request->user());
         if (!$cart) {
-            return $this->apiResponse('Cart not found', 400, false);
+            return $this->apiResponse(__('message.ERROR.CART_NOT_FOUND'), 400, false);
         }
 
         try {
@@ -81,7 +81,7 @@ class FastShippingController extends Controller
             return $this->paymentCheckoutHandler->handleCashierQrPayment($request, $order, ShippingMethod::FAST);
         }
 
-        return $this->apiResponse('Invalid payment method', 422, false);
+        return $this->apiResponse(__('message.ERROR.INVALID_PAYMENT_METHOD'), 422, false);
     }
 
     public function orders(Request $request): JsonResponse

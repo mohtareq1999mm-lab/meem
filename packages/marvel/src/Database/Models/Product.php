@@ -450,6 +450,14 @@ class Product extends Model implements HasMedia
     }
 
     /**
+     * Purchasable files of a DIGITAL product (private disk).
+     */
+    public function digitalAssets(): HasMany
+    {
+        return $this->hasMany(\App\Models\DigitalAsset::class, 'product_id');
+    }
+
+    /**
      * @return BelongsToMany
      */
     public function promotions(): BelongsToMany

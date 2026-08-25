@@ -2,6 +2,8 @@
 
 namespace Marvel\Jobs;
 
+use App\Events\FileOperationEvent;
+use App\Traits\BroadcastsFileOperationProgress;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -14,6 +16,7 @@ use Throwable;
 class ExportCategoriesJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use BroadcastsFileOperationProgress;
 
     public int $tries = 2;
 
@@ -61,8 +64,31 @@ class ExportCategoriesJob implements ShouldQueue
                 'failed_rows' => 0,
                 'errors' => [],
             ]);
+
+            $this->broadcastFileOperationTerminal(
+                FileOperationEvent::CATEGORY_EXPORT_COMPLETED,
+                'category-export',
+                $this->importId,
+                'completed',
+                false,
+                [
+                    'progress' => 100.0,
+                    'total_rows' => $rowCount,
+                    'processed_rows' => $rowCount,
+                    'success_rows' => $rowCount,
+                    'failed_rows' => 0,
+                ]
+            );
         } catch (Throwable $e) {
             $import->update(['status' => 'failed']);
+
+            $this->broadcastFileOperationTerminal(
+                FileOperationEvent::CATEGORY_EXPORT_FAILED,
+                'category-export',
+                $this->importId,
+                'failed',
+                true
+            );
 
             throw $e;
         }
@@ -74,6 +100,14 @@ class ExportCategoriesJob implements ShouldQueue
 
         if ($import && $import->status === 'processing') {
             $import->update(['status' => 'failed']);
+
+            $this->broadcastFileOperationTerminal(
+                FileOperationEvent::CATEGORY_EXPORT_FAILED,
+                'category-export',
+                $this->importId,
+                'failed',
+                true
+            );
         }
     }
 }

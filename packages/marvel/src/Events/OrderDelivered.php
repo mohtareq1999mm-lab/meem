@@ -9,6 +9,8 @@ use Marvel\Database\Models\Order;
 
 class OrderDelivered implements ShouldQueue
 {
+    public $queue = 'meem-medium';
+
     /**
      * @var Order
      */

@@ -9,6 +9,8 @@ use Marvel\Database\Models\User;
 
 class ProcessOwnershipTransition implements ShouldQueue
 {
+    public $queue = 'meem-medium';
+
     /**
      * @var Shop
      */

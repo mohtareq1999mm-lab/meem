@@ -18,6 +18,8 @@ use Marvel\Exceptions\MarvelException;
 
 class StoreNoticeEvent implements ShouldQueue, ShouldBroadcast
 {
+    public $queue = 'meem-medium';
+
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     /**

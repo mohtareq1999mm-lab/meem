@@ -28,11 +28,13 @@ class DigitalEntitlement extends Model
         'download_limit',
         'download_count',
         'revoked_at',
+        'expires_at',
     ];
 
     protected $casts = [
         'delivered_at' => 'datetime',
         'revoked_at' => 'datetime',
+        'expires_at' => 'datetime',
     ];
 
     protected static function boot(): void
@@ -70,6 +72,10 @@ class DigitalEntitlement extends Model
      * purchased product. Product-level association keeps new files
      * automatically available to existing entitlements.
      */
+    /**
+     * Fulfillment-time snapshot of granted assets (audit record).
+     * BD1 Option B — live access is product-scoped: see currentAssets().
+     */
     public function assets(): BelongsToMany
     {
         return $this->belongsToMany(
@@ -78,5 +84,30 @@ class DigitalEntitlement extends Model
             'digital_entitlement_id',
             'digital_asset_id'
         );
+    }
+
+    /**
+     * BD1 Option B — the entitlement is a license to the PRODUCT's digital
+     * assets, not to a frozen file list. Assets uploaded after delivery
+     * automatically become available; revocation/refund still blocks all.
+     */
+    public function currentAssets()
+    {
+        $product = $this->orderItem?->product;
+
+        // Order pipelines eager-load digitalEntitlements.orderItem.product.digitalAssets;
+        // reuse the loaded collection to avoid per-entitlement queries.
+        if ($product && $product->relationLoaded('digitalAssets')) {
+            return $product->digitalAssets
+                ->sortBy([['sort_order', 'asc'], ['id', 'asc']])
+                ->values();
+        }
+
+        return DigitalAsset::query()
+            ->where('product_id', $this->orderItem?->product_id)
+            ->where('status', \App\Models\DigitalAsset::STATUS_ACTIVE)   // W6: inactive assets leave the customer surface
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
     }
 }

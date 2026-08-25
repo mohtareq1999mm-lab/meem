@@ -2,6 +2,8 @@
 
 namespace Marvel\Jobs;
 
+use App\Events\FileOperationEvent;
+use App\Traits\BroadcastsFileOperationProgress;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -14,6 +16,7 @@ use Throwable;
 class BulkDeleteCategoriesJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use BroadcastsFileOperationProgress;
 
     public int $tries = 3;
 
@@ -165,6 +168,17 @@ class BulkDeleteCategoriesJob implements ShouldQueue
                 'failed_rows' => count($errors),
                 'progress' => $import->total_rows > 0 ? min(99.0, ($processedCount / $import->total_rows) * 100) : 99.0,
             ]);
+
+            $this->broadcastFileOperationProgress(
+                FileOperationEvent::CATEGORY_BULK_DELETE_PROGRESS,
+                'category-bulk-delete',
+                $this->importId,
+                $import->total_rows > 0 ? min(99.0, ($processedCount / $import->total_rows) * 100) : 99.0,
+                $processedCount,
+                $successCount,
+                count($errors),
+                (int) $import->total_rows
+            );
         }
 
         if ($this->isCancelled()) {
@@ -188,6 +202,21 @@ class BulkDeleteCategoriesJob implements ShouldQueue
             'failed_rows' => count($errors),
             'errors' => $errors,
         ]);
+
+        $this->broadcastFileOperationTerminal(
+            FileOperationEvent::CATEGORY_BULK_DELETE_COMPLETED,
+            'category-bulk-delete',
+            $this->importId,
+            $status,
+            !empty($errors),
+            [
+                'progress' => 100.0,
+                'total_rows' => (int) $import->total_rows,
+                'processed_rows' => $processedCount,
+                'success_rows' => $successCount,
+                'failed_rows' => count($errors),
+            ]
+        );
     }
 
     protected function loadRequestedIds(Import $import): array
@@ -226,6 +255,14 @@ class BulkDeleteCategoriesJob implements ShouldQueue
         $import->update([
             'status' => 'cancelled',
         ]);
+
+        $this->broadcastFileOperationTerminal(
+            FileOperationEvent::CATEGORY_BULK_DELETE_CANCELLED,
+            'category-bulk-delete',
+            $this->importId,
+            'cancelled',
+            false
+        );
     }
 
     public function failed(Throwable $exception): void
@@ -234,6 +271,14 @@ class BulkDeleteCategoriesJob implements ShouldQueue
 
         if ($import && $import->status === 'processing') {
             $import->update(['status' => 'failed']);
+
+            $this->broadcastFileOperationTerminal(
+                FileOperationEvent::CATEGORY_BULK_DELETE_FAILED,
+                'category-bulk-delete',
+                $this->importId,
+                'failed',
+                true
+            );
         }
     }
 }

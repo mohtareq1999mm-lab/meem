@@ -100,9 +100,9 @@ class InvoiceVerifyEndpointTest extends TestCase
             ->assertJsonPath('data.order.id', $invoice->order_id)
             ->assertJsonPath('data.qr_content', url('/api/v1/general/invoices/verify/' . $invoice->uuid));
 
-        // Ready-made viewer link inside the invoice payload.
+        // Ready-made viewer link inside the invoice payload (registered route: invoices/uuid/{uuid}).
         $this->assertStringContainsString(
-            '/api/v1/general/invoices/show/uuid/' . $invoice->uuid,
+            '/api/v1/invoices/uuid/' . $invoice->uuid,
             (string) $response->json('data.invoice.view_url')
         );
 

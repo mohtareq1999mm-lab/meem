@@ -38,7 +38,9 @@ return [
             'driver' => 'database',
             'table' => 'jobs',
             'queue' => 'default',
-            'retry_after' => 90,
+            // Must exceed the highest effective timeout on this connection
+            // premature re-release / duplicate execution.
+            'retry_after' => 1560,
         ],
 
         'beanstalkd' => [

@@ -50,6 +50,7 @@ class DashboardTest extends TestCase
             PermissionEnum::SUPER_ADMIN,
             PermissionEnum::CREATE_PRODUCT,
             PermissionEnum::VIEW_PRODUCTS,
+            PermissionEnum::VIEW_ANALYTICS,
         ];
 
         foreach ($permissions as $perm) {
@@ -832,28 +833,53 @@ class DashboardTest extends TestCase
     }
 
     // =========================================================================
-    // Route Security — api.php Dashboard Routes
+    // Route Security — Dashboard Routes
     // =========================================================================
 
-    private const GENERAL_PREFIX = '/api/v1/general';
+    private const DASHBOARD_PREFIX = '/api/v1/dashboard';
 
-    public function test_public_general_dashboard_route_returns_401_when_unauthenticated(): void
+    public function test_dashboard_route_returns_401_when_unauthenticated(): void
     {
-        $response = $this->getJson(self::GENERAL_PREFIX . '/dashboard/overview');
+        $response = $this->getJson(self::DASHBOARD_PREFIX . '/overview');
 
         $response->assertUnauthorized();
     }
 
-    public function test_public_general_dashboard_route_returns_200_when_authenticated(): void
+    public function test_dashboard_route_returns_200_when_authenticated(): void
     {
         $user = $this->createSuperAdminUser();
         Sanctum::actingAs($user);
 
         $this->makeOrder(['total_price' => 100, 'status' => 'completed']);
 
-        $response = $this->getJson(self::GENERAL_PREFIX . '/dashboard/overview');
+        $response = $this->getJson(self::DASHBOARD_PREFIX . '/overview');
 
         $response->assertOk();
         $response->assertJsonPath('success', true);
+    }
+
+    public function test_customer_without_view_analytics_permission_cannot_access_dashboard(): void
+    {
+        $permissions = [PermissionEnum::VIEW_ANALYTICS];
+        foreach ($permissions as $perm) {
+            Permission::findOrCreate($perm, self::GUARD);
+        }
+
+        $customer = User::create([
+            'name' => 'Plain Customer',
+            'email' => 'plain-customer@example.com',
+            'password' => Hash::make('password'),
+            'email_verified_at' => now(),
+            'is_active' => true,
+            'type' => 'user',
+        ]);
+        Sanctum::actingAs($customer);
+
+        $this->makeOrder(['total_price' => 100, 'status' => 'completed']);
+
+        $this->getJson(self::DASHBOARD_PREFIX . '/overview')->assertForbidden();
+        $this->getJson(self::DASHBOARD_PREFIX . '/revenue')->assertForbidden();
+        $this->getJson(self::DASHBOARD_PREFIX . '/finance')->assertForbidden();
+        $this->getJson(self::DASHBOARD_PREFIX . '/reconciliation')->assertForbidden();
     }
 }

@@ -88,16 +88,16 @@ Route::prefix('v1/general')->group(function () {
         Route::get('faqs', [FAQController::class, 'index']);
         //======================== governorates ========================/
         Route::get('governorates', [GovernorateController::class, 'index']);
-        Route::get('governorates/{id}', [GovernorateController::class, 'show']);
+        Route::get('governorates/{id}', [GovernorateController::class, 'show'])->whereNumber('id');
         //======================== countries ========================/
         Route::get('countries', [CountryController::class, 'index']);
-        Route::get('countries/{id}', [CountryController::class, 'show']);
+        Route::get('countries/{id}', [CountryController::class, 'show'])->whereNumber('id');
         //======================== cities ========================/
         Route::get('cities', [CityController::class, 'index']);
-        Route::get('cities/{id}', [CityController::class, 'show']);
+        Route::get('cities/{id}', [CityController::class, 'show'])->whereNumber('id');
         //============================ pickup locations ========================/
-        Route::get('pickup-locations', [PickupLocationController::class, 'index'])->name('pickup-locations.index');
-        Route::get('pickup-locations/{id}', [PickupLocationController::class, 'show']);
+        Route::get('pickup-locations', [PickupLocationController::class, 'index']);
+        Route::get('pickup-locations/{id}', [PickupLocationController::class, 'show'])->whereNumber('id');
         //============================ fast shipping ========================/
         Route::get('fast-shipping/status', [FastShippingController::class, 'status']);
         //============================ site reviews ========================/
@@ -117,8 +117,7 @@ Route::prefix('v1/general')->group(function () {
         Route::get('checkout/promotions', [OrderController::class, 'eligiblePromotions']);
         Route::post('checkout', [OrderController::class, 'checkout']);
         Route::post('checkout/cod/{orderId}/mark-paid', [OrderController::class, 'markCodAsPaid'])->middleware(['permission:update-order-status']);
-        Route::post('checkout/cashier/{orderId}/mark-paid', [OrderController::class, 'markCas
-        hierPaid'])->middleware(['permission:update-order-status']);
+        Route::post('checkout/cashier/{orderId}/mark-paid', [OrderController::class, 'markCashierPaid'])->middleware(['permission:update-order-status']);
         //======================== fast shipping checkout ========================/
         Route::post('fast-shipping/checkout', [FastShippingController::class, 'checkout']);
         //======================== orders ========================//
@@ -127,6 +126,16 @@ Route::prefix('v1/general')->group(function () {
         Route::get('orders/{id}', [OrderController::class, 'show'])->whereNumber('id');
         //======================== digital downloads ========================//
         Route::get('digital/downloads', [\App\Http\Controllers\Api\General\DigitalDownloadController::class, 'index']);
+        // W5 — license/access credential reveal (auth-scoped, never signed:
+        // secrets must not appear in shareable URLs or referrer headers).
+        Route::get('digital/license/{entitlement}/{asset}', [\App\Http\Controllers\Api\General\DigitalDownloadController::class, 'reveal'])
+            ->whereUuid('entitlement')->whereUuid('asset')
+            ->name('general.digital.license');
+        // W7 — audited external redirect for URL assets (auth-scoped, no
+        // credit consumption; the application never fetches the target).
+        Route::get('digital/url/{entitlement}/{asset}', [\App\Http\Controllers\Api\General\DigitalDownloadController::class, 'redirectToExternal'])
+            ->whereUuid('entitlement')->whereUuid('asset')
+            ->name('general.digital.url');
         //========================= product reviews =========================//
         Route::post('products/{id}/reviews', [ProductController::class, 'addProductReview']);
         Route::put('products/reviews/{id}', [ProductController::class, 'updateProductReview']);

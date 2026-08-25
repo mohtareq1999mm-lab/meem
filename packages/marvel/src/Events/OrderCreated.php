@@ -24,6 +24,8 @@ use Marvel\Traits\UsersTrait;
 
 class OrderCreated implements ShouldQueue, ShouldBroadcast
 {
+    public $queue = 'meem-medium';
+
     use Dispatchable, InteractsWithSockets, SerializesModels, UsersTrait;
 
     /**

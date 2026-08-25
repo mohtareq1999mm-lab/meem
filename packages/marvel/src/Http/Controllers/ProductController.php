@@ -195,6 +195,10 @@ class ProductController extends CoreController
             $products_query = $products_query->where('status', '=', $request->status);
         }
 
+        if ($request->filled('item_type') && in_array($request->item_type, \Marvel\Enums\ItemType::getValues(), true)) {
+            $products_query = $products_query->where('item_type', '=', $request->item_type);
+        }
+
         if ($request->has('category')) {
             $categorySlug = trim((string)$request->category);
             $products_query->whereHas('categories', function (Builder $q) use ($categorySlug) {

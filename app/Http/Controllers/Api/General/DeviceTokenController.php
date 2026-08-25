@@ -34,17 +34,17 @@ class DeviceTokenController extends Controller
             ]
         );
 
-        return $this->apiResponse('Device token registered', 200, true, ['uuid' => $device->uuid]);
+        return $this->apiResponse(DEVICE_TOKEN_REGISTERED, 200, true, ['uuid' => $device->uuid]);
     }
 
     public function destroy(Request $request): JsonResponse
     {
-        $data = $request->validate(['token' => ['required', 'string']]);
+        $data = $request->validate(['token' => ['required', 'string', 'max:512']]);
 
         DeviceToken::where('token', $data['token'])
             ->where('user_id', $request->user()->id)
             ->delete();
 
-        return $this->apiResponse('Device token removed', 200, true);
+        return $this->apiResponse(DEVICE_TOKEN_REMOVED, 200, true);
     }
 }

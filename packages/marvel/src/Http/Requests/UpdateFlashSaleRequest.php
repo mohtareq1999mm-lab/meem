@@ -40,7 +40,7 @@ class UpdateFlashSaleRequest extends FormRequest
             'image-desktop'        => ['sometimes', 'image', 'mimes:jpeg,png,jpg,webp,gif'],
             'image-mobile'        => ['sometimes', 'image', 'mimes:jpeg,png,jpg,webp,gif'],
             'start_date'   => ['sometimes', 'date'],
-            'end_date'     => ['sometimes', 'date'],
+            'end_date'     => ['sometimes', 'date', 'after_or_equal:start_date'],
             'type' => ['sometimes', Rule::in(FlashSaleType::getValues())],
             'discount' => ['sometimes', 'numeric', 'min:0'],
             'max_discount_amount' => [

@@ -36,7 +36,7 @@ class CreateFlashSaleRequest extends FormRequest
             'image-desktop'        => ['required', 'image', 'mimes:jpeg,png,jpg,webp,gif'],
             'image-mobile'        => ['required', 'image', 'mimes:jpeg,png,jpg,webp,gif'],
             'start_date'   => ['required', 'date'],
-            'end_date'     => ['required', 'date'],
+            'end_date'     => ['required', 'date', 'after_or_equal:start_date'],
             'type' => ['required', Rule::in(FlashSaleType::getValues())],
             'discount' => ['required', 'numeric', 'min:0'],
             'max_discount_amount' => [

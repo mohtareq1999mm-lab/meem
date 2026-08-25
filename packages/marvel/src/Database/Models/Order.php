@@ -129,6 +129,14 @@ class Order extends Model
         return $this->hasMany(OrderProduct::class);
     }
 
+    /**
+     * Digital download entitlements granted for this order's DIGITAL lines.
+     */
+    public function digitalEntitlements(): HasMany
+    {
+        return $this->hasMany(\App\Models\DigitalEntitlement::class, 'order_id');
+    }
+
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);

@@ -2,6 +2,9 @@
 
 return [
     'product_created' => 'تم إنشاء المنتج',
+    'digital_entitlement_limit_changed' => 'تم تغيير حد تنزيلات المنتج الرقمي',
+    'digital_entitlement_revoked' => 'تم إلغاء وصول المنتج الرقمي',
+    'digital_entitlement_restored' => 'تم استعادة وصول المنتج الرقمي',
     'product_updated' => 'تم تحديث المنتج',
     'product_deleted' => 'تم حذف المنتج',
     'product_restored' => 'تمت استعادة المنتج',

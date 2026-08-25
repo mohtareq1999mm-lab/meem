@@ -88,7 +88,8 @@ class OrderResource extends JsonResource
                     'download_limit' => (int) $entitlement->download_limit,
                     'download_count' => (int) $entitlement->download_count,
                     'delivered_at' => $entitlement->delivered_at?->toIso8601String(),
-                    'assets' => $entitlement->assets->map(fn ($asset) => [
+                    // BD1 Option B — product-scoped: late uploads included.
+                    'assets' => $entitlement->currentAssets()->map(fn ($asset) => [
                         'uuid' => $asset->uuid,
                         'type' => $asset->type,
                         'original_name' => $asset->original_name,

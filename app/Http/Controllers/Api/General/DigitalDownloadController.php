@@ -4,17 +4,22 @@ namespace App\Http\Controllers\Api\General;
 
 use App\Http\Controllers\Controller;
 use App\Models\DigitalAsset;
-use App\Models\DigitalDownloadLog;
 use App\Models\DigitalEntitlement;
+use App\Services\Digital\DeliveryResolver;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Marvel\Traits\ApiResponse;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Thin customer-facing delivery controller. ALL gates and type dispatch
+ * live in DeliveryResolver (Workstream 7 single chokepoint).
+ */
 class DigitalDownloadController extends Controller
 {
     use ApiResponse;
+
+    public function __construct(private DeliveryResolver $resolver) {}
 
     /**
      * List the authenticated user's digital entitlements together with
@@ -24,11 +29,22 @@ class DigitalDownloadController extends Controller
     {
         $entitlements = DigitalEntitlement::query()
             ->where('user_id', $request->user()->id)
-            ->with(['assets' => fn ($q) => $q->orderBy('sort_order')->orderBy('id'), 'orderItem'])
+            ->with('orderItem')
             ->orderByDesc('created_at')
             ->get();
 
-        $data = $entitlements->map(function (DigitalEntitlement $entitlement) {
+        // Single query for every license allocation this customer owns
+        // (avoids N+1 across entitlements × license assets).
+        $keysByEntitlement = \App\Models\DigitalLicenseKey::query()
+            ->whereIn('allocated_entitlement_id', $entitlements->pluck('id'))
+            ->get(['id', 'asset_id', 'allocated_entitlement_id', 'status', 'revealed_at'])
+            ->groupBy('allocated_entitlement_id');
+
+        $data = $entitlements->map(function (DigitalEntitlement $entitlement) use ($keysByEntitlement) {
+            $accessible = $this->resolver->accessAllowed($entitlement);
+            $allocated = $keysByEntitlement->get($entitlement->id, collect())
+                ->keyBy('asset_id');
+
             return [
                 'uuid' => $entitlement->uuid,
                 'status' => $entitlement->status,
@@ -36,17 +52,51 @@ class DigitalDownloadController extends Controller
                 'download_count' => (int) $entitlement->download_count,
                 'delivered_at' => $entitlement->delivered_at?->toIso8601String(),
                 'revoked_at' => $entitlement->revoked_at?->toIso8601String(),
+                'expires_at' => $entitlement->expires_at?->toIso8601String(),
                 'product' => [
                     'id' => $entitlement->orderItem?->product_id,
                     'name' => $entitlement->orderItem?->product_name,
                 ],
-                'assets' => $entitlement->assets->map(fn (DigitalAsset $asset) => [
+                'assets' => $entitlement->currentAssets()->map(fn (DigitalAsset $asset) => [
                     'uuid' => $asset->uuid,
                     'type' => $asset->type,
                     'original_name' => $asset->original_name,
                     'mime' => $asset->mime,
                     'size' => (int) $asset->size,
-                    'download_url' => $this->signedUrl($entitlement, $asset),
+
+                    // W7 — additive delivery hint per asset kind.
+                    'delivery_type' => match ($asset->type) {
+                        \App\Enums\DigitalAssetType::FILE->value => 'download',
+                        \App\Enums\DigitalAssetType::URL->value => 'redirect',
+                        \App\Enums\DigitalAssetType::LICENSE->value,
+                        \App\Enums\DigitalAssetType::ACCESS->value => 'reveal',
+                        default => null,
+                    },
+
+                    // FILE: controlled signed URL (existing contract).
+                    'download_url' => $asset->type === \App\Enums\DigitalAssetType::FILE->value
+                        ? $this->signedUrl($entitlement, $asset)
+                        : null,
+
+                    // W5 — URL assets: the external target is disclosed ONLY
+                    // while the entitlement is authorized. Revoked/pending/
+                    // expired entitlements never see it.
+                    'external_url' => ($asset->type === \App\Enums\DigitalAssetType::URL->value && $accessible)
+                        ? $asset->external_url
+                        : null,
+
+                    // W5/W7 — LICENSE/ACCESS: metadata only, never the secret.
+                    'reveal' => in_array($asset->type, [\App\Enums\DigitalAssetType::LICENSE->value, \App\Enums\DigitalAssetType::ACCESS->value], true)
+                        ? [
+                            'path' => "/api/v1/general/digital/license/{$entitlement->uuid}/{$asset->uuid}",
+                            'available' => $accessible && (
+                                $asset->type === \App\Enums\DigitalAssetType::ACCESS->value
+                                    ? $asset->secret !== null
+                                    : $allocated->has($asset->id)
+                            ),
+                            'revealed_at' => $allocated->get($asset->id)?->revealed_at?->toIso8601String(),
+                        ]
+                        : null,
                 ])->values()->all(),
             ];
         })->values()->all();
@@ -55,83 +105,64 @@ class DigitalDownloadController extends Controller
     }
 
     /**
-     * Stream a purchased digital asset.
-     *
-     * SECURITY MODEL
-     * - Ownership is enforced when the signed URL is ISSUED (authenticated
-     *   endpoints only ever issue URLs for the caller's own entitlements).
-     * - The signature alone is NOT authorization: this controller re-checks
-     *   entitlement status, asset ownership, and the download limit.
+     * W7 — thin signed-route wrapper: the resolver owns every gate and the
+     * type dispatch (attachment / inline preview / range streaming).
      */
-    public function download(string $entitlementUuid, string $assetUuid): Response|JsonResponse
+    public function download(Request $request, string $entitlementUuid, string $assetUuid): Response|JsonResponse
     {
-        if (!config('digital.enabled', true)) {
-            return $this->apiResponse(__('message.ERROR.DIGITAL_ENTITLEMENT_NOT_ACCESSIBLE'), 404, false);
+        $mode = $request->query('mode', DeliveryResolver::MODE_DOWNLOAD);
+        if (!in_array($mode, [DeliveryResolver::MODE_DOWNLOAD, DeliveryResolver::MODE_PREVIEW], true)) {
+            $mode = DeliveryResolver::MODE_DOWNLOAD;
         }
 
         $entitlement = DigitalEntitlement::query()
             ->where('uuid', $entitlementUuid)
             ->first();
 
-        if (!$entitlement || !$entitlement->relationLoaded('orderItem')) {
-            $entitlement?->loadMissing('orderItem');
-        }
-
         if (!$entitlement) {
             return $this->apiResponse(NOT_FOUND, 404, false);
         }
 
-        // Status gate — revoked/pending entitlements lose access instantly,
-        // regardless of signature validity (D7/D8).
-        if ($entitlement->status !== DigitalEntitlement::STATUS_DELIVERED) {
-            return $this->apiResponse(__('message.ERROR.DIGITAL_ENTITLEMENT_NOT_ACCESSIBLE'), 403, false);
-        }
-
-        /** @var DigitalAsset|null $asset */
         $asset = DigitalAsset::query()->where('uuid', $assetUuid)->first();
 
-        // Asset must belong to the purchased product of this entitlement.
-        if (!$asset || (int) $asset->product_id !== (int) $entitlement->orderItem?->product_id) {
+        if (!$asset) {
             return $this->apiResponse(NOT_FOUND, 404, false);
         }
 
-        // Race-safe limit enforcement: only an atomic conditional increment
-        // grants the stream. Concurrent requests can never exceed the limit.
-        $affected = DB::update(
-            'UPDATE digital_entitlements SET download_count = download_count + 1 WHERE id = ? AND status = ? AND download_count < download_limit',
-            [$entitlement->id, DigitalEntitlement::STATUS_DELIVERED]
-        );
+        return $this->resolver->deliver($entitlement, $asset, $request, $mode);
+    }
 
-        if ($affected === 0) {
-            return $this->apiResponse(__('message.ERROR.DIGITAL_DOWNLOAD_LIMIT_REACHED'), 403, false);
+    /**
+     * W5 — reveal a LICENSE pool key or ACCESS credential (delegates to the
+     * delivery chokepoint; secrets decrypted only inside it).
+     */
+    public function reveal(Request $request, string $entitlementUuid, string $assetUuid): JsonResponse
+    {
+        $result = $this->resolver->revealCredential($request->user(), $entitlementUuid, $assetUuid);
+
+        if ($result['status'] !== 200) {
+            return $this->apiResponse(
+                $result['payload']['message'],
+                $result['status'],
+                false
+            );
         }
 
-        DB::table('digital_download_logs')->insert([
-            'entitlement_id' => $entitlement->id,
-            'asset_id' => $asset->id,
-            'ip_hash' => hash('sha256', request()->ip() . '|' . config('app.key')),
-            'ua_hash' => hash('sha256', substr((string) request()->userAgent(), 0, 512) . '|' . config('app.key')),
-            'downloaded_at' => now(),
-        ]);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $result['payload']);
+    }
 
-        $disk = \Illuminate\Support\Facades\Storage::disk($asset->disk);
-
-        if (!$disk->exists($asset->path)) {
-            return $this->apiResponse(NOT_FOUND, 404, false);
-        }
-
-        $filename = $this->sanitizeFilename($asset->original_name) . '.' . pathinfo($asset->path, PATHINFO_EXTENSION);
-
-        return $disk->response($asset->path, $filename, [
-            'Content-Type' => $asset->mime ?: 'application/octet-stream',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-            'Cache-Control' => 'private, no-store',
-        ]);
+    /**
+     * W7 — audited external redirect for URL assets (auth-scoped; never
+     * consumes a download credit; every access is audit-logged).
+     */
+    public function redirectToExternal(Request $request, string $entitlementUuid, string $assetUuid): Response|JsonResponse
+    {
+        return $this->resolver->redirectToExternal($request->user(), $entitlementUuid, $assetUuid);
     }
 
     private function signedUrl(DigitalEntitlement $entitlement, DigitalAsset $asset): ?string
     {
-        if ($entitlement->status !== DigitalEntitlement::STATUS_DELIVERED) {
+        if (!$this->resolver->accessAllowed($entitlement)) {
             return null;
         }
 
@@ -140,17 +171,5 @@ class DigitalDownloadController extends Controller
             now()->addMinutes((int) config('digital.signed_url_ttl_minutes', 30)),
             ['entitlement' => $entitlement->uuid, 'asset' => $asset->uuid]
         );
-    }
-
-    /**
-     * Strip any path information and unsafe characters from the original
-     * filename before it reaches a Content-Disposition header.
-     */
-    private function sanitizeFilename(string $name): string
-    {
-        $base = pathinfo($name, PATHINFO_FILENAME);
-        $clean = preg_replace('/[^A-Za-z0-9\-_ ]+/', '-', $base) ?? 'download';
-
-        return trim(mb_substr($clean, 0, 120)) ?: 'download';
     }
 }

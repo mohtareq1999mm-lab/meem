@@ -14,7 +14,7 @@ class AdminMiddleware
         $user = $request->user();
 
         if (!$user || $user->type !== UserType::ADMIN->value) {
-            abort(403, 'NOT_AUTHORIZED');
+            abort(403, __('message.' . ERROR.NOT_AUTHORIZED));
         }
 
         return $next($request);

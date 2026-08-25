@@ -81,8 +81,9 @@ class AdminInvoiceShowTest extends TestCase
 
         $withPdf = $this->getJson(self::ADMIN_PREFIX . '/' . $invoice->id);
         $withPdf->assertOk();
+        // Registered authenticated download route: /api/v1/invoices/{uuid}/download
         $this->assertStringContainsString(
-            '/api/v1/general/invoices/' . $invoice->uuid . '/download',
+            '/api/v1/invoices/' . $invoice->uuid . '/download',
             (string) $withPdf->json('data.download_url')
         );
     }

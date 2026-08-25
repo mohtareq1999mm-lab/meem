@@ -211,7 +211,7 @@ class FlashSaleVendorRequestController extends CoreController
         try {
             $id = $request->id;
             $this->repository->approveFlashSaleVendorRequestFunc($id);
-            return response()->json(['message' => 'Flash sale request approved successfully'], 200);
+            return response()->json(['message' => __('message.' . FLASH_SALE_REQUEST_APPROVED_SUCCESSFULLY)], 200);
         } catch (MarvelException $e) {
             throw new MarvelException(SOMETHING_WENT_WRONG, $e->getMessage());
         }
@@ -246,7 +246,7 @@ class FlashSaleVendorRequestController extends CoreController
         try {
             $id = $request->id;
             $this->repository->disapproveFlashSaleVendorRequestFunc($id);
-            return response()->json(['message' => 'Flash sale request disapproved successfully'], 200);
+            return response()->json(['message' => __('message.' . FLASH_SALE_REQUEST_DISAPPROVED_SUCCESSFULLY)], 200);
         } catch (MarvelException $e) {
             throw new MarvelException(SOMETHING_WENT_WRONG, $e->getMessage());
         }

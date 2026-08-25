@@ -8,6 +8,8 @@ use Marvel\Database\Models\Product;
 
 class ProductReviewApproved implements ShouldQueue
 {
+    public $queue = 'meem-medium';
+
     /**
      * @var Product
      */

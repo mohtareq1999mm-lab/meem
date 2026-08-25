@@ -128,7 +128,7 @@ class InvoiceController extends Controller
         }
 
         if (!$invoice->pdf_path) {
-            return $this->apiResponse('PDF not yet generated', 404, false);
+            return $this->apiResponse(INVOICE_PDF_NOT_GENERATED, 404, false);
         }
 
         $relativePath = 'invoices/' . $invoice->pdf_path;
@@ -247,7 +247,7 @@ class InvoiceController extends Controller
 
         if (!$invoice->pdf_path) {
             return $this->apiResponse(
-                'PDF not yet generated',
+                INVOICE_PDF_NOT_GENERATED,
                 404,
                 false,
                 [
@@ -355,7 +355,7 @@ class InvoiceController extends Controller
         $invoice = Invoice::query()->findOrFail($id);
 
         if (!in_array($invoice->status, ['generated', 'ready', 'verified', 'downloaded', 'printed'], true)) {
-            return $this->apiResponse('Cannot issue debit note for invoice in status: ' . $invoice->status, 422, false);
+            return $this->apiResponse(__('message.' . INVOICE_DEBIT_NOTE_NOT_ALLOWED, ['status' => $invoice->status]), 422, false);
         }
 
         $debitNote = $this->debitNoteService->generate(
@@ -365,6 +365,6 @@ class InvoiceController extends Controller
             $request->user()->id,
         );
 
-        return $this->apiResponse('Debit note issued successfully', 201, true, $debitNote);
+        return $this->apiResponse(DEBIT_NOTE_ISSUED_SUCCESSFULLY, 201, true, $debitNote);
     }
 }

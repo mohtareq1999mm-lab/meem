@@ -4,7 +4,6 @@ namespace App\Listeners;
 
 use App\Events\ReviewCreated;
 use App\Notifications\NewReviewCreated;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Marvel\Database\Models\Shop;
 use Marvel\Enums\EventType;
@@ -21,6 +20,8 @@ use Marvel\Traits\UsersTrait;
 
 class CommissionRateUpdateListener
 {
+    public $queue = 'meem-medium';
+
     use SmsTrait, UsersTrait;
 
     /**

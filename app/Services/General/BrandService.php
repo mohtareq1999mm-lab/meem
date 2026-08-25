@@ -11,7 +11,7 @@ class BrandService
 
     public function getBrands($request)
     {
-        $limit = $request->get('limit', 10);
+        $limit = min(100, max(1, (int) $request->get('limit', 10)));
         $start_date = $request->query('start_date');
         $end_date   = $request->query('end_date');
         $brandsId = $request->query('brandsId');
@@ -49,8 +49,8 @@ class BrandService
     }
     public function getBrandsProductsByQtySet($request)
     {
-        $qty = $request->query('limit', 10);
-        $qtyBrand = $request->query('limit_brand', 10);
+        $qty = min(100, max(1, (int) $request->query('limit', 10)));
+        $qtyBrand = min(100, max(1, (int) $request->query('limit_brand', 10)));
         $start_date = $request->query('start_date', '');
         $end_date   = $request->query('end_date', '');
 

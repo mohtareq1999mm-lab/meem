@@ -2,6 +2,8 @@
 
 namespace Marvel\Jobs;
 
+use App\Events\FileOperationEvent;
+use App\Traits\BroadcastsFileOperationProgress;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -18,6 +20,7 @@ use Throwable;
 class ImportCategoriesJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use BroadcastsFileOperationProgress;
 
     public int $tries = 3;
 
@@ -129,6 +132,14 @@ class ImportCategoriesJob implements ShouldQueue
                 'errors' => $failedRows,
             ]);
 
+            $this->broadcastCategoryImportTerminal($status, !empty($failedRows), [
+                'progress' => 100.0,
+                'total_rows' => $successCount + count($failedRows),
+                'processed_rows' => $successCount + count($failedRows),
+                'success_rows' => $successCount,
+                'failed_rows' => count($failedRows),
+            ]);
+
             Storage::disk('public')->delete($import->file_path);
             $this->removeSignalFile('progress');
         } catch (ImportCancelledException $e) {
@@ -144,6 +155,14 @@ class ImportCategoriesJob implements ShouldQueue
                 'failed_rows' => count($service->getFailedRows()),
                 'errors' => $service->getFailedRows(),
             ]);
+
+            $this->broadcastCategoryImportTerminal('cancelled', !empty($service->getFailedRows()), [
+                'progress' => 100.0,
+                'total_rows' => $service->getSuccessCount() + count($service->getFailedRows()),
+                'processed_rows' => $service->getSuccessCount() + count($service->getFailedRows()),
+                'success_rows' => $service->getSuccessCount(),
+                'failed_rows' => count($service->getFailedRows()),
+            ]);
         } catch (Throwable $e) {
             $import->update([
                 'status' => 'failed',
@@ -157,8 +176,34 @@ class ImportCategoriesJob implements ShouldQueue
                 ]],
             ]);
 
+            $this->broadcastCategoryImportTerminal('failed', true);
+
             throw $e;
         }
+    }
+
+    /**
+     * Terminal signal for category imports, carried on the existing
+     * `category.import.progress` event name with additive `status` /
+     * `kind` / `has_errors` keys. Existing payload keys (import_id, type)
+     * are preserved for wire compatibility with current consumers.
+     */
+    protected function broadcastCategoryImportTerminal(
+        string $status,
+        bool $hasErrors,
+        array $extraPayload = [],
+    ): void {
+        $this->broadcastFileOperationTerminal(
+            FileOperationEvent::CATEGORY_IMPORT_PROGRESS,
+            'category-import',
+            $this->importId,
+            $status,
+            $hasErrors,
+            array_merge([
+                'type' => 'category',
+                'import_id' => $this->importId,
+            ], $extraPayload)
+        );
     }
 
     protected function countRows(): int
@@ -205,6 +250,8 @@ class ImportCategoriesJob implements ShouldQueue
 
         if ($import && $import->status === 'processing') {
             $import->update(['status' => 'failed']);
+
+            $this->broadcastCategoryImportTerminal('failed', true);
         }
     }
 }

@@ -192,10 +192,22 @@ class RefundController extends CoreController
      *     @OA\Response(response=404, description="Refund not found")
      * )
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
         try {
-            $refund = $this->repository->with(['shop', 'order', 'customer', 'refund_policy', 'refund_reason'])->findOrFail($id);
+            $user = $request->user();
+            if (!$user) {
+                throw new AuthorizationException(NOT_AUTHORIZED);
+            }
+
+            $refundQuery = $this->repository->with(['shop', 'order', 'customer', 'refund_policy', 'refund_reason']);
+
+            if ($user->hasPermissionTo(Permission::SUPER_ADMIN) || $this->repository->hasPermission($user)) {
+                $refund = $refundQuery->findOrFail($id);
+            } else {
+                $refund = $refundQuery->where('customer_id', $user->id)->findOrFail($id);
+            }
+
             return new GetSingleRefundResource($refund);
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);

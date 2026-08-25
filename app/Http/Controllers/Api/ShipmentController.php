@@ -66,7 +66,7 @@ class       ShipmentController extends Controller
     {
         $shipment = $this->shipmentService->create($request->validated());
 
-        return $this->apiResponse('SHIPMENT_CREATED_SUCCESSFULLY', 201, true, ShipmentResource::make($shipment));
+        return $this->apiResponse(SHIPMENT_CREATED_SUCCESSFULLY, 201, true, ShipmentResource::make($shipment));
     }
 
     public function updateStatus(UpdateShipmentStatusRequest $request, int $id): JsonResponse
@@ -78,7 +78,7 @@ class       ShipmentController extends Controller
                 $request->validated('notes'),
             );
 
-            return $this->apiResponse('SHIPMENT_STATUS_UPDATED', 200, true, ShipmentResource::make($shipment));
+            return $this->apiResponse(SHIPMENT_STATUS_UPDATED, 200, true, ShipmentResource::make($shipment));
         } catch (\RuntimeException $e) {
             return $this->apiResponse($e->getMessage(), 422, false);
         }
@@ -88,6 +88,6 @@ class       ShipmentController extends Controller
     {
         $shipment = $this->shipmentService->update($id, $request->validated());
 
-        return $this->apiResponse('SHIPMENT_UPDATED_SUCCESSFULLY', 200, true, ShipmentResource::make($shipment));
+        return $this->apiResponse(SHIPMENT_UPDATED_SUCCESSFULLY, 200, true, ShipmentResource::make($shipment));
     }
 }

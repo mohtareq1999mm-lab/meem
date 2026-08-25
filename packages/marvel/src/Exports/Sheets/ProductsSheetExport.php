@@ -35,6 +35,10 @@ class ProductsSheetExport implements FromQuery, WithTitle, WithHeadings, WithMap
             $query->where('product_type', $this->filters['product_type']);
         }
 
+        if (isset($this->filters['item_type']) && in_array($this->filters['item_type'], \Marvel\Enums\ItemType::getValues(), true)) {
+            $query->where('item_type', $this->filters['item_type']);
+        }
+
         if (isset($this->filters['category_id'])) {
             $query->whereHas('categories', fn($q) => $q->where('category_id', $this->filters['category_id']));
         }
@@ -56,6 +60,7 @@ class ProductsSheetExport implements FromQuery, WithTitle, WithHeadings, WithMap
             'description_ar',
             'price',
             'product_type',
+            'item_type',
             'quantity',
             'status',
             'in_stock',
@@ -84,6 +89,7 @@ class ProductsSheetExport implements FromQuery, WithTitle, WithHeadings, WithMap
             'description_ar' => $descTranslations['ar'] ?? '',
             'price' => $product->price,
             'product_type' => $product->product_type,
+            'item_type' => $product->item_type ?? \Marvel\Enums\ItemType::PHYSICAL,
             'quantity' => $product->stock_quantity,
             'status' => $product->status ? '1' : '0',
             'in_stock' => $product->in_stock ? '1' : '0',

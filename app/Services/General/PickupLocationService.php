@@ -8,7 +8,7 @@ class PickupLocationService
 {
     public function getPickupLocations($request)
     {
-        $limit = $request->get('limit', 10);
+        $limit = min(100, max(1, (int) $request->get('limit', 10)));
         $search = $request->query('search');
         $default = $request->query('default', false);
 

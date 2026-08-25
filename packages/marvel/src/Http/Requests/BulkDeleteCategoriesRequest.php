@@ -23,6 +23,7 @@ class BulkDeleteCategoriesRequest extends FormRequest
                 'integer',
                 'min:1',
                 'distinct',
+                'exists:categories,id',
             ],
         ];
     }
@@ -36,6 +37,7 @@ class BulkDeleteCategoriesRequest extends FormRequest
             'ids.*.integer' => __('message.MESSAGE.CATEGORY_BULK_DELETE_IDS_REQUIRED'),
             'ids.*.min' => __('message.MESSAGE.CATEGORY_BULK_DELETE_IDS_REQUIRED'),
             'ids.*.distinct' => __('message.MESSAGE.CATEGORY_BULK_DELETE_IDS_REQUIRED'),
+            'ids.*.exists' => __('message.MESSAGE.CATEGORY_BULK_DELETE_IDS_REQUIRED'),
         ];
     }
 }

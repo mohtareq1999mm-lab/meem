@@ -165,6 +165,9 @@ class OrderCreationService
 
     public function createOrderItems(Order $order, Cart $cart): bool
     {
+        // Resolved once — schema lookups must not run per order item.
+        $hasItemTypeColumn = \Illuminate\Support\Facades\Schema::hasColumn('order_products', 'item_type');
+
         foreach ($cart->items as $item) {
             try {
 $quantity = max(1, (int) ($item->quantity ?? 0));
@@ -211,7 +214,7 @@ $quantity = max(1, (int) ($item->quantity ?? 0));
                 ];
 
                 // Rolling-deploy safety: only snapshot when the column exists.
-                if (\Illuminate\Support\Facades\Schema::hasColumn('order_products', 'item_type')) {
+                if ($hasItemTypeColumn) {
                     $orderItemData['item_type'] = $product?->item_type ?? \Marvel\Enums\ItemType::PHYSICAL;
                 }
 

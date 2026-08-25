@@ -32,7 +32,7 @@ class OneTimePasswordNotification extends SpatieNotification implements ShouldQu
     {
         return (new MailMessage)
             ->from(env('MAIL_FROM_ADDRESS', 'default@default.com'), config('app.name', 'ChawkBazar'))
-            ->subject($this->subject() ?? __('Your OTP Code'))
+            ->subject($this->subject() ?? __('message.your otp code'))
             ->markdown('emails.one-time-passwords', [
                 'oneTimePassword' => $this->oneTimePassword,
                 'appName' => config('app.name', 'ChawkBazar'),

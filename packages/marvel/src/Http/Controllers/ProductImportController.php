@@ -2,7 +2,9 @@
 
 namespace Marvel\Http\Controllers;
 
+use App\Events\FileOperationEvent;
 use App\Http\Controllers\Controller;
+use App\Traits\BroadcastsFileOperationProgress;
 use Marvel\Database\Models\Import;
 use Marvel\Http\Requests\ProductImportRequest;
 use Marvel\Jobs\ImportProductsJob;
@@ -16,7 +18,7 @@ use Symfony\Component\HttpFoundation\File\Exception\FileNotFoundException;
 
 class ProductImportController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse, BroadcastsFileOperationProgress;
 
     public function __construct()
     {
@@ -228,6 +230,14 @@ class ProductImportController extends Controller
         } catch (QueryException $e) {
             report($e);
         }
+
+        $this->broadcastFileOperationTerminal(
+            FileOperationEvent::PRODUCT_IMPORT_PROGRESS,
+            'product-import',
+            $import->id,
+            'cancelled',
+            false
+        );
 
         return $this->apiResponse(__('message.MESSAGE.IMPORT_CANCELLED_SUCCESSFULLY'), 200, true, [
             'import_id' => $import->id,

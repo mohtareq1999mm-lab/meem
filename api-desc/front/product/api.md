@@ -6,9 +6,10 @@ Products expose an **`item_type`** field describing the nature of the product.
 
 | Value | Meaning |
 |-------|---------|
-| `PHYSICAL` | Physical item. May require stock. May use delivery or pickup. |
-| `DIGITAL` | Digitally delivered item. No physical shipping. May deliver a code, license, card, file, or similar digital asset. |
-| `SERVICE` | Service provided to the customer. Not a physical shipped item. Not a digital code/license/file. |
+| `PHYSICAL` | Physical item. Uses stock. May use delivery or pickup. |
+| `DIGITAL` | Digitally delivered item (e.g. PDF). No physical shipping; available for download once payment succeeds. |
+
+Only `PHYSICAL` and `DIGITAL` are valid. Invalid values are rejected with `422`. Once a product has orders or digital assets, its type is locked.
 
 ### Where `item_type` appears
 
@@ -32,11 +33,7 @@ Send one of:
 { "item_type": "DIGITAL" }
 ```
 
-```json
-{ "item_type": "SERVICE" }
-```
-
-Omitting the field defaults new products to `PHYSICAL`. Unsupported values are rejected with `422`.
+Omitting the field defaults new products to `PHYSICAL`. Unsupported values — including the retired `SERVICE` — are rejected with `422`.
 
 ### Important: `item_type` is NOT the Product Category
 
@@ -46,7 +43,7 @@ Category and product nature are independent concepts. Example — Category: **Ga
 |---------|-----------|
 | PlayStation Controller | `PHYSICAL` |
 | PlayStation Gift Card | `DIGITAL` |
-| Gaming Setup Service | `SERVICE` |
+| Gaming Setup Service Booking | `DIGITAL` (voucher delivered electronically) |
 
 > Note: `product_type` is a DIFFERENT existing field (`simple`/`variable`) describing variant structure. Do not confuse it with `item_type`.
 
@@ -61,11 +58,7 @@ Category and product nature are independent concepts. Example — Category: **Ga
 - Digitally delivered item.
 - No physical shipping.
 - May deliver a code, license, card, file, or similar digital asset.
-
-**SERVICE**
-- Service provided to the customer.
-- Not a physical shipped item.
-- Not a digital code/license/file.
+- Entitlements are product-scoped: files uploaded later to a purchased DIGITAL product automatically become available for download to its entitled customers.
 
 ---
 
@@ -339,7 +332,7 @@ Category and product nature are independent concepts. Example — Category: **Ga
 | `name` | `array` | Yes | Translatable name (`{ en, ar }`) |
 | `description` | `array` | Yes | Translatable description (max 10000) |
 | `product_type` | `string` | Yes | `simple` or `variable` (variant structure) |
-| `item_type` | `string` | No | Product nature: `PHYSICAL` (default), `DIGITAL`, or `SERVICE`. See [Product Type](#product-type-item_type) |
+| `item_type` | `string` | No | Product nature: `PHYSICAL` (default) or `DIGITAL`. See [Product Type](#product-type-item_type) |
 | `categories` | `array` | Yes | Array of category IDs |
 | `images` | `array` | Yes | Array of image files (jpeg,png,jpg, max 2MB) |
 | `in_stock` | `boolean` | Yes | Stock availability |

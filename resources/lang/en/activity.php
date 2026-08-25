@@ -1,6 +1,9 @@
 <?php
 
 return [
+    'digital_entitlement_limit_changed' => 'Digital entitlement download limit changed',
+    'digital_entitlement_revoked' => 'Digital entitlement revoked',
+    'digital_entitlement_restored' => 'Digital entitlement restored',
     'product_created' => 'Product created',
     'product_updated' => 'Product updated',
     'product_deleted' => 'Product deleted',

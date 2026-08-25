@@ -8,16 +8,17 @@ Every product carries an **`item_type`** field that describes the nature of the 
 
 | Value | Meaning | Examples | Inventory Implication | Fulfillment Implication |
 |-------|---------|----------|----------------------|------------------------|
-| `PHYSICAL` | Physical/tangible product (default) | Phone, clothes, laptop, accessories | May have physical stock quantity | May require shipping or pickup |
-| `DIGITAL` | Digital product delivered electronically after purchase | Windows license, PlayStation gift card, activation code, downloadable file | May have digital inventory such as codes/licenses | Delivered electronically; no physical shipping |
-| `SERVICE` | A service provided to the customer | Installation, maintenance, consulting, setup service | Normally no physical stock | Service fulfillment / manual completion |
+| `PHYSICAL` | Physical/tangible product (default) | Phone, clothes, laptop, accessories | Uses physical stock reservation/deduction | May require shipping or pickup |
+| `DIGITAL` | Digital product delivered electronically after purchase | PDF document, license, activation code, downloadable file | Unlimited availability for MVP; no physical stock touched | Delivered electronically once payment succeeds |
 
 **Important rules:**
 
+- Only `PHYSICAL` and `DIGITAL` are valid. (`SERVICE` was removed from the domain.)
 - `item_type` is a **PRODUCT-level attribute**. It is NOT the product category.
-- Do NOT treat `DIGITAL` as `SERVICE`: `DIGITAL` means the customer receives a digital asset (code/license/file); `SERVICE` means the customer receives a service.
-- Defaults to `PHYSICAL` when omitted (all existing products resolve to `PHYSICAL`).
+- Do NOT treat `DIGITAL` as `SERVICE`.
+- Defaults to `PHYSICAL` when omitted (all legacy products resolve to `PHYSICAL`).
 - Invalid values are rejected with `422`.
+- **Immutability:** once a product has order items or digital assets attached, its `item_type` can no longer be changed — attempts return `422`.
 
 > Note: `product_type` is a DIFFERENT field. It holds the variant structure of the product (`simple` or `variable`) and is derived server-side from whether variants are present. It must not be confused with `item_type`.
 
@@ -207,7 +208,7 @@ Create a new product.
 | `name` | object | **Yes** | `{ "en": "...", "ar": "..." }` |
 | `description` | object | **Yes** | `{ "en": "...", "ar": "..." }` |
 | `product_type` | string | **Yes** | `simple` or `variable` (variant structure; derived server-side from `variants`) |
-| `item_type` | string | No | Product nature: `PHYSICAL` (default), `DIGITAL`, or `SERVICE`. See [Product Type](#product-type-item_type) |
+| `item_type` | string | No | Product nature: `PHYSICAL` (default) or `DIGITAL`. See [Product Type](#product-type-item_type) |
 | `price` | float | sometimes | Required if `product_type=simple` |
 | `categories` | array | **Yes** | Array of category IDs |
 | `images` | array | **Yes** | Array of uploaded image files |

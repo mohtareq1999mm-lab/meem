@@ -108,6 +108,9 @@ class OrderService
             'transactions',
             'pickupLocation',
             'latestInvoice',
+            // Powers digital_downloads[] on delivered DIGITAL lines.
+            // Powers digital_downloads[] on delivered DIGITAL lines (BD1 Option B).
+            'digitalEntitlements.orderItem.product.digitalAssets',
         ];
     }
 

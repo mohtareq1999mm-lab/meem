@@ -5,7 +5,6 @@ namespace Marvel\Listeners;
 
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Notification;
 use Marvel\Database\Models\Settings;
@@ -18,6 +17,8 @@ use Marvel\Notifications\StoreNoticeNotification;
 
 class MaintenanceNotification
 {
+    public $queue = 'meem-medium';
+
     /**
      * Create the event listener.
      *

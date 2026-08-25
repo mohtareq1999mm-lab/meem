@@ -27,6 +27,8 @@ class Kernel extends ConsoleKernel
         $schedule->command('cart:notify-abandoned')->hourly()->withoutOverlapping();
         $schedule->command('promotions:notify-ending-soon')->daily()->withoutOverlapping();
         $schedule->command('flash-sales:notify-ending-soon')->daily()->withoutOverlapping();
+        // Permanently remove products soft-deleted more than 30 days ago.
+        $schedule->command('products:purge-old-deleted --days=30')->dailyAt('02:30')->withoutOverlapping();
     }
 
     /**

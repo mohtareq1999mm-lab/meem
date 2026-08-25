@@ -28,11 +28,7 @@ return new class extends Migration
                 ->update(['item_type' => ItemType::PHYSICAL]);
         }
 
-        Schema::table('products', function (Blueprint $table) {
-            $table->enum('item_type', ItemType::getValues())
-                ->default(ItemType::PHYSICAL)
-                ->change();
-        });
+        $this->shrinkEnum(ItemType::getValues());
     }
 
     /**
@@ -41,10 +37,24 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('products', function (Blueprint $table) {
-            $table->enum('item_type', ['PHYSICAL', 'DIGITAL', 'SERVICE'])
-                ->default(ItemType::PHYSICAL)
-                ->change();
-        });
+        $this->shrinkEnum(['PHYSICAL', 'DIGITAL', 'SERVICE']);
+    }
+
+    /**
+     * Native ENUM narrowing is a MySQL-only operation. SQLite (used by the
+     * test suite) treats enums as VARCHAR + CHECK; its constraint is created
+     * by the base table migration and does not need re-narrowing here.
+     */
+    private function shrinkEnum(array $values): void
+    {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
+        $columns = implode(', ', array_map(fn ($v) => "'$v'", $values));
+
+        DB::statement(
+            "ALTER TABLE products MODIFY item_type ENUM($columns) NOT NULL DEFAULT 'PHYSICAL'"
+        );
     }
 };

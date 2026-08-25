@@ -2,7 +2,9 @@
 
 namespace Marvel\Http\Controllers;
 
+use App\Events\FileOperationEvent;
 use App\Http\Controllers\Controller;
+use App\Traits\BroadcastsFileOperationProgress;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
@@ -16,7 +18,7 @@ use Symfony\Component\HttpFoundation\File\Exception\FileNotFoundException;
 
 class CategoryImportController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse, BroadcastsFileOperationProgress;
 
     public function __construct()
     {
@@ -208,6 +210,18 @@ class CategoryImportController extends Controller
         } catch (QueryException $e) {
             report($e);
         }
+
+        $this->broadcastFileOperationTerminal(
+            FileOperationEvent::CATEGORY_IMPORT_PROGRESS,
+            'category-import',
+            $import->id,
+            'cancelled',
+            false,
+            [
+                'type' => 'category',
+                'import_id' => $import->id,
+            ]
+        );
 
         return $this->apiResponse(__('message.MESSAGE.IMPORT_CANCELLED_SUCCESSFULLY'), 200, true, [
             'import_id' => $import->id,

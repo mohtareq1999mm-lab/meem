@@ -239,6 +239,8 @@ final class Permission extends Enum
     public const DELETE_CATEGORY = 'delete-category';
     public const IMPORT_CATEGORY = 'import-category';
     public const EXPORT_CATEGORY = 'export-category';
+    public const IMPORT_BRAND = 'import-brand';
+    public const EXPORT_BRAND = 'export-brand';
     public const CREATE_BRAND = 'create-brand';
     public const UPDATE_BRAND = 'update-brand';
     public const DELETE_BRAND = 'delete-brand';
@@ -293,4 +295,10 @@ final class Permission extends Enum
     public const VIEW_SHIPMENT = 'view-shipment';
     public const CREATE_SHIPMENT = 'create-shipment';
     public const UPDATE_SHIPMENT = 'update-shipment';
+
+    // 🔑 Digital licenses (Workstream 5, decision A4)
+    public const MANAGE_DIGITAL_LICENSES = 'manage-digital-licenses';
+
+    // 🛂 Digital entitlement access management (Workstream 6, decision A4)
+    public const MANAGE_DIGITAL_ACCESS = 'manage-digital-access';
 }

@@ -5,6 +5,7 @@ namespace App\Services\Digital;
 use App\Events\DigitalProductsDelivered;
 use App\Models\DigitalAsset;
 use App\Models\DigitalEntitlement;
+use App\Models\DigitalLicenseKey;
 use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Order;
 use Throwable;
@@ -55,6 +56,12 @@ class DigitalFulfillmentService
 
                 $entitlement->assets()->syncWithoutDetaching($assetIds);
 
+                // W5: allocate one pool key per LICENSE asset of this line.
+                // Runs inside the same transaction; idempotent via the
+                // existing-allocation guard + the UNIQUE(order_product_id)
+                // entitlement anchor.
+                $this->allocateLicenseKeys($entitlement, $item->product_id);
+
                 if ($entitlement->status === DigitalEntitlement::STATUS_PENDING) {
                     $entitlement->update([
                         'status' => DigitalEntitlement::STATUS_DELIVERED,
@@ -84,6 +91,59 @@ class DigitalFulfillmentService
                 'status' => DigitalEntitlement::STATUS_REVOKED,
                 'revoked_at' => now(),
             ]);
+        }
+    }
+
+    /**
+     * W5 — allocate one available pool key per LICENSE asset of the
+     * purchased product to this entitlement.
+     *
+     * Concurrency: rows are selected FOR UPDATE inside the fulfillment
+     * transaction, so two concurrent fulfillments can never grab the same
+     * key; a loser simply finds no available row (pool exhaustion is a
+     * documented, non-fatal outcome). Idempotency: an existing allocation
+     * for this entitlement+asset short-circuits before any selection, and
+     * the UNIQUE(order_product_id) anchor prevents entitlement duplication
+     * in the first place.
+     */
+    private function allocateLicenseKeys(DigitalEntitlement $entitlement, int $productId): void
+    {
+        $licenseAssetIds = DigitalAsset::query()
+            ->where('product_id', $productId)
+            ->where('type', \App\Enums\DigitalAssetType::LICENSE->value)
+            ->where('status', \App\Models\DigitalAsset::STATUS_ACTIVE)
+            ->pluck('id');
+
+        foreach ($licenseAssetIds as $assetId) {
+            $alreadyAllocated = DigitalLicenseKey::query()
+                ->where('asset_id', $assetId)
+                ->where('allocated_entitlement_id', $entitlement->id)
+                ->exists();
+
+            if ($alreadyAllocated) {
+                continue;
+            }
+
+            $key = DigitalLicenseKey::query()
+                ->where('asset_id', $assetId)
+                ->where('status', DigitalLicenseKey::STATUS_AVAILABLE)
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->first();
+
+            if (!$key) {
+                // Pool exhausted/empty: entitlement still delivers; reveal
+                // endpoint reports the missing credential. Documented W5
+                // behavior — fulfillment must never fail because ops have
+                // not topped up a pool yet.
+                continue;
+            }
+
+            $key->forceFill([
+                'status' => DigitalLicenseKey::STATUS_ASSIGNED,
+                'allocated_entitlement_id' => $entitlement->id,
+                'assigned_at' => now(),
+            ])->save();
         }
     }
 }

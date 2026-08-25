@@ -57,7 +57,7 @@ class AdminInvoiceResource extends JsonResource
                 url('/api/v1/invoices/' . $this->id)
             ),
             'download_url' => $this->when($this->uuid && $this->pdf_path, fn () =>
-                url('/api/v1/general/invoices/' . $this->uuid . '/download')
+                url('/api/v1/invoices/' . $this->uuid . '/download')
             ),
             'snapshot' => $this->when($this->data, fn () =>
                 InvoiceSnapshotResource::make($this->resource)

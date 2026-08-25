@@ -2,6 +2,8 @@
 
 namespace Marvel\Jobs;
 
+use App\Events\FileOperationEvent;
+use App\Traits\BroadcastsFileOperationProgress;
 use Marvel\Database\Models\Import;
 use Marvel\Exceptions\ImportCancelledException;
 use Marvel\Imports\ProductsImport;
@@ -18,6 +20,7 @@ use Maatwebsite\Excel\Facades\Excel;
 class ImportProductsJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use BroadcastsFileOperationProgress;
 
     public int $tries = 3;
 
@@ -123,6 +126,21 @@ class ImportProductsJob implements ShouldQueue
                 'errors' => $failedRows,
             ]);
 
+            $this->broadcastFileOperationTerminal(
+                FileOperationEvent::PRODUCT_IMPORT_PROGRESS,
+                'product-import',
+                $this->importId,
+                $status,
+                !empty($failedRows),
+                [
+                    'progress' => 100.0,
+                    'total_rows' => $successCount + count($failedRows),
+                    'processed_rows' => $successCount + count($failedRows),
+                    'success_rows' => $successCount,
+                    'failed_rows' => count($failedRows),
+                ]
+            );
+
             Storage::disk('public')->delete($import->file_path);
             $this->removeSignalFile('progress');
         } catch (ImportCancelledException $e) {
@@ -137,11 +155,34 @@ class ImportProductsJob implements ShouldQueue
                 'failed_rows' => count($service->getFailedRows()),
                 'errors' => $service->getFailedRows(),
             ]);
+
+            $this->broadcastFileOperationTerminal(
+                FileOperationEvent::PRODUCT_IMPORT_PROGRESS,
+                'product-import',
+                $this->importId,
+                'cancelled',
+                !empty($service->getFailedRows()),
+                [
+                    'progress' => 100.0,
+                    'total_rows' => $service->getSuccessCount() + count($service->getFailedRows()),
+                    'processed_rows' => $service->getSuccessCount() + count($service->getFailedRows()),
+                    'success_rows' => $service->getSuccessCount(),
+                    'failed_rows' => count($service->getFailedRows()),
+                ]
+            );
         } catch (Throwable $e) {
             $import->update([
                 'status' => 'failed',
                 'errors' => [['sheet' => 'system', 'row' => 0, 'sku' => '', 'error_message' => $e->getMessage()]],
             ]);
+
+            $this->broadcastFileOperationTerminal(
+                FileOperationEvent::PRODUCT_IMPORT_PROGRESS,
+                'product-import',
+                $this->importId,
+                'failed',
+                true
+            );
 
             throw $e;
         }
@@ -187,6 +228,14 @@ class ImportProductsJob implements ShouldQueue
         $import = Import::find($this->importId);
         if ($import && $import->status === 'processing') {
             $import->update(['status' => 'failed']);
+
+            $this->broadcastFileOperationTerminal(
+                FileOperationEvent::PRODUCT_IMPORT_PROGRESS,
+                'product-import',
+                $this->importId,
+                'failed',
+                true
+            );
         }
     }
 }

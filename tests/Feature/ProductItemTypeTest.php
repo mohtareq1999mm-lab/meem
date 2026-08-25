@@ -282,6 +282,77 @@ class ProductItemTypeTest extends TestCase
     }
 
     // =========================================================================
+    // D5 — ITEM TYPE IMMUTABILITY
+    // =========================================================================
+
+    public function test_item_type_cannot_change_once_ordered()
+    {
+        Sanctum::actingAs($this->adminUser, ['*']);
+        $product = $this->createProduct();
+
+        \Marvel\Database\Models\Order::create([
+            'user_id' => $this->adminUser->id,
+            'name' => 'Immutability Order',
+            'status' => 'completed',
+        ]);
+
+        \Marvel\Database\Models\OrderProduct::create([
+            'order_id' => \Marvel\Database\Models\Order::query()->max('id'),
+            'product_id' => $product->id,
+            'product_name' => 'x',
+            'product_quantity' => 1,
+            'item_type' => ItemType::PHYSICAL,
+        ]);
+
+        $response = $this->putJson(self::PREFIX . '/products/' . $product->id, [
+            'item_type' => ItemType::DIGITAL,
+        ]);
+
+        $response->assertStatus(422);
+        $this->assertSame(ItemType::PHYSICAL, $product->fresh()->item_type);
+    }
+
+    public function test_item_type_cannot_change_when_digital_assets_exist()
+    {
+        Sanctum::actingAs($this->adminUser, ['*']);
+        $product = $this->createProduct(['item_type' => ItemType::PHYSICAL]);
+
+        \App\Models\DigitalAsset::create([
+            'product_id' => $product->id,
+            'disk' => 'private',
+            'path' => 'digital-assets/x/a.pdf',
+            'original_name' => 'a',
+            'mime' => 'application/pdf',
+            'size' => 10,
+        ]);
+
+        $response = $this->putJson(self::PREFIX . '/products/' . $product->id, [
+            'item_type' => ItemType::DIGITAL,
+        ]);
+
+        $response->assertStatus(422);
+        $this->assertStringContainsString('digital assets', strtolower($response->json('message')));
+        $this->assertSame(ItemType::PHYSICAL, $product->fresh()->item_type);
+    }
+
+    public function test_import_rejects_invalid_item_type_without_silently_defaulting()
+    {
+        $service = app(\Marvel\Services\Import\ProductImportService::class);
+        $method = new \ReflectionMethod($service, 'buildProductData');
+        $method->setAccessible(true);
+
+        try {
+            $method->invoke($service, ['item_type' => 'SERVICE', 'name_en' => 'X']);
+            $this->fail('Invalid item_type should throw');
+        } catch (\InvalidArgumentException $e) {
+            $this->assertStringContainsString('Invalid item_type', $e->getMessage());
+        }
+
+        $data = $method->invoke($service, ['item_type' => 'digital', 'name_en' => 'Y']);
+        $this->assertSame(ItemType::DIGITAL, $data['item_type']);
+    }
+
+    // =========================================================================
     // RESPONSE EXPOSURE — ADMIN RESOURCES
     // =========================================================================
 

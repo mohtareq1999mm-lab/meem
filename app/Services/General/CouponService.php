@@ -12,7 +12,7 @@ class CouponService
     public function getCoupons($request)
     {
         $name = $request->get("search", false);
-        $limit = $request->get('limit', 10);
+        $limit = min(100, max(1, (int) $request->get('limit', 10)));
         $start_date = $request->query('start_date');
         $end_date   = $request->query('end_date');
         $couponsId = $request->query('couponsId');

@@ -17,7 +17,7 @@ class TagController extends Controller
     {
         $tags = Tag::query();
         $order = $request->input("order", "desc");
-        $limit = $request->input("limit",15);
+        $limit = min(100, max(1, (int) $request->input("limit", 15)));
 
         if ($request->filled('tagsIds')) {
             $ids = is_array($request->tagsIds) ? $request->tagsIds : explode(',', $request->tagsIds);

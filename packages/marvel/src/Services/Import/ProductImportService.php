@@ -2,6 +2,8 @@
 
 namespace Marvel\Services\Import;
 
+use App\Events\FileOperationEvent;
+use App\Traits\BroadcastsFileOperationProgress;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Collection;
@@ -26,6 +28,8 @@ use Marvel\Services\Pricing\ProductPricingService;
 
 class ProductImportService
 {
+    use BroadcastsFileOperationProgress;
+
     protected ?UrlImageHandler $urlHandler = null;
 
     protected ProductPricingService $pricingService;
@@ -148,6 +152,16 @@ class ProductImportService
             $this->currentProgress = $this->calculateSmoothProgress();
             $this->lastTickProcessedCount = $this->processedCount;
             $this->lastTickTime = microtime(true);
+
+            $this->broadcastFileOperationProgress(
+                FileOperationEvent::PRODUCT_IMPORT_PROGRESS,
+                'product-import',
+                (int) $this->importId,
+                $this->currentProgress,
+                $this->processedCount,
+                $this->successCount,
+                count($this->failedRows)
+            );
         }
 
         $this->writeSignal('progress', [
@@ -181,6 +195,16 @@ class ProductImportService
             'failed_rows' => count($this->failedRows),
             'progress' => $progress,
         ]);
+
+        $this->broadcastFileOperationProgress(
+            FileOperationEvent::PRODUCT_IMPORT_PROGRESS,
+            'product-import',
+            (int) $this->importId,
+            $progress,
+            $this->successCount + count($this->failedRows),
+            $this->successCount,
+            count($this->failedRows)
+        );
     }
 
     protected function calculateSmoothProgress(): float
@@ -300,6 +324,12 @@ class ProductImportService
             if ($product) {
                 
                 $data['slug'] = $product->slug;
+
+                // D5 — item_type immutability for existing products.
+                if (isset($data['item_type']) && $data['item_type'] !== $product->item_type && \Marvel\Database\Models\OrderProduct::where('product_id', $product->id)->exists()) {
+                    throw new \InvalidArgumentException(__('message.ERROR.ITEM_TYPE_IMMUTABLE_ORDERED'));
+                }
+
                 $product->fill($data)->saveQuietly();
             } else {
                 $data['slug'] = $this->generateSlug($row, $product?->id);
@@ -643,6 +673,19 @@ class ProductImportService
             $data['product_type'] = in_array($row['product_type'], ProductType::getValues())
                 ? $row['product_type']
                 : ProductType::SIMPLE;
+        }
+
+        if (isset($row['item_type'])) {
+            $itemType = strtoupper(trim((string) $row['item_type']));
+
+            if (!in_array($itemType, \Marvel\Enums\ItemType::getValues(), true)) {
+                // Invalid values are rejected — never silently defaulted.
+                throw new \InvalidArgumentException(
+                    "Invalid item_type '{$row['item_type']}'. Allowed: " . implode(', ', \Marvel\Enums\ItemType::getValues())
+                );
+            }
+
+            $data['item_type'] = $itemType;
         }
 
         if (isset($row['quantity'])) {

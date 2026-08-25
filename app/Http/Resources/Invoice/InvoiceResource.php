@@ -47,7 +47,7 @@ class InvoiceResource extends JsonResource
                 return url('/api/v1/general/invoices/verify/' . $this->uuid);
             }),
             'view_url' => $this->when($this->uuid, function () {
-                return url('/api/v1/general/invoices/show/uuid/' . $this->uuid);
+                return url('/api/v1/invoices/uuid/' . $this->uuid);
             }),
         ];
     }

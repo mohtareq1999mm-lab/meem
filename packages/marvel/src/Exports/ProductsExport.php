@@ -10,6 +10,7 @@ use Marvel\Exports\Sheets\ImagesSheetExport;
 use Marvel\Exports\Sheets\ProductsSheetExport;
 use Marvel\Exports\Sheets\ProductVariantsSheetExport;
 use Marvel\Exports\Sheets\SlidersSheetExport;
+use Marvel\Exports\Sheets\TagsSheetExport;
 
 class ProductsExport implements WithMultipleSheets
 {
@@ -30,6 +31,7 @@ class ProductsExport implements WithMultipleSheets
             'brands' => new BrandsSheetExport($this->filters),
             'flash_sales' => new FlashSalesSheetExport($this->filters),
             'sliders' => new SlidersSheetExport($this->filters),
+            'tags' => new TagsSheetExport($this->filters),
         ];
     }
 

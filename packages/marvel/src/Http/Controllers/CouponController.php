@@ -5,6 +5,7 @@ namespace Marvel\Http\Controllers;
 use App\Enums\FrontendResource;
 use App\Traits\HasCache;
 use Exception;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
@@ -200,6 +201,9 @@ class CouponController extends CoreController
 
     public function approveCoupon(Request $request)
     {
+        if (!auth()->user()?->hasPermissionTo(Permission::SUPER_ADMIN)) {
+            throw new AuthorizationException(NOT_AUTHORIZED);
+        }
         try {
             $coupon = $this->repository->findOrFail($request->id);
             $coupon->update(['is_approve' => true]);
@@ -212,6 +216,9 @@ class CouponController extends CoreController
 
     public function disApproveCoupon(Request $request)
     {
+        if (!auth()->user()?->hasPermissionTo(Permission::SUPER_ADMIN)) {
+            throw new AuthorizationException(NOT_AUTHORIZED);
+        }
         try {
             $coupon = $this->repository->findOrFail($request->id);
             $coupon->is_approve = false;

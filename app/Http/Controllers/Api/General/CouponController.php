@@ -28,6 +28,10 @@ class CouponController extends Controller
 
     public function applyCoupon(Request $request)
     {
+        $request->validate([
+            'code' => ['required', 'string', 'max:191'],
+        ]);
+
         $code = $request->get('code');
         $result = $this->couponService->addCouponToCart($code);
 

@@ -41,6 +41,6 @@ class FastShippingController extends CoreController
 
         $this->repository->updateSettings($validated);
         $this->flushTag(FrontendResource::FAST_SHIPPING_SETTINGS->value);
-        return $this->apiResponse('Fast shipping settings updated successfully', 200, true);
+        return $this->apiResponse(FAST_SHIPPING_SETTINGS_UPDATED, 200, true);
     }
 }

@@ -212,8 +212,14 @@ return [
     // 📂 Category Import / Export
     'import-category' => 'Import categories',
     'export-category' => 'Export categories',
+    'import-brand' => 'Import brands',
+    'export-brand' => 'Export brands',
 
     // 🧾 Invoices
     'view-invoice-download' => 'Download invoice',
+
+    // Digital licenses
+    'manage-digital-licenses' => 'Manage digital licenses',
+    'manage-digital-access' => 'Manage digital access',
 
 ];

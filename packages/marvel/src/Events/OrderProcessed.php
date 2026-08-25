@@ -8,6 +8,8 @@ use Marvel\Database\Models\Order;
 
 class OrderProcessed implements ShouldQueue
 {
+    public $queue = 'meem-medium';
+
     /**
      * @var Order
      */

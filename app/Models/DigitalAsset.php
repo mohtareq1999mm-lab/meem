@@ -16,7 +16,12 @@ class DigitalAsset extends Model
     public const TYPE_ACTIVATION_CODE = 'ACTIVATION_CODE';
 
     // MVP ships FILE only; the remaining types are reserved extension points.
+    // DEPRECATED for authorization decisions: the creatable-type whitelist
+    // lives in App\Services\Digital\AssetTypeRegistry::creatableTypes().
     public const ACTIVE_TYPES = [self::TYPE_FILE];
+
+    public const STATUS_ACTIVE = 'active';
+    // Reserved future states (target schema): inactive, revoked, expired.
 
     protected $fillable = [
         'uuid',
@@ -25,14 +30,33 @@ class DigitalAsset extends Model
         'disk',
         'path',
         'original_name',
+        'display_name',
         'mime',
+        'extension',
         'size',
+        'checksum',
+        'status',
+        'metadata',
+        'external_url',
+        'secret',
         'sort_order',
+        'expires_at',
     ];
 
+    /**
+     * Storage location and license secrets never leave the model through
+     * serialization; resources must re-declare anything they expose.
+     */
     protected $hidden = [
         'path',
         'disk',
+        'secret',
+    ];
+
+    protected $casts = [
+        'metadata' => 'array',
+        'expires_at' => 'datetime',
+        'secret' => 'encrypted',
     ];
 
     protected static function boot(): void

@@ -207,6 +207,7 @@ Production Ready
 **Revision History:**
 - Rev 1 (2026-07-17): Phase 1 production audit — 76/76 tests passing
 - Rev 2 (2026-08-23): Added `item_type` (PHYSICAL/DIGITAL/SERVICE): new ItemType enum + DB column (default PHYSICAL, indexed), fillable, create/update validation, serialization in package ProductResource + app ProductResource + ProductMiniResource; api-desc docs updated. Existing `product_type` (simple/variable) intentionally NOT repurposed — server-derived variant structure consumed by Cart/Orders/FlashSales/Import.
+- Rev 3 (2026-08-23): SERVICE removed from domain (enum shrink migration). D5 immutability enforced via App\Services\Digital\ItemTypePolicy. order_products.item_type snapshot written at order creation. Dead legacy digital stack deleted. New Digital Product System: digital_assets on private disk, entitlements with exactly-once fulfillment from PaymentSucceeded, signed-URL downloads with atomic limits, refund revocation.
 
 ---
 
@@ -619,3 +620,133 @@ Production Ready
 
 Dependency Confidence:
 Verified
+
+--------------------------------------------------
+
+Feature:
+Dashboard Analytics
+
+Purpose:
+Platform-wide admin analytics (overview, revenue, orders, products, customers, finance, reconciliation) served from app/Services/Dashboard/DashboardService.
+
+Depends On:
+- Orders / Payments / Products / Coupons (read-only aggregates) (Verified)
+- Spatie permission view-analytics (seeded PermissionSeeder:130) (Verified)
+- Authentication - Sanctum (Verified)
+
+Used By:
+- Admin dashboard UI (Verified)
+- Frontend charts (Not verified)
+
+Regression Required When Changed:
+- DashboardTest
+- OrderCreationFlowTest (aggregate fixtures)
+
+Blocking Dependencies:
+None
+
+Current Status:
+Production Ready (view-analytics gate added 2026-08-23; previously any authenticated user could read platform financials - fixed)
+
+Dependency Confidence:
+Verified
+
+--------------------------------------------------
+
+Feature:
+Shipments
+
+Purpose:
+Admin shipment lifecycle (create, update, status transitions with lockForUpdate state machine).
+
+Depends On:
+- Orders (Verified)
+- Permissions view-shipments/view-shipment/create-shipment/update-shipment (constructor middleware, seeded) (Verified)
+- Translation System MESSAGE.SHIPMENT_* keys + constants (Verified)
+
+Used By:
+- Admin shipment UI (Verified per api-desc/shipment docs)
+- Invoice PDF templates (tracking display) (Verified)
+
+Regression Required When Changed:
+- Shipments suite
+- ProductionClosureAuditRegressionTest (translated-message assertions)
+
+Blocking Dependencies:
+None
+
+Current Status:
+Production Ready (Rev 2: raw-key response strings fixed; whereNumber constraints added)
+
+Dependency Confidence:
+Verified
+
+--------------------------------------------------
+
+Feature:
+Refunds
+
+Purpose:
+Customer refund requests against main orders; admin approve/reject with wallet/balance effects.
+
+Depends On:
+- Orders (customer_id/amount mapping UNDEFINED in schema) (Verified broken)
+- refunds table (migration ABSENT anywhere in repo) (Verified broken)
+- Payment System gateways (Not Started feature) (Verified)
+
+Used By:
+- Customer order refund requests (Blocked)
+- Admin approval flows incl. RatingRemoved / RestoreInventoryOnRefund / RevokePendingDigitalEntitlements listeners on RefundApproved (Verified)
+
+Regression Required When Changed:
+- Refunds suites (none exist yet - create with ERR-001 resolution)
+- EventSystemTest refund event coverage
+
+Blocking Dependencies:
+ERR-001 architectural blocker (error.md): feature cannot function without schema decisions.
+
+Current Status:
+Blocked (security hardening applied 2026-08-23: route auth:sanctum, show() customer scoping, storeRefund inverted super_admin condition fixed; functional restoration deferred to Payment System implementation)
+
+Dependency Confidence:
+Verified
+
+---
+
+## Realtime File Operations (Pusher)
+
+**Purpose:**
+Deliver import/export/bulk-delete progress and terminal transitions to the admin CMS in real time over the existing Pusher stack, with the imports table as source of truth and status endpoints as recovery/reconciliation. Removes dependence on continuous 2s polling.
+
+**Dependency Confidence:**
+All dependencies verified from source code.
+
+**Depends On:**
+- Pusher Broadcasting — config/broadcasting.php, BROADCAST_DRIVER=pusher, PUSHER_ENABLED (Verified)
+- Channel authorization users.{id} + dmin.notifications in routes/channels.php; marvel Rest/Channel.php (Verified)
+- Imports table (imports) as operation state incl. created_by owner resolution (Verified)
+- Queue policy: all producer jobs on meem-high, unchanged (Verified - QueueStandardizationStaticTest 134/134)
+- Status endpoints of Products/Categories/Brands import/export + bulk delete (reconciliation contract, unchanged) (Verified)
+- CategoryImportProgress legacy wire contract preserved (Verified)
+
+**Used By:**
+- Admin frontend: product/category/brand import progress UIs (Verified via api-desc contracts)
+- Admin frontend: category/brand export download flows (Verified)
+- Admin frontend: category bulk-delete progress UI (Verified)
+
+**Regression Required When Changed:**
+- tests/Unit/FileOperationEventContractTest
+- tests/Feature/FileOperations/* (broadcast contract, isolation, security)
+- ProductImportTest / ProductExportTest / CategoryImportTest / CategoryExportTest / BrandImportExportTest / CategoryBulkDelete*Test
+- QueueStandardizationStaticTest + Digital/QueueRoutingRuntimeTest (queue policy proof)
+- NotificationAuthorizationTest (channel auth regression)
+
+**Blocking Dependencies:**
+None
+
+**Current Status:**
+Production Ready
+
+**Revision History:**
+- Rev 1 (2026-08-25): Initial implementation (ADR-002 docs/architecture/realtime-file-operations.md). Added FileOperationEvent + BroadcastsFileOperationProgress trait; wired product/brand/category import jobs, export jobs, bulk-delete job, cancel endpoints; removed unauthenticated /test-pusher debug route (Pusher key leak). Deferred: G3 product-export async, G4 ownership scoping, G7 signal-file scaling.
+

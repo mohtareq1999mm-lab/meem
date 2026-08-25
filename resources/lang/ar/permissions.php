@@ -215,7 +215,15 @@ return [
     'import-category' => 'استيراد التصنيفات',
     'export-category' => 'تصدير التصنيفات',
 
+    // 🏷️ Brand Import / Export
+    'import-brand' => 'استيراد العلامات التجارية',
+    'export-brand' => 'تصدير العلامات التجارية',
+
     // 🧾 Invoices
     'view-invoice-download' => 'تنزيل فاتورة PDF',
+
+    // التراخيص الرقمية
+    'manage-digital-licenses' => 'إدارة التراخيص الرقمية',
+    'manage-digital-access' => 'إدارة الوصول الرقمي',
 
 ];

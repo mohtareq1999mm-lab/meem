@@ -5,7 +5,6 @@ namespace App\Listeners;
 use App\Enums\UserType;
 use App\Notifications\UserOrderDeliveredNotification;
 use App\Events\OrderDelivered;
-use App\Notifications\UserOrderDeliveredNotification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
 class SendUserOrderDeliveredNotification implements ShouldQueue

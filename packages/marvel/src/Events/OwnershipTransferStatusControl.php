@@ -10,6 +10,8 @@ use Marvel\Database\Models\OwnershipTransfer;
 
 class OwnershipTransferStatusControl implements ShouldQueue
 {
+    public $queue = 'meem-medium';
+
     /**
      * @var OwnershipTransfer
      */

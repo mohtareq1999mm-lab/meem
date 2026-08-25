@@ -4,6 +4,7 @@ namespace Tests\Feature\Categories;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Marvel\Jobs\BulkDeleteCategoriesJob;
@@ -66,7 +67,14 @@ class CategoryQueueAssignmentTest extends TestCase
     {
         $this->superAdmin();
 
-        $this->postJson(self::PREFIX . '/categories/bulk-delete', ['ids' => [424242]])
+        // BulkDeleteCategoriesRequest validates ids.* exists — use a real row.
+        $categoryId = DB::table('categories')->insertGetId([
+            'name' => json_encode(['en' => 'Queue Probe']),
+            'slug' => 'queue-probe-' . uniqid(),
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $this->postJson(self::PREFIX . '/categories/bulk-delete', ['ids' => [$categoryId]])
             ->assertStatus(202);
 
         Queue::assertPushedOn('meem-high', BulkDeleteCategoriesJob::class);
