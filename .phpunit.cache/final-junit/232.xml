@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Settings\SettingsCrudTest" file="D:\meem-commerce\tests\Feature\Settings\SettingsCrudTest.php" tests="5" assertions="41" errors="0" failures="0" skipped="0" time="0.110912">
+    <testcase name="can_view_settings" file="D:\meem-commerce\tests\Feature\Settings\SettingsCrudTest.php" line="69" class="Tests\Feature\Settings\SettingsCrudTest" classname="Tests.Feature.Settings.SettingsCrudTest" assertions="2" time="0.037542"/>
+    <testcase name="can_update_settings" file="D:\meem-commerce\tests\Feature\Settings\SettingsCrudTest.php" line="83" class="Tests\Feature\Settings\SettingsCrudTest" classname="Tests.Feature.Settings.SettingsCrudTest" assertions="5" time="0.046251"/>
+    <testcase name="settings_returns_expected_json_structure" file="D:\meem-commerce\tests\Feature\Settings\SettingsCrudTest.php" line="133" class="Tests\Feature\Settings\SettingsCrudTest" classname="Tests.Feature.Settings.SettingsCrudTest" assertions="22" time="0.005845"/>
+    <testcase name="omitted_tiktok_and_snapchat_preserve_existing_values" file="D:\meem-commerce\tests\Feature\Settings\SettingsCrudTest.php" line="170" class="Tests\Feature\Settings\SettingsCrudTest" classname="Tests.Feature.Settings.SettingsCrudTest" assertions="3" time="0.007023"/>
+    <testcase name="updated_tiktok_and_snapchat_are_returned_by_admin_and_website_endpoints" file="D:\meem-commerce\tests\Feature\Settings\SettingsCrudTest.php" line="191" class="Tests\Feature\Settings\SettingsCrudTest" classname="Tests.Feature.Settings.SettingsCrudTest" assertions="9" time="0.014252"/>
+  </testsuite>
+</testsuites>

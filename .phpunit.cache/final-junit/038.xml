@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\CmsPageTest" file="D:\meem-commerce\tests\Feature\CmsPageTest.php" tests="3" assertions="3" errors="0" failures="3" skipped="0" time="0.079236">
+    <testcase name="test_public_can_fetch_page_by_slug_sorted_content" file="D:\meem-commerce\tests\Feature\CmsPageTest.php" line="62" class="Tests\Feature\CmsPageTest" classname="Tests.Feature.CmsPageTest" assertions="1" time="0.040095">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\CmsPageTest::test_public_can_fetch_page_by_slug_sorted_content&#13;
+Expected response status code [200] but received 404.
+Failed asserting that 200 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\Concerns\AssertsStatusCodes.php:16
+D:\meem-commerce\tests\Feature\CmsPageTest.php:76
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_editor_can_create_update_and_delete_page" file="D:\meem-commerce\tests\Feature\CmsPageTest.php" line="82" class="Tests\Feature\CmsPageTest" classname="Tests.Feature.CmsPageTest" assertions="1" time="0.029747">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\CmsPageTest::test_editor_can_create_update_and_delete_page&#13;
+Expected response status code [201] but received 404.
+Failed asserting that 201 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\Concerns\AssertsStatusCodes.php:26
+D:\meem-commerce\tests\Feature\CmsPageTest.php:98
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_non_editor_cannot_mutate_pages" file="D:\meem-commerce\tests\Feature\CmsPageTest.php" line="122" class="Tests\Feature\CmsPageTest" classname="Tests.Feature.CmsPageTest" assertions="1" time="0.009394">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\CmsPageTest::test_non_editor_cannot_mutate_pages&#13;
+Expected response status code [403] but received 404.
+Failed asserting that 403 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\CmsPageTest.php:139
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+  </testsuite>
+</testsuites>

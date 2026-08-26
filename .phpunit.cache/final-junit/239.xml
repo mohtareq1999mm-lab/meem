@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\SiteReviews\SiteReviewPublicApiTest" file="D:\meem-commerce\tests\Feature\SiteReviews\SiteReviewPublicApiTest.php" tests="6" assertions="26" errors="0" failures="0" skipped="0" time="0.087159">
+    <testcase name="public_api_returns_approved_reviews_only" file="D:\meem-commerce\tests\Feature\SiteReviews\SiteReviewPublicApiTest.php" line="12" class="Tests\Feature\SiteReviews\SiteReviewPublicApiTest" classname="Tests.Feature.SiteReviews.SiteReviewPublicApiTest" assertions="5" time="0.055854"/>
+    <testcase name="pending_reviews_are_not_publicly_visible" file="D:\meem-commerce\tests\Feature\SiteReviews\SiteReviewPublicApiTest.php" line="32" class="Tests\Feature\SiteReviews\SiteReviewPublicApiTest" classname="Tests.Feature.SiteReviews.SiteReviewPublicApiTest" assertions="3" time="0.005845"/>
+    <testcase name="rejected_reviews_are_not_publicly_visible" file="D:\meem-commerce\tests\Feature\SiteReviews\SiteReviewPublicApiTest.php" line="44" class="Tests\Feature\SiteReviews\SiteReviewPublicApiTest" classname="Tests.Feature.SiteReviews.SiteReviewPublicApiTest" assertions="2" time="0.006600"/>
+    <testcase name="public_response_exposes_customer_name_and_not_moderation_fields" file="D:\meem-commerce\tests\Feature\SiteReviews\SiteReviewPublicApiTest.php" line="55" class="Tests\Feature\SiteReviews\SiteReviewPublicApiTest" classname="Tests.Feature.SiteReviews.SiteReviewPublicApiTest" assertions="12" time="0.007274"/>
+    <testcase name="public_endpoint_works_without_authentication" file="D:\meem-commerce\tests\Feature\SiteReviews\SiteReviewPublicApiTest.php" line="79" class="Tests\Feature\SiteReviews\SiteReviewPublicApiTest" classname="Tests.Feature.SiteReviews.SiteReviewPublicApiTest" assertions="1" time="0.007583"/>
+    <testcase name="approved_review_can_be_created_by_any_customer_via_factory" file="D:\meem-commerce\tests\Feature\SiteReviews\SiteReviewPublicApiTest.php" line="89" class="Tests\Feature\SiteReviews\SiteReviewPublicApiTest" classname="Tests.Feature.SiteReviews.SiteReviewPublicApiTest" assertions="3" time="0.004003"/>
+  </testsuite>
+</testsuites>

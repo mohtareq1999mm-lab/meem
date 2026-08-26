@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Categories\CategoryRelationshipTest" file="D:\meem-commerce\tests\Feature\Categories\CategoryRelationshipTest.php" tests="5" assertions="7" errors="0" failures="0" skipped="0" time="0.116248">
+    <testcase name="test_parent_child_relationship" file="D:\meem-commerce\tests\Feature\Categories\CategoryRelationshipTest.php" line="36" class="Tests\Feature\Categories\CategoryRelationshipTest" classname="Tests.Feature.Categories.CategoryRelationshipTest" assertions="2" time="0.026707"/>
+    <testcase name="test_show_returns_parent" file="D:\meem-commerce\tests\Feature\Categories\CategoryRelationshipTest.php" line="55" class="Tests\Feature\Categories\CategoryRelationshipTest" classname="Tests.Feature.Categories.CategoryRelationshipTest" assertions="1" time="0.041308"/>
+    <testcase name="test_children_are_returned_with_parent" file="D:\meem-commerce\tests\Feature\Categories\CategoryRelationshipTest.php" line="74" class="Tests\Feature\Categories\CategoryRelationshipTest" classname="Tests.Feature.Categories.CategoryRelationshipTest" assertions="1" time="0.018095"/>
+    <testcase name="test_deleting_parent_does_not_cascade_delete_children" file="D:\meem-commerce\tests\Feature\Categories\CategoryRelationshipTest.php" line="99" class="Tests\Feature\Categories\CategoryRelationshipTest" classname="Tests.Feature.Categories.CategoryRelationshipTest" assertions="2" time="0.012467"/>
+    <testcase name="test_setting_invalid_parent_returns_validation_error" file="D:\meem-commerce\tests\Feature\Categories\CategoryRelationshipTest.php" line="119" class="Tests\Feature\Categories\CategoryRelationshipTest" classname="Tests.Feature.Categories.CategoryRelationshipTest" assertions="1" time="0.017671"/>
+  </testsuite>
+</testsuites>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\BrandApiTest" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" tests="38" assertions="118" errors="0" failures="1" skipped="0" time="0.414245">
+    <testcase name="test_authenticated_user_can_list_brands" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="85" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="20" time="0.081074"/>
+    <testcase name="test_guest_gets_401_for_list_brands" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="105" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="1" time="0.003023"/>
+    <testcase name="test_list_brands_returns_empty_data_when_none_exist" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="112" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="3" time="0.005222"/>
+    <testcase name="test_list_brands_pagination" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="123" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="4" time="0.012748"/>
+    <testcase name="test_list_brands_with_search" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="139" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="2" time="0.009016"/>
+    <testcase name="test_list_brands_with_ordering" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="152" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="2" time="0.010109"/>
+    <testcase name="test_list_brands_active_filter" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="165" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="3" time="0.010959"/>
+    <testcase name="test_list_brands_inactive_filter" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="179" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="2" time="0.009319"/>
+    <testcase name="test_authenticated_user_can_show_brand_by_id" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="196" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="13" time="0.008276"/>
+    <testcase name="test_authenticated_user_can_show_brand_by_slug" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="214" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="3" time="0.007947"/>
+    <testcase name="test_guest_gets_401_for_show_brand" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="227" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="1" time="0.007811"/>
+    <testcase name="test_show_brand_returns_404_for_nonexistent_id" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="235" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="1" time="0.010864"/>
+    <testcase name="test_show_brand_returns_404_for_nonexistent_slug" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="243" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="1" time="0.006195"/>
+    <testcase name="test_unauthenticated_user_cannot_create_brand" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="255" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="1" time="0.002655"/>
+    <testcase name="test_user_without_create_permission_gets_forbidden" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="263" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="1" time="0.005400"/>
+    <testcase name="test_authenticated_admin_can_create_brand" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="273" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="14" time="0.045152"/>
+    <testcase name="test_create_brand_returns_422_for_missing_name" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="301" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="1" time="0.006599"/>
+    <testcase name="test_create_brand_returns_422_for_invalid_status" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="315" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="1" time="0.007431"/>
+    <testcase name="test_unauthenticated_user_cannot_update_brand" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="336" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="1" time="0.004529"/>
+    <testcase name="test_user_without_update_permission_gets_forbidden" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="346" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="1" time="0.007414"/>
+    <testcase name="test_authenticated_admin_can_update_brand" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="358" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="3" time="0.010474"/>
+    <testcase name="test_update_brand_returns_404_for_nonexistent_id" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="374" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="1" time="0.006697"/>
+    <testcase name="test_unauthenticated_user_cannot_delete_brand" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="388" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="1" time="0.005009"/>
+    <testcase name="test_user_without_delete_permission_gets_forbidden" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="396" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="1" time="0.006807"/>
+    <testcase name="test_authenticated_admin_can_soft_delete_brand" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="406" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="3" time="0.006691"/>
+    <testcase name="test_delete_brand_returns_404_for_nonexistent_id" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="419" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="1" time="0.004389"/>
+    <testcase name="test_soft_deleted_brand_not_listed_in_index" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="427" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="2" time="0.009834"/>
+    <testcase name="test_soft_deleted_brand_returns_404_on_show" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="442" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="1" time="0.008470"/>
+    <testcase name="test_brand_can_be_restored" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="454" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="1" time="0.005892"/>
+    <testcase name="test_create_brand_with_product_association" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="470" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="3" time="0.022839"/>
+    <testcase name="test_brand_name_is_translatable" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="507" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="3" time="0.034132">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\BrandApiTest::test_brand_name_is_translatable&#13;
+Failed asserting that two strings are identical.
+--- Expected
++++ Actual
+@@ @@
+-'Nike'
++'نايك'
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\AssertableJsonString.php:243
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:683
+D:\meem-commerce\tests\Feature\BrandApiTest.php:529
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_brand_resource_structure_on_show" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="536" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="15" time="0.007390"/>
+    <testcase name="test_explicit_slug_is_preserved_on_create" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="558" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="1" time="0.002716"/>
+    <testcase name="test_slug_auto_generated_when_not_provided" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="570" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="1" time="0.002898"/>
+    <testcase name="test_slug_stable_when_name_unchanged" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="581" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="1" time="0.003920"/>
+    <testcase name="test_slug_updates_when_name_changes_and_slug_not_provided" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="595" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="1" time="0.004879"/>
+    <testcase name="test_slug_preserved_when_both_name_and_slug_provided" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="609" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="1" time="0.004100"/>
+    <testcase name="test_status_update_does_not_change_slug" file="D:\meem-commerce\tests\Feature\BrandApiTest.php" line="625" class="Tests\Feature\BrandApiTest" classname="Tests.Feature.BrandApiTest" assertions="2" time="0.005365"/>
+  </testsuite>
+</testsuites>

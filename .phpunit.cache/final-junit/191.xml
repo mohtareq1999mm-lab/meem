@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Invoice\AdminInvoiceEndToEndTest" file="D:\meem-commerce\tests\Feature\Invoice\AdminInvoiceEndToEndTest.php" tests="1" assertions="21" errors="0" failures="0" skipped="0" time="0.284392">
+    <testcase name="test_complete_lifecycle_from_index_to_correction_pdf_to_cancellation" file="D:\meem-commerce\tests\Feature\Invoice\AdminInvoiceEndToEndTest.php" line="32" class="Tests\Feature\Invoice\AdminInvoiceEndToEndTest" classname="Tests.Feature.Invoice.AdminInvoiceEndToEndTest" assertions="21" time="0.284392"/>
+  </testsuite>
+</testsuites>

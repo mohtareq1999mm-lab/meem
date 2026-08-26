@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Contacts\ContactValidationTest" file="D:\meem-commerce\tests\Feature\Contacts\ContactValidationTest.php" tests="6" assertions="6" errors="0" failures="0" skipped="0" time="0.056153">
+    <testcase name="create_returns_422_without_email" file="D:\meem-commerce\tests\Feature\Contacts\ContactValidationTest.php" line="72" class="Tests\Feature\Contacts\ContactValidationTest" classname="Tests.Feature.Contacts.ContactValidationTest" assertions="1" time="0.034705"/>
+    <testcase name="create_returns_422_with_invalid_email" file="D:\meem-commerce\tests\Feature\Contacts\ContactValidationTest.php" line="83" class="Tests\Feature\Contacts\ContactValidationTest" classname="Tests.Feature.Contacts.ContactValidationTest" assertions="1" time="0.007590"/>
+    <testcase name="create_returns_422_without_subject" file="D:\meem-commerce\tests\Feature\Contacts\ContactValidationTest.php" line="95" class="Tests\Feature\Contacts\ContactValidationTest" classname="Tests.Feature.Contacts.ContactValidationTest" assertions="1" time="0.003997"/>
+    <testcase name="create_returns_422_without_message" file="D:\meem-commerce\tests\Feature\Contacts\ContactValidationTest.php" line="106" class="Tests\Feature\Contacts\ContactValidationTest" classname="Tests.Feature.Contacts.ContactValidationTest" assertions="1" time="0.003239"/>
+    <testcase name="create_returns_422_with_short_message" file="D:\meem-commerce\tests\Feature\Contacts\ContactValidationTest.php" line="117" class="Tests\Feature\Contacts\ContactValidationTest" classname="Tests.Feature.Contacts.ContactValidationTest" assertions="1" time="0.003389"/>
+    <testcase name="create_returns_422_without_name" file="D:\meem-commerce\tests\Feature\Contacts\ContactValidationTest.php" line="129" class="Tests\Feature\Contacts\ContactValidationTest" classname="Tests.Feature.Contacts.ContactValidationTest" assertions="1" time="0.003233"/>
+  </testsuite>
+</testsuites>

@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\AttributesProductionHardenTest" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" tests="32" assertions="59" errors="0" failures="8" skipped="0" time="0.322264">
+    <testcase name="test_guest_cannot_list_attributes" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="100" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="1" time="0.033805"/>
+    <testcase name="test_guest_cannot_show_attribute" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="106" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="1" time="0.003787"/>
+    <testcase name="test_guest_cannot_create_attribute" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="113" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="1" time="0.003000"/>
+    <testcase name="test_guest_cannot_update_attribute" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="121" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="1" time="0.002751"/>
+    <testcase name="test_guest_cannot_delete_attribute" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="130" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="1" time="0.002470"/>
+    <testcase name="test_view_only_user_cannot_create" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="137" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="1" time="0.022693"/>
+    <testcase name="test_view_only_user_cannot_update" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="146" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="1" time="0.004580"/>
+    <testcase name="test_view_only_user_cannot_delete" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="156" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="1" time="0.004807"/>
+    <testcase name="test_admin_can_create_attribute_without_values" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="168" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="2" time="0.020422"/>
+    <testcase name="test_admin_can_create_attribute_with_values" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="180" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="3" time="0.014109"/>
+    <testcase name="test_admin_can_show_attribute_by_id" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="197" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="3" time="0.007630"/>
+    <testcase name="test_admin_can_show_attribute_by_slug" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="214" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="2" time="0.005647"/>
+    <testcase name="test_show_nonexistent_attribute_returns_404" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="226" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="1" time="0.005603"/>
+    <testcase name="test_admin_can_update_attribute_name_without_touching_values" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="234" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="2" time="0.008081"/>
+    <testcase name="test_update_attribute_with_values_replaces_values" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="254" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="2" time="0.009545"/>
+    <testcase name="test_admin_can_delete_attribute" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="277" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="2" time="0.004592"/>
+    <testcase name="test_delete_nonexistent_attribute_returns_404" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="289" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="1" time="0.011777"/>
+    <testcase name="test_admin_can_create_attribute_value" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="301" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="1" time="0.016491">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\AttributesProductionHardenTest::test_admin_can_create_attribute_value&#13;
+Expected response status code [201] but received 404.
+Failed asserting that 201 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\Concerns\AssertsStatusCodes.php:26
+D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php:312
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_admin_can_show_attribute_value" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="318" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="1" time="0.007797">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\AttributesProductionHardenTest::test_admin_can_show_attribute_value&#13;
+Expected response status code [200] but received 404.
+Failed asserting that 200 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\Concerns\AssertsStatusCodes.php:16
+D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php:331
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_admin_can_update_attribute_value" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="335" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="1" time="0.008640">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\AttributesProductionHardenTest::test_admin_can_update_attribute_value&#13;
+Expected response status code [200] but received 404.
+Failed asserting that 200 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\Concerns\AssertsStatusCodes.php:16
+D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php:351
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_update_nonexistent_value_returns_error" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="354" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="1" time="0.006944"/>
+    <testcase name="test_admin_can_delete_attribute_value" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="368" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="1" time="0.008247">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\AttributesProductionHardenTest::test_admin_can_delete_attribute_value&#13;
+Expected response status code [200] but received 404.
+Failed asserting that 200 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\Concerns\AssertsStatusCodes.php:16
+D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php:380
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_create_attribute_requires_name" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="389" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="1" time="0.008230"/>
+    <testcase name="test_create_attribute_value_requires_valid_attribute_id" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="397" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="1" time="0.006922">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\AttributesProductionHardenTest::test_create_attribute_value_requires_valid_attribute_id&#13;
+Expected response status code [422] but received 404.
+Failed asserting that 422 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php:405
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_create_attribute_value_requires_value_array" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="408" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="1" time="0.007821">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\AttributesProductionHardenTest::test_create_attribute_value_requires_value_array&#13;
+Expected response status code [422] but received 404.
+Failed asserting that 422 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php:418
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_attribute_list_response_structure" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="425" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="7" time="0.007859"/>
+    <testcase name="test_attribute_show_response_structure" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="443" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="10" time="0.008183"/>
+    <testcase name="test_attribute_value_show_response_structure" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="464" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="1" time="0.011494">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\AttributesProductionHardenTest::test_attribute_value_show_response_structure&#13;
+Expected response status code [200] but received 404.
+Failed asserting that 200 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\Concerns\AssertsStatusCodes.php:16
+D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php:477
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_deleting_attribute_cascades_to_values" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="489" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="1" time="0.005651"/>
+    <testcase name="test_deleting_attribute_value_cascades_to_pivot" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="505" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="2" time="0.033433">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\AttributesProductionHardenTest::test_deleting_attribute_value_cascades_to_pivot&#13;
+Failed asserting that a row in the table [attribute_product] does not match the attributes {
+    "attribute_value_id": 1
+}.
+
+Found similar results: [
+    {
+        "attribute_value_id": 1
+    }
+].
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\InteractsWithDatabase.php:50
+D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php:541
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_update_attribute_preserves_unaffected_values" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="548" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="2" time="0.011392"/>
+    <testcase name="test_list_attributes_paginates" file="D:\meem-commerce\tests\Feature\AttributesProductionHardenTest.php" line="599" class="Tests\Feature\AttributesProductionHardenTest" classname="Tests.Feature.AttributesProductionHardenTest" assertions="2" time="0.007864"/>
+  </testsuite>
+</testsuites>

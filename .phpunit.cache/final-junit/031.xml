@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\CartExpirationTest" file="D:\meem-commerce\tests\Feature\CartExpirationTest.php" tests="4" assertions="19" errors="0" failures="0" skipped="0" time="0.024019">
+    <testcase name="stale_activity_window_does_not_expire_the_cart" file="D:\meem-commerce\tests\Feature\CartExpirationTest.php" line="84" class="Tests\Feature\CartExpirationTest" classname="Tests.Feature.CartExpirationTest" assertions="4" time="0.007874"/>
+    <testcase name="abandoned_cart_notification_window_semantics_hold" file="D:\meem-commerce\tests\Feature\CartExpirationTest.php" line="100" class="Tests\Feature\CartExpirationTest" classname="Tests.Feature.CartExpirationTest" assertions="2" time="0.003686"/>
+    <testcase name="cart_receives_3day_ttl_on_touch" file="D:\meem-commerce\tests\Feature\CartExpirationTest.php" line="127" class="Tests\Feature\CartExpirationTest" classname="Tests.Feature.CartExpirationTest" assertions="4" time="0.003019"/>
+    <testcase name="inventory_counters_never_move_through_any_cart_lifecycle" file="D:\meem-commerce\tests\Feature\CartExpirationTest.php" line="151" class="Tests\Feature\CartExpirationTest" classname="Tests.Feature.CartExpirationTest" assertions="9" time="0.009441"/>
+  </testsuite>
+</testsuites>

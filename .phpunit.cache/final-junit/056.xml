@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\FrontendWebhookServiceTest" file="D:\meem-commerce\tests\Feature\FrontendWebhookServiceTest.php" tests="10" assertions="21" errors="0" failures="0" skipped="0" time="0.049871">
+    <testcase name="it_dispatches_webhook_successfully" file="D:\meem-commerce\tests\Feature\FrontendWebhookServiceTest.php" line="36" class="Tests\Feature\FrontendWebhookServiceTest" classname="Tests.Feature.FrontendWebhookServiceTest" assertions="3" time="0.031929"/>
+    <testcase name="it_includes_all_required_headers" file="D:\meem-commerce\tests\Feature\FrontendWebhookServiceTest.php" line="65" class="Tests\Feature\FrontendWebhookServiceTest" classname="Tests.Feature.FrontendWebhookServiceTest" assertions="1" time="0.004906"/>
+    <testcase name="it_returns_disabled_response_when_webhook_is_disabled" file="D:\meem-commerce\tests\Feature\FrontendWebhookServiceTest.php" line="89" class="Tests\Feature\FrontendWebhookServiceTest" classname="Tests.Feature.FrontendWebhookServiceTest" assertions="4" time="0.000739"/>
+    <testcase name="it_throws_exception_when_url_is_not_configured" file="D:\meem-commerce\tests\Feature\FrontendWebhookServiceTest.php" line="107" class="Tests\Feature\FrontendWebhookServiceTest" classname="Tests.Feature.FrontendWebhookServiceTest" assertions="2" time="0.001286"/>
+    <testcase name="it_throws_exception_on_http_failure" file="D:\meem-commerce\tests\Feature\FrontendWebhookServiceTest.php" line="122" class="Tests\Feature\FrontendWebhookServiceTest" classname="Tests.Feature.FrontendWebhookServiceTest" assertions="1" time="0.002421"/>
+    <testcase name="it_throws_exception_on_connection_timeout" file="D:\meem-commerce\tests\Feature\FrontendWebhookServiceTest.php" line="138" class="Tests\Feature\FrontendWebhookServiceTest" classname="Tests.Feature.FrontendWebhookServiceTest" assertions="2" time="0.001466"/>
+    <testcase name="it_sends_correct_payload_structure" file="D:\meem-commerce\tests\Feature\FrontendWebhookServiceTest.php" line="157" class="Tests\Feature\FrontendWebhookServiceTest" classname="Tests.Feature.FrontendWebhookServiceTest" assertions="1" time="0.001219"/>
+    <testcase name="it_logs_successful_dispatch" file="D:\meem-commerce\tests\Feature\FrontendWebhookServiceTest.php" line="180" class="Tests\Feature\FrontendWebhookServiceTest" classname="Tests.Feature.FrontendWebhookServiceTest" assertions="1" time="0.002785"/>
+    <testcase name="it_logs_failed_dispatch" file="D:\meem-commerce\tests\Feature\FrontendWebhookServiceTest.php" line="203" class="Tests\Feature\FrontendWebhookServiceTest" classname="Tests.Feature.FrontendWebhookServiceTest" assertions="2" time="0.001126"/>
+    <testcase name="it_sends_only_cache_invalidation_fields" file="D:\meem-commerce\tests\Feature\FrontendWebhookServiceTest.php" line="227" class="Tests\Feature\FrontendWebhookServiceTest" classname="Tests.Feature.FrontendWebhookServiceTest" assertions="4" time="0.001994"/>
+  </testsuite>
+</testsuites>

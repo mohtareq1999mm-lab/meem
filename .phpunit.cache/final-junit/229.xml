@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Phase0\FcmScopingTest" file="D:\meem-commerce\tests\Feature\Phase0\FcmScopingTest.php" tests="3" assertions="8" errors="0" failures="0" skipped="0" time="0.040696">
+    <testcase name="job_targets_only_the_intended_users_tokens" file="D:\meem-commerce\tests\Feature\Phase0\FcmScopingTest.php" line="69" class="Tests\Feature\Phase0\FcmScopingTest" classname="Tests.Feature.Phase0.FcmScopingTest" assertions="3" time="0.031200"/>
+    <testcase name="job_without_target_user_never_broadcasts" file="D:\meem-commerce\tests\Feature\Phase0\FcmScopingTest.php" line="94" class="Tests\Feature\Phase0\FcmScopingTest" classname="Tests.Feature.Phase0.FcmScopingTest" assertions="2" time="0.003052"/>
+    <testcase name="other_users_tokens_are_untouched_by_invalid_token_cleanup" file="D:\meem-commerce\tests\Feature\Phase0\FcmScopingTest.php" line="109" class="Tests\Feature\Phase0\FcmScopingTest" classname="Tests.Feature.Phase0.FcmScopingTest" assertions="3" time="0.006443"/>
+  </testsuite>
+</testsuites>

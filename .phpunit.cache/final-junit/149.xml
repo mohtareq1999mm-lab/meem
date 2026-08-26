@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Currency\ProductCurrencyTest" file="D:\meem-commerce\tests\Feature\Currency\ProductCurrencyTest.php" tests="8" assertions="24" errors="0" failures="0" skipped="0" time="0.152167">
+    <testcase name="catalog_price_is_preserved_when_base_equals_catalog" file="D:\meem-commerce\tests\Feature\Currency\ProductCurrencyTest.php" line="37" class="Tests\Feature\Currency\ProductCurrencyTest" classname="Tests.Feature.Currency.ProductCurrencyTest" assertions="4" time="0.052371"/>
+    <testcase name="current_price_is_converted_to_the_effective_currency" file="D:\meem-commerce\tests\Feature\Currency\ProductCurrencyTest.php" line="51" class="Tests\Feature\Currency\ProductCurrencyTest" classname="Tests.Feature.Currency.ProductCurrencyTest" assertions="4" time="0.020972"/>
+    <testcase name="currency_metadata_includes_translations_and_icon" file="D:\meem-commerce\tests\Feature\Currency\ProductCurrencyTest.php" line="68" class="Tests\Feature\Currency\ProductCurrencyTest" classname="Tests.Feature.Currency.ProductCurrencyTest" assertions="5" time="0.008323"/>
+    <testcase name="variant_prices_are_converted_alongside_the_product" file="D:\meem-commerce\tests\Feature\Currency\ProductCurrencyTest.php" line="84" class="Tests\Feature\Currency\ProductCurrencyTest" classname="Tests.Feature.Currency.ProductCurrencyTest" assertions="4" time="0.012671"/>
+    <testcase name="product_without_price_returns_null_conversion" file="D:\meem-commerce\tests\Feature\Currency\ProductCurrencyTest.php" line="105" class="Tests\Feature\Currency\ProductCurrencyTest" classname="Tests.Feature.Currency.ProductCurrencyTest" assertions="2" time="0.010840"/>
+    <testcase name="fixed_rate_discount_amount_is_converted_to_the_effective_currency" file="D:\meem-commerce\tests\Feature\Currency\ProductCurrencyTest.php" line="120" class="Tests\Feature\Currency\ProductCurrencyTest" classname="Tests.Feature.Currency.ProductCurrencyTest" assertions="2" time="0.015707"/>
+    <testcase name="percentage_discount_amount_is_not_converted_to_money" file="D:\meem-commerce\tests\Feature\Currency\ProductCurrencyTest.php" line="140" class="Tests\Feature\Currency\ProductCurrencyTest" classname="Tests.Feature.Currency.ProductCurrencyTest" assertions="1" time="0.015871"/>
+    <testcase name="conversion_updates_when_the_exchange_rate_changes" file="D:\meem-commerce\tests\Feature\Currency\ProductCurrencyTest.php" line="159" class="Tests\Feature\Currency\ProductCurrencyTest" classname="Tests.Feature.Currency.ProductCurrencyTest" assertions="2" time="0.015412"/>
+  </testsuite>
+</testsuites>

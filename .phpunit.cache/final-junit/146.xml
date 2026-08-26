@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Currency\OrderCurrencyTest" file="D:\meem-commerce\tests\Feature\Currency\OrderCurrencyTest.php" tests="5" assertions="37" errors="0" failures="0" skipped="0" time="0.077273">
+    <testcase name="order_snapshots_currency_when_catalog_differs_from_base" file="D:\meem-commerce\tests\Feature\Currency\OrderCurrencyTest.php" line="58" class="Tests\Feature\Currency\OrderCurrencyTest" classname="Tests.Feature.Currency.OrderCurrencyTest" assertions="8" time="0.034558"/>
+    <testcase name="order_preserves_total_when_catalog_equals_base" file="D:\meem-commerce\tests\Feature\Currency\OrderCurrencyTest.php" line="78" class="Tests\Feature\Currency\OrderCurrencyTest" classname="Tests.Feature.Currency.OrderCurrencyTest" assertions="7" time="0.007279"/>
+    <testcase name="order_snapshot_refreshes_when_base_currency_changes" file="D:\meem-commerce\tests\Feature\Currency\OrderCurrencyTest.php" line="95" class="Tests\Feature\Currency\OrderCurrencyTest" classname="Tests.Feature.Currency.OrderCurrencyTest" assertions="8" time="0.010750"/>
+    <testcase name="order_with_zero_total_still_records_snapshot" file="D:\meem-commerce\tests\Feature\Currency\OrderCurrencyTest.php" line="125" class="Tests\Feature\Currency\OrderCurrencyTest" classname="Tests.Feature.Currency.OrderCurrencyTest" assertions="7" time="0.011616"/>
+    <testcase name="order_resource_exposes_the_currency_snapshot" file="D:\meem-commerce\tests\Feature\Currency\OrderCurrencyTest.php" line="144" class="Tests\Feature\Currency\OrderCurrencyTest" classname="Tests.Feature.Currency.OrderCurrencyTest" assertions="7" time="0.013069"/>
+  </testsuite>
+</testsuites>

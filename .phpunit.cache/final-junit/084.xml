@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\PromotionCheckoutTest" file="D:\meem-commerce\tests\Feature\PromotionCheckoutTest.php" tests="6" assertions="22" errors="0" failures="0" skipped="0" time="0.666910">
+    <testcase name="test_eligible_promotions_endpoint_returns_promotions" file="D:\meem-commerce\tests\Feature\PromotionCheckoutTest.php" line="69" class="Tests\Feature\PromotionCheckoutTest" classname="Tests.Feature.PromotionCheckoutTest" assertions="9" time="0.278346"/>
+    <testcase name="test_cart_item_resource_contains_promotion_fields" file="D:\meem-commerce\tests\Feature\PromotionCheckoutTest.php" line="101" class="Tests\Feature\PromotionCheckoutTest" classname="Tests.Feature.PromotionCheckoutTest" assertions="4" time="0.201732"/>
+    <testcase name="test_cart_resource_contains_has_eligible_promotion" file="D:\meem-commerce\tests\Feature\PromotionCheckoutTest.php" line="134" class="Tests\Feature\PromotionCheckoutTest" classname="Tests.Feature.PromotionCheckoutTest" assertions="4" time="0.154299"/>
+    <testcase name="test_cart_resource_has_eligible_promotion_false_when_none" file="D:\meem-commerce\tests\Feature\PromotionCheckoutTest.php" line="164" class="Tests\Feature\PromotionCheckoutTest" classname="Tests.Feature.PromotionCheckoutTest" assertions="2" time="0.012880"/>
+    <testcase name="test_public_promotion_listing_returns_active_promotions" file="D:\meem-commerce\tests\Feature\PromotionCheckoutTest.php" line="178" class="Tests\Feature\PromotionCheckoutTest" classname="Tests.Feature.PromotionCheckoutTest" assertions="1" time="0.009933"/>
+    <testcase name="test_promotion_by_slug_returns_promotion" file="D:\meem-commerce\tests\Feature\PromotionCheckoutTest.php" line="196" class="Tests\Feature\PromotionCheckoutTest" classname="Tests.Feature.PromotionCheckoutTest" assertions="2" time="0.009720"/>
+  </testsuite>
+</testsuites>

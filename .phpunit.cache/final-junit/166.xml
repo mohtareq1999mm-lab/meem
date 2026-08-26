@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Faqs\FaqReorderTest" file="D:\meem-commerce\tests\Feature\Faqs\FaqReorderTest.php" tests="3" assertions="4" errors="0" failures="0" skipped="0" time="0.051660">
+    <testcase name="can_reorder_faqs" file="D:\meem-commerce\tests\Feature\Faqs\FaqReorderTest.php" line="74" class="Tests\Feature\Faqs\FaqReorderTest" classname="Tests.Feature.Faqs.FaqReorderTest" assertions="2" time="0.039595"/>
+    <testcase name="reorder_updates_order_column" file="D:\meem-commerce\tests\Feature\Faqs\FaqReorderTest.php" line="89" class="Tests\Feature\Faqs\FaqReorderTest" classname="Tests.Feature.Faqs.FaqReorderTest" assertions="1" time="0.007058"/>
+    <testcase name="reorder_validates_faqs_required" file="D:\meem-commerce\tests\Feature\Faqs\FaqReorderTest.php" line="105" class="Tests\Feature\Faqs\FaqReorderTest" classname="Tests.Feature.Faqs.FaqReorderTest" assertions="1" time="0.005007"/>
+  </testsuite>
+</testsuites>

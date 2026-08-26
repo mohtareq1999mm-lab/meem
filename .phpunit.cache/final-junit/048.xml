@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\EventSystemTest" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" tests="48" assertions="58" errors="0" failures="10" skipped="0" time="1.520711">
+    <testcase name="order_cancelled_event_holds_order" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="429" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.013382"/>
+    <testcase name="order_status_changed_event_holds_order" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="438" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.001748"/>
+    <testcase name="payment_succeeded_event_holds_order" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="447" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.001846"/>
+    <testcase name="payment_failed_event_holds_order" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="456" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.001711"/>
+    <testcase name="restore_product_inventory_restores_stock" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="467" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.218528"/>
+    <testcase name="restore_product_inventory_skips_gift_items" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="481" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.145151"/>
+    <testcase name="restore_product_inventory_handles_missing_product_gracefully" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="509" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.150504"/>
+    <testcase name="restore_product_inventory_is_queued" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="543" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.000435"/>
+    <testcase name="restore_product_inventory_uses_medium_queue" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="550" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.009699">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\EventSystemTest::restore_product_inventory_uses_medium_queue&#13;
+Failed asserting that two strings are equal.
+--- Expected
++++ Actual
+@@ @@
+-'medium'
++'meem-medium'
+&#13;
+D:\meem-commerce\tests\Feature\EventSystemTest.php:553
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="restore_inventory_on_refund_restores_stock" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="559" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.017987"/>
+    <testcase name="restore_inventory_on_refund_skips_when_order_already_cancelled" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="582" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.004946"/>
+    <testcase name="restore_inventory_on_refund_handles_missing_order_gracefully" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="607" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.002267"/>
+    <testcase name="restore_inventory_on_refund_skips_gift_items" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="625" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.005321"/>
+    <testcase name="restore_inventory_on_refund_is_queued" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="663" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.000775"/>
+    <testcase name="restore_inventory_on_refund_uses_medium_queue" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="670" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.001081">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\EventSystemTest::restore_inventory_on_refund_uses_medium_queue&#13;
+Failed asserting that two strings are equal.
+--- Expected
++++ Actual
+@@ @@
+-'medium'
++'meem-medium'
+&#13;
+D:\meem-commerce\tests\Feature\EventSystemTest.php:673
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="gateway_refund_returns_success_result" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="679" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.012143">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\EventSystemTest::gateway_refund_returns_success_result&#13;
+Failed asserting that false is true.
+&#13;
+D:\meem-commerce\tests\Feature\EventSystemTest.php:702
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="gateway_refund_handles_no_paid_transaction" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="709" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="2" time="0.003003"/>
+    <testcase name="gateway_refund_handles_gateway_error" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="721" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="2" time="0.002998">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\EventSystemTest::gateway_refund_handles_gateway_error&#13;
+Failed asserting that two strings are equal.
+--- Expected
++++ Actual
+@@ @@
+-'No response from payment gateway'
++'Payment gateway does not support the selected currency USD'
+&#13;
+D:\meem-commerce\tests\Feature\EventSystemTest.php:739
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="refund_approved_event_dispatches_listeners" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="743" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.002581"/>
+    <testcase name="order_cancelled_logs_activity" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="766" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.002966"/>
+    <testcase name="order_cancelled_notification_is_queued" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="788" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.000540"/>
+    <testcase name="order_cancelled_notification_uses_medium_queue" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="795" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.001146">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\EventSystemTest::order_cancelled_notification_uses_medium_queue&#13;
+Failed asserting that two strings are equal.
+--- Expected
++++ Actual
+@@ @@
+-'medium'
++'meem-medium'
+&#13;
+D:\meem-commerce\tests\Feature\EventSystemTest.php:798
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="order_status_changed_logs_activity" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="804" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.002387"/>
+    <testcase name="order_status_changed_notification_is_queued" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="826" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.000496"/>
+    <testcase name="order_status_changed_notification_uses_medium_queue" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="833" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.001020">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\EventSystemTest::order_status_changed_notification_uses_medium_queue&#13;
+Failed asserting that two strings are equal.
+--- Expected
++++ Actual
+@@ @@
+-'medium'
++'meem-medium'
+&#13;
+D:\meem-commerce\tests\Feature\EventSystemTest.php:836
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="payment_succeeded_logs_activity" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="842" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.002161"/>
+    <testcase name="payment_succeeded_notification_is_queued" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="864" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.000504"/>
+    <testcase name="payment_succeeded_notification_uses_medium_queue" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="871" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.001010">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\EventSystemTest::payment_succeeded_notification_uses_medium_queue&#13;
+Failed asserting that two strings are equal.
+--- Expected
++++ Actual
+@@ @@
+-'medium'
++'meem-medium'
+&#13;
+D:\meem-commerce\tests\Feature\EventSystemTest.php:874
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="payment_failed_logs_activity" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="880" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.001917"/>
+    <testcase name="payment_failed_notification_is_queued" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="902" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.000495"/>
+    <testcase name="payment_failed_notification_uses_medium_queue" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="909" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.001050">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\EventSystemTest::payment_failed_notification_uses_medium_queue&#13;
+Failed asserting that two strings are equal.
+--- Expected
++++ Actual
+@@ @@
+-'medium'
++'meem-medium'
+&#13;
+D:\meem-commerce\tests\Feature\EventSystemTest.php:912
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="change_order_status_dispatches_order_status_changed" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="918" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.325851"/>
+    <testcase name="change_order_status_to_cancelled_from_pending_dispatches_order_cancelled" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="931" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="3" time="0.072099"/>
+    <testcase name="mark_cod_as_paid_dispatches_payment_succeeded" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="946" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.067638"/>
+    <testcase name="mark_cashier_paid_dispatches_payment_succeeded" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="959" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.084964"/>
+    <testcase name="cancel_unpaid_orders_dispatches_payment_failed" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="974" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.143978">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\EventSystemTest::cancel_unpaid_orders_dispatches_payment_failed&#13;
+The expected [App\Events\PaymentFailed] event was not dispatched.
+Failed asserting that false is true.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Testing\Fakes\EventFake.php:144
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Facades\Facade.php:353
+D:\meem-commerce\tests\Feature\EventSystemTest.php:985
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="order_cancelled_listener_creates_activity_log_record" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="991" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.003377"/>
+    <testcase name="order_status_changed_listener_creates_activity_log_record" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="1008" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.003240"/>
+    <testcase name="payment_succeeded_listener_creates_activity_log_record" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="1025" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.003637"/>
+    <testcase name="payment_failed_listener_creates_activity_log_record" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="1042" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.004019"/>
+    <testcase name="event_service_provider_registers_order_cancelled_listeners" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="1061" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="3" time="0.000999"/>
+    <testcase name="app_event_service_provider_listens_to_marvel_order_cancelled" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="1072" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.001120">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\EventSystemTest::app_event_service_provider_listens_to_marvel_order_cancelled&#13;
+Failed asserting that an array has the key 'Marvel\Events\OrderCancelled'.
+&#13;
+D:\meem-commerce\tests\Feature\EventSystemTest.php:1077
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="order_cancelled_via_service_restores_stock" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="1089" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="2" time="0.182284"/>
+    <testcase name="marvel_event_service_provider_registers_order_cancelled_listener" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="1119" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="2" time="0.000551"/>
+    <testcase name="marvel_order_cancelled_listener_is_queued" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="1132" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.001625"/>
+    <testcase name="marvel_order_cancelled_event_dispatches_listener" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="1139" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="1" time="0.002458"/>
+    <testcase name="restore_product_inventory_handles_marvel_event" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="1152" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="2" time="0.005007"/>
+    <testcase name="restore_product_inventory_via_marvel_event_is_idempotent" file="D:\meem-commerce\tests\Feature\EventSystemTest.php" line="1170" class="Tests\Feature\EventSystemTest" classname="Tests.Feature.EventSystemTest" assertions="2" time="0.006064"/>
+  </testsuite>
+</testsuites>

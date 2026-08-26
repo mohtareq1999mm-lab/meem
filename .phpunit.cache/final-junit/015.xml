@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Unit\WebhookResponseTest" file="D:\meem-commerce\tests\Unit\WebhookResponseTest.php" tests="3" assertions="15" errors="0" failures="0" skipped="0" time="0.010930">
+    <testcase name="it_creates_success_response" file="D:\meem-commerce\tests\Unit\WebhookResponseTest.php" line="11" class="Tests\Unit\WebhookResponseTest" classname="Tests.Unit.WebhookResponseTest" assertions="7" time="0.010041"/>
+    <testcase name="it_creates_failure_response" file="D:\meem-commerce\tests\Unit\WebhookResponseTest.php" line="32" class="Tests\Unit\WebhookResponseTest" classname="Tests.Unit.WebhookResponseTest" assertions="7" time="0.000491"/>
+    <testcase name="it_accepts_custom_attempts" file="D:\meem-commerce\tests\Unit\WebhookResponseTest.php" line="50" class="Tests\Unit\WebhookResponseTest" classname="Tests.Unit.WebhookResponseTest" assertions="1" time="0.000398"/>
+  </testsuite>
+</testsuites>

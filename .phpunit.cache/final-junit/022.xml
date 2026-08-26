@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\AssignedCouponSystemTest" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" tests="47" assertions="89" errors="7" failures="0" skipped="0" time="11.511081">
+    <testcase name="assigned_user_can_apply_assigned_coupon" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="115" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="3" time="0.286758"/>
+    <testcase name="assigned_coupon_with_multiple_users_isolates_quota" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="136" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="2" time="0.238094"/>
+    <testcase name="non_assigned_user_cannot_apply_assigned_coupon" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="157" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="2" time="0.221028"/>
+    <testcase name="expired_assignment_returns_error" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="174" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="2" time="0.223617"/>
+    <testcase name="usage_quota_exceeded_returns_error" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="192" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="2" time="0.220623"/>
+    <testcase name="assigned_coupon_can_be_used_multiple_times_up_to_max_uses" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="215" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="2" time="0.220315"/>
+    <testcase name="assigned_coupon_allow_usage_before_reaching_max" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="234" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="2" time="0.220994"/>
+    <testcase name="public_coupon_with_no_assignments_still_works" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="257" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="2" time="0.221024"/>
+    <testcase name="public_coupon_already_used_check_still_works" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="272" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="2" time="0.221798"/>
+    <testcase name="any_user_can_use_public_coupon" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="293" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="2" time="0.218703"/>
+    <testcase name="assigned_coupon_with_product_restriction_validates_products" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="312" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="2" time="0.223431"/>
+    <testcase name="assigned_coupon_with_matching_product_succeeds" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="339" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="2" time="0.241841"/>
+    <testcase name="global_limiter_still_works_for_assigned_coupon" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="361" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="2" time="0.240923"/>
+    <testcase name="assignment_quota_rejected_even_when_global_limiter_available" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="380" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="2" time="0.222044"/>
+    <testcase name="orchestrator_returns_valid_for_assigned_user" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="403" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="2" time="0.218922"/>
+    <testcase name="orchestrator_returns_not_assigned_for_non_assigned_user" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="415" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="2" time="0.213436"/>
+    <testcase name="orchestrator_returns_public_validation_when_no_assignments" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="427" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="1" time="0.217583"/>
+    <testcase name="orchestrator_skips_already_used_for_assigned_coupons" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="437" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="1" time="0.215619"/>
+    <testcase name="orchestrator_rejects_disabled_coupon_even_if_assigned" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="448" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="2" time="0.221366"/>
+    <testcase name="checkout_records_assigned_coupon_usage_and_increments_assignment" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="464" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="0" time="0.341527">
+      <error type="App\Exceptions\FinancialInvariantException">Tests\Feature\AssignedCouponSystemTest::checkout_records_assigned_coupon_usage_and_increments_assignment&#13;
+App\Exceptions\FinancialInvariantException: Financial invariant violation: subtotal(90) - promotion(0) - coupon(10) + shipping(0) + fast_shipping_fee(0) = 80, but declared total is 100 (diff: 20)
+&#13;
+D:\meem-commerce\app\Services\Invoice\Validators\FinancialInvariantValidator.php:28
+D:\meem-commerce\app\Services\Invoice\InvoiceSnapshotValidator.php:19
+D:\meem-commerce\app\Services\Invoice\InvoiceService.php:34
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Concerns\ManagesTransactions.php:30
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseManager.php:469
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Facades\Facade.php:353
+D:\meem-commerce\app\Services\Invoice\InvoiceService.php:24
+D:\meem-commerce\app\Listeners\GenerateInvoiceListener.php:29
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\CallQueuedListener.php:107
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:36
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Util.php:41
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:93
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:35
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Container.php:662
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Bus\Dispatcher.php:128
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:141
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:116
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Bus\Dispatcher.php:132
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\CallQueuedHandler.php:123
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:141
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:116
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\CallQueuedHandler.php:122
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\CallQueuedHandler.php:70
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\Jobs\Job.php:98
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\SyncQueue.php:43
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\Queue.php:58
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:633
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:552
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:478
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:286
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:260
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseTransactionRecord.php:60
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Collections\HigherOrderCollectionProxy.php:60
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Collections\Arr.php:558
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Collections\Collection.php:777
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Collections\HigherOrderCollectionProxy.php:59
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseTransactionsManager.php:66
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Concerns\ManagesTransactions.php:53
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseManager.php:469
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Facades\Facade.php:353
+D:\meem-commerce\app\Services\General\OrderService.php:653
+D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php:492
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</error>
+    </testcase>
+    <testcase name="checkout_allows_multiple_assignments_usage" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="502" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="0" time="0.328829">
+      <error type="App\Exceptions\FinancialInvariantException">Tests\Feature\AssignedCouponSystemTest::checkout_allows_multiple_assignments_usage&#13;
+App\Exceptions\FinancialInvariantException: Financial invariant violation: subtotal(90) - promotion(0) - coupon(10) + shipping(0) + fast_shipping_fee(0) = 80, but declared total is 100 (diff: 20)
+&#13;
+D:\meem-commerce\app\Services\Invoice\Validators\FinancialInvariantValidator.php:28
+D:\meem-commerce\app\Services\Invoice\InvoiceSnapshotValidator.php:19
+D:\meem-commerce\app\Services\Invoice\InvoiceService.php:34
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Concerns\ManagesTransactions.php:30
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseManager.php:469
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Facades\Facade.php:353
+D:\meem-commerce\app\Services\Invoice\InvoiceService.php:24
+D:\meem-commerce\app\Listeners\GenerateInvoiceListener.php:29
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\CallQueuedListener.php:107
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:36
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Util.php:41
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:93
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:35
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Container.php:662
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Bus\Dispatcher.php:128
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:141
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:116
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Bus\Dispatcher.php:132
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\CallQueuedHandler.php:123
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:141
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:116
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\CallQueuedHandler.php:122
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\CallQueuedHandler.php:70
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\Jobs\Job.php:98
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\SyncQueue.php:43
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\Queue.php:58
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:633
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:552
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:478
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:286
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:260
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseTransactionRecord.php:60
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Collections\HigherOrderCollectionProxy.php:60
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Collections\Arr.php:558
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Collections\Collection.php:777
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Collections\HigherOrderCollectionProxy.php:59
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseTransactionsManager.php:66
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Concerns\ManagesTransactions.php:53
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseManager.php:469
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Facades\Facade.php:353
+D:\meem-commerce\app\Services\General\OrderService.php:511
+D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php:532
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</error>
+    </testcase>
+    <testcase name="checkout_with_public_coupon_still_uses_first_or_create" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="540" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="0" time="0.277318">
+      <error type="App\Exceptions\FinancialInvariantException">Tests\Feature\AssignedCouponSystemTest::checkout_with_public_coupon_still_uses_first_or_create&#13;
+App\Exceptions\FinancialInvariantException: Financial invariant violation: subtotal(90) - promotion(0) - coupon(10) + shipping(0) + fast_shipping_fee(0) = 80, but declared total is 100 (diff: 20)
+&#13;
+D:\meem-commerce\app\Services\Invoice\Validators\FinancialInvariantValidator.php:28
+D:\meem-commerce\app\Services\Invoice\InvoiceSnapshotValidator.php:19
+D:\meem-commerce\app\Services\Invoice\InvoiceService.php:34
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Concerns\ManagesTransactions.php:30
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseManager.php:469
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Facades\Facade.php:353
+D:\meem-commerce\app\Services\Invoice\InvoiceService.php:24
+D:\meem-commerce\app\Listeners\GenerateInvoiceListener.php:29
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\CallQueuedListener.php:107
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:36
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Util.php:41
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:93
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:35
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Container.php:662
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Bus\Dispatcher.php:128
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:141
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:116
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Bus\Dispatcher.php:132
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\CallQueuedHandler.php:123
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:141
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:116
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\CallQueuedHandler.php:122
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\CallQueuedHandler.php:70
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\Jobs\Job.php:98
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\SyncQueue.php:43
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\Queue.php:58
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:633
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:552
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:478
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:286
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:260
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseTransactionRecord.php:60
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Collections\HigherOrderCollectionProxy.php:60
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Collections\Arr.php:558
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Collections\Collection.php:777
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Collections\HigherOrderCollectionProxy.php:59
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseTransactionsManager.php:66
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Concerns\ManagesTransactions.php:53
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseManager.php:469
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Facades\Facade.php:353
+D:\meem-commerce\app\Services\General\OrderService.php:511
+D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php:568
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</error>
+    </testcase>
+    <testcase name="assignment_validator_returns_no_assignments_for_public_coupon" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="584" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="2" time="0.212824"/>
+    <testcase name="assignment_validator_detects_expired_assignment" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="595" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="3" time="0.217993"/>
+    <testcase name="assignment_validator_quota_exceeded" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="610" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="3" time="0.221560"/>
+    <testcase name="assignment_validator_passes_for_valid_assignment" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="626" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="3" time="0.220826"/>
+    <testcase name="assignment_validator_uses_assignment_used_counter" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="642" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="1" time="0.215888"/>
+    <testcase name="coupon_resource_serializes_is_assigned_false_for_public_coupon" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="660" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="2" time="0.343234"/>
+    <testcase name="coupon_resource_serializes_is_assigned_true_with_assignments" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="674" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="5" time="0.232272"/>
+    <testcase name="record_coupon_usage_creates_assignment_usage_history" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="696" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="0" time="0.345261">
+      <error type="App\Exceptions\FinancialInvariantException">Tests\Feature\AssignedCouponSystemTest::record_coupon_usage_creates_assignment_usage_history&#13;
+App\Exceptions\FinancialInvariantException: Financial invariant violation: subtotal(90) - promotion(0) - coupon(10) + shipping(0) + fast_shipping_fee(0) = 80, but declared total is 100 (diff: 20)
+&#13;
+D:\meem-commerce\app\Services\Invoice\Validators\FinancialInvariantValidator.php:28
+D:\meem-commerce\app\Services\Invoice\InvoiceSnapshotValidator.php:19
+D:\meem-commerce\app\Services\Invoice\InvoiceService.php:34
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Concerns\ManagesTransactions.php:30
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseManager.php:469
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Facades\Facade.php:353
+D:\meem-commerce\app\Services\Invoice\InvoiceService.php:24
+D:\meem-commerce\app\Listeners\GenerateInvoiceListener.php:29
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\CallQueuedListener.php:107
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:36
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Util.php:41
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:93
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:35
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Container.php:662
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Bus\Dispatcher.php:128
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:141
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:116
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Bus\Dispatcher.php:132
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\CallQueuedHandler.php:123
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:141
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:116
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\CallQueuedHandler.php:122
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\CallQueuedHandler.php:70
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\Jobs\Job.php:98
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\SyncQueue.php:43
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\Queue.php:58
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:633
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:552
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:478
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:286
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:260
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseTransactionRecord.php:60
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Collections\HigherOrderCollectionProxy.php:60
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Collections\Arr.php:558
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Collections\Collection.php:777
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Collections\HigherOrderCollectionProxy.php:59
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseTransactionsManager.php:66
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Concerns\ManagesTransactions.php:53
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseManager.php:469
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Facades\Facade.php:353
+D:\meem-commerce\app\Services\General\OrderService.php:511
+D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php:725
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</error>
+    </testcase>
+    <testcase name="audit_trail_shows_all_usage_events" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="737" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="0" time="0.309805">
+      <error type="App\Exceptions\FinancialInvariantException">Tests\Feature\AssignedCouponSystemTest::audit_trail_shows_all_usage_events&#13;
+App\Exceptions\FinancialInvariantException: Financial invariant violation: subtotal(90) - promotion(0) - coupon(10) + shipping(0) + fast_shipping_fee(0) = 80, but declared total is 100 (diff: 20)
+&#13;
+D:\meem-commerce\app\Services\Invoice\Validators\FinancialInvariantValidator.php:28
+D:\meem-commerce\app\Services\Invoice\InvoiceSnapshotValidator.php:19
+D:\meem-commerce\app\Services\Invoice\InvoiceService.php:34
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Concerns\ManagesTransactions.php:30
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseManager.php:469
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Facades\Facade.php:353
+D:\meem-commerce\app\Services\Invoice\InvoiceService.php:24
+D:\meem-commerce\app\Listeners\GenerateInvoiceListener.php:29
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\CallQueuedListener.php:107
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:36
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Util.php:41
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:93
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:35
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Container.php:662
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Bus\Dispatcher.php:128
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:141
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:116
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Bus\Dispatcher.php:132
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\CallQueuedHandler.php:123
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:141
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:116
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\CallQueuedHandler.php:122
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\CallQueuedHandler.php:70
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\Jobs\Job.php:98
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\SyncQueue.php:43
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\Queue.php:58
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:633
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:552
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:478
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:286
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:260
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseTransactionRecord.php:60
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Collections\HigherOrderCollectionProxy.php:60
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Collections\Arr.php:558
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Collections\Collection.php:777
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Collections\HigherOrderCollectionProxy.php:59
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseTransactionsManager.php:66
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Concerns\ManagesTransactions.php:53
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseManager.php:469
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Facades\Facade.php:353
+D:\meem-commerce\app\Services\General\OrderService.php:511
+D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php:768
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</error>
+    </testcase>
+    <testcase name="disabled_coupon_is_rejected_even_with_valid_assignment" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="792" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="2" time="0.283029"/>
+    <testcase name="user_hard_deletion_cascades_to_assignments" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="812" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="3" time="0.226116"/>
+    <testcase name="soft_deleted_user_cannot_authenticate_so_assignment_is_inaccessible" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="833" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="4" time="0.243839"/>
+    <testcase name="increasing_max_uses_preserves_used_counter" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="856" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="3" time="0.214027"/>
+    <testcase name="decreasing_max_uses_can_lock_out_user" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="874" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="5" time="0.233524"/>
+    <testcase name="expired_assignment_rejected_while_coupon_is_active" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="900" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="2" time="0.220847"/>
+    <testcase name="cannot_create_duplicate_assignment" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="925" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="1" time="0.232662"/>
+    <testcase name="coupon_usage_rolled_back_when_mark_cod_fails" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="943" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="3" time="0.246170"/>
+    <testcase name="mark_cod_as_paid_is_atomic" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="987" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="0" time="0.321839">
+      <error type="App\Exceptions\FinancialInvariantException">Tests\Feature\AssignedCouponSystemTest::mark_cod_as_paid_is_atomic&#13;
+App\Exceptions\FinancialInvariantException: Financial invariant violation: subtotal(90) - promotion(0) - coupon(10) + shipping(0) + fast_shipping_fee(0) = 80, but declared total is 100 (diff: 20)
+&#13;
+D:\meem-commerce\app\Services\Invoice\Validators\FinancialInvariantValidator.php:28
+D:\meem-commerce\app\Services\Invoice\InvoiceSnapshotValidator.php:19
+D:\meem-commerce\app\Services\Invoice\InvoiceService.php:34
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Concerns\ManagesTransactions.php:30
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseManager.php:469
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Facades\Facade.php:353
+D:\meem-commerce\app\Services\Invoice\InvoiceService.php:24
+D:\meem-commerce\app\Listeners\GenerateInvoiceListener.php:29
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\CallQueuedListener.php:107
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:36
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Util.php:41
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:93
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:35
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Container.php:662
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Bus\Dispatcher.php:128
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:141
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:116
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Bus\Dispatcher.php:132
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\CallQueuedHandler.php:123
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:141
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:116
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\CallQueuedHandler.php:122
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\CallQueuedHandler.php:70
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\Jobs\Job.php:98
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\SyncQueue.php:43
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\Queue.php:58
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:633
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:552
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:478
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:286
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:260
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseTransactionRecord.php:60
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Collections\HigherOrderCollectionProxy.php:60
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Collections\Arr.php:558
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Collections\Collection.php:777
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Collections\HigherOrderCollectionProxy.php:59
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseTransactionsManager.php:66
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Concerns\ManagesTransactions.php:53
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseManager.php:469
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Facades\Facade.php:353
+D:\meem-commerce\app\Services\General\OrderService.php:653
+D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php:1017
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</error>
+    </testcase>
+    <testcase name="order_cancellation_does_not_decrement_assignment_used" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="1032" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="1" time="0.326811"/>
+    <testcase name="product_restrictions_are_owned_by_coupon_not_assignment" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="1071" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="2" time="0.239268"/>
+    <testcase name="record_coupon_usage_skips_when_quota_exhausted" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="1095" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="0" time="0.231019">
+      <error type="App\Exceptions\FinancialInvariantException">Tests\Feature\AssignedCouponSystemTest::record_coupon_usage_skips_when_quota_exhausted&#13;
+App\Exceptions\FinancialInvariantException: Financial invariant violation: subtotal(90) - promotion(0) - coupon(10) + shipping(0) + fast_shipping_fee(0) = 80, but declared total is 100 (diff: 20)
+&#13;
+D:\meem-commerce\app\Services\Invoice\Validators\FinancialInvariantValidator.php:28
+D:\meem-commerce\app\Services\Invoice\InvoiceSnapshotValidator.php:19
+D:\meem-commerce\app\Services\Invoice\InvoiceService.php:34
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Concerns\ManagesTransactions.php:30
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseManager.php:469
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Facades\Facade.php:353
+D:\meem-commerce\app\Services\Invoice\InvoiceService.php:24
+D:\meem-commerce\app\Listeners\GenerateInvoiceListener.php:29
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\CallQueuedListener.php:107
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:36
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Util.php:41
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:93
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:35
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Container.php:662
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Bus\Dispatcher.php:128
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:141
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:116
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Bus\Dispatcher.php:132
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\CallQueuedHandler.php:123
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:141
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:116
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\CallQueuedHandler.php:122
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\CallQueuedHandler.php:70
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\Jobs\Job.php:98
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\SyncQueue.php:43
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\Queue.php:58
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:633
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:552
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:478
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:286
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:260
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseTransactionRecord.php:60
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Collections\HigherOrderCollectionProxy.php:60
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Collections\Arr.php:558
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Collections\Collection.php:777
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Collections\HigherOrderCollectionProxy.php:59
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseTransactionsManager.php:66
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Concerns\ManagesTransactions.php:53
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseManager.php:469
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Facades\Facade.php:353
+D:\meem-commerce\app\Services\General\OrderService.php:511
+D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php:1124
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</error>
+    </testcase>
+    <testcase name="public_coupon_free_shipping_still_works" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="1135" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="2" time="0.231575"/>
+    <testcase name="public_coupon_fixed_rate_still_works" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="1153" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="2" time="0.224545"/>
+    <testcase name="public_coupon_global_limiter_still_works" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="1171" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="2" time="0.239217"/>
+    <testcase name="assignment_detection_uses_exists_not_count" file="D:\meem-commerce\tests\Feature\AssignedCouponSystemTest.php" line="1193" class="Tests\Feature\AssignedCouponSystemTest" classname="Tests.Feature.AssignedCouponSystemTest" assertions="1" time="0.221134"/>
+  </testsuite>
+</testsuites>

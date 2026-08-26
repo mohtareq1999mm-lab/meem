@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\UserPasswordResetTest" file="D:\meem-commerce\tests\Feature\UserPasswordResetTest.php" tests="13" assertions="21" errors="0" failures="1" skipped="0" time="0.230956">
+    <testcase name="test_forget_password_sends_reset_token" file="D:\meem-commerce\tests\Feature\UserPasswordResetTest.php" line="74" class="Tests\Feature\UserPasswordResetTest" classname="Tests.Feature.UserPasswordResetTest" assertions="2" time="0.122804"/>
+    <testcase name="test_forget_password_does_not_leak_email_existence" file="D:\meem-commerce\tests\Feature\UserPasswordResetTest.php" line="86" class="Tests\Feature\UserPasswordResetTest" classname="Tests.Feature.UserPasswordResetTest" assertions="2" time="0.003428"/>
+    <testcase name="test_forget_password_updates_existing_token" file="D:\meem-commerce\tests\Feature\UserPasswordResetTest.php" line="96" class="Tests\Feature\UserPasswordResetTest" classname="Tests.Feature.UserPasswordResetTest" assertions="2" time="0.014231"/>
+    <testcase name="test_verify_forget_password_token_succeeds_with_valid_token" file="D:\meem-commerce\tests\Feature\UserPasswordResetTest.php" line="120" class="Tests\Feature\UserPasswordResetTest" classname="Tests.Feature.UserPasswordResetTest" assertions="1" time="0.010403"/>
+    <testcase name="test_verify_forget_password_token_fails_with_expired_token" file="D:\meem-commerce\tests\Feature\UserPasswordResetTest.php" line="137" class="Tests\Feature\UserPasswordResetTest" classname="Tests.Feature.UserPasswordResetTest" assertions="2" time="0.005178"/>
+    <testcase name="test_verify_forget_password_token_fails_with_invalid_token" file="D:\meem-commerce\tests\Feature\UserPasswordResetTest.php" line="156" class="Tests\Feature\UserPasswordResetTest" classname="Tests.Feature.UserPasswordResetTest" assertions="2" time="0.005074"/>
+    <testcase name="test_reset_password_succeeds_with_valid_token" file="D:\meem-commerce\tests\Feature\UserPasswordResetTest.php" line="177" class="Tests\Feature\UserPasswordResetTest" classname="Tests.Feature.UserPasswordResetTest" assertions="4" time="0.018387"/>
+    <testcase name="test_reset_password_fails_with_wrong_token" file="D:\meem-commerce\tests\Feature\UserPasswordResetTest.php" line="204" class="Tests\Feature\UserPasswordResetTest" classname="Tests.Feature.UserPasswordResetTest" assertions="1" time="0.003520"/>
+    <testcase name="test_reset_password_fails_with_mismatched_confirmation" file="D:\meem-commerce\tests\Feature\UserPasswordResetTest.php" line="216" class="Tests\Feature\UserPasswordResetTest" classname="Tests.Feature.UserPasswordResetTest" assertions="1" time="0.005318"/>
+    <testcase name="test_reset_password_fails_with_short_password" file="D:\meem-commerce\tests\Feature\UserPasswordResetTest.php" line="227" class="Tests\Feature\UserPasswordResetTest" classname="Tests.Feature.UserPasswordResetTest" assertions="1" time="0.004877"/>
+    <testcase name="test_reset_password_fails_without_email" file="D:\meem-commerce\tests\Feature\UserPasswordResetTest.php" line="238" class="Tests\Feature\UserPasswordResetTest" classname="Tests.Feature.UserPasswordResetTest" assertions="1" time="0.003155"/>
+    <testcase name="test_contact_us_sends_email" file="D:\meem-commerce\tests\Feature\UserPasswordResetTest.php" line="251" class="Tests\Feature\UserPasswordResetTest" classname="Tests.Feature.UserPasswordResetTest" assertions="1" time="0.030845">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\UserPasswordResetTest::test_contact_us_sends_email&#13;
+Expected response status code [200] but received 409.
+Failed asserting that 200 is identical to 409.&#13;
+&#13;
+The following exception occurred during the last request:
+
+PDOException: SQLSTATE[HY000]: General error: 1 no such table: contacts in D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Connection.php:574
+Stack trace:
+#0 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Connection.php(574): PDO-&gt;prepare('insert into "co...')
+#1 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Connection.php(809): Illuminate\Database\Connection-&gt;Illuminate\Database\{closure}('insert into "co...', Array)
+#2 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Connection.php(776): Illuminate\Database\Connection-&gt;runQueryCallback('insert into "co...', Array, Object(Closure))
+#3 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Connection.php(569): Illuminate\Database\Connection-&gt;run('insert into "co...', Array, Object(Closure))
+#4 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Connection.php(533): Illuminate\Database\Connection-&gt;statement('insert into "co...', Array)
+#5 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Query\Processors\Processor.php(32): Illuminate\Database\Connection-&gt;insert('insert into "co...', Array)
+#6 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Query\Builder.php(3387): Illuminate\Database\Query\Processors\Processor-&gt;processInsertGetId(Object(Illuminate\Database\Query\Builder), 'insert into "co...', Array, 'id')
+#7 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Builder.php(1968): Illuminate\Database\Query\Builder-&gt;insertGetId(Array, 'id')
+#8 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php(1333): Illuminate\Database\Eloquent\Builder-&gt;__call('insertGetId', Array)
+#9 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php(1298): Illuminate\Database\Eloquent\Model-&gt;insertAndSetId(Object(Illuminate\Database\Eloquent\Builder), Array)
+#10 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php(1137): Illuminate\Database\Eloquent\Model-&gt;performInsert(Object(Illuminate\Database\Eloquent\Builder))
+#11 D:\meem-commerce\vendor\prettus\l5-repository\src\Prettus\Repository\Eloquent\BaseRepository.php(651): Illuminate\Database\Eloquent\Model-&gt;save()
+#12 D:\meem-commerce\packages\marvel\src\Database\Repositories\ContactRepository.php(44): Prettus\Repository\Eloquent\BaseRepository-&gt;create(Array)
+#13 D:\meem-commerce\packages\marvel\src\Http\Controllers\ContactController.php(56): Marvel\Database\Repositories\ContactRepository-&gt;saveContact(Object(Marvel\Http\Requests\ContactCreateRequest))
+#14 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Controller.php(54): Marvel\Http\Controllers\ContactController-&gt;store(Object(Marvel\Http\Requests\ContactCreateRequest))
+#15 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\ControllerDispatcher.php(43): Illuminate\Routing\Controller-&gt;callAction('store', Array)
+#16 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Route.php(259): Illuminate\Routing\ControllerDispatcher-&gt;dispatch(Object(Illuminate\Routing\Route), Object(Marvel\Http\Controllers\ContactController), 'store')
+#17 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Route.php(205): Illuminate\Routing\Route-&gt;runController()
+#18 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(799): Illuminate\Routing\Route-&gt;run()
+#19 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(141): Illuminate\Routing\Router-&gt;Illuminate\Routing\{closure}(Object(Illuminate\Http\Request))
+#20 D:\meem-commerce\app\Http\Middleware\CheckLangMiddleware.php(27): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#21 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): App\Http\Middleware\CheckLangMiddleware-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#22 D:\meem-commerce\app\Http\Middleware\ChannelMiddleware.php(25): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#23 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): App\Http\Middleware\ChannelMiddleware-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#24 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\SubstituteBindings.php(50): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#25 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Routing\Middleware\SubstituteBindings-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#26 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(159): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#27 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(125): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequest(Object(Illuminate\Http\Request), Object(Closure), Array)
+#28 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(87): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequestUsingNamedLimiter(Object(Illuminate\Http\Request), Object(Closure), 'sensitive', Object(Closure))
+#29 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handle(Object(Illuminate\Http\Request), Object(Closure), 'sensitive')
+#30 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(159): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#31 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(125): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequest(Object(Illuminate\Http\Request), Object(Closure), Array)
+#32 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(87): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequestUsingNamedLimiter(Object(Illuminate\Http\Request), Object(Closure), 'api', Object(Closure))
+#33 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handle(Object(Illuminate\Http\Request), Object(Closure), 'api')
+#34 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse.php(37): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#35 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#36 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Cookie\Middleware\EncryptCookies.php(67): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#37 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Cookie\Middleware\EncryptCookies-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#38 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(116): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#39 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(798): Illuminate\Pipeline\Pipeline-&gt;then(Object(Closure))
+#40 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(777): Illuminate\Routing\Router-&gt;runRouteWithinStack(Object(Illuminate\Routing\Route), Object(Illuminate\Http\Request))
+#41 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(741): Illuminate\Routing\Router-&gt;runRoute(Object(Illuminate\Http\Request), Object(Illuminate\Routing\Route))
+#42 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(730): Illuminate\Routing\Router-&gt;dispatchToRoute(Object(Illuminate\Http\Request))
+#43 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(200): Illuminate\Routing\Router-&gt;dispatch(Object(Illuminate\Http\Request))
+#44 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(141): Illuminate\Foundation\Http\Kernel-&gt;Illuminate\Foundation\Http\{closure}(Object(Illuminate\Http\Request))
+#45 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Http\Middleware\HandleCors.php(62): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#46 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Http\Middleware\HandleCors-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#47 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TransformsRequest.php(21): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#48 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull.php(31): Illuminate\Foundation\Http\Middleware\TransformsRequest-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#49 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#50 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TransformsRequest.php(21): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#51 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TrimStrings.php(40): Illuminate\Foundation\Http\Middleware\TransformsRequest-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#52 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\TrimStrings-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#53 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\ValidatePostSize.php(27): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#54 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\ValidatePostSize-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#55 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance.php(99): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#56 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#57 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Http\Middleware\TrustProxies.php(39): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#58 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Http\Middleware\TrustProxies-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#59 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(116): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#60 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(175): Illuminate\Pipeline\Pipeline-&gt;then(Object(Closure))
+#61 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(144): Illuminate\Foundation\Http\Kernel-&gt;sendRequestThroughRouter(Object(Illuminate\Http\Request))
+#62 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\MakesHttpRequests.php(573): Illuminate\Foundation\Http\Kernel-&gt;handle(Object(Illuminate\Http\Request))
+#63 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\MakesHttpRequests.php(539): Illuminate\Foundation\Testing\TestCase-&gt;call('POST', '/api/v1/contact...', Array, Array, Array, Array, '{"subject":"Tes...')
+#64 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\MakesHttpRequests.php(377): Illuminate\Foundation\Testing\TestCase-&gt;json('POST', '/api/v1/contact...', Array, Array, 0)
+#65 D:\meem-commerce\tests\Feature\UserPasswordResetTest.php(255): Illuminate\Foundation\Testing\TestCase-&gt;postJson('/api/v1/contact...', Array)
+#66 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestCase.php(1030): Tests\Feature\UserPasswordResetTest-&gt;test_contact_us_sends_email()
+#67 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php(174): PHPUnit\Framework\TestCase-&gt;runTest()
+#68 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestCase.php(627): Illuminate\Foundation\Testing\TestCase-&gt;runTest()
+#69 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestRunner.php(101): PHPUnit\Framework\TestCase-&gt;runBare()
+#70 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestCase.php(456): PHPUnit\Framework\TestRunner-&gt;run(Object(Tests\Feature\UserPasswordResetTest))
+#71 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestSuite.php(352): PHPUnit\Framework\TestCase-&gt;run()
+#72 D:\meem-commerce\vendor\phpunit\phpunit\src\TextUI\TestRunner.php(63): PHPUnit\Framework\TestSuite-&gt;run()
+#73 D:\meem-commerce\vendor\phpunit\phpunit\src\TextUI\Application.php(141): PHPUnit\TextUI\TestRunner-&gt;run(Object(PHPUnit\TextUI\Configuration\Configuration), Object(PHPUnit\Runner\ResultCache\DefaultResultCache), Object(PHPUnit\Framework\TestSuite))
+#74 D:\meem-commerce\vendor\phpunit\phpunit\phpunit(90): PHPUnit\TextUI\Application-&gt;run(Array)
+#75 D:\meem-commerce\vendor\bin\phpunit(122): include('D:\\meem-commerc...')
+#76 {main}
+
+Next Illuminate\Database\QueryException: SQLSTATE[HY000]: General error: 1 no such table: contacts (Connection: sqlite, SQL: insert into "contacts" ("name", "email", "subject", "message", "updated_at", "created_at") values (Test User, reset@example.com, Test Subject, This is a test message., 2026-08-26 13:25:55, 2026-08-26 13:25:55)) in D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Connection.php:822
+Stack trace:
+#0 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Connection.php(776): Illuminate\Database\Connection-&gt;runQueryCallback('insert into "co...', Array, Object(Closure))
+#1 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Connection.php(569): Illuminate\Database\Connection-&gt;run('insert into "co...', Array, Object(Closure))
+#2 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Connection.php(533): Illuminate\Database\Connection-&gt;statement('insert into "co...', Array)
+#3 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Query\Processors\Processor.php(32): Illuminate\Database\Connection-&gt;insert('insert into "co...', Array)
+#4 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Query\Builder.php(3387): Illuminate\Database\Query\Processors\Processor-&gt;processInsertGetId(Object(Illuminate\Database\Query\Builder), 'insert into "co...', Array, 'id')
+#5 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Builder.php(1968): Illuminate\Database\Query\Builder-&gt;insertGetId(Array, 'id')
+#6 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php(1333): Illuminate\Database\Eloquent\Builder-&gt;__call('insertGetId', Array)
+#7 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php(1298): Illuminate\Database\Eloquent\Model-&gt;insertAndSetId(Object(Illuminate\Database\Eloquent\Builder), Array)
+#8 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php(1137): Illuminate\Database\Eloquent\Model-&gt;performInsert(Object(Illuminate\Database\Eloquent\Builder))
+#9 D:\meem-commerce\vendor\prettus\l5-repository\src\Prettus\Repository\Eloquent\BaseRepository.php(651): Illuminate\Database\Eloquent\Model-&gt;save()
+#10 D:\meem-commerce\packages\marvel\src\Database\Repositories\ContactRepository.php(44): Prettus\Repository\Eloquent\BaseRepository-&gt;create(Array)
+#11 D:\meem-commerce\packages\marvel\src\Http\Controllers\ContactController.php(56): Marvel\Database\Repositories\ContactRepository-&gt;saveContact(Object(Marvel\Http\Requests\ContactCreateRequest))
+#12 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Controller.php(54): Marvel\Http\Controllers\ContactController-&gt;store(Object(Marvel\Http\Requests\ContactCreateRequest))
+#13 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\ControllerDispatcher.php(43): Illuminate\Routing\Controller-&gt;callAction('store', Array)
+#14 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Route.php(259): Illuminate\Routing\ControllerDispatcher-&gt;dispatch(Object(Illuminate\Routing\Route), Object(Marvel\Http\Controllers\ContactController), 'store')
+#15 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Route.php(205): Illuminate\Routing\Route-&gt;runController()
+#16 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(799): Illuminate\Routing\Route-&gt;run()
+#17 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(141): Illuminate\Routing\Router-&gt;Illuminate\Routing\{closure}(Object(Illuminate\Http\Request))
+#18 D:\meem-commerce\app\Http\Middleware\CheckLangMiddleware.php(27): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#19 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): App\Http\Middleware\CheckLangMiddleware-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#20 D:\meem-commerce\app\Http\Middleware\ChannelMiddleware.php(25): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#21 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): App\Http\Middleware\ChannelMiddleware-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#22 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\SubstituteBindings.php(50): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#23 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Routing\Middleware\SubstituteBindings-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#24 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(159): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#25 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(125): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequest(Object(Illuminate\Http\Request), Object(Closure), Array)
+#26 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(87): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequestUsingNamedLimiter(Object(Illuminate\Http\Request), Object(Closure), 'sensitive', Object(Closure))
+#27 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handle(Object(Illuminate\Http\Request), Object(Closure), 'sensitive')
+#28 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(159): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#29 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(125): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequest(Object(Illuminate\Http\Request), Object(Closure), Array)
+#30 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(87): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequestUsingNamedLimiter(Object(Illuminate\Http\Request), Object(Closure), 'api', Object(Closure))
+#31 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handle(Object(Illuminate\Http\Request), Object(Closure), 'api')
+#32 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse.php(37): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#33 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#34 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Cookie\Middleware\EncryptCookies.php(67): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#35 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Cookie\Middleware\EncryptCookies-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#36 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(116): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#37 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(798): Illuminate\Pipeline\Pipeline-&gt;then(Object(Closure))
+#38 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(777): Illuminate\Routing\Router-&gt;runRouteWithinStack(Object(Illuminate\Routing\Route), Object(Illuminate\Http\Request))
+#39 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(741): Illuminate\Routing\Router-&gt;runRoute(Object(Illuminate\Http\Request), Object(Illuminate\Routing\Route))
+#40 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(730): Illuminate\Routing\Router-&gt;dispatchToRoute(Object(Illuminate\Http\Request))
+#41 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(200): Illuminate\Routing\Router-&gt;dispatch(Object(Illuminate\Http\Request))
+#42 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(141): Illuminate\Foundation\Http\Kernel-&gt;Illuminate\Foundation\Http\{closure}(Object(Illuminate\Http\Request))
+#43 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Http\Middleware\HandleCors.php(62): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#44 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Http\Middleware\HandleCors-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#45 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TransformsRequest.php(21): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#46 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull.php(31): Illuminate\Foundation\Http\Middleware\TransformsRequest-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#47 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#48 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TransformsRequest.php(21): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#49 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TrimStrings.php(40): Illuminate\Foundation\Http\Middleware\TransformsRequest-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#50 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\TrimStrings-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#51 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\ValidatePostSize.php(27): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#52 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\ValidatePostSize-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#53 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance.php(99): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#54 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#55 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Http\Middleware\TrustProxies.php(39): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#56 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Http\Middleware\TrustProxies-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#57 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(116): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#58 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(175): Illuminate\Pipeline\Pipeline-&gt;then(Object(Closure))
+#59 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(144): Illuminate\Foundation\Http\Kernel-&gt;sendRequestThroughRouter(Object(Illuminate\Http\Request))
+#60 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\MakesHttpRequests.php(573): Illuminate\Foundation\Http\Kernel-&gt;handle(Object(Illuminate\Http\Request))
+#61 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\MakesHttpRequests.php(539): Illuminate\Foundation\Testing\TestCase-&gt;call('POST', '/api/v1/contact...', Array, Array, Array, Array, '{"subject":"Tes...')
+#62 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\MakesHttpRequests.php(377): Illuminate\Foundation\Testing\TestCase-&gt;json('POST', '/api/v1/contact...', Array, Array, 0)
+#63 D:\meem-commerce\tests\Feature\UserPasswordResetTest.php(255): Illuminate\Foundation\Testing\TestCase-&gt;postJson('/api/v1/contact...', Array)
+#64 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestCase.php(1030): Tests\Feature\UserPasswordResetTest-&gt;test_contact_us_sends_email()
+#65 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php(174): PHPUnit\Framework\TestCase-&gt;runTest()
+#66 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestCase.php(627): Illuminate\Foundation\Testing\TestCase-&gt;runTest()
+#67 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestRunner.php(101): PHPUnit\Framework\TestCase-&gt;runBare()
+#68 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestCase.php(456): PHPUnit\Framework\TestRunner-&gt;run(Object(Tests\Feature\UserPasswordResetTest))
+#69 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestSuite.php(352): PHPUnit\Framework\TestCase-&gt;run()
+#70 D:\meem-commerce\vendor\phpunit\phpunit\src\TextUI\TestRunner.php(63): PHPUnit\Framework\TestSuite-&gt;run()
+#71 D:\meem-commerce\vendor\phpunit\phpunit\src\TextUI\Application.php(141): PHPUnit\TextUI\TestRunner-&gt;run(Object(PHPUnit\TextUI\Configuration\Configuration), Object(PHPUnit\Runner\ResultCache\DefaultResultCache), Object(PHPUnit\Framework\TestSuite))
+#72 D:\meem-commerce\vendor\phpunit\phpunit\phpunit(90): PHPUnit\TextUI\Application-&gt;run(Array)
+#73 D:\meem-commerce\vendor\bin\phpunit(122): include('D:\\meem-commerc...')
+#74 {main}
+
+----------------------------------------------------------------------------------
+
+SQLSTATE[HY000]: General error: 1 no such table: contacts (Connection: sqlite, SQL: insert into "contacts" ("name", "email", "subject", "message", "updated_at", "created_at") values (Test User, reset@example.com, Test Subject, This is a test message., 2026-08-26 13:25:55, 2026-08-26 13:25:55))
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\Concerns\AssertsStatusCodes.php:16
+D:\meem-commerce\tests\Feature\UserPasswordResetTest.php:262
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_contact_us_fails_without_subject" file="D:\meem-commerce\tests\Feature\UserPasswordResetTest.php" line="266" class="Tests\Feature\UserPasswordResetTest" classname="Tests.Feature.UserPasswordResetTest" assertions="1" time="0.003736"/>
+  </testsuite>
+</testsuites>

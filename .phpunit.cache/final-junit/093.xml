@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\UserAuthAdminTest" file="D:\meem-commerce\tests\Feature\UserAuthAdminTest.php" tests="19" assertions="30" errors="0" failures="7" skipped="0" time="0.445028">
+    <testcase name="test_admin_login_with_valid_credentials_returns_token" file="D:\meem-commerce\tests\Feature\UserAuthAdminTest.php" line="63" class="Tests\Feature\UserAuthAdminTest" classname="Tests.Feature.UserAuthAdminTest" assertions="8" time="0.298058"/>
+    <testcase name="test_admin_login_fails_for_regular_user" file="D:\meem-commerce\tests\Feature\UserAuthAdminTest.php" line="78" class="Tests\Feature\UserAuthAdminTest" classname="Tests.Feature.UserAuthAdminTest" assertions="2" time="0.005934"/>
+    <testcase name="test_admin_login_fails_with_invalid_password" file="D:\meem-commerce\tests\Feature\UserAuthAdminTest.php" line="95" class="Tests\Feature\UserAuthAdminTest" classname="Tests.Feature.UserAuthAdminTest" assertions="1" time="0.005631"/>
+    <testcase name="test_admin_login_fails_with_inactive_admin" file="D:\meem-commerce\tests\Feature\UserAuthAdminTest.php" line="105" class="Tests\Feature\UserAuthAdminTest" classname="Tests.Feature.UserAuthAdminTest" assertions="1" time="0.009192"/>
+    <testcase name="test_admin_login_fails_with_unverified_email" file="D:\meem-commerce\tests\Feature\UserAuthAdminTest.php" line="117" class="Tests\Feature\UserAuthAdminTest" classname="Tests.Feature.UserAuthAdminTest" assertions="2" time="0.007019"/>
+    <testcase name="test_admin_login_fails_without_credentials" file="D:\meem-commerce\tests\Feature\UserAuthAdminTest.php" line="130" class="Tests\Feature\UserAuthAdminTest" classname="Tests.Feature.UserAuthAdminTest" assertions="1" time="0.003896"/>
+    <testcase name="test_user_can_change_password" file="D:\meem-commerce\tests\Feature\UserAuthAdminTest.php" line="139" class="Tests\Feature\UserAuthAdminTest" classname="Tests.Feature.UserAuthAdminTest" assertions="3" time="0.022945"/>
+    <testcase name="test_change_password_fails_with_wrong_old_password" file="D:\meem-commerce\tests\Feature\UserAuthAdminTest.php" line="162" class="Tests\Feature\UserAuthAdminTest" classname="Tests.Feature.UserAuthAdminTest" assertions="1" time="0.005067"/>
+    <testcase name="test_change_password_fails_without_old_password" file="D:\meem-commerce\tests\Feature\UserAuthAdminTest.php" line="181" class="Tests\Feature\UserAuthAdminTest" classname="Tests.Feature.UserAuthAdminTest" assertions="1" time="0.007745"/>
+    <testcase name="test_change_password_fails_with_short_new_password" file="D:\meem-commerce\tests\Feature\UserAuthAdminTest.php" line="197" class="Tests\Feature\UserAuthAdminTest" classname="Tests.Feature.UserAuthAdminTest" assertions="1" time="0.005158"/>
+    <testcase name="test_change_password_fails_with_same_password" file="D:\meem-commerce\tests\Feature\UserAuthAdminTest.php" line="214" class="Tests\Feature\UserAuthAdminTest" classname="Tests.Feature.UserAuthAdminTest" assertions="1" time="0.005409"/>
+    <testcase name="test_change_password_fails_for_unauthenticated_user" file="D:\meem-commerce\tests\Feature\UserAuthAdminTest.php" line="231" class="Tests\Feature\UserAuthAdminTest" classname="Tests.Feature.UserAuthAdminTest" assertions="1" time="0.002741"/>
+    <testcase name="test_user_can_update_email" file="D:\meem-commerce\tests\Feature\UserAuthAdminTest.php" line="244" class="Tests\Feature\UserAuthAdminTest" classname="Tests.Feature.UserAuthAdminTest" assertions="1" time="0.018994">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\UserAuthAdminTest::test_user_can_update_email&#13;
+Expected response status code [200] but received 404.
+Failed asserting that 200 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\Concerns\AssertsStatusCodes.php:16
+D:\meem-commerce\tests\Feature\UserAuthAdminTest.php:258
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_update_email_fails_with_duplicate_email" file="D:\meem-commerce\tests\Feature\UserAuthAdminTest.php" line="266" class="Tests\Feature\UserAuthAdminTest" classname="Tests.Feature.UserAuthAdminTest" assertions="1" time="0.009397">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\UserAuthAdminTest::test_update_email_fails_with_duplicate_email&#13;
+Expected response status code [422] but received 404.
+Failed asserting that 422 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\UserAuthAdminTest.php:283
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_update_email_fails_without_email" file="D:\meem-commerce\tests\Feature\UserAuthAdminTest.php" line="286" class="Tests\Feature\UserAuthAdminTest" classname="Tests.Feature.UserAuthAdminTest" assertions="1" time="0.007866">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\UserAuthAdminTest::test_update_email_fails_without_email&#13;
+Expected response status code [422] but received 404.
+Failed asserting that 422 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\UserAuthAdminTest.php:296
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_update_email_fails_for_unauthenticated_user" file="D:\meem-commerce\tests\Feature\UserAuthAdminTest.php" line="299" class="Tests\Feature\UserAuthAdminTest" classname="Tests.Feature.UserAuthAdminTest" assertions="1" time="0.006935">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\UserAuthAdminTest::test_update_email_fails_for_unauthenticated_user&#13;
+Expected response status code [401] but received 404.
+Failed asserting that 401 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\UserAuthAdminTest.php:302
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_social_login_fails_with_invalid_provider" file="D:\meem-commerce\tests\Feature\UserAuthAdminTest.php" line="309" class="Tests\Feature\UserAuthAdminTest" classname="Tests.Feature.UserAuthAdminTest" assertions="1" time="0.006753">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\UserAuthAdminTest::test_social_login_fails_with_invalid_provider&#13;
+Expected response status code [500] but received 404.
+Failed asserting that 500 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\UserAuthAdminTest.php:316
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_social_login_fails_without_provider" file="D:\meem-commerce\tests\Feature\UserAuthAdminTest.php" line="319" class="Tests\Feature\UserAuthAdminTest" classname="Tests.Feature.UserAuthAdminTest" assertions="1" time="0.009510">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\UserAuthAdminTest::test_social_login_fails_without_provider&#13;
+Expected response status code [422] but received 404.
+Failed asserting that 422 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\UserAuthAdminTest.php:323
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_social_login_fails_without_token" file="D:\meem-commerce\tests\Feature\UserAuthAdminTest.php" line="326" class="Tests\Feature\UserAuthAdminTest" classname="Tests.Feature.UserAuthAdminTest" assertions="1" time="0.006777">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\UserAuthAdminTest::test_social_login_fails_without_token&#13;
+Expected response status code [422] but received 404.
+Failed asserting that 422 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\UserAuthAdminTest.php:330
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+  </testsuite>
+</testsuites>

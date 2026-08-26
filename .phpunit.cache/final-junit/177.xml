@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\FlashSales\FlashSaleApproveRequestTest" file="D:\meem-commerce\tests\Feature\FlashSales\FlashSaleApproveRequestTest.php" tests="4" assertions="4" errors="0" failures="4" skipped="0" time="0.081218">
+    <testcase name="unauthenticated_user_cannot_approve" file="D:\meem-commerce\tests\Feature\FlashSales\FlashSaleApproveRequestTest.php" line="22" class="Tests\Feature\FlashSales\FlashSaleApproveRequestTest" classname="Tests.Feature.FlashSales.FlashSaleApproveRequestTest" assertions="1" time="0.036296">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\FlashSales\FlashSaleApproveRequestTest::unauthenticated_user_cannot_approve&#13;
+Expected response status code [401] but received 404.
+Failed asserting that 401 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\FlashSales\FlashSaleApproveRequestTest.php:28
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="unauthenticated_user_cannot_disapprove" file="D:\meem-commerce\tests\Feature\FlashSales\FlashSaleApproveRequestTest.php" line="32" class="Tests\Feature\FlashSales\FlashSaleApproveRequestTest" classname="Tests.Feature.FlashSales.FlashSaleApproveRequestTest" assertions="1" time="0.006190">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\FlashSales\FlashSaleApproveRequestTest::unauthenticated_user_cannot_disapprove&#13;
+Expected response status code [401] but received 404.
+Failed asserting that 401 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\FlashSales\FlashSaleApproveRequestTest.php:38
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="unauthorized_user_gets_403_on_approve" file="D:\meem-commerce\tests\Feature\FlashSales\FlashSaleApproveRequestTest.php" line="47" class="Tests\Feature\FlashSales\FlashSaleApproveRequestTest" classname="Tests.Feature.FlashSales.FlashSaleApproveRequestTest" assertions="1" time="0.028940">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\FlashSales\FlashSaleApproveRequestTest::unauthorized_user_gets_403_on_approve&#13;
+Expected response status code [403] but received 404.
+Failed asserting that 403 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\FlashSales\FlashSaleApproveRequestTest.php:65
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="unauthorized_user_gets_403_on_disapprove" file="D:\meem-commerce\tests\Feature\FlashSales\FlashSaleApproveRequestTest.php" line="69" class="Tests\Feature\FlashSales\FlashSaleApproveRequestTest" classname="Tests.Feature.FlashSales.FlashSaleApproveRequestTest" assertions="1" time="0.009793">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\FlashSales\FlashSaleApproveRequestTest::unauthorized_user_gets_403_on_disapprove&#13;
+Expected response status code [403] but received 404.
+Failed asserting that 403 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\FlashSales\FlashSaleApproveRequestTest.php:87
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+  </testsuite>
+</testsuites>

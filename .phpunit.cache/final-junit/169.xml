@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Faqs\FaqTranslationTest" file="D:\meem-commerce\tests\Feature\Faqs\FaqTranslationTest.php" tests="5" assertions="10" errors="0" failures="0" skipped="0" time="0.076787">
+    <testcase name="create_faq_with_multiple_translations" file="D:\meem-commerce\tests\Feature\Faqs\FaqTranslationTest.php" line="72" class="Tests\Feature\Faqs\FaqTranslationTest" classname="Tests.Feature.Faqs.FaqTranslationTest" assertions="3" time="0.049253"/>
+    <testcase name="index_returns_translated_title_in_current_locale" file="D:\meem-commerce\tests\Feature\Faqs\FaqTranslationTest.php" line="93" class="Tests\Feature\Faqs\FaqTranslationTest" classname="Tests.Feature.Faqs.FaqTranslationTest" assertions="2" time="0.009882"/>
+    <testcase name="index_returns_arabic_translation_when_locale_is_ar" file="D:\meem-commerce\tests\Feature\Faqs\FaqTranslationTest.php" line="107" class="Tests\Feature\Faqs\FaqTranslationTest" classname="Tests.Feature.Faqs.FaqTranslationTest" assertions="2" time="0.010175"/>
+    <testcase name="show_returns_faq_with_translatable_fields" file="D:\meem-commerce\tests\Feature\Faqs\FaqTranslationTest.php" line="120" class="Tests\Feature\Faqs\FaqTranslationTest" classname="Tests.Feature.Faqs.FaqTranslationTest" assertions="2" time="0.006950"/>
+    <testcase name="model_has_translatable_fields_defined" file="D:\meem-commerce\tests\Feature\Faqs\FaqTranslationTest.php" line="133" class="Tests\Feature\Faqs\FaqTranslationTest" classname="Tests.Feature.Faqs.FaqTranslationTest" assertions="1" time="0.000528"/>
+  </testsuite>
+</testsuites>

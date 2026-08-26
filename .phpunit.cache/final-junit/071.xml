@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\PricingCacheInvalidationTest" file="D:\meem-commerce\tests\Feature\PricingCacheInvalidationTest.php" tests="6" assertions="16" errors="2" failures="2" skipped="0" time="0.100296">
+    <testcase name="test_clear_cache_removes_all_home_pricing_keys" file="D:\meem-commerce\tests\Feature\PricingCacheInvalidationTest.php" line="147" class="Tests\Feature\PricingCacheInvalidationTest" classname="Tests.Feature.PricingCacheInvalidationTest" assertions="12" time="0.012343"/>
+    <testcase name="test_flash_sale_store_clears_cache" file="D:\meem-commerce\tests\Feature\PricingCacheInvalidationTest.php" line="170" class="Tests\Feature\PricingCacheInvalidationTest" classname="Tests.Feature.PricingCacheInvalidationTest" assertions="2" time="0.052830">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\PricingCacheInvalidationTest::test_flash_sale_store_clears_cache&#13;
+Failed asserting that true is false.
+&#13;
+D:\meem-commerce\tests\Feature\PricingCacheInvalidationTest.php:198
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_flash_sale_update_clears_cache" file="D:\meem-commerce\tests\Feature\PricingCacheInvalidationTest.php" line="205" class="Tests\Feature\PricingCacheInvalidationTest" classname="Tests.Feature.PricingCacheInvalidationTest" assertions="1" time="0.013810">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\PricingCacheInvalidationTest::test_flash_sale_update_clears_cache&#13;
+Failed asserting that true is false.
+&#13;
+D:\meem-commerce\tests\Feature\PricingCacheInvalidationTest.php:244
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_flash_sale_delete_resets_product_and_clears_cache" file="D:\meem-commerce\tests\Feature\PricingCacheInvalidationTest.php" line="250" class="Tests\Feature\PricingCacheInvalidationTest" classname="Tests.Feature.PricingCacheInvalidationTest" assertions="0" time="0.005970">
+      <error type="BadMethodCallException">Tests\Feature\PricingCacheInvalidationTest::test_flash_sale_delete_resets_product_and_clears_cache&#13;
+BadMethodCallException: Call to undefined method Marvel\Database\Models\FlashSale::deleteFlashSale()
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Traits\ForwardsCalls.php:67
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Traits\ForwardsCalls.php:36
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php:2334
+D:\meem-commerce\vendor\prettus\l5-repository\src\Prettus\Repository\Eloquent\BaseRepository.php:1227
+D:\meem-commerce\tests\Feature\PricingCacheInvalidationTest.php:278
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</error>
+    </testcase>
+    <testcase name="test_flash_sale_delete_with_no_products" file="D:\meem-commerce\tests\Feature\PricingCacheInvalidationTest.php" line="288" class="Tests\Feature\PricingCacheInvalidationTest" classname="Tests.Feature.PricingCacheInvalidationTest" assertions="0" time="0.004438">
+      <error type="BadMethodCallException">Tests\Feature\PricingCacheInvalidationTest::test_flash_sale_delete_with_no_products&#13;
+BadMethodCallException: Call to undefined method Marvel\Database\Models\FlashSale::deleteFlashSale()
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Traits\ForwardsCalls.php:67
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Traits\ForwardsCalls.php:36
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php:2334
+D:\meem-commerce\vendor\prettus\l5-repository\src\Prettus\Repository\Eloquent\BaseRepository.php:1227
+D:\meem-commerce\tests\Feature\PricingCacheInvalidationTest.php:302
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</error>
+    </testcase>
+    <testcase name="test_inactive_flash_sale_sets_product_price_to_null" file="D:\meem-commerce\tests\Feature\PricingCacheInvalidationTest.php" line="309" class="Tests\Feature\PricingCacheInvalidationTest" classname="Tests.Feature.PricingCacheInvalidationTest" assertions="1" time="0.010905"/>
+  </testsuite>
+</testsuites>

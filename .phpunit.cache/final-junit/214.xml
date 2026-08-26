@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Notifications\PusherRealConnectionCheckTest" file="D:\meem-commerce\tests\Feature\Notifications\PusherRealConnectionCheckTest.php" tests="2" assertions="5" errors="0" failures="0" skipped="0" time="0.420234">
+    <testcase name="test_real_pusher_connection_is_reachable" file="D:\meem-commerce\tests\Feature\Notifications\PusherRealConnectionCheckTest.php" line="50" class="Tests\Feature\Notifications\PusherRealConnectionCheckTest" classname="Tests.Feature.Notifications.PusherRealConnectionCheckTest" assertions="2" time="0.166632"/>
+    <testcase name="test_real_pusher_receives_user_notification_broadcast" file="D:\meem-commerce\tests\Feature\Notifications\PusherRealConnectionCheckTest.php" line="60" class="Tests\Feature\Notifications\PusherRealConnectionCheckTest" classname="Tests.Feature.Notifications.PusherRealConnectionCheckTest" assertions="3" time="0.253603"/>
+  </testsuite>
+</testsuites>

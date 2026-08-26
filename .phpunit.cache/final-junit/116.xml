@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Categories\CategoryMediaTest" file="D:\meem-commerce\tests\Feature\Categories\CategoryMediaTest.php" tests="2" assertions="3" errors="0" failures="0" skipped="0" time="0.038832">
+    <testcase name="test_category_implements_has_media" file="D:\meem-commerce\tests\Feature\Categories\CategoryMediaTest.php" line="16" class="Tests\Feature\Categories\CategoryMediaTest" classname="Tests.Feature.Categories.CategoryMediaTest" assertions="1" time="0.004646"/>
+    <testcase name="test_category_has_media_collections_defined" file="D:\meem-commerce\tests\Feature\Categories\CategoryMediaTest.php" line="22" class="Tests\Feature\Categories\CategoryMediaTest" classname="Tests.Feature.Categories.CategoryMediaTest" assertions="2" time="0.034186"/>
+  </testsuite>
+</testsuites>

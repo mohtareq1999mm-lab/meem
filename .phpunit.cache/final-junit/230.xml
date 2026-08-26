@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Phase0\ImportRetrySemanticsTest" file="D:\meem-commerce\tests\Feature\Phase0\ImportRetrySemanticsTest.php" tests="5" assertions="19" errors="0" failures="0" skipped="0" time="0.045324">
+    <testcase name="product_import_intermediate_attempt_stays_retryable" file="D:\meem-commerce\tests\Feature\Phase0\ImportRetrySemanticsTest.php" line="92" class="Tests\Feature\Phase0\ImportRetrySemanticsTest" classname="Tests.Feature.Phase0.ImportRetrySemanticsTest" assertions="6" time="0.032296"/>
+    <testcase name="product_import_terminal_attempt_marks_failed" file="D:\meem-commerce\tests\Feature\Phase0\ImportRetrySemanticsTest.php" line="116" class="Tests\Feature\Phase0\ImportRetrySemanticsTest" classname="Tests.Feature.Phase0.ImportRetrySemanticsTest" assertions="4" time="0.002360"/>
+    <testcase name="product_import_failed_status_makes_next_attempt_an_early_noop" file="D:\meem-commerce\tests\Feature\Phase0\ImportRetrySemanticsTest.php" line="137" class="Tests\Feature\Phase0\ImportRetrySemanticsTest" classname="Tests.Feature.Phase0.ImportRetrySemanticsTest" assertions="3" time="0.001483"/>
+    <testcase name="category_import_intermediate_attempt_stays_retryable" file="D:\meem-commerce\tests\Feature\Phase0\ImportRetrySemanticsTest.php" line="153" class="Tests\Feature\Phase0\ImportRetrySemanticsTest" classname="Tests.Feature.Phase0.ImportRetrySemanticsTest" assertions="3" time="0.005197"/>
+    <testcase name="brand_import_intermediate_attempt_stays_retryable" file="D:\meem-commerce\tests\Feature\Phase0\ImportRetrySemanticsTest.php" line="175" class="Tests\Feature\Phase0\ImportRetrySemanticsTest" classname="Tests.Feature.Phase0.ImportRetrySemanticsTest" assertions="3" time="0.003988"/>
+  </testsuite>
+</testsuites>

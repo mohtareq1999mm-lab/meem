@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Pages\SectionLifecycleTest" file="D:\meem-commerce\tests\Feature\Pages\SectionLifecycleTest.php" tests="1" assertions="38" errors="0" failures="0" skipped="0" time="0.141045">
+    <testcase name="test_full_section_lifecycle_end_to_end" file="D:\meem-commerce\tests\Feature\Pages\SectionLifecycleTest.php" line="122" class="Tests\Feature\Pages\SectionLifecycleTest" classname="Tests.Feature.Pages.SectionLifecycleTest" assertions="38" time="0.141045"/>
+  </testsuite>
+</testsuites>

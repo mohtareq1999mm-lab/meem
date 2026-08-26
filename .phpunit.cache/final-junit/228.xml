@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Phase0\EventBoundaryTest" file="D:\meem-commerce\tests\Feature\Phase0\EventBoundaryTest.php" tests="9" assertions="21" errors="0" failures="0" skipped="0" time="0.030215">
+    <testcase name="critical_domain_events_implement_should_dispatch_after_commit" file="D:\meem-commerce\tests\Feature\Phase0\EventBoundaryTest.php" line="54" class="Tests\Feature\Phase0\EventBoundaryTest" classname="Tests.Feature.Phase0.EventBoundaryTest" assertions="6" time="0.011268"/>
+    <testcase name="order_created_listeners_are_not_queued_when_the_transaction_rolls_back" file="D:\meem-commerce\tests\Feature\Phase0\EventBoundaryTest.php" line="75" class="Tests\Feature\Phase0\EventBoundaryTest" classname="Tests.Feature.Phase0.EventBoundaryTest" assertions="1" time="0.008803"/>
+    <testcase name="order_created_listeners_are_queued_only_after_commit" file="D:\meem-commerce\tests\Feature\Phase0\EventBoundaryTest.php" line="94" class="Tests\Feature\Phase0\EventBoundaryTest" classname="Tests.Feature.Phase0.EventBoundaryTest" assertions="3" time="0.002372"/>
+    <testcase name="payment_success_notification_listeners_declare_after_commit" file="D:\meem-commerce\tests\Feature\Phase0\EventBoundaryTest.php" line="113" class="Tests\Feature\Phase0\EventBoundaryTest" classname="Tests.Feature.Phase0.EventBoundaryTest" assertions="2" time="0.000789"/>
+    <testcase name="payment_success_inside_rolled_back_transaction_pushes_no_listener_jobs" file="D:\meem-commerce\tests\Feature\Phase0\EventBoundaryTest.php" line="120" class="Tests\Feature\Phase0\EventBoundaryTest" classname="Tests.Feature.Phase0.EventBoundaryTest" assertions="1" time="0.000493"/>
+    <testcase name="payment_success_after_commit_pushes_all_four_listeners" file="D:\meem-commerce\tests\Feature\Phase0\EventBoundaryTest.php" line="138" class="Tests\Feature\Phase0\EventBoundaryTest" classname="Tests.Feature.Phase0.EventBoundaryTest" assertions="4" time="0.003859"/>
+    <testcase name="payment_failed_inside_rolled_back_transaction_pushes_nothing" file="D:\meem-commerce\tests\Feature\Phase0\EventBoundaryTest.php" line="157" class="Tests\Feature\Phase0\EventBoundaryTest" classname="Tests.Feature.Phase0.EventBoundaryTest" assertions="1" time="0.000913"/>
+    <testcase name="order_cancelled_inside_rolled_back_transaction_pushes_nothing" file="D:\meem-commerce\tests\Feature\Phase0\EventBoundaryTest.php" line="174" class="Tests\Feature\Phase0\EventBoundaryTest" classname="Tests.Feature.Phase0.EventBoundaryTest" assertions="1" time="0.000532"/>
+    <testcase name="order_delivered_event_has_a_registered_listener" file="D:\meem-commerce\tests\Feature\Phase0\EventBoundaryTest.php" line="193" class="Tests\Feature\Phase0\EventBoundaryTest" classname="Tests.Feature.Phase0.EventBoundaryTest" assertions="2" time="0.001185"/>
+  </testsuite>
+</testsuites>

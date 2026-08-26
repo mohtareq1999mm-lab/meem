@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\PromotionCrudTest" file="D:\meem-commerce\tests\Feature\PromotionCrudTest.php" tests="7" assertions="25" errors="0" failures="0" skipped="0" time="1.049638">
+    <testcase name="test_admin_can_list_promotions" file="D:\meem-commerce\tests\Feature\PromotionCrudTest.php" line="62" class="Tests\Feature\PromotionCrudTest" classname="Tests.Feature.PromotionCrudTest" assertions="16" time="0.349932"/>
+    <testcase name="test_admin_can_show_promotion" file="D:\meem-commerce\tests\Feature\PromotionCrudTest.php" line="82" class="Tests\Feature\PromotionCrudTest" classname="Tests.Feature.PromotionCrudTest" assertions="2" time="0.177843"/>
+    <testcase name="test_admin_can_update_promotion" file="D:\meem-commerce\tests\Feature\PromotionCrudTest.php" line="95" class="Tests\Feature\PromotionCrudTest" classname="Tests.Feature.PromotionCrudTest" assertions="2" time="0.173559"/>
+    <testcase name="test_admin_can_delete_promotion" file="D:\meem-commerce\tests\Feature\PromotionCrudTest.php" line="115" class="Tests\Feature\PromotionCrudTest" classname="Tests.Feature.PromotionCrudTest" assertions="2" time="0.166466"/>
+    <testcase name="test_create_validation_fails_without_required_fields" file="D:\meem-commerce\tests\Feature\PromotionCrudTest.php" line="128" class="Tests\Feature\PromotionCrudTest" classname="Tests.Feature.PromotionCrudTest" assertions="1" time="0.018536"/>
+    <testcase name="test_update_validation_fails_with_invalid_type" file="D:\meem-commerce\tests\Feature\PromotionCrudTest.php" line="138" class="Tests\Feature\PromotionCrudTest" classname="Tests.Feature.PromotionCrudTest" assertions="1" time="0.160474"/>
+    <testcase name="test_unauthenticated_user_cannot_create_promotion" file="D:\meem-commerce\tests\Feature\PromotionCrudTest.php" line="153" class="Tests\Feature\PromotionCrudTest" classname="Tests.Feature.PromotionCrudTest" assertions="1" time="0.002827"/>
+  </testsuite>
+</testsuites>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\StaticPages\StaticPageCrudTest" file="D:\meem-commerce\tests\Feature\StaticPages\StaticPageCrudTest.php" tests="10" assertions="37" errors="0" failures="0" skipped="0" time="0.141234">
+    <testcase name="test_admin_can_list_static_pages" file="D:\meem-commerce\tests\Feature\StaticPages\StaticPageCrudTest.php" line="100" class="Tests\Feature\StaticPages\StaticPageCrudTest" classname="Tests.Feature.StaticPages.StaticPageCrudTest" assertions="3" time="0.055774"/>
+    <testcase name="test_admin_can_view_single_static_page" file="D:\meem-commerce\tests\Feature\StaticPages\StaticPageCrudTest.php" line="112" class="Tests\Feature\StaticPages\StaticPageCrudTest" classname="Tests.Feature.StaticPages.StaticPageCrudTest" assertions="3" time="0.006889"/>
+    <testcase name="test_admin_can_update_static_page_title" file="D:\meem-commerce\tests\Feature\StaticPages\StaticPageCrudTest.php" line="124" class="Tests\Feature\StaticPages\StaticPageCrudTest" classname="Tests.Feature.StaticPages.StaticPageCrudTest" assertions="4" time="0.014538"/>
+    <testcase name="test_admin_can_deactivate_static_page" file="D:\meem-commerce\tests\Feature\StaticPages\StaticPageCrudTest.php" line="139" class="Tests\Feature\StaticPages\StaticPageCrudTest" classname="Tests.Feature.StaticPages.StaticPageCrudTest" assertions="3" time="0.006551"/>
+    <testcase name="test_admin_can_create_static_section" file="D:\meem-commerce\tests\Feature\StaticPages\StaticPageCrudTest.php" line="151" class="Tests\Feature\StaticPages\StaticPageCrudTest" classname="Tests.Feature.StaticPages.StaticPageCrudTest" assertions="5" time="0.007357"/>
+    <testcase name="test_admin_can_update_static_section" file="D:\meem-commerce\tests\Feature\StaticPages\StaticPageCrudTest.php" line="168" class="Tests\Feature\StaticPages\StaticPageCrudTest" classname="Tests.Feature.StaticPages.StaticPageCrudTest" assertions="4" time="0.008737"/>
+    <testcase name="test_admin_can_delete_static_section" file="D:\meem-commerce\tests\Feature\StaticPages\StaticPageCrudTest.php" line="184" class="Tests\Feature\StaticPages\StaticPageCrudTest" classname="Tests.Feature.StaticPages.StaticPageCrudTest" assertions="3" time="0.006986"/>
+    <testcase name="test_admin_can_reorder_static_sections" file="D:\meem-commerce\tests\Feature\StaticPages\StaticPageCrudTest.php" line="197" class="Tests\Feature\StaticPages\StaticPageCrudTest" classname="Tests.Feature.StaticPages.StaticPageCrudTest" assertions="5" time="0.008400"/>
+    <testcase name="test_reorder_persists_new_order_in_database" file="D:\meem-commerce\tests\Feature\StaticPages\StaticPageCrudTest.php" line="216" class="Tests\Feature\StaticPages\StaticPageCrudTest" classname="Tests.Feature.StaticPages.StaticPageCrudTest" assertions="2" time="0.008342"/>
+    <testcase name="test_crud_flow_full_lifecycle" file="D:\meem-commerce\tests\Feature\StaticPages\StaticPageCrudTest.php" line="236" class="Tests\Feature\StaticPages\StaticPageCrudTest" classname="Tests.Feature.StaticPages.StaticPageCrudTest" assertions="5" time="0.017658"/>
+  </testsuite>
+</testsuites>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Currency\PaymentCurrencyTest" file="D:\meem-commerce\tests\Feature\Currency\PaymentCurrencyTest.php" tests="5" assertions="17" errors="0" failures="0" skipped="0" time="0.109092">
+    <testcase name="myfatoorah_invoice_uses_the_orders_currency" file="D:\meem-commerce\tests\Feature\Currency\PaymentCurrencyTest.php" line="66" class="Tests\Feature\Currency\PaymentCurrencyTest" classname="Tests.Feature.Currency.PaymentCurrencyTest" assertions="4" time="0.049796"/>
+    <testcase name="myfatoorah_refund_uses_the_orders_currency" file="D:\meem-commerce\tests\Feature\Currency\PaymentCurrencyTest.php" line="97" class="Tests\Feature\Currency\PaymentCurrencyTest" classname="Tests.Feature.Currency.PaymentCurrencyTest" assertions="4" time="0.019651"/>
+    <testcase name="payment_reconciliation_compares_currency_in_the_orders_currency" file="D:\meem-commerce\tests\Feature\Currency\PaymentCurrencyTest.php" line="122" class="Tests\Feature\Currency\PaymentCurrencyTest" classname="Tests.Feature.Currency.PaymentCurrencyTest" assertions="4" time="0.020486"/>
+    <testcase name="invoice_snapshot_pricing_currency_uses_the_orders_currency" file="D:\meem-commerce\tests\Feature\Currency\PaymentCurrencyTest.php" line="156" class="Tests\Feature\Currency\PaymentCurrencyTest" classname="Tests.Feature.Currency.PaymentCurrencyTest" assertions="2" time="0.013108"/>
+    <testcase name="invoice_snapshot_falls_back_to_the_default_currency_for_legacy_orders" file="D:\meem-commerce\tests\Feature\Currency\PaymentCurrencyTest.php" line="167" class="Tests\Feature\Currency\PaymentCurrencyTest" classname="Tests.Feature.Currency.PaymentCurrencyTest" assertions="3" time="0.006051"/>
+  </testsuite>
+</testsuites>

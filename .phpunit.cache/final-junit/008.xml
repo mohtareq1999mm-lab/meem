@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Unit\FileOperationEventContractTest" file="D:\meem-commerce\tests\Unit\FileOperationEventContractTest.php" tests="4" assertions="27" errors="0" failures="0" skipped="0" time="0.005722">
+    <testcase name="test_broadcasts_only_to_the_owner_private_user_channel" file="D:\meem-commerce\tests\Unit\FileOperationEventContractTest.php" line="17" class="Tests\Unit\FileOperationEventContractTest" classname="Tests.Unit.FileOperationEventContractTest" assertions="1" time="0.004659"/>
+    <testcase name="test_broadcast_as_returns_the_configured_event_name" file="D:\meem-commerce\tests\Unit\FileOperationEventContractTest.php" line="30" class="Tests\Unit\FileOperationEventContractTest" classname="Tests.Unit.FileOperationEventContractTest" assertions="11" time="0.000126"/>
+    <testcase name="test_payload_is_passed_through_untouched" file="D:\meem-commerce\tests\Unit\FileOperationEventContractTest.php" line="52" class="Tests\Unit\FileOperationEventContractTest" classname="Tests.Unit.FileOperationEventContractTest" assertions="4" time="0.000657"/>
+    <testcase name="test_event_names_use_the_project_naming_convention" file="D:\meem-commerce\tests\Unit\FileOperationEventContractTest.php" line="70" class="Tests\Unit\FileOperationEventContractTest" classname="Tests.Unit.FileOperationEventContractTest" assertions="11" time="0.000280"/>
+  </testsuite>
+</testsuites>

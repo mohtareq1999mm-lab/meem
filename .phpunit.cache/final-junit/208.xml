@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Notifications\NotificationPusherIntegrationTest" file="D:\meem-commerce\tests\Feature\Notifications\NotificationPusherIntegrationTest.php" tests="3" assertions="11" errors="0" failures="0" skipped="0" time="0.551565">
+    <testcase name="test_real_pusher_accepts_user_notification_wire_contract" file="D:\meem-commerce\tests\Feature\Notifications\NotificationPusherIntegrationTest.php" line="49" class="Tests\Feature\Notifications\NotificationPusherIntegrationTest" classname="Tests.Feature.Notifications.NotificationPusherIntegrationTest" assertions="4" time="0.315018"/>
+    <testcase name="test_recorded_admin_event_contract_is_accepted" file="D:\meem-commerce\tests\Feature\Notifications\NotificationPusherIntegrationTest.php" line="77" class="Tests\Feature\Notifications\NotificationPusherIntegrationTest" classname="Tests.Feature.Notifications.NotificationPusherIntegrationTest" assertions="4" time="0.223982"/>
+    <testcase name="test_every_recorded_broadcast_payload_is_json_serializable_for_pusher" file="D:\meem-commerce\tests\Feature\Notifications\NotificationPusherIntegrationTest.php" line="98" class="Tests\Feature\Notifications\NotificationPusherIntegrationTest" classname="Tests.Feature.Notifications.NotificationPusherIntegrationTest" assertions="3" time="0.012566"/>
+  </testsuite>
+</testsuites>

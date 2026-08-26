@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Brands\BrandImportExportTest" file="D:\meem-commerce\tests\Feature\Brands\BrandImportExportTest.php" tests="5" assertions="12" errors="0" failures="0" skipped="0" time="0.150509">
+    <testcase name="sample_downloads_valid_xlsx_with_contract_headers" file="D:\meem-commerce\tests\Feature\Brands\BrandImportExportTest.php" line="92" class="Tests\Feature\Brands\BrandImportExportTest" classname="Tests.Feature.Brands.BrandImportExportTest" assertions="2" time="0.044974"/>
+    <testcase name="import_dispatches_job_on_meem_high_queue_and_returns_202" file="D:\meem-commerce\tests\Feature\Brands\BrandImportExportTest.php" line="105" class="Tests\Feature\Brands\BrandImportExportTest" classname="Tests.Feature.Brands.BrandImportExportTest" assertions="4" time="0.078645"/>
+    <testcase name="import_requires_authentication_and_permission" file="D:\meem-commerce\tests\Feature\Brands\BrandImportExportTest.php" line="129" class="Tests\Feature\Brands\BrandImportExportTest" classname="Tests.Feature.Brands.BrandImportExportTest" assertions="2" time="0.004281"/>
+    <testcase name="export_start_returns_202_with_export_id" file="D:\meem-commerce\tests\Feature\Brands\BrandImportExportTest.php" line="136" class="Tests\Feature\Brands\BrandImportExportTest" classname="Tests.Feature.Brands.BrandImportExportTest" assertions="3" time="0.017330"/>
+    <testcase name="cancel_on_terminal_import_returns_409" file="D:\meem-commerce\tests\Feature\Brands\BrandImportExportTest.php" line="150" class="Tests\Feature\Brands\BrandImportExportTest" classname="Tests.Feature.Brands.BrandImportExportTest" assertions="1" time="0.005277"/>
+  </testsuite>
+</testsuites>

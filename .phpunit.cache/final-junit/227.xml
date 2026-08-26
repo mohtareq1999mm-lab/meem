@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Pages\SectionResourceQueryCountTest" file="D:\meem-commerce\tests\Feature\Pages\SectionResourceQueryCountTest.php" tests="5" assertions="21" errors="0" failures="0" skipped="0" time="0.107960">
+    <testcase name="test_public_home_eager_loads_section_types_and_settings_once" file="D:\meem-commerce\tests\Feature\Pages\SectionResourceQueryCountTest.php" line="139" class="Tests\Feature\Pages\SectionResourceQueryCountTest" classname="Tests.Feature.Pages.SectionResourceQueryCountTest" assertions="4" time="0.034863"/>
+    <testcase name="test_public_home_serves_populated_settings_from_eager_loaded_relations" file="D:\meem-commerce\tests\Feature\Pages\SectionResourceQueryCountTest.php" line="154" class="Tests\Feature\Pages\SectionResourceQueryCountTest" classname="Tests.Feature.Pages.SectionResourceQueryCountTest" assertions="6" time="0.012728"/>
+    <testcase name="test_public_home_cached_payload_matches_fresh_payload" file="D:\meem-commerce\tests\Feature\Pages\SectionResourceQueryCountTest.php" line="171" class="Tests\Feature\Pages\SectionResourceQueryCountTest" classname="Tests.Feature.Pages.SectionResourceQueryCountTest" assertions="3" time="0.015282"/>
+    <testcase name="test_admin_sections_index_eager_loads_section_types_and_settings_once" file="D:\meem-commerce\tests\Feature\Pages\SectionResourceQueryCountTest.php" line="184" class="Tests\Feature\Pages\SectionResourceQueryCountTest" classname="Tests.Feature.Pages.SectionResourceQueryCountTest" assertions="4" time="0.030819"/>
+    <testcase name="test_admin_content_page_show_eager_loads_section_types_and_settings_once" file="D:\meem-commerce\tests\Feature\Pages\SectionResourceQueryCountTest.php" line="201" class="Tests\Feature\Pages\SectionResourceQueryCountTest" classname="Tests.Feature.Pages.SectionResourceQueryCountTest" assertions="4" time="0.014268"/>
+  </testsuite>
+</testsuites>

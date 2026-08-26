@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Unit\CouponCalculatorTest" file="D:\meem-commerce\tests\Unit\CouponCalculatorTest.php" tests="10" assertions="27" errors="0" failures="0" skipped="0" time="0.013635">
+    <testcase name="test_percentage_discount" file="D:\meem-commerce\tests\Unit\CouponCalculatorTest.php" line="12" class="Tests\Unit\CouponCalculatorTest" classname="Tests.Unit.CouponCalculatorTest" assertions="4" time="0.010018"/>
+    <testcase name="test_percentage_discount_with_max_cap" file="D:\meem-commerce\tests\Unit\CouponCalculatorTest.php" line="27" class="Tests\Unit\CouponCalculatorTest" classname="Tests.Unit.CouponCalculatorTest" assertions="2" time="0.000328"/>
+    <testcase name="test_percentage_discount_respects_max_cap_when_discount_is_lower" file="D:\meem-commerce\tests\Unit\CouponCalculatorTest.php" line="40" class="Tests\Unit\CouponCalculatorTest" classname="Tests.Unit.CouponCalculatorTest" assertions="2" time="0.000345"/>
+    <testcase name="test_fixed_rate_discount" file="D:\meem-commerce\tests\Unit\CouponCalculatorTest.php" line="53" class="Tests\Unit\CouponCalculatorTest" classname="Tests.Unit.CouponCalculatorTest" assertions="2" time="0.000346"/>
+    <testcase name="test_zero_discount_returns_same_price" file="D:\meem-commerce\tests\Unit\CouponCalculatorTest.php" line="66" class="Tests\Unit\CouponCalculatorTest" classname="Tests.Unit.CouponCalculatorTest" assertions="2" time="0.000366"/>
+    <testcase name="test_discount_cannot_make_price_negative" file="D:\meem-commerce\tests\Unit\CouponCalculatorTest.php" line="79" class="Tests\Unit\CouponCalculatorTest" classname="Tests.Unit.CouponCalculatorTest" assertions="2" time="0.000336"/>
+    <testcase name="test_free_shipping_is_always_false" file="D:\meem-commerce\tests\Unit\CouponCalculatorTest.php" line="92" class="Tests\Unit\CouponCalculatorTest" classname="Tests.Unit.CouponCalculatorTest" assertions="2" time="0.000371"/>
+    <testcase name="test_free_shipping_returns_same_price" file="D:\meem-commerce\tests\Unit\CouponCalculatorTest.php" line="109" class="Tests\Unit\CouponCalculatorTest" classname="Tests.Unit.CouponCalculatorTest" assertions="4" time="0.000554"/>
+    <testcase name="test_free_shipping_with_high_discount_value" file="D:\meem-commerce\tests\Unit\CouponCalculatorTest.php" line="124" class="Tests\Unit\CouponCalculatorTest" classname="Tests.Unit.CouponCalculatorTest" assertions="3" time="0.000376"/>
+    <testcase name="test_returns_expected_structure" file="D:\meem-commerce\tests\Unit\CouponCalculatorTest.php" line="138" class="Tests\Unit\CouponCalculatorTest" classname="Tests.Unit.CouponCalculatorTest" assertions="4" time="0.000595"/>
+  </testsuite>
+</testsuites>

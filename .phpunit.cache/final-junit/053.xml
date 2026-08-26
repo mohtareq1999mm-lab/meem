@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\FinancialDeepAuditTest" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" tests="30" assertions="81" errors="0" failures="2" skipped="0" time="2.880694">
+    <testcase name="promotion_usage_limiter_enforces_max_uses" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="220" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="2" time="0.078141"/>
+    <testcase name="concurrent_coupon_usage_unique_per_user" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="248" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="3" time="0.162687"/>
+    <testcase name="transaction_lock_prevents_double_promotion_application" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="281" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="3" time="0.155749"/>
+    <testcase name="assigned_coupon_usage_recorded_in_assignment_and_global" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="314" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="4" time="0.342148"/>
+    <testcase name="assigned_coupon_rejects_when_max_uses_exhausted" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="361" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="1" time="0.144711"/>
+    <testcase name="gift_promotion_has_zero_discount_and_reserves_gift_item" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="390" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="4" time="0.184064">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\FinancialDeepAuditTest::gift_promotion_has_zero_discount_and_reserves_gift_item&#13;
+Failed asserting that null is not null.
+&#13;
+D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php:418
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="promotion_applies_only_to_specific_products" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="428" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="6" time="0.159264"/>
+    <testcase name="expired_discount_not_applied" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="471" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="2" time="0.003850"/>
+    <testcase name="future_discount_not_applied" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="489" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="2" time="0.004676"/>
+    <testcase name="expired_promotion_rejected_by_resolver" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="507" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="1" time="0.149917"/>
+    <testcase name="inactive_promotion_rejected" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="527" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="1" time="0.008397"/>
+    <testcase name="expired_coupon_rejected_by_orchestrator" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="546" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="1" time="0.159013"/>
+    <testcase name="free_shipping_by_threshold_works_with_promotion" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="566" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="4" time="0.004082"/>
+    <testcase name="free_shipping_coupon_overrides_shipping_cost" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="583" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="3" time="0.000648"/>
+    <testcase name="shipping_cost_included_in_order_total" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="592" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="3" time="0.166587"/>
+    <testcase name="variant_with_flash_sale_applied_correctly" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="612" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="2" time="0.009074"/>
+    <testcase name="variant_with_product_discount_and_no_flash_sale" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="634" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="1" time="0.004891"/>
+    <testcase name="promotion_minimum_order_amount_enforced" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="658" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="1" time="0.151328"/>
+    <testcase name="promotion_usage_limiter_at_scope_valid" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="682" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="2" time="0.006648"/>
+    <testcase name="coupon_global_limiter_enforced_by_validator" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="702" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="2" time="0.004665"/>
+    <testcase name="settings_minimum_order_amount_reads_from_column" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="726" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="2" time="0.012961"/>
+    <testcase name="settings_api_returns_minimum_order_amount" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="754" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="1" time="0.025552">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\FinancialDeepAuditTest::settings_api_returns_minimum_order_amount&#13;
+Expected response status code [200] but received 401.
+Failed asserting that 200 is identical to 401.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\Concerns\AssertsStatusCodes.php:16
+D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php:758
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="settings_update_via_api_writes_to_column" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="763" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="2" time="0.027899"/>
+    <testcase name="max_discount_coupon_with_fixed_promotion" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="781" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="4" time="0.239414"/>
+    <testcase name="order_immutable_after_all_price_changes" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="820" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="4" time="0.188962"/>
+    <testcase name="complete_checkout_all_discounts_manually_verified" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="849" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="6" time="0.250645"/>
+    <testcase name="rounding_consistency_across_discounts" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="914" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="1" time="0.231009"/>
+    <testcase name="number_format_precision_preserved" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="938" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="7" time="0.000538"/>
+    <testcase name="no_legacy_minimum_order_amount_in_options" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="950" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="3" time="0.001636"/>
+    <testcase name="checkout_repository_uses_dedicated_column" file="D:\meem-commerce\tests\Feature\FinancialDeepAuditTest.php" line="962" class="Tests\Feature\FinancialDeepAuditTest" classname="Tests.Feature.FinancialDeepAuditTest" assertions="3" time="0.001540"/>
+  </testsuite>
+</testsuites>

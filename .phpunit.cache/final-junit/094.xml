@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\UserAuthRegressionTest" file="D:\meem-commerce\tests\Feature\UserAuthRegressionTest.php" tests="8" assertions="18" errors="0" failures="1" skipped="0" time="0.254380">
+    <testcase name="test_password_change_revokes_existing_tokens" file="D:\meem-commerce\tests\Feature\UserAuthRegressionTest.php" line="67" class="Tests\Feature\UserAuthRegressionTest" classname="Tests.Feature.UserAuthRegressionTest" assertions="3" time="0.077859"/>
+    <testcase name="test_old_token_revoked_after_password_change" file="D:\meem-commerce\tests\Feature\UserAuthRegressionTest.php" line="83" class="Tests\Feature\UserAuthRegressionTest" classname="Tests.Feature.UserAuthRegressionTest" assertions="3" time="0.007509"/>
+    <testcase name="test_verify_forget_password_token_rejects_static_otp_code" file="D:\meem-commerce\tests\Feature\UserAuthRegressionTest.php" line="103" class="Tests\Feature\UserAuthRegressionTest" classname="Tests.Feature.UserAuthRegressionTest" assertions="2" time="0.006712"/>
+    <testcase name="test_reset_password_rejects_static_otp" file="D:\meem-commerce\tests\Feature\UserAuthRegressionTest.php" line="114" class="Tests\Feature\UserAuthRegressionTest" classname="Tests.Feature.UserAuthRegressionTest" assertions="1" time="0.003652"/>
+    <testcase name="test_registration_assigns_default_customer_role" file="D:\meem-commerce\tests\Feature\UserAuthRegressionTest.php" line="130" class="Tests\Feature\UserAuthRegressionTest" classname="Tests.Feature.UserAuthRegressionTest" assertions="4" time="0.138138">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\UserAuthRegressionTest::test_registration_assigns_default_customer_role&#13;
+Newly registered user should have customer role
+Failed asserting that false is true.
+&#13;
+D:\meem-commerce\tests\Feature\UserAuthRegressionTest.php:151
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_reset_password_rejects_invalid_token_inside_transaction" file="D:\meem-commerce\tests\Feature\UserAuthRegressionTest.php" line="158" class="Tests\Feature\UserAuthRegressionTest" classname="Tests.Feature.UserAuthRegressionTest" assertions="2" time="0.006515"/>
+    <testcase name="test_reset_password_cleans_up_token_on_success" file="D:\meem-commerce\tests\Feature\UserAuthRegressionTest.php" line="173" class="Tests\Feature\UserAuthRegressionTest" classname="Tests.Feature.UserAuthRegressionTest" assertions="2" time="0.009145"/>
+    <testcase name="test_change_password_rejects_wrong_old_password" file="D:\meem-commerce\tests\Feature\UserAuthRegressionTest.php" line="200" class="Tests\Feature\UserAuthRegressionTest" classname="Tests.Feature.UserAuthRegressionTest" assertions="1" time="0.004850"/>
+  </testsuite>
+</testsuites>

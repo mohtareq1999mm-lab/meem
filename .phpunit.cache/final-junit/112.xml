@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Categories\CategoryImportProgressBroadcastTest" file="D:\meem-commerce\tests\Feature\Categories\CategoryImportProgressBroadcastTest.php" tests="4" assertions="30" errors="0" failures="0" skipped="0" time="0.030663">
+    <testcase name="test_event_contract_targets_private_user_channel" file="D:\meem-commerce\tests\Feature\Categories\CategoryImportProgressBroadcastTest.php" line="106" class="Tests\Feature\Categories\CategoryImportProgressBroadcastTest" classname="Tests.Feature.Categories.CategoryImportProgressBroadcastTest" assertions="6" time="0.005933"/>
+    <testcase name="test_write_explicit_progress_broadcasts_to_owner_channel" file="D:\meem-commerce\tests\Feature\Categories\CategoryImportProgressBroadcastTest.php" line="121" class="Tests\Feature\Categories\CategoryImportProgressBroadcastTest" classname="Tests.Feature.Categories.CategoryImportProgressBroadcastTest" assertions="14" time="0.019128"/>
+    <testcase name="test_finalize_progress_broadcasts_terminal_100_percent" file="D:\meem-commerce\tests\Feature\Categories\CategoryImportProgressBroadcastTest.php" line="154" class="Tests\Feature\Categories\CategoryImportProgressBroadcastTest" classname="Tests.Feature.Categories.CategoryImportProgressBroadcastTest" assertions="8" time="0.004668"/>
+    <testcase name="test_no_broadcast_when_import_has_no_creator" file="D:\meem-commerce\tests\Feature\Categories\CategoryImportProgressBroadcastTest.php" line="179" class="Tests\Feature\Categories\CategoryImportProgressBroadcastTest" classname="Tests.Feature.Categories.CategoryImportProgressBroadcastTest" assertions="2" time="0.000934"/>
+  </testsuite>
+</testsuites>

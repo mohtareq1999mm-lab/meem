@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Invoice\AdminInvoiceIndexTest" file="D:\meem-commerce\tests\Feature\Invoice\AdminInvoiceIndexTest.php" tests="7" assertions="34" errors="0" failures="0" skipped="0" time="0.176488">
+    <testcase name="test_index_returns_paginated_invoices_with_contract_shape" file="D:\meem-commerce\tests\Feature\Invoice\AdminInvoiceIndexTest.php" line="31" class="Tests\Feature\Invoice\AdminInvoiceIndexTest" classname="Tests.Feature.Invoice.AdminInvoiceIndexTest" assertions="24" time="0.079268"/>
+    <testcase name="test_limit_is_clamped_to_100" file="D:\meem-commerce\tests\Feature\Invoice\AdminInvoiceIndexTest.php" line="65" class="Tests\Feature\Invoice\AdminInvoiceIndexTest" classname="Tests.Feature.Invoice.AdminInvoiceIndexTest" assertions="2" time="0.012006"/>
+    <testcase name="test_filter_by_status_excludes_other_statuses" file="D:\meem-commerce\tests\Feature\Invoice\AdminInvoiceIndexTest.php" line="75" class="Tests\Feature\Invoice\AdminInvoiceIndexTest" classname="Tests.Feature.Invoice.AdminInvoiceIndexTest" assertions="2" time="0.018284"/>
+    <testcase name="test_filter_by_user_id" file="D:\meem-commerce\tests\Feature\Invoice\AdminInvoiceIndexTest.php" line="88" class="Tests\Feature\Invoice\AdminInvoiceIndexTest" classname="Tests.Feature.Invoice.AdminInvoiceIndexTest" assertions="2" time="0.016765"/>
+    <testcase name="test_search_matches_invoice_number" file="D:\meem-commerce\tests\Feature\Invoice\AdminInvoiceIndexTest.php" line="100" class="Tests\Feature\Invoice\AdminInvoiceIndexTest" classname="Tests.Feature.Invoice.AdminInvoiceIndexTest" assertions="1" time="0.012962"/>
+    <testcase name="test_sort_by_whitelist_falls_back_to_created_at_for_unknown_field" file="D:\meem-commerce\tests\Feature\Invoice\AdminInvoiceIndexTest.php" line="110" class="Tests\Feature\Invoice\AdminInvoiceIndexTest" classname="Tests.Feature.Invoice.AdminInvoiceIndexTest" assertions="2" time="0.019161"/>
+    <testcase name="test_sort_direction_asc_supported" file="D:\meem-commerce\tests\Feature\Invoice\AdminInvoiceIndexTest.php" line="128" class="Tests\Feature\Invoice\AdminInvoiceIndexTest" classname="Tests.Feature.Invoice.AdminInvoiceIndexTest" assertions="1" time="0.018044"/>
+  </testsuite>
+</testsuites>

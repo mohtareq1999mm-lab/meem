@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Pages\ContentPagePublicContractTest" file="D:\meem-commerce\tests\Feature\Pages\ContentPagePublicContractTest.php" tests="7" assertions="15" errors="0" failures="0" skipped="0" time="0.087814">
+    <testcase name="test_create_content_page_without_title_returns_422" file="D:\meem-commerce\tests\Feature\Pages\ContentPagePublicContractTest.php" line="84" class="Tests\Feature\Pages\ContentPagePublicContractTest" classname="Tests.Feature.Pages.ContentPagePublicContractTest" assertions="2" time="0.051821"/>
+    <testcase name="test_create_content_page_without_english_title_returns_422" file="D:\meem-commerce\tests\Feature\Pages\ContentPagePublicContractTest.php" line="94" class="Tests\Feature\Pages\ContentPagePublicContractTest" classname="Tests.Feature.Pages.ContentPagePublicContractTest" assertions="2" time="0.007876"/>
+    <testcase name="test_create_content_page_with_valid_title_still_works" file="D:\meem-commerce\tests\Feature\Pages\ContentPagePublicContractTest.php" line="106" class="Tests\Feature\Pages\ContentPagePublicContractTest" classname="Tests.Feature.Pages.ContentPagePublicContractTest" assertions="2" time="0.008679"/>
+    <testcase name="test_inactive_page_is_hidden_from_public_show" file="D:\meem-commerce\tests\Feature\Pages\ContentPagePublicContractTest.php" line="122" class="Tests\Feature\Pages\ContentPagePublicContractTest" classname="Tests.Feature.Pages.ContentPagePublicContractTest" assertions="1" time="0.003702"/>
+    <testcase name="test_active_page_is_visible_publicly" file="D:\meem-commerce\tests\Feature\Pages\ContentPagePublicContractTest.php" line="129" class="Tests\Feature\Pages\ContentPagePublicContractTest" classname="Tests.Feature.Pages.ContentPagePublicContractTest" assertions="2" time="0.004748"/>
+    <testcase name="test_inactive_page_is_excluded_from_public_index" file="D:\meem-commerce\tests\Feature\Pages\ContentPagePublicContractTest.php" line="139" class="Tests\Feature\Pages\ContentPagePublicContractTest" classname="Tests.Feature.Pages.ContentPagePublicContractTest" assertions="3" time="0.005409"/>
+    <testcase name="test_inactive_page_hides_its_inactive_sections_publicly" file="D:\meem-commerce\tests\Feature\Pages\ContentPagePublicContractTest.php" line="152" class="Tests\Feature\Pages\ContentPagePublicContractTest" classname="Tests.Feature.Pages.ContentPagePublicContractTest" assertions="3" time="0.005579"/>
+  </testsuite>
+</testsuites>

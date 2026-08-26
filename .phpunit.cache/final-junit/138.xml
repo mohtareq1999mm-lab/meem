@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Currency\CatalogCurrencyTest" file="D:\meem-commerce\tests\Feature\Currency\CatalogCurrencyTest.php" tests="8" assertions="26" errors="0" failures="0" skipped="0" time="0.298401">
+    <testcase name="admin_can_set_a_new_catalog_currency" file="D:\meem-commerce\tests\Feature\Currency\CatalogCurrencyTest.php" line="15" class="Tests\Feature\Currency\CatalogCurrencyTest" classname="Tests.Feature.Currency.CatalogCurrencyTest" assertions="5" time="0.119262"/>
+    <testcase name="set_catalog_updates_only_the_catalog_currency_option" file="D:\meem-commerce\tests\Feature\Currency\CatalogCurrencyTest.php" line="30" class="Tests\Feature\Currency\CatalogCurrencyTest" classname="Tests.Feature.Currency.CatalogCurrencyTest" assertions="4" time="0.027224"/>
+    <testcase name="catalog_code_is_reflected_by_currency_service" file="D:\meem-commerce\tests\Feature\Currency\CatalogCurrencyTest.php" line="46" class="Tests\Feature\Currency\CatalogCurrencyTest" classname="Tests.Feature.Currency.CatalogCurrencyTest" assertions="4" time="0.029217"/>
+    <testcase name="inactive_currency_cannot_be_set_as_catalog" file="D:\meem-commerce\tests\Feature\Currency\CatalogCurrencyTest.php" line="59" class="Tests\Feature\Currency\CatalogCurrencyTest" classname="Tests.Feature.Currency.CatalogCurrencyTest" assertions="4" time="0.027089"/>
+    <testcase name="currency_without_a_rate_cannot_be_set_as_catalog" file="D:\meem-commerce\tests\Feature\Currency\CatalogCurrencyTest.php" line="77" class="Tests\Feature\Currency\CatalogCurrencyTest" classname="Tests.Feature.Currency.CatalogCurrencyTest" assertions="4" time="0.026787"/>
+    <testcase name="set_catalog_for_missing_currency_returns_404" file="D:\meem-commerce\tests\Feature\Currency\CatalogCurrencyTest.php" line="94" class="Tests\Feature\Currency\CatalogCurrencyTest" classname="Tests.Feature.Currency.CatalogCurrencyTest" assertions="1" time="0.025283"/>
+    <testcase name="set_catalog_requires_permission" file="D:\meem-commerce\tests\Feature\Currency\CatalogCurrencyTest.php" line="103" class="Tests\Feature\Currency\CatalogCurrencyTest" classname="Tests.Feature.Currency.CatalogCurrencyTest" assertions="1" time="0.015189"/>
+    <testcase name="set_catalog_flushes_frontend_price_caches" file="D:\meem-commerce\tests\Feature\Currency\CatalogCurrencyTest.php" line="113" class="Tests\Feature\Currency\CatalogCurrencyTest" classname="Tests.Feature.Currency.CatalogCurrencyTest" assertions="3" time="0.028349"/>
+  </testsuite>
+</testsuites>

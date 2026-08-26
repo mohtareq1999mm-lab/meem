@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\CityApiTest" file="D:\meem-commerce\tests\Feature\CityApiTest.php" tests="23" assertions="64" errors="0" failures="0" skipped="0" time="0.194156">
+    <testcase name="test_guest_gets_401_for_list_cities" file="D:\meem-commerce\tests\Feature\CityApiTest.php" line="78" class="Tests\Feature\CityApiTest" classname="Tests.Feature.CityApiTest" assertions="1" time="0.031881"/>
+    <testcase name="test_guest_gets_401_for_show_city" file="D:\meem-commerce\tests\Feature\CityApiTest.php" line="84" class="Tests\Feature\CityApiTest" classname="Tests.Feature.CityApiTest" assertions="1" time="0.005738"/>
+    <testcase name="test_guest_gets_401_for_create_city" file="D:\meem-commerce\tests\Feature\CityApiTest.php" line="91" class="Tests\Feature\CityApiTest" classname="Tests.Feature.CityApiTest" assertions="1" time="0.002788"/>
+    <testcase name="test_guest_gets_401_for_update_city" file="D:\meem-commerce\tests\Feature\CityApiTest.php" line="100" class="Tests\Feature\CityApiTest" classname="Tests.Feature.CityApiTest" assertions="1" time="0.004191"/>
+    <testcase name="test_guest_gets_401_for_delete_city" file="D:\meem-commerce\tests\Feature\CityApiTest.php" line="109" class="Tests\Feature\CityApiTest" classname="Tests.Feature.CityApiTest" assertions="1" time="0.002386"/>
+    <testcase name="test_user_without_view_permission_gets_forbidden_for_index" file="D:\meem-commerce\tests\Feature\CityApiTest.php" line="120" class="Tests\Feature\CityApiTest" classname="Tests.Feature.CityApiTest" assertions="1" time="0.025451"/>
+    <testcase name="test_user_without_create_permission_gets_forbidden_for_store" file="D:\meem-commerce\tests\Feature\CityApiTest.php" line="137" class="Tests\Feature\CityApiTest" classname="Tests.Feature.CityApiTest" assertions="1" time="0.006393"/>
+    <testcase name="test_user_without_update_permission_gets_forbidden_for_update" file="D:\meem-commerce\tests\Feature\CityApiTest.php" line="148" class="Tests\Feature\CityApiTest" classname="Tests.Feature.CityApiTest" assertions="1" time="0.008815"/>
+    <testcase name="test_user_without_delete_permission_gets_forbidden_for_destroy" file="D:\meem-commerce\tests\Feature\CityApiTest.php" line="160" class="Tests\Feature\CityApiTest" classname="Tests.Feature.CityApiTest" assertions="1" time="0.004852"/>
+    <testcase name="test_authenticated_user_can_list_cities" file="D:\meem-commerce\tests\Feature\CityApiTest.php" line="174" class="Tests\Feature\CityApiTest" classname="Tests.Feature.CityApiTest" assertions="7" time="0.009984"/>
+    <testcase name="test_list_cities_returns_empty_when_none_exist" file="D:\meem-commerce\tests\Feature\CityApiTest.php" line="189" class="Tests\Feature\CityApiTest" classname="Tests.Feature.CityApiTest" assertions="2" time="0.010587"/>
+    <testcase name="test_authenticated_user_can_show_city" file="D:\meem-commerce\tests\Feature\CityApiTest.php" line="203" class="Tests\Feature\CityApiTest" classname="Tests.Feature.CityApiTest" assertions="11" time="0.005117"/>
+    <testcase name="test_show_city_returns_404_for_nonexistent_id" file="D:\meem-commerce\tests\Feature\CityApiTest.php" line="221" class="Tests\Feature\CityApiTest" classname="Tests.Feature.CityApiTest" assertions="1" time="0.005113"/>
+    <testcase name="test_authenticated_admin_can_create_city" file="D:\meem-commerce\tests\Feature\CityApiTest.php" line="233" class="Tests\Feature\CityApiTest" classname="Tests.Feature.CityApiTest" assertions="12" time="0.016123"/>
+    <testcase name="test_create_city_returns_422_for_missing_name" file="D:\meem-commerce\tests\Feature\CityApiTest.php" line="253" class="Tests\Feature\CityApiTest" classname="Tests.Feature.CityApiTest" assertions="1" time="0.004864"/>
+    <testcase name="test_create_city_returns_422_for_missing_governorate_id" file="D:\meem-commerce\tests\Feature\CityApiTest.php" line="264" class="Tests\Feature\CityApiTest" classname="Tests.Feature.CityApiTest" assertions="1" time="0.004763"/>
+    <testcase name="test_authenticated_admin_can_update_city" file="D:\meem-commerce\tests\Feature\CityApiTest.php" line="279" class="Tests\Feature\CityApiTest" classname="Tests.Feature.CityApiTest" assertions="3" time="0.006726"/>
+    <testcase name="test_update_city_returns_404_for_nonexistent_id" file="D:\meem-commerce\tests\Feature\CityApiTest.php" line="294" class="Tests\Feature\CityApiTest" classname="Tests.Feature.CityApiTest" assertions="1" time="0.004658"/>
+    <testcase name="test_authenticated_admin_can_delete_city" file="D:\meem-commerce\tests\Feature\CityApiTest.php" line="308" class="Tests\Feature\CityApiTest" classname="Tests.Feature.CityApiTest" assertions="2" time="0.004286"/>
+    <testcase name="test_delete_city_returns_404_for_nonexistent_id" file="D:\meem-commerce\tests\Feature\CityApiTest.php" line="319" class="Tests\Feature\CityApiTest" classname="Tests.Feature.CityApiTest" assertions="1" time="0.005483"/>
+    <testcase name="test_city_name_is_translatable" file="D:\meem-commerce\tests\Feature\CityApiTest.php" line="331" class="Tests\Feature\CityApiTest" classname="Tests.Feature.CityApiTest" assertions="2" time="0.011476"/>
+    <testcase name="test_city_resource_structure_on_show" file="D:\meem-commerce\tests\Feature\CityApiTest.php" line="349" class="Tests\Feature\CityApiTest" classname="Tests.Feature.CityApiTest" assertions="9" time="0.005587"/>
+    <testcase name="test_city_mass_assignment_protection" file="D:\meem-commerce\tests\Feature\CityApiTest.php" line="369" class="Tests\Feature\CityApiTest" classname="Tests.Feature.CityApiTest" assertions="2" time="0.006894"/>
+  </testsuite>
+</testsuites>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\FileOperations\BrandImportBroadcastTest" file="D:\meem-commerce\tests\Feature\FileOperations\BrandImportBroadcastTest.php" tests="4" assertions="24" errors="0" failures="0" skipped="0" time="0.029990">
+    <testcase name="test_publish_progress_actually_dispatches_to_owner_channel" file="D:\meem-commerce\tests\Feature\FileOperations\BrandImportBroadcastTest.php" line="17" class="Tests\Feature\FileOperations\BrandImportBroadcastTest" classname="Tests.Feature.FileOperations.BrandImportBroadcastTest" assertions="19" time="0.023507"/>
+    <testcase name="test_finalize_progress_broadcasts_terminal_status" file="D:\meem-commerce\tests\Feature\FileOperations\BrandImportBroadcastTest.php" line="33" class="Tests\Feature\FileOperations\BrandImportBroadcastTest" classname="Tests.Feature.FileOperations.BrandImportBroadcastTest" assertions="1" time="0.003540"/>
+    <testcase name="test_misleading_dispatched_log_is_removed_from_source" file="D:\meem-commerce\tests\Feature\FileOperations\BrandImportBroadcastTest.php" line="51" class="Tests\Feature\FileOperations\BrandImportBroadcastTest" classname="Tests.Feature.FileOperations.BrandImportBroadcastTest" assertions="3" time="0.001543"/>
+    <testcase name="test_no_broadcast_when_import_has_no_creator" file="D:\meem-commerce\tests\Feature\FileOperations\BrandImportBroadcastTest.php" line="72" class="Tests\Feature\FileOperations\BrandImportBroadcastTest" classname="Tests.Feature.FileOperations.BrandImportBroadcastTest" assertions="1" time="0.001400"/>
+  </testsuite>
+</testsuites>

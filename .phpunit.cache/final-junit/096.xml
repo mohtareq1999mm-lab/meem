@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\UserCrudTest" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" tests="38" assertions="67" errors="0" failures="2" skipped="1" time="1.443337">
+    <testcase name="test_super_admin_can_view_user_by_id" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="243" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="4" time="0.126715"/>
+    <testcase name="test_show_user_fails_for_nonexistent_user" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="258" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="1" time="0.038837"/>
+    <testcase name="test_show_user_fails_for_unauthorized_user" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="268" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="1" time="0.008560"/>
+    <testcase name="test_show_user_fails_for_unauthenticated_user" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="281" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="1" time="0.004305"/>
+    <testcase name="test_super_admin_can_create_user_via_store" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="290" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="3" time="0.051796"/>
+    <testcase name="test_store_user_without_name_returns_422" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="311" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="1" time="0.207354"/>
+    <testcase name="test_super_admin_can_update_any_user" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="327" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="3" time="0.040411"/>
+    <testcase name="test_user_cannot_update_self_without_permission" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="346" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="1" time="0.004840"/>
+    <testcase name="test_user_cannot_update_other_user" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="356" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="1" time="0.005817"/>
+    <testcase name="test_update_user_fails_for_unauthenticated_user" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="369" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="1" time="0.002735"/>
+    <testcase name="test_super_admin_can_delete_user_via_destroy" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="378" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="1" time="0.060696">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\UserCrudTest::test_super_admin_can_delete_user_via_destroy&#13;
+Expected response status code [200] but received 409.
+Failed asserting that 200 is identical to 409.&#13;
+&#13;
+The following exception occurred during the last request:
+
+PDOException: SQLSTATE[HY000]: General error: 1 no such table: personal_access_tokens in D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Connection.php:601
+Stack trace:
+#0 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Connection.php(601): PDO-&gt;prepare('delete from "pe...')
+#1 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Connection.php(809): Illuminate\Database\Connection-&gt;Illuminate\Database\{closure}('delete from "pe...', Array)
+#2 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Connection.php(776): Illuminate\Database\Connection-&gt;runQueryCallback('delete from "pe...', Array, Object(Closure))
+#3 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Connection.php(593): Illuminate\Database\Connection-&gt;run('delete from "pe...', Array, Object(Closure))
+#4 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Connection.php(557): Illuminate\Database\Connection-&gt;affectingStatement('delete from "pe...', Array)
+#5 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Query\Builder.php(3615): Illuminate\Database\Connection-&gt;delete('delete from "pe...', Array)
+#6 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Builder.php(1271): Illuminate\Database\Query\Builder-&gt;delete()
+#7 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Traits\ForwardsCalls.php(23): Illuminate\Database\Eloquent\Builder-&gt;delete()
+#8 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Traits\ForwardsCalls.php(52): Illuminate\Database\Eloquent\Relations\Relation-&gt;forwardCallTo(Object(Illuminate\Database\Eloquent\Builder), 'delete', Array)
+#9 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Relations\Relation.php(517): Illuminate\Database\Eloquent\Relations\Relation-&gt;forwardDecoratedCallTo(Object(Illuminate\Database\Eloquent\Builder), 'delete', Array)
+#10 D:\meem-commerce\packages\marvel\src\Http\Controllers\UserController.php(310): Illuminate\Database\Eloquent\Relations\Relation-&gt;__call('delete', Array)
+#11 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Controller.php(54): Marvel\Http\Controllers\UserController-&gt;destroy('2')
+#12 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\ControllerDispatcher.php(43): Illuminate\Routing\Controller-&gt;callAction('destroy', Array)
+#13 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Route.php(259): Illuminate\Routing\ControllerDispatcher-&gt;dispatch(Object(Illuminate\Routing\Route), Object(Marvel\Http\Controllers\UserController), 'destroy')
+#14 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Route.php(205): Illuminate\Routing\Route-&gt;runController()
+#15 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(799): Illuminate\Routing\Route-&gt;run()
+#16 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(141): Illuminate\Routing\Router-&gt;Illuminate\Routing\{closure}(Object(Illuminate\Http\Request))
+#17 D:\meem-commerce\vendor\spatie\laravel-permission\src\Middleware\PermissionMiddleware.php(39): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#18 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Spatie\Permission\Middleware\PermissionMiddleware-&gt;handle(Object(Illuminate\Http\Request), Object(Closure), 'delete-user')
+#19 D:\meem-commerce\app\Http\Middleware\CheckLangMiddleware.php(27): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#20 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): App\Http\Middleware\CheckLangMiddleware-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#21 D:\meem-commerce\app\Http\Middleware\ChannelMiddleware.php(25): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#22 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): App\Http\Middleware\ChannelMiddleware-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#23 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\SubstituteBindings.php(50): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#24 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Routing\Middleware\SubstituteBindings-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#25 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(159): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#26 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(125): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequest(Object(Illuminate\Http\Request), Object(Closure), Array)
+#27 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(87): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequestUsingNamedLimiter(Object(Illuminate\Http\Request), Object(Closure), 'admin', Object(Closure))
+#28 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handle(Object(Illuminate\Http\Request), Object(Closure), 'admin')
+#29 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(159): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#30 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(125): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequest(Object(Illuminate\Http\Request), Object(Closure), Array)
+#31 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(87): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequestUsingNamedLimiter(Object(Illuminate\Http\Request), Object(Closure), 'api', Object(Closure))
+#32 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handle(Object(Illuminate\Http\Request), Object(Closure), 'api')
+#33 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Auth\Middleware\Authenticate.php(57): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#34 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Auth\Middleware\Authenticate-&gt;handle(Object(Illuminate\Http\Request), Object(Closure), 'sanctum')
+#35 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse.php(37): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#36 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#37 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Cookie\Middleware\EncryptCookies.php(67): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#38 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Cookie\Middleware\EncryptCookies-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#39 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(116): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#40 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(798): Illuminate\Pipeline\Pipeline-&gt;then(Object(Closure))
+#41 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(777): Illuminate\Routing\Router-&gt;runRouteWithinStack(Object(Illuminate\Routing\Route), Object(Illuminate\Http\Request))
+#42 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(741): Illuminate\Routing\Router-&gt;runRoute(Object(Illuminate\Http\Request), Object(Illuminate\Routing\Route))
+#43 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(730): Illuminate\Routing\Router-&gt;dispatchToRoute(Object(Illuminate\Http\Request))
+#44 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(200): Illuminate\Routing\Router-&gt;dispatch(Object(Illuminate\Http\Request))
+#45 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(141): Illuminate\Foundation\Http\Kernel-&gt;Illuminate\Foundation\Http\{closure}(Object(Illuminate\Http\Request))
+#46 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Http\Middleware\HandleCors.php(62): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#47 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Http\Middleware\HandleCors-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#48 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TransformsRequest.php(21): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#49 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull.php(31): Illuminate\Foundation\Http\Middleware\TransformsRequest-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#50 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#51 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TransformsRequest.php(21): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#52 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TrimStrings.php(40): Illuminate\Foundation\Http\Middleware\TransformsRequest-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#53 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\TrimStrings-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#54 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\ValidatePostSize.php(27): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#55 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\ValidatePostSize-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#56 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance.php(99): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#57 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#58 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Http\Middleware\TrustProxies.php(39): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#59 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Http\Middleware\TrustProxies-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#60 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(116): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#61 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(175): Illuminate\Pipeline\Pipeline-&gt;then(Object(Closure))
+#62 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(144): Illuminate\Foundation\Http\Kernel-&gt;sendRequestThroughRouter(Object(Illuminate\Http\Request))
+#63 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\MakesHttpRequests.php(573): Illuminate\Foundation\Http\Kernel-&gt;handle(Object(Illuminate\Http\Request))
+#64 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\MakesHttpRequests.php(539): Illuminate\Foundation\Testing\TestCase-&gt;call('DELETE', '/api/v1/users/2', Array, Array, Array, Array, '[]')
+#65 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\MakesHttpRequests.php(467): Illuminate\Foundation\Testing\TestCase-&gt;json('DELETE', '/api/v1/users/2', Array, Array, 0)
+#66 D:\meem-commerce\tests\Feature\UserCrudTest.php(385): Illuminate\Foundation\Testing\TestCase-&gt;deleteJson('/api/v1/users/2')
+#67 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestCase.php(1030): Tests\Feature\UserCrudTest-&gt;test_super_admin_can_delete_user_via_destroy()
+#68 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php(174): PHPUnit\Framework\TestCase-&gt;runTest()
+#69 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestCase.php(627): Illuminate\Foundation\Testing\TestCase-&gt;runTest()
+#70 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestRunner.php(101): PHPUnit\Framework\TestCase-&gt;runBare()
+#71 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestCase.php(456): PHPUnit\Framework\TestRunner-&gt;run(Object(Tests\Feature\UserCrudTest))
+#72 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestSuite.php(352): PHPUnit\Framework\TestCase-&gt;run()
+#73 D:\meem-commerce\vendor\phpunit\phpunit\src\TextUI\TestRunner.php(63): PHPUnit\Framework\TestSuite-&gt;run()
+#74 D:\meem-commerce\vendor\phpunit\phpunit\src\TextUI\Application.php(141): PHPUnit\TextUI\TestRunner-&gt;run(Object(PHPUnit\TextUI\Configuration\Configuration), Object(PHPUnit\Runner\ResultCache\DefaultResultCache), Object(PHPUnit\Framework\TestSuite))
+#75 D:\meem-commerce\vendor\phpunit\phpunit\phpunit(90): PHPUnit\TextUI\Application-&gt;run(Array)
+#76 D:\meem-commerce\vendor\bin\phpunit(122): include('D:\\meem-commerc...')
+#77 {main}
+
+Next Illuminate\Database\QueryException: SQLSTATE[HY000]: General error: 1 no such table: personal_access_tokens (Connection: sqlite, SQL: delete from "personal_access_tokens" where "personal_access_tokens"."tokenable_type" = Marvel\Database\Models\User and "personal_access_tokens"."tokenable_id" = 2 and "personal_access_tokens"."tokenable_id" is not null) in D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Connection.php:822
+Stack trace:
+#0 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Connection.php(776): Illuminate\Database\Connection-&gt;runQueryCallback('delete from "pe...', Array, Object(Closure))
+#1 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Connection.php(593): Illuminate\Database\Connection-&gt;run('delete from "pe...', Array, Object(Closure))
+#2 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Connection.php(557): Illuminate\Database\Connection-&gt;affectingStatement('delete from "pe...', Array)
+#3 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Query\Builder.php(3615): Illuminate\Database\Connection-&gt;delete('delete from "pe...', Array)
+#4 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Builder.php(1271): Illuminate\Database\Query\Builder-&gt;delete()
+#5 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Traits\ForwardsCalls.php(23): Illuminate\Database\Eloquent\Builder-&gt;delete()
+#6 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Traits\ForwardsCalls.php(52): Illuminate\Database\Eloquent\Relations\Relation-&gt;forwardCallTo(Object(Illuminate\Database\Eloquent\Builder), 'delete', Array)
+#7 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Relations\Relation.php(517): Illuminate\Database\Eloquent\Relations\Relation-&gt;forwardDecoratedCallTo(Object(Illuminate\Database\Eloquent\Builder), 'delete', Array)
+#8 D:\meem-commerce\packages\marvel\src\Http\Controllers\UserController.php(310): Illuminate\Database\Eloquent\Relations\Relation-&gt;__call('delete', Array)
+#9 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Controller.php(54): Marvel\Http\Controllers\UserController-&gt;destroy('2')
+#10 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\ControllerDispatcher.php(43): Illuminate\Routing\Controller-&gt;callAction('destroy', Array)
+#11 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Route.php(259): Illuminate\Routing\ControllerDispatcher-&gt;dispatch(Object(Illuminate\Routing\Route), Object(Marvel\Http\Controllers\UserController), 'destroy')
+#12 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Route.php(205): Illuminate\Routing\Route-&gt;runController()
+#13 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(799): Illuminate\Routing\Route-&gt;run()
+#14 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(141): Illuminate\Routing\Router-&gt;Illuminate\Routing\{closure}(Object(Illuminate\Http\Request))
+#15 D:\meem-commerce\vendor\spatie\laravel-permission\src\Middleware\PermissionMiddleware.php(39): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#16 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Spatie\Permission\Middleware\PermissionMiddleware-&gt;handle(Object(Illuminate\Http\Request), Object(Closure), 'delete-user')
+#17 D:\meem-commerce\app\Http\Middleware\CheckLangMiddleware.php(27): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#18 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): App\Http\Middleware\CheckLangMiddleware-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#19 D:\meem-commerce\app\Http\Middleware\ChannelMiddleware.php(25): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#20 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): App\Http\Middleware\ChannelMiddleware-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#21 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\SubstituteBindings.php(50): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#22 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Routing\Middleware\SubstituteBindings-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#23 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(159): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#24 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(125): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequest(Object(Illuminate\Http\Request), Object(Closure), Array)
+#25 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(87): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequestUsingNamedLimiter(Object(Illuminate\Http\Request), Object(Closure), 'admin', Object(Closure))
+#26 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handle(Object(Illuminate\Http\Request), Object(Closure), 'admin')
+#27 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(159): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#28 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(125): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequest(Object(Illuminate\Http\Request), Object(Closure), Array)
+#29 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(87): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequestUsingNamedLimiter(Object(Illuminate\Http\Request), Object(Closure), 'api', Object(Closure))
+#30 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handle(Object(Illuminate\Http\Request), Object(Closure), 'api')
+#31 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Auth\Middleware\Authenticate.php(57): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#32 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Auth\Middleware\Authenticate-&gt;handle(Object(Illuminate\Http\Request), Object(Closure), 'sanctum')
+#33 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse.php(37): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#34 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#35 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Cookie\Middleware\EncryptCookies.php(67): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#36 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Cookie\Middleware\EncryptCookies-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#37 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(116): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#38 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(798): Illuminate\Pipeline\Pipeline-&gt;then(Object(Closure))
+#39 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(777): Illuminate\Routing\Router-&gt;runRouteWithinStack(Object(Illuminate\Routing\Route), Object(Illuminate\Http\Request))
+#40 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(741): Illuminate\Routing\Router-&gt;runRoute(Object(Illuminate\Http\Request), Object(Illuminate\Routing\Route))
+#41 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(730): Illuminate\Routing\Router-&gt;dispatchToRoute(Object(Illuminate\Http\Request))
+#42 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(200): Illuminate\Routing\Router-&gt;dispatch(Object(Illuminate\Http\Request))
+#43 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(141): Illuminate\Foundation\Http\Kernel-&gt;Illuminate\Foundation\Http\{closure}(Object(Illuminate\Http\Request))
+#44 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Http\Middleware\HandleCors.php(62): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#45 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Http\Middleware\HandleCors-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#46 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TransformsRequest.php(21): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#47 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull.php(31): Illuminate\Foundation\Http\Middleware\TransformsRequest-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#48 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#49 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TransformsRequest.php(21): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#50 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TrimStrings.php(40): Illuminate\Foundation\Http\Middleware\TransformsRequest-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#51 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\TrimStrings-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#52 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\ValidatePostSize.php(27): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#53 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\ValidatePostSize-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#54 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance.php(99): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#55 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#56 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Http\Middleware\TrustProxies.php(39): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#57 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Http\Middleware\TrustProxies-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#58 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(116): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#59 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(175): Illuminate\Pipeline\Pipeline-&gt;then(Object(Closure))
+#60 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(144): Illuminate\Foundation\Http\Kernel-&gt;sendRequestThroughRouter(Object(Illuminate\Http\Request))
+#61 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\MakesHttpRequests.php(573): Illuminate\Foundation\Http\Kernel-&gt;handle(Object(Illuminate\Http\Request))
+#62 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\MakesHttpRequests.php(539): Illuminate\Foundation\Testing\TestCase-&gt;call('DELETE', '/api/v1/users/2', Array, Array, Array, Array, '[]')
+#63 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\MakesHttpRequests.php(467): Illuminate\Foundation\Testing\TestCase-&gt;json('DELETE', '/api/v1/users/2', Array, Array, 0)
+#64 D:\meem-commerce\tests\Feature\UserCrudTest.php(385): Illuminate\Foundation\Testing\TestCase-&gt;deleteJson('/api/v1/users/2')
+#65 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestCase.php(1030): Tests\Feature\UserCrudTest-&gt;test_super_admin_can_delete_user_via_destroy()
+#66 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php(174): PHPUnit\Framework\TestCase-&gt;runTest()
+#67 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestCase.php(627): Illuminate\Foundation\Testing\TestCase-&gt;runTest()
+#68 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestRunner.php(101): PHPUnit\Framework\TestCase-&gt;runBare()
+#69 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestCase.php(456): PHPUnit\Framework\TestRunner-&gt;run(Object(Tests\Feature\UserCrudTest))
+#70 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestSuite.php(352): PHPUnit\Framework\TestCase-&gt;run()
+#71 D:\meem-commerce\vendor\phpunit\phpunit\src\TextUI\TestRunner.php(63): PHPUnit\Framework\TestSuite-&gt;run()
+#72 D:\meem-commerce\vendor\phpunit\phpunit\src\TextUI\Application.php(141): PHPUnit\TextUI\TestRunner-&gt;run(Object(PHPUnit\TextUI\Configuration\Configuration), Object(PHPUnit\Runner\ResultCache\DefaultResultCache), Object(PHPUnit\Framework\TestSuite))
+#73 D:\meem-commerce\vendor\phpunit\phpunit\phpunit(90): PHPUnit\TextUI\Application-&gt;run(Array)
+#74 D:\meem-commerce\vendor\bin\phpunit(122): include('D:\\meem-commerc...')
+#75 {main}
+
+----------------------------------------------------------------------------------
+
+SQLSTATE[HY000]: General error: 1 no such table: personal_access_tokens (Connection: sqlite, SQL: delete from "personal_access_tokens" where "personal_access_tokens"."tokenable_type" = Marvel\Database\Models\User and "personal_access_tokens"."tokenable_id" = 2 and "personal_access_tokens"."tokenable_id" is not null)
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\Concerns\AssertsStatusCodes.php:16
+D:\meem-commerce\tests\Feature\UserCrudTest.php:387
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_destroy_fails_for_nonexistent_user" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="392" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="1" time="0.039364"/>
+    <testcase name="test_destroy_fails_for_unauthenticated_user" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="400" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="1" time="0.002304"/>
+    <testcase name="test_super_admin_can_force_delete_user" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="409" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="2" time="0.040126"/>
+    <testcase name="test_force_delete_fails_for_super_admin" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="423" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="1" time="0.034752"/>
+    <testcase name="test_force_delete_fails_for_nonexistent_user" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="432" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="1" time="0.040646"/>
+    <testcase name="test_super_admin_can_restore_soft_deleted_user" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="444" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="2" time="0.041314"/>
+    <testcase name="test_restore_fails_for_non_trashed_user" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="458" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="1" time="0.036319"/>
+    <testcase name="test_restore_fails_for_nonexistent_user" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="469" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="1" time="0.035339"/>
+    <testcase name="test_super_admin_can_view_trashed_users" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="481" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="2" time="0.039980"/>
+    <testcase name="test_super_admin_can_add_points_to_user" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="500" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="3" time="0.041659"/>
+    <testcase name="test_add_points_accumulates" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="522" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="1" time="0.039474"/>
+    <testcase name="test_add_points_fails_without_customer_id" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="539" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="1" time="0.036725"/>
+    <testcase name="test_add_points_fails_without_points" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="547" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="1" time="0.036277"/>
+    <testcase name="test_add_points_with_negative_value" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="555" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="2" time="0.042112"/>
+    <testcase name="test_add_points_fails_for_unauthorized_user" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="575" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="1" time="0.005074"/>
+    <testcase name="test_ban_user_cannot_ban_self" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="588" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="1" time="0.033311"/>
+    <testcase name="test_subscribe_to_newsletter_works" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="604" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="0" time="0.001008">
+      <skipped/>
+    </testcase>
+    <testcase name="test_make_admin_toggles_twice_returns_to_user" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="622" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="2" time="0.045976"/>
+    <testcase name="test_make_admin_dispatches_event_on_each_toggle" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="638" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="1" time="0.040058"/>
+    <testcase name="test_force_delete_fails_for_unauthenticated_user" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="657" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="1" time="0.002331"/>
+    <testcase name="test_restore_fails_for_unauthenticated_user" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="662" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="1" time="0.001947"/>
+    <testcase name="test_make_admin_does_not_crash" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="672" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="2" time="0.040569"/>
+    <testcase name="test_update_user_with_same_email_works" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="689" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="1" time="0.042470">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\UserCrudTest::test_update_user_with_same_email_works&#13;
+Expected response status code [200] but received 422.
+Failed asserting that 200 is identical to 422.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\Concerns\AssertsStatusCodes.php:16
+D:\meem-commerce\tests\Feature\UserCrudTest.php:701
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_store_user_persists_phone_number" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="706" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="2" time="0.038974"/>
+    <testcase name="test_destroy_fails_for_self_delete" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="730" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="2" time="0.035971"/>
+    <testcase name="test_destroy_fails_for_super_admin_delete" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="742" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="2" time="0.040417"/>
+    <testcase name="test_show_user_returns_all_resource_fields" file="D:\meem-commerce\tests\Feature\UserCrudTest.php" line="766" class="Tests\Feature\UserCrudTest" classname="Tests.Feature.UserCrudTest" assertions="13" time="0.056777"/>
+  </testsuite>
+</testsuites>

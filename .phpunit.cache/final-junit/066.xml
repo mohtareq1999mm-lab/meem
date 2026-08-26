@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\PaymentReconciliationTest" file="D:\meem-commerce\tests\Feature\PaymentReconciliationTest.php" tests="26" assertions="49" errors="0" failures="2" skipped="0" time="0.137919">
+    <testcase name="successful_reconciliation_creates_no_mismatches" file="D:\meem-commerce\tests\Feature\PaymentReconciliationTest.php" line="182" class="Tests\Feature\PaymentReconciliationTest" classname="Tests.Feature.PaymentReconciliationTest" assertions="1" time="0.014009"/>
+    <testcase name="reconciliation_checks_multiple_transactions" file="D:\meem-commerce\tests\Feature\PaymentReconciliationTest.php" line="196" class="Tests\Feature\PaymentReconciliationTest" classname="Tests.Feature.PaymentReconciliationTest" assertions="1" time="0.003500"/>
+    <testcase name="amount_mismatch_creates_reconciliation_record" file="D:\meem-commerce\tests\Feature\PaymentReconciliationTest.php" line="215" class="Tests\Feature\PaymentReconciliationTest" classname="Tests.Feature.PaymentReconciliationTest" assertions="8" time="0.004328"/>
+    <testcase name="amount_within_tolerance_does_not_create_mismatch" file="D:\meem-commerce\tests\Feature\PaymentReconciliationTest.php" line="239" class="Tests\Feature\PaymentReconciliationTest" classname="Tests.Feature.PaymentReconciliationTest" assertions="1" time="0.002254"/>
+    <testcase name="amount_mismatch_ignored_when_gateway_amount_is_null" file="D:\meem-commerce\tests\Feature\PaymentReconciliationTest.php" line="254" class="Tests\Feature\PaymentReconciliationTest" classname="Tests.Feature.PaymentReconciliationTest" assertions="1" time="0.002948"/>
+    <testcase name="currency_mismatch_creates_reconciliation_record" file="D:\meem-commerce\tests\Feature\PaymentReconciliationTest.php" line="273" class="Tests\Feature\PaymentReconciliationTest" classname="Tests.Feature.PaymentReconciliationTest" assertions="2" time="0.003382"/>
+    <testcase name="currency_mismatch_ignored_when_gateway_currency_is_null" file="D:\meem-commerce\tests\Feature\PaymentReconciliationTest.php" line="291" class="Tests\Feature\PaymentReconciliationTest" classname="Tests.Feature.PaymentReconciliationTest" assertions="1" time="0.002091"/>
+    <testcase name="payment_status_mismatch_when_gateway_says_paid_but_local_is_pending" file="D:\meem-commerce\tests\Feature\PaymentReconciliationTest.php" line="310" class="Tests\Feature\PaymentReconciliationTest" classname="Tests.Feature.PaymentReconciliationTest" assertions="2" time="0.003737"/>
+    <testcase name="payment_status_mismatch_when_gateway_says_failed_but_local_is_paid" file="D:\meem-commerce\tests\Feature\PaymentReconciliationTest.php" line="328" class="Tests\Feature\PaymentReconciliationTest" classname="Tests.Feature.PaymentReconciliationTest" assertions="2" time="0.002460"/>
+    <testcase name="payment_status_match_when_both_are_paid" file="D:\meem-commerce\tests\Feature\PaymentReconciliationTest.php" line="347" class="Tests\Feature\PaymentReconciliationTest" classname="Tests.Feature.PaymentReconciliationTest" assertions="1" time="0.002972"/>
+    <testcase name="payment_status_ignored_when_gateway_status_is_unknown" file="D:\meem-commerce\tests\Feature\PaymentReconciliationTest.php" line="362" class="Tests\Feature\PaymentReconciliationTest" classname="Tests.Feature.PaymentReconciliationTest" assertions="1" time="0.002462"/>
+    <testcase name="order_status_mismatch_when_gateway_says_paid_but_order_not_completed" file="D:\meem-commerce\tests\Feature\PaymentReconciliationTest.php" line="381" class="Tests\Feature\PaymentReconciliationTest" classname="Tests.Feature.PaymentReconciliationTest" assertions="4" time="0.003069"/>
+    <testcase name="order_status_mismatch_when_gateway_says_failed_but_order_completed" file="D:\meem-commerce\tests\Feature\PaymentReconciliationTest.php" line="402" class="Tests\Feature\PaymentReconciliationTest" classname="Tests.Feature.PaymentReconciliationTest" assertions="2" time="0.002581"/>
+    <testcase name="order_status_match_when_gateway_paid_and_order_completed" file="D:\meem-commerce\tests\Feature\PaymentReconciliationTest.php" line="420" class="Tests\Feature\PaymentReconciliationTest" classname="Tests.Feature.PaymentReconciliationTest" assertions="1" time="0.002071"/>
+    <testcase name="offline_payments_without_gateway_transaction_id_are_skipped" file="D:\meem-commerce\tests\Feature\PaymentReconciliationTest.php" line="439" class="Tests\Feature\PaymentReconciliationTest" classname="Tests.Feature.PaymentReconciliationTest" assertions="1" time="0.001746"/>
+    <testcase name="failed_transactions_are_skipped" file="D:\meem-commerce\tests\Feature\PaymentReconciliationTest.php" line="461" class="Tests\Feature\PaymentReconciliationTest" classname="Tests.Feature.PaymentReconciliationTest" assertions="1" time="0.002028"/>
+    <testcase name="unsupported_gateway_is_skipped" file="D:\meem-commerce\tests\Feature\PaymentReconciliationTest.php" line="479" class="Tests\Feature\PaymentReconciliationTest" classname="Tests.Feature.PaymentReconciliationTest" assertions="1" time="0.002466"/>
+    <testcase name="gateway_timeout_is_handled_gracefully" file="D:\meem-commerce\tests\Feature\PaymentReconciliationTest.php" line="499" class="Tests\Feature\PaymentReconciliationTest" classname="Tests.Feature.PaymentReconciliationTest" assertions="1" time="0.002772"/>
+    <testcase name="gateway_exception_does_not_stop_job" file="D:\meem-commerce\tests\Feature\PaymentReconciliationTest.php" line="511" class="Tests\Feature\PaymentReconciliationTest" classname="Tests.Feature.PaymentReconciliationTest" assertions="2" time="0.007158"/>
+    <testcase name="job_continues_after_exception_on_one_transaction" file="D:\meem-commerce\tests\Feature\PaymentReconciliationTest.php" line="543" class="Tests\Feature\PaymentReconciliationTest" classname="Tests.Feature.PaymentReconciliationTest" assertions="2" time="0.003887"/>
+    <testcase name="multiple_mismatches_on_same_transaction_all_recorded" file="D:\meem-commerce\tests\Feature\PaymentReconciliationTest.php" line="578" class="Tests\Feature\PaymentReconciliationTest" classname="Tests.Feature.PaymentReconciliationTest" assertions="5" time="0.003580"/>
+    <testcase name="dashboard_reconciliation_endpoint_returns_summary" file="D:\meem-commerce\tests\Feature\PaymentReconciliationTest.php" line="607" class="Tests\Feature\PaymentReconciliationTest" classname="Tests.Feature.PaymentReconciliationTest" assertions="1" time="0.047863">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\PaymentReconciliationTest::dashboard_reconciliation_endpoint_returns_summary&#13;
+Expected response status code [200] but received 403.
+Failed asserting that 200 is identical to 403.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\PaymentReconciliationTest.php:622
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="reconciliation_endpoint_returns_zero_when_no_data" file="D:\meem-commerce\tests\Feature\PaymentReconciliationTest.php" line="642" class="Tests\Feature\PaymentReconciliationTest" classname="Tests.Feature.PaymentReconciliationTest" assertions="1" time="0.005074">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\PaymentReconciliationTest::reconciliation_endpoint_returns_zero_when_no_data&#13;
+Expected response status code [200] but received 403.
+Failed asserting that 200 is identical to 403.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\PaymentReconciliationTest.php:648
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="reconciliation_command_dispatches_job" file="D:\meem-commerce\tests\Feature\PaymentReconciliationTest.php" line="661" class="Tests\Feature\PaymentReconciliationTest" classname="Tests.Feature.PaymentReconciliationTest" assertions="2" time="0.005844"/>
+    <testcase name="reconciliation_job_is_on_the_meem_medium_queue" file="D:\meem-commerce\tests\Feature\PaymentReconciliationTest.php" line="672" class="Tests\Feature\PaymentReconciliationTest" classname="Tests.Feature.PaymentReconciliationTest" assertions="1" time="0.000395"/>
+    <testcase name="reconciliation_result_model_scopes_work" file="D:\meem-commerce\tests\Feature\PaymentReconciliationTest.php" line="684" class="Tests\Feature\PaymentReconciliationTest" classname="Tests.Feature.PaymentReconciliationTest" assertions="3" time="0.003241"/>
+  </testsuite>
+</testsuites>

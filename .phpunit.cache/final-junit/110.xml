@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Categories\CategoryExportTest" file="D:\meem-commerce\tests\Feature\Categories\CategoryExportTest.php" tests="9" assertions="35" errors="0" failures="0" skipped="0" time="0.184811">
+    <testcase name="test_unauthenticated_user_cannot_export" file="D:\meem-commerce\tests\Feature\Categories\CategoryExportTest.php" line="81" class="Tests\Feature\Categories\CategoryExportTest" classname="Tests.Feature.Categories.CategoryExportTest" assertions="1" time="0.027126"/>
+    <testcase name="test_export_dispatches_job_and_returns_202" file="D:\meem-commerce\tests\Feature\Categories\CategoryExportTest.php" line="88" class="Tests\Feature\Categories\CategoryExportTest" classname="Tests.Feature.Categories.CategoryExportTest" assertions="7" time="0.024972"/>
+    <testcase name="test_export_status_endpoint_returns_status" file="D:\meem-commerce\tests\Feature\Categories\CategoryExportTest.php" line="109" class="Tests\Feature\Categories\CategoryExportTest" classname="Tests.Feature.Categories.CategoryExportTest" assertions="4" time="0.005026"/>
+    <testcase name="test_download_returns_409_when_not_ready" file="D:\meem-commerce\tests\Feature\Categories\CategoryExportTest.php" line="133" class="Tests\Feature\Categories\CategoryExportTest" classname="Tests.Feature.Categories.CategoryExportTest" assertions="1" time="0.004714"/>
+    <testcase name="test_download_returns_file_when_completed" file="D:\meem-commerce\tests\Feature\Categories\CategoryExportTest.php" line="154" class="Tests\Feature\Categories\CategoryExportTest" classname="Tests.Feature.Categories.CategoryExportTest" assertions="2" time="0.016839"/>
+    <testcase name="test_export_class_exposes_expected_headings" file="D:\meem-commerce\tests\Feature\Categories\CategoryExportTest.php" line="180" class="Tests\Feature\Categories\CategoryExportTest" classname="Tests.Feature.Categories.CategoryExportTest" assertions="1" time="0.001818"/>
+    <testcase name="test_export_class_maps_parent_name_en" file="D:\meem-commerce\tests\Feature\Categories\CategoryExportTest.php" line="197" class="Tests\Feature\Categories\CategoryExportTest" classname="Tests.Feature.Categories.CategoryExportTest" assertions="9" time="0.013858"/>
+    <testcase name="test_export_file_preserves_zero_status_and_featured_cells" file="D:\meem-commerce\tests\Feature\Categories\CategoryExportTest.php" line="226" class="Tests\Feature\Categories\CategoryExportTest" classname="Tests.Feature.Categories.CategoryExportTest" assertions="6" time="0.068409"/>
+    <testcase name="test_export_job_completes_and_writes_file" file="D:\meem-commerce\tests\Feature\Categories\CategoryExportTest.php" line="256" class="Tests\Feature\Categories\CategoryExportTest" classname="Tests.Feature.Categories.CategoryExportTest" assertions="4" time="0.022049"/>
+  </testsuite>
+</testsuites>

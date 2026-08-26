@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Settings\SettingsValidationTest" file="D:\meem-commerce\tests\Feature\Settings\SettingsValidationTest.php" tests="8" assertions="8" errors="0" failures="0" skipped="0" time="0.087894">
+    <testcase name="update_returns_422_without_site_name" file="D:\meem-commerce\tests\Feature\Settings\SettingsValidationTest.php" line="96" class="Tests\Feature\Settings\SettingsValidationTest" classname="Tests.Feature.Settings.SettingsValidationTest" assertions="1" time="0.045893"/>
+    <testcase name="update_returns_422_without_site_email" file="D:\meem-commerce\tests\Feature\Settings\SettingsValidationTest.php" line="109" class="Tests\Feature\Settings\SettingsValidationTest" classname="Tests.Feature.Settings.SettingsValidationTest" assertions="1" time="0.005376"/>
+    <testcase name="update_returns_422_with_invalid_email" file="D:\meem-commerce\tests\Feature\Settings\SettingsValidationTest.php" line="122" class="Tests\Feature\Settings\SettingsValidationTest" classname="Tests.Feature.Settings.SettingsValidationTest" assertions="1" time="0.005888"/>
+    <testcase name="update_returns_422_with_invalid_url" file="D:\meem-commerce\tests\Feature\Settings\SettingsValidationTest.php" line="135" class="Tests\Feature\Settings\SettingsValidationTest" classname="Tests.Feature.Settings.SettingsValidationTest" assertions="1" time="0.005302"/>
+    <testcase name="update_returns_422_with_invalid_tiktok_url" file="D:\meem-commerce\tests\Feature\Settings\SettingsValidationTest.php" line="148" class="Tests\Feature\Settings\SettingsValidationTest" classname="Tests.Feature.Settings.SettingsValidationTest" assertions="1" time="0.005703"/>
+    <testcase name="update_returns_422_with_invalid_snapchat_url" file="D:\meem-commerce\tests\Feature\Settings\SettingsValidationTest.php" line="161" class="Tests\Feature\Settings\SettingsValidationTest" classname="Tests.Feature.Settings.SettingsValidationTest" assertions="1" time="0.005798"/>
+    <testcase name="update_returns_422_without_fast_shipping_page_publish" file="D:\meem-commerce\tests\Feature\Settings\SettingsValidationTest.php" line="174" class="Tests\Feature\Settings\SettingsValidationTest" classname="Tests.Feature.Settings.SettingsValidationTest" assertions="1" time="0.006965"/>
+    <testcase name="update_returns_422_with_invalid_fast_shipping_value" file="D:\meem-commerce\tests\Feature\Settings\SettingsValidationTest.php" line="187" class="Tests\Feature\Settings\SettingsValidationTest" classname="Tests.Feature.Settings.SettingsValidationTest" assertions="1" time="0.006968"/>
+  </testsuite>
+</testsuites>

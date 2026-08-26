@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Unit\WebhookSignatureTest" file="D:\meem-commerce\tests\Unit\WebhookSignatureTest.php" tests="7" assertions="10" errors="0" failures="0" skipped="0" time="0.013594">
+    <testcase name="it_generates_hmac_sha256_signature" file="D:\meem-commerce\tests\Unit\WebhookSignatureTest.php" line="11" class="Tests\Unit\WebhookSignatureTest" classname="Tests.Unit.WebhookSignatureTest" assertions="3" time="0.010826"/>
+    <testcase name="it_generates_different_signatures_for_different_secrets" file="D:\meem-commerce\tests\Unit\WebhookSignatureTest.php" line="24" class="Tests\Unit\WebhookSignatureTest" classname="Tests.Unit.WebhookSignatureTest" assertions="1" time="0.000638"/>
+    <testcase name="it_generates_different_signatures_for_different_payloads" file="D:\meem-commerce\tests\Unit\WebhookSignatureTest.php" line="38" class="Tests\Unit\WebhookSignatureTest" classname="Tests.Unit.WebhookSignatureTest" assertions="1" time="0.000366"/>
+    <testcase name="it_generates_consistent_signature_for_same_input" file="D:\meem-commerce\tests\Unit\WebhookSignatureTest.php" line="49" class="Tests\Unit\WebhookSignatureTest" classname="Tests.Unit.WebhookSignatureTest" assertions="1" time="0.000332"/>
+    <testcase name="it_verifies_correct_signature" file="D:\meem-commerce\tests\Unit\WebhookSignatureTest.php" line="61" class="Tests\Unit\WebhookSignatureTest" classname="Tests.Unit.WebhookSignatureTest" assertions="1" time="0.000652"/>
+    <testcase name="it_rejects_incorrect_signature" file="D:\meem-commerce\tests\Unit\WebhookSignatureTest.php" line="71" class="Tests\Unit\WebhookSignatureTest" classname="Tests.Unit.WebhookSignatureTest" assertions="1" time="0.000436"/>
+    <testcase name="it_works_with_empty_secret" file="D:\meem-commerce\tests\Unit\WebhookSignatureTest.php" line="80" class="Tests\Unit\WebhookSignatureTest" classname="Tests.Unit.WebhookSignatureTest" assertions="2" time="0.000344"/>
+  </testsuite>
+</testsuites>

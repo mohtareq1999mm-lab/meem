@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\SiteReviews\SiteReviewBugRegressionTest" file="D:\meem-commerce\tests\Feature\SiteReviews\SiteReviewBugRegressionTest.php" tests="4" assertions="11" errors="0" failures="0" skipped="0" time="0.558176">
+    <testcase name="non_numeric_id_returns_404_not_500" file="D:\meem-commerce\tests\Feature\SiteReviews\SiteReviewBugRegressionTest.php" line="12" class="Tests\Feature\SiteReviews\SiteReviewBugRegressionTest" classname="Tests.Feature.SiteReviews.SiteReviewBugRegressionTest" assertions="3" time="0.091390"/>
+    <testcase name="negative_limit_is_normalized_not_409" file="D:\meem-commerce\tests\Feature\SiteReviews\SiteReviewBugRegressionTest.php" line="22" class="Tests\Feature\SiteReviews\SiteReviewBugRegressionTest" classname="Tests.Feature.SiteReviews.SiteReviewBugRegressionTest" assertions="3" time="0.047147"/>
+    <testcase name="zero_and_non_numeric_limit_fall_back_to_default" file="D:\meem-commerce\tests\Feature\SiteReviews\SiteReviewBugRegressionTest.php" line="35" class="Tests\Feature\SiteReviews\SiteReviewBugRegressionTest" classname="Tests.Feature.SiteReviews.SiteReviewBugRegressionTest" assertions="2" time="0.025721"/>
+    <testcase name="oversized_limit_is_capped_at_100" file="D:\meem-commerce\tests\Feature\SiteReviews\SiteReviewBugRegressionTest.php" line="45" class="Tests\Feature\SiteReviews\SiteReviewBugRegressionTest" classname="Tests.Feature.SiteReviews.SiteReviewBugRegressionTest" assertions="3" time="0.393918"/>
+  </testsuite>
+</testsuites>

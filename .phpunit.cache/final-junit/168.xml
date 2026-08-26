@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Faqs\FaqSoftDeleteTest" file="D:\meem-commerce\tests\Feature\Faqs\FaqSoftDeleteTest.php" tests="5" assertions="8" errors="0" failures="0" skipped="0" time="0.056214">
+    <testcase name="faq_uses_soft_deletes_trait" file="D:\meem-commerce\tests\Feature\Faqs\FaqSoftDeleteTest.php" line="72" class="Tests\Feature\Faqs\FaqSoftDeleteTest" classname="Tests.Feature.Faqs.FaqSoftDeleteTest" assertions="1" time="0.006647"/>
+    <testcase name="deleted_faq_not_in_index" file="D:\meem-commerce\tests\Feature\Faqs\FaqSoftDeleteTest.php" line="79" class="Tests\Feature\Faqs\FaqSoftDeleteTest" classname="Tests.Feature.Faqs.FaqSoftDeleteTest" assertions="2" time="0.039381"/>
+    <testcase name="show_returns_404_for_soft_deleted_faq" file="D:\meem-commerce\tests\Feature\Faqs\FaqSoftDeleteTest.php" line="92" class="Tests\Feature\Faqs\FaqSoftDeleteTest" classname="Tests.Feature.Faqs.FaqSoftDeleteTest" assertions="1" time="0.006464"/>
+    <testcase name="force_delete_removes_permanently" file="D:\meem-commerce\tests\Feature\Faqs\FaqSoftDeleteTest.php" line="103" class="Tests\Feature\Faqs\FaqSoftDeleteTest" classname="Tests.Feature.Faqs.FaqSoftDeleteTest" assertions="1" time="0.001283"/>
+    <testcase name="multiple_soft_deletes_work" file="D:\meem-commerce\tests\Feature\Faqs\FaqSoftDeleteTest.php" line="113" class="Tests\Feature\Faqs\FaqSoftDeleteTest" classname="Tests.Feature.Faqs.FaqSoftDeleteTest" assertions="3" time="0.002440"/>
+  </testsuite>
+</testsuites>

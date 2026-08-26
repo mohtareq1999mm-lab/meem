@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\PaymentCallbackStressTest" file="D:\meem-commerce\tests\Feature\PaymentCallbackStressTest.php" tests="9" assertions="33" errors="0" failures="0" skipped="0" time="0.147058">
+    <testcase name="callback_without_payment_id_returns_400" file="D:\meem-commerce\tests\Feature\PaymentCallbackStressTest.php" line="397" class="Tests\Feature\PaymentCallbackStressTest" classname="Tests.Feature.PaymentCallbackStressTest" assertions="2" time="0.038485"/>
+    <testcase name="callback_with_unsupported_gateway_returns_500" file="D:\meem-commerce\tests\Feature\PaymentCallbackStressTest.php" line="405" class="Tests\Feature\PaymentCallbackStressTest" classname="Tests.Feature.PaymentCallbackStressTest" assertions="1" time="0.010702"/>
+    <testcase name="callback_with_failed_verification_does_not_complete_order" file="D:\meem-commerce\tests\Feature\PaymentCallbackStressTest.php" line="423" class="Tests\Feature\PaymentCallbackStressTest" classname="Tests.Feature.PaymentCallbackStressTest" assertions="4" time="0.012484"/>
+    <testcase name="callback_with_amount_mismatch_blocks_order" file="D:\meem-commerce\tests\Feature\PaymentCallbackStressTest.php" line="459" class="Tests\Feature\PaymentCallbackStressTest" classname="Tests.Feature.PaymentCallbackStressTest" assertions="4" time="0.009539"/>
+    <testcase name="callback_with_non_existent_transaction_redirects_success" file="D:\meem-commerce\tests\Feature\PaymentCallbackStressTest.php" line="497" class="Tests\Feature\PaymentCallbackStressTest" classname="Tests.Feature.PaymentCallbackStressTest" assertions="2" time="0.003348"/>
+    <testcase name="rapid_duplicate_callbacks_are_idempotent" file="D:\meem-commerce\tests\Feature\PaymentCallbackStressTest.php" line="508" class="Tests\Feature\PaymentCallbackStressTest" classname="Tests.Feature.PaymentCallbackStressTest" assertions="7" time="0.023727"/>
+    <testcase name="callback_after_order_already_completed_is_idempotent" file="D:\meem-commerce\tests\Feature\PaymentCallbackStressTest.php" line="535" class="Tests\Feature\PaymentCallbackStressTest" classname="Tests.Feature.PaymentCallbackStressTest" assertions="5" time="0.015871"/>
+    <testcase name="callback_for_cancelled_order_does_not_resurrect" file="D:\meem-commerce\tests\Feature\PaymentCallbackStressTest.php" line="555" class="Tests\Feature\PaymentCallbackStressTest" classname="Tests.Feature.PaymentCallbackStressTest" assertions="4" time="0.005781"/>
+    <testcase name="callback_with_lock_for_update_prevents_double_processing" file="D:\meem-commerce\tests\Feature\PaymentCallbackStressTest.php" line="577" class="Tests\Feature\PaymentCallbackStressTest" classname="Tests.Feature.PaymentCallbackStressTest" assertions="4" time="0.027121"/>
+  </testsuite>
+</testsuites>

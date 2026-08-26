@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\PaymentSystemTest" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" tests="29" assertions="54" errors="1" failures="5" skipped="0" time="1.361358">
+    <testcase name="mark_cashier_as_paid_updates_transaction_and_order" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" line="544" class="Tests\Feature\PaymentSystemTest" classname="Tests.Feature.PaymentSystemTest" assertions="2" time="0.194140"/>
+    <testcase name="mark_cashier_as_paid_fires_payment_success_event" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" line="566" class="Tests\Feature\PaymentSystemTest" classname="Tests.Feature.PaymentSystemTest" assertions="1" time="0.066380"/>
+    <testcase name="mark_cashier_as_paid_throws_exception_without_pending_transaction" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" line="579" class="Tests\Feature\PaymentSystemTest" classname="Tests.Feature.PaymentSystemTest" assertions="1" time="0.002021"/>
+    <testcase name="mark_cashier_as_paid_ignores_paid_transactions" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" line="596" class="Tests\Feature\PaymentSystemTest" classname="Tests.Feature.PaymentSystemTest" assertions="1" time="0.001903"/>
+    <testcase name="mark_cashier_as_paid_ignores_other_payment_methods" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" line="622" class="Tests\Feature\PaymentSystemTest" classname="Tests.Feature.PaymentSystemTest" assertions="1" time="0.001956"/>
+    <testcase name="mark_cod_as_paid_records_coupon_usage" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" line="649" class="Tests\Feature\PaymentSystemTest" classname="Tests.Feature.PaymentSystemTest" assertions="0" time="0.015434">
+      <error type="Illuminate\Database\QueryException">Tests\Feature\PaymentSystemTest::mark_cod_as_paid_records_coupon_usage&#13;
+Illuminate\Database\QueryException: SQLSTATE[HY000]: General error: 1 no such table: coupon_assignments (Connection: sqlite, SQL: select exists(select * from "coupon_assignments" where "coupon_assignments"."coupon_id" = 1 and "coupon_assignments"."coupon_id" is not null) as "exists")
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Connection.php:416
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Connection.php:809
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Connection.php:776
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Connection.php:407
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Query\Builder.php:3093
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Builder.php:1968
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Traits\ForwardsCalls.php:23
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Traits\ForwardsCalls.php:52
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Relations\Relation.php:517
+D:\meem-commerce\app\Listeners\SendUserCouponAvailableNotification.php:20
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\CallQueuedListener.php:107
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:36
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Util.php:41
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:93
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:35
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Container.php:662
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Bus\Dispatcher.php:128
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:141
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:116
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Bus\Dispatcher.php:132
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\CallQueuedHandler.php:123
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:141
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:116
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\CallQueuedHandler.php:122
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\CallQueuedHandler.php:70
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\Jobs\Job.php:98
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\SyncQueue.php:43
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\Queue.php:58
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:633
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:552
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:478
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:286
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:266
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Testing\Fakes\EventFake.php:304
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\helpers.php:433
+D:\meem-commerce\app\Observers\CouponObserver.php:23
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:478
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:286
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:266
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Testing\Fakes\EventFake.php:304
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Concerns\HasEvents.php:188
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php:1319
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php:1137
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Builder.php:1023
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\helpers.php:307
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Builder.php:1022
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Traits\ForwardsCalls.php:23
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php:2334
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php:2346
+D:\meem-commerce\tests\Feature\PaymentSystemTest.php:653
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</error>
+    </testcase>
+    <testcase name="change_order_status_works_with_order_id_when_invoice_id_is_null" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" line="692" class="Tests\Feature\PaymentSystemTest" classname="Tests.Feature.PaymentSystemTest" assertions="5" time="0.230749"/>
+    <testcase name="change_order_status_still_works_with_invoice_id" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" line="717" class="Tests\Feature\PaymentSystemTest" classname="Tests.Feature.PaymentSystemTest" assertions="4" time="0.212322"/>
+    <testcase name="change_order_status_returns_false_when_no_order_found" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" line="737" class="Tests\Feature\PaymentSystemTest" classname="Tests.Feature.PaymentSystemTest" assertions="1" time="0.000962"/>
+    <testcase name="mark_cod_as_paid_endpoint_requires_auth" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" line="748" class="Tests\Feature\PaymentSystemTest" classname="Tests.Feature.PaymentSystemTest" assertions="1" time="0.016831"/>
+    <testcase name="mark_cod_as_paid_endpoint_requires_update_order_status_permission" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" line="755" class="Tests\Feature\PaymentSystemTest" classname="Tests.Feature.PaymentSystemTest" assertions="1" time="0.024142"/>
+    <testcase name="mark_cod_as_paid_endpoint_succeeds_for_admin" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" line="766" class="Tests\Feature\PaymentSystemTest" classname="Tests.Feature.PaymentSystemTest" assertions="4" time="0.077248"/>
+    <testcase name="mark_cod_as_paid_endpoint_returns_422_for_no_pending_transaction" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" line="790" class="Tests\Feature\PaymentSystemTest" classname="Tests.Feature.PaymentSystemTest" assertions="1" time="0.005681"/>
+    <testcase name="mark_paid_endpoint_requires_auth" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" line="809" class="Tests\Feature\PaymentSystemTest" classname="Tests.Feature.PaymentSystemTest" assertions="1" time="0.001931"/>
+    <testcase name="mark_paid_endpoint_requires_update_order_status_permission" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" line="816" class="Tests\Feature\PaymentSystemTest" classname="Tests.Feature.PaymentSystemTest" assertions="1" time="0.003955"/>
+    <testcase name="mark_paid_endpoint_succeeds_for_admin" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" line="827" class="Tests\Feature\PaymentSystemTest" classname="Tests.Feature.PaymentSystemTest" assertions="4" time="0.072350"/>
+    <testcase name="mark_paid_endpoint_returns_422_for_no_pending_transaction" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" line="851" class="Tests\Feature\PaymentSystemTest" classname="Tests.Feature.PaymentSystemTest" assertions="1" time="0.007432"/>
+    <testcase name="mark_paid_endpoint_returns_404_for_nonexistent_order" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" line="868" class="Tests\Feature\PaymentSystemTest" classname="Tests.Feature.PaymentSystemTest" assertions="1" time="0.005502"/>
+    <testcase name="cancel_unpaid_orders_cancels_expired_pending_orders" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" line="879" class="Tests\Feature\PaymentSystemTest" classname="Tests.Feature.PaymentSystemTest" assertions="3" time="0.162956">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\PaymentSystemTest::cancel_unpaid_orders_cancels_expired_pending_orders&#13;
+Failed asserting that a row in the table [orders] matches the attributes {
+    "id": 2,
+    "status": "cancelled"
+}.
+
+Found similar results: [
+    {
+        "id": 2,
+        "status": "pending"
+    }
+].
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\InteractsWithDatabase.php:29
+D:\meem-commerce\tests\Feature\PaymentSystemTest.php:899
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="cancel_unpaid_orders_skips_completed_orders" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" line="911" class="Tests\Feature\PaymentSystemTest" classname="Tests.Feature.PaymentSystemTest" assertions="2" time="0.004607"/>
+    <testcase name="cancel_unpaid_orders_fires_payment_failed_event" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" line="933" class="Tests\Feature\PaymentSystemTest" classname="Tests.Feature.PaymentSystemTest" assertions="1" time="0.006500">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\PaymentSystemTest::cancel_unpaid_orders_fires_payment_failed_event&#13;
+The expected [App\Events\PaymentFailed] event was not dispatched.
+Failed asserting that false is true.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Testing\Fakes\EventFake.php:144
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Facades\Facade.php:353
+D:\meem-commerce\tests\Feature\PaymentSystemTest.php:944
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="cancel_unpaid_orders_uses_configurable_timeout" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" line="948" class="Tests\Feature\PaymentSystemTest" classname="Tests.Feature.PaymentSystemTest" assertions="3" time="0.006358">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\PaymentSystemTest::cancel_unpaid_orders_uses_configurable_timeout&#13;
+Failed asserting that a row in the table [orders] matches the attributes {
+    "id": 2,
+    "status": "cancelled"
+}.
+
+Found similar results: [
+    {
+        "id": 2,
+        "status": "pending"
+    }
+].
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\InteractsWithDatabase.php:29
+D:\meem-commerce\tests\Feature\PaymentSystemTest.php:966
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="cancel_unpaid_orders_releases_cart_reservation" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" line="973" class="Tests\Feature\PaymentSystemTest" classname="Tests.Feature.PaymentSystemTest" assertions="3" time="0.009737">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\PaymentSystemTest::cancel_unpaid_orders_releases_cart_reservation&#13;
+Failed asserting that a row in the table [orders] matches the attributes {
+    "id": 1,
+    "status": "cancelled"
+}.
+
+Found similar results: [
+    {
+        "id": 1,
+        "status": "pending"
+    }
+].
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\InteractsWithDatabase.php:29
+D:\meem-commerce\tests\Feature\PaymentSystemTest.php:993
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="cancel_unpaid_orders_skips_release_when_cart_already_checked_out" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" line="1005" class="Tests\Feature\PaymentSystemTest" classname="Tests.Feature.PaymentSystemTest" assertions="2" time="0.009521">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\PaymentSystemTest::cancel_unpaid_orders_skips_release_when_cart_already_checked_out&#13;
+Failed asserting that a row in the table [orders] matches the attributes {
+    "id": 1,
+    "status": "cancelled"
+}.
+
+Found similar results: [
+    {
+        "id": 1,
+        "status": "pending"
+    }
+].
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\InteractsWithDatabase.php:29
+D:\meem-commerce\tests\Feature\PaymentSystemTest.php:1020
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="checkout_requires_pickup_location_id_for_pickup_fulfillment" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" line="1035" class="Tests\Feature\PaymentSystemTest" classname="Tests.Feature.PaymentSystemTest" assertions="2" time="0.017361"/>
+    <testcase name="fast_checkout_requires_pickup_location_id_for_pickup_fulfillment" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" line="1055" class="Tests\Feature\PaymentSystemTest" classname="Tests.Feature.PaymentSystemTest" assertions="2" time="0.007010"/>
+    <testcase name="checkout_does_not_require_pickup_location_id_for_delivery" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" line="1076" class="Tests\Feature\PaymentSystemTest" classname="Tests.Feature.PaymentSystemTest" assertions="1" time="0.189850"/>
+    <testcase name="payment_checkout_handler_cod_creates_transaction" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" line="1097" class="Tests\Feature\PaymentSystemTest" classname="Tests.Feature.PaymentSystemTest" assertions="3" time="0.003653"/>
+    <testcase name="payment_checkout_handler_uses_configured_currency" file="D:\meem-commerce\tests\Feature\PaymentSystemTest.php" line="1120" class="Tests\Feature\PaymentSystemTest" classname="Tests.Feature.PaymentSystemTest" assertions="1" time="0.002865"/>
+  </testsuite>
+</testsuites>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\DispatchFrontendCacheInvalidationListenerTest" file="D:\meem-commerce\tests\Feature\DispatchFrontendCacheInvalidationListenerTest.php" tests="3" assertions="27" errors="0" failures="0" skipped="0" time="0.021853">
+    <testcase name="it_dispatches_job_when_event_is_fired" file="D:\meem-commerce\tests\Feature\DispatchFrontendCacheInvalidationListenerTest.php" line="15" class="Tests\Feature\DispatchFrontendCacheInvalidationListenerTest" classname="Tests.Feature.DispatchFrontendCacheInvalidationListenerTest" assertions="1" time="0.020262"/>
+    <testcase name="it_passes_correct_resource_to_payload" file="D:\meem-commerce\tests\Feature\DispatchFrontendCacheInvalidationListenerTest.php" line="32" class="Tests\Feature\DispatchFrontendCacheInvalidationListenerTest" classname="Tests.Feature.DispatchFrontendCacheInvalidationListenerTest" assertions="1" time="0.000401"/>
+    <testcase name="it_handles_all_resource_types" file="D:\meem-commerce\tests\Feature\DispatchFrontendCacheInvalidationListenerTest.php" line="50" class="Tests\Feature\DispatchFrontendCacheInvalidationListenerTest" classname="Tests.Feature.DispatchFrontendCacheInvalidationListenerTest" assertions="25" time="0.001190"/>
+  </testsuite>
+</testsuites>

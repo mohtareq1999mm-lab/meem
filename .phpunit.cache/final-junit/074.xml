@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\ProductCacheTest" file="D:\meem-commerce\tests\Feature\ProductCacheTest.php" tests="5" assertions="16" errors="0" failures="0" skipped="0" time="0.157494">
+    <testcase name="test_products_endpoint_writes_response_to_cache_without_search_parameter" file="D:\meem-commerce\tests\Feature\ProductCacheTest.php" line="55" class="Tests\Feature\ProductCacheTest" classname="Tests.Feature.ProductCacheTest" assertions="2" time="0.085460"/>
+    <testcase name="test_products_endpoint_serves_cached_response_without_search_parameter" file="D:\meem-commerce\tests\Feature\ProductCacheTest.php" line="66" class="Tests\Feature\ProductCacheTest" classname="Tests.Feature.ProductCacheTest" assertions="2" time="0.011650"/>
+    <testcase name="test_products_endpoint_uses_distinct_cache_entries_for_different_query_parameters" file="D:\meem-commerce\tests\Feature\ProductCacheTest.php" line="78" class="Tests\Feature\ProductCacheTest" classname="Tests.Feature.ProductCacheTest" assertions="4" time="0.026654"/>
+    <testcase name="test_products_endpoint_with_search_parameter_does_not_read_or_write_cache" file="D:\meem-commerce\tests\Feature\ProductCacheTest.php" line="93" class="Tests\Feature\ProductCacheTest" classname="Tests.Feature.ProductCacheTest" assertions="4" time="0.018745"/>
+    <testcase name="test_products_endpoint_with_empty_search_parameter_also_bypasses_cache" file="D:\meem-commerce\tests\Feature\ProductCacheTest.php" line="108" class="Tests\Feature\ProductCacheTest" classname="Tests.Feature.ProductCacheTest" assertions="4" time="0.014985"/>
+  </testsuite>
+</testsuites>

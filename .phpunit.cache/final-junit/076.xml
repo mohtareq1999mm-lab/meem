@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\ProductExportTest" file="D:\meem-commerce\tests\Feature\ProductExportTest.php" tests="4" assertions="8" errors="0" failures="0" skipped="0" time="0.225108">
+    <testcase name="test_unauthenticated_user_cannot_export" file="D:\meem-commerce\tests\Feature\ProductExportTest.php" line="65" class="Tests\Feature\ProductExportTest" classname="Tests.Feature.ProductExportTest" assertions="1" time="0.030368"/>
+    <testcase name="test_export_returns_excel_file" file="D:\meem-commerce\tests\Feature\ProductExportTest.php" line="72" class="Tests\Feature\ProductExportTest" classname="Tests.Feature.ProductExportTest" assertions="3" time="0.133408"/>
+    <testcase name="test_export_with_filters" file="D:\meem-commerce\tests\Feature\ProductExportTest.php" line="95" class="Tests\Feature\ProductExportTest" classname="Tests.Feature.ProductExportTest" assertions="1" time="0.037012"/>
+    <testcase name="test_export_validates_invalid_product_type" file="D:\meem-commerce\tests\Feature\ProductExportTest.php" line="129" class="Tests\Feature\ProductExportTest" classname="Tests.Feature.ProductExportTest" assertions="3" time="0.024320"/>
+  </testsuite>
+</testsuites>

@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\NotifyLogsTest" file="D:\meem-commerce\tests\Feature\NotifyLogsTest.php" tests="20" assertions="21" errors="0" failures="16" skipped="0" time="0.290841">
+    <testcase name="test_unauthenticated_user_cannot_access_index" file="D:\meem-commerce\tests\Feature\NotifyLogsTest.php" line="163" class="Tests\Feature\NotifyLogsTest" classname="Tests.Feature.NotifyLogsTest" assertions="1" time="0.038171">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\NotifyLogsTest::test_unauthenticated_user_cannot_access_index&#13;
+Expected response status code [401] but received 404.
+Failed asserting that 401 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\NotifyLogsTest.php:166
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_unauthenticated_user_cannot_access_show" file="D:\meem-commerce\tests\Feature\NotifyLogsTest.php" line="169" class="Tests\Feature\NotifyLogsTest" classname="Tests.Feature.NotifyLogsTest" assertions="1" time="0.008181">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\NotifyLogsTest::test_unauthenticated_user_cannot_access_show&#13;
+Expected response status code [401] but received 404.
+Failed asserting that 401 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\NotifyLogsTest.php:172
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_unauthenticated_user_cannot_read_notify_log" file="D:\meem-commerce\tests\Feature\NotifyLogsTest.php" line="175" class="Tests\Feature\NotifyLogsTest" classname="Tests.Feature.NotifyLogsTest" assertions="1" time="0.006042">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\NotifyLogsTest::test_unauthenticated_user_cannot_read_notify_log&#13;
+Expected response status code [401] but received 404.
+Failed asserting that 401 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\NotifyLogsTest.php:178
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_unauthenticated_user_cannot_read_all_notify_logs" file="D:\meem-commerce\tests\Feature\NotifyLogsTest.php" line="181" class="Tests\Feature\NotifyLogsTest" classname="Tests.Feature.NotifyLogsTest" assertions="1" time="0.007482">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\NotifyLogsTest::test_unauthenticated_user_cannot_read_all_notify_logs&#13;
+Expected response status code [401] but received 404.
+Failed asserting that 401 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\NotifyLogsTest.php:184
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_index_returns_own_notifications" file="D:\meem-commerce\tests\Feature\NotifyLogsTest.php" line="189" class="Tests\Feature\NotifyLogsTest" classname="Tests.Feature.NotifyLogsTest" assertions="1" time="0.054391">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\NotifyLogsTest::test_index_returns_own_notifications&#13;
+Expected response status code [200] but received 404.
+Failed asserting that 200 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\NotifyLogsTest.php:203
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_index_returns_empty_when_no_notifications" file="D:\meem-commerce\tests\Feature\NotifyLogsTest.php" line="208" class="Tests\Feature\NotifyLogsTest" classname="Tests.Feature.NotifyLogsTest" assertions="1" time="0.008355">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\NotifyLogsTest::test_index_returns_empty_when_no_notifications&#13;
+Expected response status code [200] but received 404.
+Failed asserting that 200 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\NotifyLogsTest.php:215
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_index_filters_by_notify_type" file="D:\meem-commerce\tests\Feature\NotifyLogsTest.php" line="220" class="Tests\Feature\NotifyLogsTest" classname="Tests.Feature.NotifyLogsTest" assertions="1" time="0.014875">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\NotifyLogsTest::test_index_filters_by_notify_type&#13;
+Expected response status code [200] but received 404.
+Failed asserting that 200 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\NotifyLogsTest.php:233
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_index_does_not_expose_sensitive_data" file="D:\meem-commerce\tests\Feature\NotifyLogsTest.php" line="237" class="Tests\Feature\NotifyLogsTest" classname="Tests.Feature.NotifyLogsTest" assertions="1" time="0.009203">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\NotifyLogsTest::test_index_does_not_expose_sensitive_data&#13;
+Expected response status code [200] but received 404.
+Failed asserting that 200 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\NotifyLogsTest.php:251
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_show_returns_own_notification" file="D:\meem-commerce\tests\Feature\NotifyLogsTest.php" line="264" class="Tests\Feature\NotifyLogsTest" classname="Tests.Feature.NotifyLogsTest" assertions="1" time="0.013050">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\NotifyLogsTest::test_show_returns_own_notification&#13;
+Expected response status code [200] but received 404.
+Failed asserting that 200 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\NotifyLogsTest.php:275
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_show_returns_404_for_nonexistent_notification" file="D:\meem-commerce\tests\Feature\NotifyLogsTest.php" line="281" class="Tests\Feature\NotifyLogsTest" classname="Tests.Feature.NotifyLogsTest" assertions="1" time="0.009959"/>
+    <testcase name="test_user_cannot_view_another_users_notification" file="D:\meem-commerce\tests\Feature\NotifyLogsTest.php" line="293" class="Tests\Feature\NotifyLogsTest" classname="Tests.Feature.NotifyLogsTest" assertions="1" time="0.011819"/>
+    <testcase name="test_user_can_mark_own_notification_as_read" file="D:\meem-commerce\tests\Feature\NotifyLogsTest.php" line="310" class="Tests\Feature\NotifyLogsTest" classname="Tests.Feature.NotifyLogsTest" assertions="1" time="0.013255">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\NotifyLogsTest::test_user_can_mark_own_notification_as_read&#13;
+Expected response status code [200] but received 404.
+Failed asserting that 200 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\NotifyLogsTest.php:321
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_read_requires_id" file="D:\meem-commerce\tests\Feature\NotifyLogsTest.php" line="328" class="Tests\Feature\NotifyLogsTest" classname="Tests.Feature.NotifyLogsTest" assertions="1" time="0.010080">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\NotifyLogsTest::test_read_requires_id&#13;
+Expected response status code [422] but received 404.
+Failed asserting that 422 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\NotifyLogsTest.php:335
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_user_cannot_mark_another_users_notification_as_read" file="D:\meem-commerce\tests\Feature\NotifyLogsTest.php" line="340" class="Tests\Feature\NotifyLogsTest" classname="Tests.Feature.NotifyLogsTest" assertions="2" time="0.014248"/>
+    <testcase name="test_user_can_mark_all_own_notifications_as_read" file="D:\meem-commerce\tests\Feature\NotifyLogsTest.php" line="359" class="Tests\Feature\NotifyLogsTest" classname="Tests.Feature.NotifyLogsTest" assertions="1" time="0.010217">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\NotifyLogsTest::test_user_can_mark_all_own_notifications_as_read&#13;
+Expected response status code [200] but received 404.
+Failed asserting that 200 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\NotifyLogsTest.php:374
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_user_can_mark_all_own_notifications_as_read_filtered_by_type" file="D:\meem-commerce\tests\Feature\NotifyLogsTest.php" line="380" class="Tests\Feature\NotifyLogsTest" classname="Tests.Feature.NotifyLogsTest" assertions="1" time="0.010244">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\NotifyLogsTest::test_user_can_mark_all_own_notifications_as_read_filtered_by_type&#13;
+Expected response status code [200] but received 404.
+Failed asserting that 200 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\NotifyLogsTest.php:396
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_user_cannot_mark_another_users_notifications_as_read_through_receiver_injection" file="D:\meem-commerce\tests\Feature\NotifyLogsTest.php" line="405" class="Tests\Feature\NotifyLogsTest" classname="Tests.Feature.NotifyLogsTest" assertions="1" time="0.015039">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\NotifyLogsTest::test_user_cannot_mark_another_users_notifications_as_read_through_receiver_injection&#13;
+Expected response status code [200] but received 404.
+Failed asserting that 200 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\NotifyLogsTest.php:421
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_non_admin_destroy_does_not_delete_notify_log" file="D:\meem-commerce\tests\Feature\NotifyLogsTest.php" line="428" class="Tests\Feature\NotifyLogsTest" classname="Tests.Feature.NotifyLogsTest" assertions="1" time="0.009059"/>
+    <testcase name="test_super_admin_can_destroy_notify_log" file="D:\meem-commerce\tests\Feature\NotifyLogsTest.php" line="440" class="Tests\Feature\NotifyLogsTest" classname="Tests.Feature.NotifyLogsTest" assertions="1" time="0.017407">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\NotifyLogsTest::test_super_admin_can_destroy_notify_log&#13;
+Expected response status code [200] but received 404.
+Failed asserting that 200 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\NotifyLogsTest.php:450
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_notify_log_response_structure" file="D:\meem-commerce\tests\Feature\NotifyLogsTest.php" line="456" class="Tests\Feature\NotifyLogsTest" classname="Tests.Feature.NotifyLogsTest" assertions="1" time="0.009763">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\NotifyLogsTest::test_notify_log_response_structure&#13;
+Expected response status code [200] but received 404.
+Failed asserting that 200 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\NotifyLogsTest.php:467
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+  </testsuite>
+</testsuites>

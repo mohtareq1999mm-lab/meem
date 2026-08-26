@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\FileOperations\ProductImportBroadcastTest" file="D:\meem-commerce\tests\Feature\FileOperations\ProductImportBroadcastTest.php" tests="6" assertions="32" errors="0" failures="0" skipped="0" time="0.044525">
+    <testcase name="test_write_explicit_progress_broadcasts_to_owner_channel" file="D:\meem-commerce\tests\Feature\FileOperations\ProductImportBroadcastTest.php" line="23" class="Tests\Feature\FileOperations\ProductImportBroadcastTest" classname="Tests.Feature.FileOperations.ProductImportBroadcastTest" assertions="20" time="0.023990"/>
+    <testcase name="test_progress_event_is_not_sent_to_anyone_but_the_owner" file="D:\meem-commerce\tests\Feature\FileOperations\ProductImportBroadcastTest.php" line="41" class="Tests\Feature\FileOperations\ProductImportBroadcastTest" classname="Tests.Feature.FileOperations.ProductImportBroadcastTest" assertions="3" time="0.003627"/>
+    <testcase name="test_failed_hook_broadcasts_terminal_once" file="D:\meem-commerce\tests\Feature\FileOperations\ProductImportBroadcastTest.php" line="53" class="Tests\Feature\FileOperations\ProductImportBroadcastTest" classname="Tests.Feature.FileOperations.ProductImportBroadcastTest" assertions="5" time="0.005422"/>
+    <testcase name="test_retry_on_terminal_state_does_not_broadcast_again" file="D:\meem-commerce\tests\Feature\FileOperations\ProductImportBroadcastTest.php" line="72" class="Tests\Feature\FileOperations\ProductImportBroadcastTest" classname="Tests.Feature.FileOperations.ProductImportBroadcastTest" assertions="2" time="0.002283"/>
+    <testcase name="test_no_broadcast_when_operation_has_no_owner" file="D:\meem-commerce\tests\Feature\FileOperations\ProductImportBroadcastTest.php" line="84" class="Tests\Feature\FileOperations\ProductImportBroadcastTest" classname="Tests.Feature.FileOperations.ProductImportBroadcastTest" assertions="1" time="0.001231"/>
+    <testcase name="test_dispatch_is_logged_only_after_a_real_dispatch" file="D:\meem-commerce\tests\Feature\FileOperations\ProductImportBroadcastTest.php" line="93" class="Tests\Feature\FileOperations\ProductImportBroadcastTest" classname="Tests.Feature.FileOperations.ProductImportBroadcastTest" assertions="1" time="0.007973"/>
+  </testsuite>
+</testsuites>

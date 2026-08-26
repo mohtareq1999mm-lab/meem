@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\AttributeApiTest" file="D:\meem-commerce\tests\Feature\AttributeApiTest.php" tests="16" assertions="20" errors="0" failures="5" skipped="0" time="0.155502">
+    <testcase name="test_authenticated_user_can_list_attributes" file="D:\meem-commerce\tests\Feature\AttributeApiTest.php" line="76" class="Tests\Feature\AttributeApiTest" classname="Tests.Feature.AttributeApiTest" assertions="1" time="0.057270"/>
+    <testcase name="test_guest_cannot_list_attributes" file="D:\meem-commerce\tests\Feature\AttributeApiTest.php" line="88" class="Tests\Feature\AttributeApiTest" classname="Tests.Feature.AttributeApiTest" assertions="1" time="0.010384">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\AttributeApiTest::test_guest_cannot_list_attributes&#13;
+Expected response status code [403] but received 401.
+Failed asserting that 403 is identical to 401.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\AttributeApiTest.php:92
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_list_attributes_returns_empty_data_when_none_exist" file="D:\meem-commerce\tests\Feature\AttributeApiTest.php" line="95" class="Tests\Feature\AttributeApiTest" classname="Tests.Feature.AttributeApiTest" assertions="1" time="0.005036"/>
+    <testcase name="test_authenticated_user_can_show_attribute_by_id" file="D:\meem-commerce\tests\Feature\AttributeApiTest.php" line="108" class="Tests\Feature\AttributeApiTest" classname="Tests.Feature.AttributeApiTest" assertions="2" time="0.006282"/>
+    <testcase name="test_guest_gets_403_for_attribute_show" file="D:\meem-commerce\tests\Feature\AttributeApiTest.php" line="124" class="Tests\Feature\AttributeApiTest" classname="Tests.Feature.AttributeApiTest" assertions="1" time="0.004394">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\AttributeApiTest::test_guest_gets_403_for_attribute_show&#13;
+Expected response status code [403] but received 401.
+Failed asserting that 403 is identical to 401.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\AttributeApiTest.php:129
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_authenticated_user_gets_404_for_nonexistent_attribute_id" file="D:\meem-commerce\tests\Feature\AttributeApiTest.php" line="132" class="Tests\Feature\AttributeApiTest" classname="Tests.Feature.AttributeApiTest" assertions="1" time="0.004546"/>
+    <testcase name="test_unauthenticated_user_cannot_create_attribute" file="D:\meem-commerce\tests\Feature\AttributeApiTest.php" line="144" class="Tests\Feature\AttributeApiTest" classname="Tests.Feature.AttributeApiTest" assertions="1" time="0.003277"/>
+    <testcase name="test_authenticated_admin_can_create_attribute" file="D:\meem-commerce\tests\Feature\AttributeApiTest.php" line="153" class="Tests\Feature\AttributeApiTest" classname="Tests.Feature.AttributeApiTest" assertions="2" time="0.019402"/>
+    <testcase name="test_user_without_required_permission_gets_forbidden_for_create" file="D:\meem-commerce\tests\Feature\AttributeApiTest.php" line="165" class="Tests\Feature\AttributeApiTest" classname="Tests.Feature.AttributeApiTest" assertions="1" time="0.005144"/>
+    <testcase name="test_unauthenticated_user_cannot_update_attribute" file="D:\meem-commerce\tests\Feature\AttributeApiTest.php" line="179" class="Tests\Feature\AttributeApiTest" classname="Tests.Feature.AttributeApiTest" assertions="1" time="0.002555"/>
+    <testcase name="test_unauthenticated_user_cannot_delete_attribute" file="D:\meem-commerce\tests\Feature\AttributeApiTest.php" line="193" class="Tests\Feature\AttributeApiTest" classname="Tests.Feature.AttributeApiTest" assertions="1" time="0.002393"/>
+    <testcase name="test_authenticated_admin_can_delete_attribute" file="D:\meem-commerce\tests\Feature\AttributeApiTest.php" line="201" class="Tests\Feature\AttributeApiTest" classname="Tests.Feature.AttributeApiTest" assertions="2" time="0.005041"/>
+    <testcase name="test_unauthenticated_user_cannot_create_attribute_value" file="D:\meem-commerce\tests\Feature\AttributeApiTest.php" line="219" class="Tests\Feature\AttributeApiTest" classname="Tests.Feature.AttributeApiTest" assertions="1" time="0.009906">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\AttributeApiTest::test_unauthenticated_user_cannot_create_attribute_value&#13;
+Expected response status code [401] but received 404.
+Failed asserting that 401 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\AttributeApiTest.php:225
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_authenticated_admin_can_create_attribute_value" file="D:\meem-commerce\tests\Feature\AttributeApiTest.php" line="228" class="Tests\Feature\AttributeApiTest" classname="Tests.Feature.AttributeApiTest" assertions="1" time="0.008211">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\AttributeApiTest::test_authenticated_admin_can_create_attribute_value&#13;
+Expected response status code [201] but received 404.
+Failed asserting that 201 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\Concerns\AssertsStatusCodes.php:26
+D:\meem-commerce\tests\Feature\AttributeApiTest.php:239
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_authenticated_admin_can_delete_attribute_value" file="D:\meem-commerce\tests\Feature\AttributeApiTest.php" line="249" class="Tests\Feature\AttributeApiTest" classname="Tests.Feature.AttributeApiTest" assertions="1" time="0.007002">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\AttributeApiTest::test_authenticated_admin_can_delete_attribute_value&#13;
+Expected response status code [200] but received 404.
+Failed asserting that 200 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\Concerns\AssertsStatusCodes.php:16
+D:\meem-commerce\tests\Feature\AttributeApiTest.php:261
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_deleting_attribute_cascades_to_its_values" file="D:\meem-commerce\tests\Feature\AttributeApiTest.php" line="269" class="Tests\Feature\AttributeApiTest" classname="Tests.Feature.AttributeApiTest" assertions="2" time="0.004658"/>
+  </testsuite>
+</testsuites>

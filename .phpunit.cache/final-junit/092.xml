@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\TagCrudTest" file="D:\meem-commerce\tests\Feature\TagCrudTest.php" tests="13" assertions="52" errors="0" failures="0" skipped="0" time="0.152711">
+    <testcase name="test_index_returns_standard_response_wrapper" file="D:\meem-commerce\tests\Feature\TagCrudTest.php" line="115" class="Tests\Feature\TagCrudTest" classname="Tests.Feature.TagCrudTest" assertions="9" time="0.058618"/>
+    <testcase name="test_store_returns_201_with_standard_wrapper" file="D:\meem-commerce\tests\Feature\TagCrudTest.php" line="136" class="Tests\Feature\TagCrudTest" classname="Tests.Feature.TagCrudTest" assertions="6" time="0.017834"/>
+    <testcase name="test_store_syncs_products_relation" file="D:\meem-commerce\tests\Feature\TagCrudTest.php" line="152" class="Tests\Feature\TagCrudTest" classname="Tests.Feature.TagCrudTest" assertions="6" time="0.009577"/>
+    <testcase name="test_store_rejects_invalid_product_ids" file="D:\meem-commerce\tests\Feature\TagCrudTest.php" line="172" class="Tests\Feature\TagCrudTest" classname="Tests.Feature.TagCrudTest" assertions="1" time="0.005457"/>
+    <testcase name="test_show_by_id_returns_wrapper_with_products" file="D:\meem-commerce\tests\Feature\TagCrudTest.php" line="188" class="Tests\Feature\TagCrudTest" classname="Tests.Feature.TagCrudTest" assertions="5" time="0.010736"/>
+    <testcase name="test_show_by_slug_returns_wrapper" file="D:\meem-commerce\tests\Feature\TagCrudTest.php" line="203" class="Tests\Feature\TagCrudTest" classname="Tests.Feature.TagCrudTest" assertions="3" time="0.006506"/>
+    <testcase name="test_update_returns_200_with_wrapper" file="D:\meem-commerce\tests\Feature\TagCrudTest.php" line="219" class="Tests\Feature\TagCrudTest" classname="Tests.Feature.TagCrudTest" assertions="5" time="0.008323"/>
+    <testcase name="test_update_syncs_products_relation" file="D:\meem-commerce\tests\Feature\TagCrudTest.php" line="235" class="Tests\Feature\TagCrudTest" classname="Tests.Feature.TagCrudTest" assertions="5" time="0.008453"/>
+    <testcase name="test_update_with_empty_products_clears_relation" file="D:\meem-commerce\tests\Feature\TagCrudTest.php" line="253" class="Tests\Feature\TagCrudTest" classname="Tests.Feature.TagCrudTest" assertions="2" time="0.006305"/>
+    <testcase name="test_update_rejects_invalid_product_ids" file="D:\meem-commerce\tests\Feature\TagCrudTest.php" line="267" class="Tests\Feature\TagCrudTest" classname="Tests.Feature.TagCrudTest" assertions="1" time="0.004559"/>
+    <testcase name="test_destroy_returns_200_with_wrapper_and_true" file="D:\meem-commerce\tests\Feature\TagCrudTest.php" line="283" class="Tests\Feature\TagCrudTest" classname="Tests.Feature.TagCrudTest" assertions="6" time="0.006227"/>
+    <testcase name="test_guest_cannot_access_tags_crud" file="D:\meem-commerce\tests\Feature\TagCrudTest.php" line="304" class="Tests\Feature\TagCrudTest" classname="Tests.Feature.TagCrudTest" assertions="2" time="0.005441"/>
+    <testcase name="test_user_without_permission_cannot_create" file="D:\meem-commerce\tests\Feature\TagCrudTest.php" line="310" class="Tests\Feature\TagCrudTest" classname="Tests.Feature.TagCrudTest" assertions="1" time="0.004675"/>
+  </testsuite>
+</testsuites>

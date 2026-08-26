@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\PendingOrderLifecycleTest" file="D:\meem-commerce\tests\Feature\PendingOrderLifecycleTest.php" tests="6" assertions="19" errors="0" failures="0" skipped="0" time="0.058154">
+    <testcase name="first_checkout_creates_pending_order" file="D:\meem-commerce\tests\Feature\PendingOrderLifecycleTest.php" line="99" class="Tests\Feature\PendingOrderLifecycleTest" classname="Tests.Feature.PendingOrderLifecycleTest" assertions="4" time="0.015686"/>
+    <testcase name="find_pending_order_returns_null_after_completion" file="D:\meem-commerce\tests\Feature\PendingOrderLifecycleTest.php" line="121" class="Tests\Feature\PendingOrderLifecycleTest" classname="Tests.Feature.PendingOrderLifecycleTest" assertions="2" time="0.004235"/>
+    <testcase name="second_checkout_updates_existing_pending_order" file="D:\meem-commerce\tests\Feature\PendingOrderLifecycleTest.php" line="142" class="Tests\Feature\PendingOrderLifecycleTest" classname="Tests.Feature.PendingOrderLifecycleTest" assertions="3" time="0.006012"/>
+    <testcase name="sync_order_items_replaces_existing_items" file="D:\meem-commerce\tests\Feature\PendingOrderLifecycleTest.php" line="173" class="Tests\Feature\PendingOrderLifecycleTest" classname="Tests.Feature.PendingOrderLifecycleTest" assertions="2" time="0.015805"/>
+    <testcase name="pending_order_does_not_block_new_order_after_payment" file="D:\meem-commerce\tests\Feature\PendingOrderLifecycleTest.php" line="210" class="Tests\Feature\PendingOrderLifecycleTest" classname="Tests.Feature.PendingOrderLifecycleTest" assertions="4" time="0.010055"/>
+    <testcase name="cancelled_pending_order_removes_pending_status" file="D:\meem-commerce\tests\Feature\PendingOrderLifecycleTest.php" line="242" class="Tests\Feature\PendingOrderLifecycleTest" classname="Tests.Feature.PendingOrderLifecycleTest" assertions="4" time="0.006362"/>
+  </testsuite>
+</testsuites>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Digital\DigitalAssetAdminTest" file="D:\meem-commerce\tests\Feature\Digital\DigitalAssetAdminTest.php" tests="7" assertions="22" errors="0" failures="0" skipped="0" time="0.186999">
+    <testcase name="test_unauthenticated_upload_is_rejected" file="D:\meem-commerce\tests\Feature\Digital\DigitalAssetAdminTest.php" line="93" class="Tests\Feature\Digital\DigitalAssetAdminTest" classname="Tests.Feature.Digital.DigitalAssetAdminTest" assertions="1" time="0.062817"/>
+    <testcase name="test_view_only_admin_cannot_upload" file="D:\meem-commerce\tests\Feature\Digital\DigitalAssetAdminTest.php" line="102" class="Tests\Feature\Digital\DigitalAssetAdminTest" classname="Tests.Feature.Digital.DigitalAssetAdminTest" assertions="1" time="0.028627"/>
+    <testcase name="test_authorized_admin_uploads_pdf_to_digital_product" file="D:\meem-commerce\tests\Feature\Digital\DigitalAssetAdminTest.php" line="112" class="Tests\Feature\Digital\DigitalAssetAdminTest" classname="Tests.Feature.Digital.DigitalAssetAdminTest" assertions="7" time="0.034037"/>
+    <testcase name="test_invalid_mime_is_rejected" file="D:\meem-commerce\tests\Feature\Digital\DigitalAssetAdminTest.php" line="146" class="Tests\Feature\Digital\DigitalAssetAdminTest" classname="Tests.Feature.Digital.DigitalAssetAdminTest" assertions="1" time="0.008223"/>
+    <testcase name="test_oversized_file_is_rejected" file="D:\meem-commerce\tests\Feature\Digital\DigitalAssetAdminTest.php" line="158" class="Tests\Feature\Digital\DigitalAssetAdminTest" classname="Tests.Feature.Digital.DigitalAssetAdminTest" assertions="2" time="0.008173"/>
+    <testcase name="test_physical_product_rejects_asset_upload" file="D:\meem-commerce\tests\Feature\Digital\DigitalAssetAdminTest.php" line="172" class="Tests\Feature\Digital\DigitalAssetAdminTest" classname="Tests.Feature.Digital.DigitalAssetAdminTest" assertions="2" time="0.008054"/>
+    <testcase name="test_metadata_update_and_delete_remove_row_and_file" file="D:\meem-commerce\tests\Feature\Digital\DigitalAssetAdminTest.php" line="185" class="Tests\Feature\Digital\DigitalAssetAdminTest" classname="Tests.Feature.Digital.DigitalAssetAdminTest" assertions="8" time="0.037068"/>
+  </testsuite>
+</testsuites>

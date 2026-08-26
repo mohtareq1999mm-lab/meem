@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Contacts\ContactAuthenticationTest" file="D:\meem-commerce\tests\Feature\Contacts\ContactAuthenticationTest.php" tests="8" assertions="8" errors="0" failures="0" skipped="0" time="0.082540">
+    <testcase name="unauthenticated_user_cannot_index_contacts" file="D:\meem-commerce\tests\Feature\Contacts\ContactAuthenticationTest.php" line="72" class="Tests\Feature\Contacts\ContactAuthenticationTest" classname="Tests.Feature.Contacts.ContactAuthenticationTest" assertions="1" time="0.030239"/>
+    <testcase name="unauthenticated_user_cannot_show_contact" file="D:\meem-commerce\tests\Feature\Contacts\ContactAuthenticationTest.php" line="80" class="Tests\Feature\Contacts\ContactAuthenticationTest" classname="Tests.Feature.Contacts.ContactAuthenticationTest" assertions="1" time="0.004349"/>
+    <testcase name="unauthenticated_user_cannot_delete_contact" file="D:\meem-commerce\tests\Feature\Contacts\ContactAuthenticationTest.php" line="95" class="Tests\Feature\Contacts\ContactAuthenticationTest" classname="Tests.Feature.Contacts.ContactAuthenticationTest" assertions="1" time="0.002687"/>
+    <testcase name="unauthenticated_user_cannot_delete_all_contacts" file="D:\meem-commerce\tests\Feature\Contacts\ContactAuthenticationTest.php" line="110" class="Tests\Feature\Contacts\ContactAuthenticationTest" classname="Tests.Feature.Contacts.ContactAuthenticationTest" assertions="1" time="0.002497"/>
+    <testcase name="unauthenticated_user_cannot_delete_all_read_contacts" file="D:\meem-commerce\tests\Feature\Contacts\ContactAuthenticationTest.php" line="118" class="Tests\Feature\Contacts\ContactAuthenticationTest" classname="Tests.Feature.Contacts.ContactAuthenticationTest" assertions="1" time="0.002577"/>
+    <testcase name="unauthenticated_user_cannot_send_replay" file="D:\meem-commerce\tests\Feature\Contacts\ContactAuthenticationTest.php" line="126" class="Tests\Feature\Contacts\ContactAuthenticationTest" classname="Tests.Feature.Contacts.ContactAuthenticationTest" assertions="1" time="0.004857"/>
+    <testcase name="unauthenticated_user_can_create_contact" file="D:\meem-commerce\tests\Feature\Contacts\ContactAuthenticationTest.php" line="144" class="Tests\Feature\Contacts\ContactAuthenticationTest" classname="Tests.Feature.Contacts.ContactAuthenticationTest" assertions="1" time="0.017170"/>
+    <testcase name="authenticated_user_can_access_all_routes" file="D:\meem-commerce\tests\Feature\Contacts\ContactAuthenticationTest.php" line="159" class="Tests\Feature\Contacts\ContactAuthenticationTest" classname="Tests.Feature.Contacts.ContactAuthenticationTest" assertions="1" time="0.018164"/>
+  </testsuite>
+</testsuites>

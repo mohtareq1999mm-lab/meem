@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Unit\FastShippingRepositoryTest" file="D:\meem-commerce\tests\Unit\FastShippingRepositoryTest.php" tests="5" assertions="17" errors="0" failures="0" skipped="0" time="0.025245">
+    <testcase name="validate_checkout_returns_translated_error_when_disabled" file="D:\meem-commerce\tests\Unit\FastShippingRepositoryTest.php" line="93" class="Tests\Unit\FastShippingRepositoryTest" classname="Tests.Unit.FastShippingRepositoryTest" assertions="2" time="0.017379"/>
+    <testcase name="validate_checkout_returns_translated_error_for_empty_cart" file="D:\meem-commerce\tests\Unit\FastShippingRepositoryTest.php" line="111" class="Tests\Unit\FastShippingRepositoryTest" classname="Tests.Unit.FastShippingRepositoryTest" assertions="2" time="0.001940"/>
+    <testcase name="fast_shipping_settings_use_cache" file="D:\meem-commerce\tests\Unit\FastShippingRepositoryTest.php" line="144" class="Tests\Unit\FastShippingRepositoryTest" classname="Tests.Unit.FastShippingRepositoryTest" assertions="5" time="0.002089"/>
+    <testcase name="fast_shipping_settings_cache_invalidated_after_update" file="D:\meem-commerce\tests\Unit\FastShippingRepositoryTest.php" line="180" class="Tests\Unit\FastShippingRepositoryTest" classname="Tests.Unit.FastShippingRepositoryTest" assertions="3" time="0.002200"/>
+    <testcase name="settings_update_is_transaction_safe" file="D:\meem-commerce\tests\Unit\FastShippingRepositoryTest.php" line="211" class="Tests\Unit\FastShippingRepositoryTest" classname="Tests.Unit.FastShippingRepositoryTest" assertions="5" time="0.001636"/>
+  </testsuite>
+</testsuites>

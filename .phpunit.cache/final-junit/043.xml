@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\DashboardClosureTest" file="D:\meem-commerce\tests\Feature\DashboardClosureTest.php" tests="13" assertions="88" errors="0" failures="1" skipped="0" time="0.401680">
+    <testcase name="test_processing_orders_are_counted_not_hardcoded_zero" file="D:\meem-commerce\tests\Feature\DashboardClosureTest.php" line="176" class="Tests\Feature\DashboardClosureTest" classname="Tests.Feature.DashboardClosureTest" assertions="8" time="0.110070"/>
+    <testcase name="test_existing_statuses_remain_correct_and_no_double_counting" file="D:\meem-commerce\tests\Feature\DashboardClosureTest.php" line="192" class="Tests\Feature\DashboardClosureTest" classname="Tests.Feature.DashboardClosureTest" assertions="6" time="0.028914"/>
+    <testcase name="test_legacy_status_keys_are_preserved_for_clients" file="D:\meem-commerce\tests\Feature\DashboardClosureTest.php" line="218" class="Tests\Feature\DashboardClosureTest" classname="Tests.Feature.DashboardClosureTest" assertions="5" time="0.016429"/>
+    <testcase name="test_zero_buckets_and_bucket_nesting_stay_consistent" file="D:\meem-commerce\tests\Feature\DashboardClosureTest.php" line="229" class="Tests\Feature\DashboardClosureTest" classname="Tests.Feature.DashboardClosureTest" assertions="17" time="0.023989"/>
+    <testcase name="test_order_stats_response_contract_is_backward_compatible" file="D:\meem-commerce\tests\Feature\DashboardClosureTest.php" line="256" class="Tests\Feature\DashboardClosureTest" classname="Tests.Feature.DashboardClosureTest" assertions="12" time="0.016254"/>
+    <testcase name="test_digital_products_excluded_from_physical_inventory_value" file="D:\meem-commerce\tests\Feature\DashboardClosureTest.php" line="277" class="Tests\Feature\DashboardClosureTest" classname="Tests.Feature.DashboardClosureTest" assertions="2" time="0.038423"/>
+    <testcase name="test_out_of_stock_and_low_stock_exclude_digital" file="D:\meem-commerce\tests\Feature\DashboardClosureTest.php" line="295" class="Tests\Feature\DashboardClosureTest" classname="Tests.Feature.DashboardClosureTest" assertions="6" time="0.033200"/>
+    <testcase name="test_digital_block_reports_products_entitlements_downloads_licenses" file="D:\meem-commerce\tests\Feature\DashboardClosureTest.php" line="312" class="Tests\Feature\DashboardClosureTest" classname="Tests.Feature.DashboardClosureTest" assertions="9" time="0.025758"/>
+    <testcase name="test_dashboard_payload_never_contains_license_secrets" file="D:\meem-commerce\tests\Feature\DashboardClosureTest.php" line="353" class="Tests\Feature\DashboardClosureTest" classname="Tests.Feature.DashboardClosureTest" assertions="2" time="0.027890"/>
+    <testcase name="test_multi_currency_revenue_is_never_raw_mixed" file="D:\meem-commerce\tests\Feature\DashboardClosureTest.php" line="386" class="Tests\Feature\DashboardClosureTest" classname="Tests.Feature.DashboardClosureTest" assertions="7" time="0.026182"/>
+    <testcase name="test_sales_daily_revenue_respects_conversion" file="D:\meem-commerce\tests\Feature\DashboardClosureTest.php" line="420" class="Tests\Feature\DashboardClosureTest" classname="Tests.Feature.DashboardClosureTest" assertions="2" time="0.026038"/>
+    <testcase name="test_reconciliation_endpoint_contract" file="D:\meem-commerce\tests\Feature\DashboardClosureTest.php" line="434" class="Tests\Feature\DashboardClosureTest" classname="Tests.Feature.DashboardClosureTest" assertions="10" time="0.017508"/>
+    <testcase name="test_scheduler_registers_all_expected_jobs" file="D:\meem-commerce\tests\Feature\DashboardClosureTest.php" line="454" class="Tests\Feature\DashboardClosureTest" classname="Tests.Feature.DashboardClosureTest" assertions="2" time="0.011024">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\DashboardClosureTest::test_scheduler_registers_all_expected_jobs&#13;
+Scheduler is missing [carts:expire].
+Failed asserting that null is not null.
+&#13;
+D:\meem-commerce\tests\Feature\DashboardClosureTest.php:476
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+  </testsuite>
+</testsuites>

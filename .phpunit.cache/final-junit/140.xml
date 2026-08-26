@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Currency\CurrencyBugRegressionTest" file="D:\meem-commerce\tests\Feature\Currency\CurrencyBugRegressionTest.php" tests="4" assertions="17" errors="0" failures="0" skipped="0" time="0.134306">
+    <testcase name="order_currency_snapshot_columns_are_persisted_to_the_database" file="D:\meem-commerce\tests\Feature\Currency\CurrencyBugRegressionTest.php" line="19" class="Tests\Feature\Currency\CurrencyBugRegressionTest" classname="Tests.Feature.Currency.CurrencyBugRegressionTest" assertions="8" time="0.029536"/>
+    <testcase name="base_currency_without_rates_is_still_protected_from_deletion" file="D:\meem-commerce\tests\Feature\Currency\CurrencyBugRegressionTest.php" line="57" class="Tests\Feature\Currency\CurrencyBugRegressionTest" classname="Tests.Feature.Currency.CurrencyBugRegressionTest" assertions="2" time="0.005588"/>
+    <testcase name="currency_code_is_uppercased_by_the_store_request" file="D:\meem-commerce\tests\Feature\Currency\CurrencyBugRegressionTest.php" line="83" class="Tests\Feature\Currency\CurrencyBugRegressionTest" classname="Tests.Feature.Currency.CurrencyBugRegressionTest" assertions="3" time="0.095892"/>
+    <testcase name="conversion_rate_ratio_is_what_gets_snapshotted_on_orders" file="D:\meem-commerce\tests\Feature\Currency\CurrencyBugRegressionTest.php" line="95" class="Tests\Feature\Currency\CurrencyBugRegressionTest" classname="Tests.Feature.Currency.CurrencyBugRegressionTest" assertions="4" time="0.003291"/>
+  </testsuite>
+</testsuites>

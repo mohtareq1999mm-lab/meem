@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\FastShippingHardenTest" file="D:\meem-commerce\tests\Feature\FastShippingHardenTest.php" tests="14" assertions="22" errors="0" failures="2" skipped="0" time="0.309104">
+    <testcase name="fast_checkout_succeeds_with_cod" file="D:\meem-commerce\tests\Feature\FastShippingHardenTest.php" line="470" class="Tests\Feature\FastShippingHardenTest" classname="Tests.Feature.FastShippingHardenTest" assertions="3" time="0.113067"/>
+    <testcase name="fast_checkout_succeeds_with_online_payment" file="D:\meem-commerce\tests\Feature\FastShippingHardenTest.php" line="499" class="Tests\Feature\FastShippingHardenTest" classname="Tests.Feature.FastShippingHardenTest" assertions="2" time="0.032465"/>
+    <testcase name="fast_checkout_rejects_cod_pickup_combination" file="D:\meem-commerce\tests\Feature\FastShippingHardenTest.php" line="521" class="Tests\Feature\FastShippingHardenTest" classname="Tests.Feature.FastShippingHardenTest" assertions="2" time="0.029780"/>
+    <testcase name="fast_checkout_rejects_governorate_with_fast_shipping_disabled" file="D:\meem-commerce\tests\Feature\FastShippingHardenTest.php" line="546" class="Tests\Feature\FastShippingHardenTest" classname="Tests.Feature.FastShippingHardenTest" assertions="2" time="0.009281"/>
+    <testcase name="fast_checkout_rejects_inactive_governorate" file="D:\meem-commerce\tests\Feature\FastShippingHardenTest.php" line="573" class="Tests\Feature\FastShippingHardenTest" classname="Tests.Feature.FastShippingHardenTest" assertions="1" time="0.006556"/>
+    <testcase name="fast_checkout_fails_when_product_has_insufficient_stock" file="D:\meem-commerce\tests\Feature\FastShippingHardenTest.php" line="601" class="Tests\Feature\FastShippingHardenTest" classname="Tests.Feature.FastShippingHardenTest" assertions="1" time="0.018141"/>
+    <testcase name="cache_key_differs_by_channel" file="D:\meem-commerce\tests\Feature\FastShippingHardenTest.php" line="641" class="Tests\Feature\FastShippingHardenTest" classname="Tests.Feature.FastShippingHardenTest" assertions="1" time="0.022126">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\FastShippingHardenTest::cache_key_differs_by_channel&#13;
+No home-channel cache keys found
+Failed asserting that an array is not empty.
+&#13;
+D:\meem-commerce\tests\Feature\FastShippingHardenTest.php:661
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="product_toggle_fast_shipping_updates_flag" file="D:\meem-commerce\tests\Feature\FastShippingHardenTest.php" line="668" class="Tests\Feature\FastShippingHardenTest" classname="Tests.Feature.FastShippingHardenTest" assertions="1" time="0.010024">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\FastShippingHardenTest::product_toggle_fast_shipping_updates_flag&#13;
+Expected response status code [200] but received 404.
+Failed asserting that 200 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\FastShippingHardenTest.php:693
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="admin_fast_shipping_settings_requires_authentication" file="D:\meem-commerce\tests\Feature\FastShippingHardenTest.php" line="703" class="Tests\Feature\FastShippingHardenTest" classname="Tests.Feature.FastShippingHardenTest" assertions="1" time="0.007573"/>
+    <testcase name="admin_fast_shipping_settings_update_requires_authentication" file="D:\meem-commerce\tests\Feature\FastShippingHardenTest.php" line="710" class="Tests\Feature\FastShippingHardenTest" classname="Tests.Feature.FastShippingHardenTest" assertions="1" time="0.001899"/>
+    <testcase name="fast_checkout_only_processes_fast_items_from_mixed_cart" file="D:\meem-commerce\tests\Feature\FastShippingHardenTest.php" line="721" class="Tests\Feature\FastShippingHardenTest" classname="Tests.Feature.FastShippingHardenTest" assertions="3" time="0.035454"/>
+    <testcase name="fast_checkout_fails_with_empty_cart" file="D:\meem-commerce\tests\Feature\FastShippingHardenTest.php" line="776" class="Tests\Feature\FastShippingHardenTest" classname="Tests.Feature.FastShippingHardenTest" assertions="1" time="0.005867"/>
+    <testcase name="fast_checkout_fails_when_cart_has_no_fast_items" file="D:\meem-commerce\tests\Feature\FastShippingHardenTest.php" line="801" class="Tests\Feature\FastShippingHardenTest" classname="Tests.Feature.FastShippingHardenTest" assertions="2" time="0.010986"/>
+    <testcase name="fast_checkout_rejects_invalid_payment_method" file="D:\meem-commerce\tests\Feature\FastShippingHardenTest.php" line="839" class="Tests\Feature\FastShippingHardenTest" classname="Tests.Feature.FastShippingHardenTest" assertions="1" time="0.005885"/>
+  </testsuite>
+</testsuites>

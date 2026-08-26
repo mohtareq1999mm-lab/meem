@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Contacts\ContactSoftDeleteTest" file="D:\meem-commerce\tests\Feature\Contacts\ContactSoftDeleteTest.php" tests="8" assertions="12" errors="0" failures="0" skipped="0" time="0.079272">
+    <testcase name="contact_uses_soft_deletes_trait" file="D:\meem-commerce\tests\Feature\Contacts\ContactSoftDeleteTest.php" line="72" class="Tests\Feature\Contacts\ContactSoftDeleteTest" classname="Tests.Feature.Contacts.ContactSoftDeleteTest" assertions="1" time="0.004543"/>
+    <testcase name="delete_soft_deletes_contact" file="D:\meem-commerce\tests\Feature\Contacts\ContactSoftDeleteTest.php" line="79" class="Tests\Feature\Contacts\ContactSoftDeleteTest" classname="Tests.Feature.Contacts.ContactSoftDeleteTest" assertions="1" time="0.027956"/>
+    <testcase name="deleted_contact_not_in_index" file="D:\meem-commerce\tests\Feature\Contacts\ContactSoftDeleteTest.php" line="94" class="Tests\Feature\Contacts\ContactSoftDeleteTest" classname="Tests.Feature.Contacts.ContactSoftDeleteTest" assertions="1" time="0.010246"/>
+    <testcase name="show_returns_404_for_soft_deleted_contact" file="D:\meem-commerce\tests\Feature\Contacts\ContactSoftDeleteTest.php" line="111" class="Tests\Feature\Contacts\ContactSoftDeleteTest" classname="Tests.Feature.Contacts.ContactSoftDeleteTest" assertions="1" time="0.012228"/>
+    <testcase name="delete_all_soft_deletes_all_contacts" file="D:\meem-commerce\tests\Feature\Contacts\ContactSoftDeleteTest.php" line="125" class="Tests\Feature\Contacts\ContactSoftDeleteTest" classname="Tests.Feature.Contacts.ContactSoftDeleteTest" assertions="2" time="0.006626"/>
+    <testcase name="delete_all_read_contacts_soft_deletes_only_read_contacts" file="D:\meem-commerce\tests\Feature\Contacts\ContactSoftDeleteTest.php" line="137" class="Tests\Feature\Contacts\ContactSoftDeleteTest" classname="Tests.Feature.Contacts.ContactSoftDeleteTest" assertions="2" time="0.005594"/>
+    <testcase name="delete_all_keeps_records_in_database" file="D:\meem-commerce\tests\Feature\Contacts\ContactSoftDeleteTest.php" line="149" class="Tests\Feature\Contacts\ContactSoftDeleteTest" classname="Tests.Feature.Contacts.ContactSoftDeleteTest" assertions="2" time="0.005535"/>
+    <testcase name="delete_all_read_keeps_unread_records_in_database" file="D:\meem-commerce\tests\Feature\Contacts\ContactSoftDeleteTest.php" line="161" class="Tests\Feature\Contacts\ContactSoftDeleteTest" classname="Tests.Feature.Contacts.ContactSoftDeleteTest" assertions="2" time="0.006544"/>
+  </testsuite>
+</testsuites>

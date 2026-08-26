@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Notifications\CouponNotificationE2ETest" file="D:\meem-commerce\tests\Feature\Notifications\CouponNotificationE2ETest.php" tests="5" assertions="26" errors="0" failures="0" skipped="0" time="0.093877">
+    <testcase name="test_coupon_created_fans_out_to_all_users_in_db_and_broadcast" file="D:\meem-commerce\tests\Feature\Notifications\CouponNotificationE2ETest.php" line="23" class="Tests\Feature\Notifications\CouponNotificationE2ETest" classname="Tests.Feature.Notifications.CouponNotificationE2ETest" assertions="11" time="0.058662"/>
+    <testcase name="test_coupon_created_skips_fanout_when_coupon_has_assignments" file="D:\meem-commerce\tests\Feature\Notifications\CouponNotificationE2ETest.php" line="48" class="Tests\Feature\Notifications\CouponNotificationE2ETest" classname="Tests.Feature.Notifications.CouponNotificationE2ETest" assertions="2" time="0.003518"/>
+    <testcase name="test_coupon_assigned_notifies_specific_user_in_db_and_broadcast" file="D:\meem-commerce\tests\Feature\Notifications\CouponNotificationE2ETest.php" line="60" class="Tests\Feature\Notifications\CouponNotificationE2ETest" classname="Tests.Feature.Notifications.CouponNotificationE2ETest" assertions="7" time="0.016156"/>
+    <testcase name="test_coupon_assigned_skips_admin_user" file="D:\meem-commerce\tests\Feature\Notifications\CouponNotificationE2ETest.php" line="83" class="Tests\Feature\Notifications\CouponNotificationE2ETest" classname="Tests.Feature.Notifications.CouponNotificationE2ETest" assertions="1" time="0.003566"/>
+    <testcase name="test_assigned_coupon_consumed_notifies_user_in_db_and_broadcast" file="D:\meem-commerce\tests\Feature\Notifications\CouponNotificationE2ETest.php" line="94" class="Tests\Feature\Notifications\CouponNotificationE2ETest" classname="Tests.Feature.Notifications.CouponNotificationE2ETest" assertions="5" time="0.011974"/>
+  </testsuite>
+</testsuites>

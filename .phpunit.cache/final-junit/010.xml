@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Unit\FrontendResourceTest" file="D:\meem-commerce\tests\Unit\FrontendResourceTest.php" tests="4" assertions="45" errors="0" failures="1" skipped="0" time="0.017773">
+    <testcase name="it_has_all_expected_resources" file="D:\meem-commerce\tests\Unit\FrontendResourceTest.php" line="11" class="Tests\Unit\FrontendResourceTest" classname="Tests.Unit.FrontendResourceTest" assertions="15" time="0.009053"/>
+    <testcase name="it_has_exactly_fifteen_resources" file="D:\meem-commerce\tests\Unit\FrontendResourceTest.php" line="33" class="Tests\Unit\FrontendResourceTest" classname="Tests.Unit.FrontendResourceTest" assertions="1" time="0.007646">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Unit\FrontendResourceTest::it_has_exactly_fifteen_resources&#13;
+Failed asserting that actual size 25 matches expected size 15.
+&#13;
+D:\meem-commerce\tests\Unit\FrontendResourceTest.php:35
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="it_returns_plural_lowercase_values" file="D:\meem-commerce\tests\Unit\FrontendResourceTest.php" line="39" class="Tests\Unit\FrontendResourceTest" classname="Tests.Unit.FrontendResourceTest" assertions="25" time="0.000669"/>
+    <testcase name="it_uses_snake_case_for_multi_word_resources" file="D:\meem-commerce\tests\Unit\FrontendResourceTest.php" line="47" class="Tests\Unit\FrontendResourceTest" classname="Tests.Unit.FrontendResourceTest" assertions="4" time="0.000405"/>
+  </testsuite>
+</testsuites>

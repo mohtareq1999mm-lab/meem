@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\SendFrontendWebhookJobTest" file="D:\meem-commerce\tests\Feature\SendFrontendWebhookJobTest.php" tests="5" assertions="8" errors="0" failures="0" skipped="0" time="0.030500">
+    <testcase name="it_dispatches_on_configured_queue" file="D:\meem-commerce\tests\Feature\SendFrontendWebhookJobTest.php" line="25" class="Tests\Feature\SendFrontendWebhookJobTest" classname="Tests.Feature.SendFrontendWebhookJobTest" assertions="1" time="0.018993"/>
+    <testcase name="it_calls_dispatcher_on_handle" file="D:\meem-commerce\tests\Feature\SendFrontendWebhookJobTest.php" line="39" class="Tests\Feature\SendFrontendWebhookJobTest" classname="Tests.Feature.SendFrontendWebhookJobTest" assertions="1" time="0.006061"/>
+    <testcase name="it_logs_error_on_failure" file="D:\meem-commerce\tests\Feature\SendFrontendWebhookJobTest.php" line="68" class="Tests\Feature\SendFrontendWebhookJobTest" classname="Tests.Feature.SendFrontendWebhookJobTest" assertions="1" time="0.003349"/>
+    <testcase name="it_has_correct_retry_configuration" file="D:\meem-commerce\tests\Feature\SendFrontendWebhookJobTest.php" line="94" class="Tests\Feature\SendFrontendWebhookJobTest" classname="Tests.Feature.SendFrontendWebhookJobTest" assertions="3" time="0.001169"/>
+    <testcase name="it_has_retry_until_deadline" file="D:\meem-commerce\tests\Feature\SendFrontendWebhookJobTest.php" line="108" class="Tests\Feature\SendFrontendWebhookJobTest" classname="Tests.Feature.SendFrontendWebhookJobTest" assertions="2" time="0.000927"/>
+  </testsuite>
+</testsuites>

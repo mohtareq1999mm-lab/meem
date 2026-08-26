@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Invoice\AdminInvoiceShowTest" file="D:\meem-commerce\tests\Feature\Invoice\AdminInvoiceShowTest.php" tests="5" assertions="32" errors="0" failures="0" skipped="0" time="0.105225">
+    <testcase name="test_show_returns_invoice_with_contract_fields" file="D:\meem-commerce\tests\Feature\Invoice\AdminInvoiceShowTest.php" line="26" class="Tests\Feature\Invoice\AdminInvoiceShowTest" classname="Tests.Feature.Invoice.AdminInvoiceShowTest" assertions="25" time="0.063577"/>
+    <testcase name="test_show_includes_conditional_download_url_only_when_pdf_exists" file="D:\meem-commerce\tests\Feature\Invoice\AdminInvoiceShowTest.php" line="68" class="Tests\Feature\Invoice\AdminInvoiceShowTest" classname="Tests.Feature.Invoice.AdminInvoiceShowTest" assertions="3" time="0.015503"/>
+    <testcase name="test_nonexistent_invoice_id_returns_404" file="D:\meem-commerce\tests\Feature\Invoice\AdminInvoiceShowTest.php" line="91" class="Tests\Feature\Invoice\AdminInvoiceShowTest" classname="Tests.Feature.Invoice.AdminInvoiceShowTest" assertions="1" time="0.005976"/>
+    <testcase name="test_regression_inv001_non_numeric_id_returns_404_not_500" file="D:\meem-commerce\tests\Feature\Invoice\AdminInvoiceShowTest.php" line="101" class="Tests\Feature\Invoice\AdminInvoiceShowTest" classname="Tests.Feature.Invoice.AdminInvoiceShowTest" assertions="2" time="0.008194"/>
+    <testcase name="test_regression_inv001_uuid_in_numeric_id_route_returns_404_not_500" file="D:\meem-commerce\tests\Feature\Invoice\AdminInvoiceShowTest.php" line="108" class="Tests\Feature\Invoice\AdminInvoiceShowTest" classname="Tests.Feature.Invoice.AdminInvoiceShowTest" assertions="1" time="0.011975"/>
+  </testsuite>
+</testsuites>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Notifications\DatabasePersistenceAuditTest" file="D:\meem-commerce\tests\Feature\Notifications\DatabasePersistenceAuditTest.php" tests="1" assertions="23" errors="0" failures="0" skipped="0" time="0.062756">
+    <testcase name="test_real_pipeline_creates_db_row_and_broadcast_with_matching_ids" file="D:\meem-commerce\tests\Feature\Notifications\DatabasePersistenceAuditTest.php" line="26" class="Tests\Feature\Notifications\DatabasePersistenceAuditTest" classname="Tests.Feature.Notifications.DatabasePersistenceAuditTest" assertions="23" time="0.062756"/>
+  </testsuite>
+</testsuites>

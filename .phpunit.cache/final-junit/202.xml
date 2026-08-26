@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Notifications\BroadcastQueueAssignmentTest" file="D:\meem-commerce\tests\Feature\Notifications\BroadcastQueueAssignmentTest.php" tests="4" assertions="5" errors="0" failures="0" skipped="0" time="0.050327">
+    <testcase name="test_broadcast_job_is_queued_on_meem_medium" file="D:\meem-commerce\tests\Feature\Notifications\BroadcastQueueAssignmentTest.php" line="23" class="Tests\Feature\Notifications\BroadcastQueueAssignmentTest" classname="Tests.Feature.Notifications.BroadcastQueueAssignmentTest" assertions="1" time="0.038406"/>
+    <testcase name="test_broadcast_job_never_uses_default_queue" file="D:\meem-commerce\tests\Feature\Notifications\BroadcastQueueAssignmentTest.php" line="39" class="Tests\Feature\Notifications\BroadcastQueueAssignmentTest" classname="Tests.Feature.Notifications.BroadcastQueueAssignmentTest" assertions="2" time="0.004462"/>
+    <testcase name="test_database_notification_still_persists" file="D:\meem-commerce\tests\Feature\Notifications\BroadcastQueueAssignmentTest.php" line="56" class="Tests\Feature\Notifications\BroadcastQueueAssignmentTest" classname="Tests.Feature.Notifications.BroadcastQueueAssignmentTest" assertions="1" time="0.004648"/>
+    <testcase name="test_notification_sending_job_uses_meem_medium" file="D:\meem-commerce\tests\Feature\Notifications\BroadcastQueueAssignmentTest.php" line="68" class="Tests\Feature\Notifications\BroadcastQueueAssignmentTest" classname="Tests.Feature.Notifications.BroadcastQueueAssignmentTest" assertions="1" time="0.002811"/>
+  </testsuite>
+</testsuites>

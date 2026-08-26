@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Unit\ChannelEnumTest" file="D:\meem-commerce\tests\Unit\ChannelEnumTest.php" tests="4" assertions="8" errors="0" failures="0" skipped="0" time="0.011008">
+    <testcase name="it_has_all_expected_channels" file="D:\meem-commerce\tests\Unit\ChannelEnumTest.php" line="11" class="Tests\Unit\ChannelEnumTest" classname="Tests.Unit.ChannelEnumTest" assertions="2" time="0.009045"/>
+    <testcase name="it_validates_known_values" file="D:\meem-commerce\tests\Unit\ChannelEnumTest.php" line="20" class="Tests\Unit\ChannelEnumTest" classname="Tests.Unit.ChannelEnumTest" assertions="2" time="0.001196"/>
+    <testcase name="it_rejects_unknown_values" file="D:\meem-commerce\tests\Unit\ChannelEnumTest.php" line="27" class="Tests\Unit\ChannelEnumTest" classname="Tests.Unit.ChannelEnumTest" assertions="3" time="0.000479"/>
+    <testcase name="it_accepts_null_as_valid" file="D:\meem-commerce\tests\Unit\ChannelEnumTest.php" line="35" class="Tests\Unit\ChannelEnumTest" classname="Tests.Unit.ChannelEnumTest" assertions="1" time="0.000289"/>
+  </testsuite>
+</testsuites>

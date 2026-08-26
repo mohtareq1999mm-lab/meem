@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Faqs\FaqAuthenticationTest" file="D:\meem-commerce\tests\Feature\Faqs\FaqAuthenticationTest.php" tests="7" assertions="7" errors="0" failures="0" skipped="0" time="0.073775">
+    <testcase name="unauthenticated_user_cannot_index_faqs" file="D:\meem-commerce\tests\Feature\Faqs\FaqAuthenticationTest.php" line="73" class="Tests\Feature\Faqs\FaqAuthenticationTest" classname="Tests.Feature.Faqs.FaqAuthenticationTest" assertions="1" time="0.030307"/>
+    <testcase name="unauthenticated_user_cannot_show_faq" file="D:\meem-commerce\tests\Feature\Faqs\FaqAuthenticationTest.php" line="81" class="Tests\Feature\Faqs\FaqAuthenticationTest" classname="Tests.Feature.Faqs.FaqAuthenticationTest" assertions="1" time="0.004834"/>
+    <testcase name="unauthenticated_user_cannot_create_faq" file="D:\meem-commerce\tests\Feature\Faqs\FaqAuthenticationTest.php" line="94" class="Tests\Feature\Faqs\FaqAuthenticationTest" classname="Tests.Feature.Faqs.FaqAuthenticationTest" assertions="1" time="0.008395"/>
+    <testcase name="unauthenticated_user_cannot_update_faq" file="D:\meem-commerce\tests\Feature\Faqs\FaqAuthenticationTest.php" line="105" class="Tests\Feature\Faqs\FaqAuthenticationTest" classname="Tests.Feature.Faqs.FaqAuthenticationTest" assertions="1" time="0.003583"/>
+    <testcase name="unauthenticated_user_cannot_delete_faq" file="D:\meem-commerce\tests\Feature\Faqs\FaqAuthenticationTest.php" line="120" class="Tests\Feature\Faqs\FaqAuthenticationTest" classname="Tests.Feature.Faqs.FaqAuthenticationTest" assertions="1" time="0.002965"/>
+    <testcase name="unauthenticated_user_cannot_reorder_faqs" file="D:\meem-commerce\tests\Feature\Faqs\FaqAuthenticationTest.php" line="133" class="Tests\Feature\Faqs\FaqAuthenticationTest" classname="Tests.Feature.Faqs.FaqAuthenticationTest" assertions="1" time="0.002101"/>
+    <testcase name="authenticated_user_can_access_all_routes" file="D:\meem-commerce\tests\Feature\Faqs\FaqAuthenticationTest.php" line="143" class="Tests\Feature\Faqs\FaqAuthenticationTest" classname="Tests.Feature.Faqs.FaqAuthenticationTest" assertions="1" time="0.021590"/>
+  </testsuite>
+</testsuites>

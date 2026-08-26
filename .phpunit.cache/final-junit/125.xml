@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Categories\CategoryTranslationTest" file="D:\meem-commerce\tests\Feature\Categories\CategoryTranslationTest.php" tests="3" assertions="10" errors="0" failures="0" skipped="0" time="0.071060">
+    <testcase name="test_create_category_with_multiple_translations" file="D:\meem-commerce\tests\Feature\Categories\CategoryTranslationTest.php" line="36" class="Tests\Feature\Categories\CategoryTranslationTest" classname="Tests.Feature.Categories.CategoryTranslationTest" assertions="4" time="0.011345"/>
+    <testcase name="test_resource_returns_translated_name_not_raw_json" file="D:\meem-commerce\tests\Feature\Categories\CategoryTranslationTest.php" line="50" class="Tests\Feature\Categories\CategoryTranslationTest" classname="Tests.Feature.Categories.CategoryTranslationTest" assertions="4" time="0.049345"/>
+    <testcase name="test_show_returns_details_in_current_locale" file="D:\meem-commerce\tests\Feature\Categories\CategoryTranslationTest.php" line="68" class="Tests\Feature\Categories\CategoryTranslationTest" classname="Tests.Feature.Categories.CategoryTranslationTest" assertions="2" time="0.010370"/>
+  </testsuite>
+</testsuites>

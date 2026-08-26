@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Notifications\PromotionFlashSaleNotificationE2ETest" file="D:\meem-commerce\tests\Feature\Notifications\PromotionFlashSaleNotificationE2ETest.php" tests="4" assertions="40" errors="0" failures="0" skipped="0" time="0.255393">
+    <testcase name="test_promotion_activated_notifies_all_users_and_wishlist_users_in_db_and_broadcast" file="D:\meem-commerce\tests\Feature\Notifications\PromotionFlashSaleNotificationE2ETest.php" line="27" class="Tests\Feature\Notifications\PromotionFlashSaleNotificationE2ETest" classname="Tests.Feature.Notifications.PromotionFlashSaleNotificationE2ETest" assertions="14" time="0.067835"/>
+    <testcase name="test_flash_sale_activated_notifies_all_users_and_wishlist_users_in_db_and_broadcast" file="D:\meem-commerce\tests\Feature\Notifications\PromotionFlashSaleNotificationE2ETest.php" line="62" class="Tests\Feature\Notifications\PromotionFlashSaleNotificationE2ETest" classname="Tests.Feature.Notifications.PromotionFlashSaleNotificationE2ETest" assertions="12" time="0.019278"/>
+    <testcase name="test_promotion_ending_soon_command_notifies_wishlist_users_once" file="D:\meem-commerce\tests\Feature\Notifications\PromotionFlashSaleNotificationE2ETest.php" line="90" class="Tests\Feature\Notifications\PromotionFlashSaleNotificationE2ETest" classname="Tests.Feature.Notifications.PromotionFlashSaleNotificationE2ETest" assertions="8" time="0.148970"/>
+    <testcase name="test_flash_sale_ending_soon_command_notifies_wishlist_users_once" file="D:\meem-commerce\tests\Feature\Notifications\PromotionFlashSaleNotificationE2ETest.php" line="122" class="Tests\Feature\Notifications\PromotionFlashSaleNotificationE2ETest" classname="Tests.Feature.Notifications.PromotionFlashSaleNotificationE2ETest" assertions="6" time="0.019310"/>
+  </testsuite>
+</testsuites>

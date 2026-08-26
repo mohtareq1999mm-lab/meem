@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Invoice\AdminInvoiceRegenerateTest" file="D:\meem-commerce\tests\Feature\Invoice\AdminInvoiceRegenerateTest.php" tests="5" assertions="43" errors="0" failures="0" skipped="0" time="0.287320">
+    <testcase name="test_regenerate_from_generated_transitions_to_pdf_generating_and_dispatches_job" file="D:\meem-commerce\tests\Feature\Invoice\AdminInvoiceRegenerateTest.php" line="30" class="Tests\Feature\Invoice\AdminInvoiceRegenerateTest" classname="Tests.Feature.Invoice.AdminInvoiceRegenerateTest" assertions="11" time="0.062787"/>
+    <testcase name="test_repeated_regenerate_increments_attempts_and_pushes_again" file="D:\meem-commerce\tests\Feature\Invoice\AdminInvoiceRegenerateTest.php" line="61" class="Tests\Feature\Invoice\AdminInvoiceRegenerateTest" classname="Tests.Feature.Invoice.AdminInvoiceRegenerateTest" assertions="4" time="0.014714"/>
+    <testcase name="test_regenerate_is_rejected_for_terminal_or_non_pdf_statuses" file="D:\meem-commerce\tests\Feature\Invoice\AdminInvoiceRegenerateTest.php" line="89" class="Tests\Feature\Invoice\AdminInvoiceRegenerateTest" classname="Tests.Feature.Invoice.AdminInvoiceRegenerateTest" assertions="10" time="0.018624"/>
+    <testcase name="test_regression_inv002_regenerate_from_ready_follows_valid_transition" file="D:\meem-commerce\tests\Feature\Invoice\AdminInvoiceRegenerateTest.php" line="117" class="Tests\Feature\Invoice\AdminInvoiceRegenerateTest" classname="Tests.Feature.Invoice.AdminInvoiceRegenerateTest" assertions="14" time="0.179350"/>
+    <testcase name="test_regenerate_from_failed_remains_supported" file="D:\meem-commerce\tests\Feature\Invoice\AdminInvoiceRegenerateTest.php" line="160" class="Tests\Feature\Invoice\AdminInvoiceRegenerateTest" classname="Tests.Feature.Invoice.AdminInvoiceRegenerateTest" assertions="4" time="0.011845"/>
+  </testsuite>
+</testsuites>

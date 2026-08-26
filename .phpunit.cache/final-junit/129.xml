@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Contacts\ContactCrudTest" file="D:\meem-commerce\tests\Feature\Contacts\ContactCrudTest.php" tests="6" assertions="10" errors="0" failures="0" skipped="0" time="0.073452">
+    <testcase name="can_list_contacts" file="D:\meem-commerce\tests\Feature\Contacts\ContactCrudTest.php" line="72" class="Tests\Feature\Contacts\ContactCrudTest" classname="Tests.Feature.Contacts.ContactCrudTest" assertions="2" time="0.035387"/>
+    <testcase name="can_show_contact" file="D:\meem-commerce\tests\Feature\Contacts\ContactCrudTest.php" line="84" class="Tests\Feature\Contacts\ContactCrudTest" classname="Tests.Feature.Contacts.ContactCrudTest" assertions="2" time="0.005844"/>
+    <testcase name="show_marks_contact_as_read" file="D:\meem-commerce\tests\Feature\Contacts\ContactCrudTest.php" line="100" class="Tests\Feature\Contacts\ContactCrudTest" classname="Tests.Feature.Contacts.ContactCrudTest" assertions="2" time="0.005885"/>
+    <testcase name="can_delete_contact" file="D:\meem-commerce\tests\Feature\Contacts\ContactCrudTest.php" line="118" class="Tests\Feature\Contacts\ContactCrudTest" classname="Tests.Feature.Contacts.ContactCrudTest" assertions="2" time="0.006145"/>
+    <testcase name="show_returns_404_for_nonexistent_contact" file="D:\meem-commerce\tests\Feature\Contacts\ContactCrudTest.php" line="134" class="Tests\Feature\Contacts\ContactCrudTest" classname="Tests.Feature.Contacts.ContactCrudTest" assertions="1" time="0.010679"/>
+    <testcase name="delete_returns_404_for_nonexistent_contact" file="D:\meem-commerce\tests\Feature\Contacts\ContactCrudTest.php" line="142" class="Tests\Feature\Contacts\ContactCrudTest" classname="Tests.Feature.Contacts.ContactCrudTest" assertions="1" time="0.009512"/>
+  </testsuite>
+</testsuites>

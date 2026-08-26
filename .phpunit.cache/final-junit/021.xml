@@ -1,0 +1,439 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\AdminOrderTest" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" tests="58" assertions="206" errors="0" failures="2" skipped="0" time="2.891445">
+    <testcase name="test_index_requires_authentication" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="135" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="1" time="0.038601"/>
+    <testcase name="test_index_requires_view_orders_permission" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="142" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="1" time="0.018686"/>
+    <testcase name="test_index_returns_paginated_orders" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="150" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="14" time="0.015964"/>
+    <testcase name="test_index_respects_limit_parameter" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="171" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.008177"/>
+    <testcase name="test_index_enforces_max_limit" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="187" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="2" time="0.010456"/>
+    <testcase name="test_index_returns_empty_data_when_no_orders" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="201" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.005417"/>
+    <testcase name="test_index_filters_by_status" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="212" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="2" time="0.009236"/>
+    <testcase name="test_index_filters_by_user_id" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="228" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="2" time="0.009847"/>
+    <testcase name="test_index_filters_by_shipping_method" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="252" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="2" time="0.009124"/>
+    <testcase name="test_index_search_returns_matching_results" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="268" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.008070"/>
+    <testcase name="test_index_filters_by_date_range" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="289" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="2" time="0.008462"/>
+    <testcase name="test_index_filters_by_product_id" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="302" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="2" time="0.007939"/>
+    <testcase name="test_index_does_not_include_extra_fields" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="315" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="8" time="0.007977"/>
+    <testcase name="test_show_requires_authentication" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="340" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="1" time="0.003489"/>
+    <testcase name="test_show_requires_view_order_permission" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="349" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="1" time="0.004986"/>
+    <testcase name="test_show_returns_single_order" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="359" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="19" time="0.009305"/>
+    <testcase name="test_show_returns_404_for_nonexistent_order" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="391" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="1" time="0.005240"/>
+    <testcase name="test_show_includes_customer_details_and_items" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="400" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="7" time="0.009171"/>
+    <testcase name="test_show_returns_correct_order_number" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="420" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="2" time="0.006427"/>
+    <testcase name="test_show_order_items_have_correct_structure" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="433" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="6" time="0.010119"/>
+    <testcase name="test_show_transactions_have_correct_structure" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="451" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="6" time="0.007401"/>
+    <testcase name="test_update_status_requires_authentication" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="473" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="1" time="0.002533"/>
+    <testcase name="test_update_status_requires_update_order_status_permission" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="484" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="1" time="0.005015"/>
+    <testcase name="test_update_status_updates_order_to_completed" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="496" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="17" time="0.344185"/>
+    <testcase name="test_update_status_to_processing_is_supported" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="532" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.078335"/>
+    <testcase name="test_update_status_completed_to_delivered" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="550" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="1" time="0.016291">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\AdminOrderTest::test_update_status_completed_to_delivered&#13;
+Expected response status code [200] but received 500.
+Failed asserting that 200 is identical to 500.&#13;
+&#13;
+The following exception occurred during the last request:
+
+ReflectionException: Class "App\Providers\SendUserOrderDeliveredNotification" does not exist in D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Container.php:912
+Stack trace:
+#0 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Container.php(912): ReflectionClass-&gt;__construct('App\\Providers\\S...')
+#1 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Container.php(795): Illuminate\Container\Container-&gt;build('App\\Providers\\S...')
+#2 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Application.php(955): Illuminate\Container\Container-&gt;resolve('App\\Providers\\S...', Array, true)
+#3 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Container.php(731): Illuminate\Foundation\Application-&gt;resolve('App\\Providers\\S...', Array)
+#4 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Application.php(940): Illuminate\Container\Container-&gt;make('App\\Providers\\S...', Array)
+#5 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php(502): Illuminate\Foundation\Application-&gt;make('App\\Providers\\S...')
+#6 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php(476): Illuminate\Events\Dispatcher-&gt;createClassCallable('App\\Providers\\S...')
+#7 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php(286): Illuminate\Events\Dispatcher-&gt;Illuminate\Events\{closure}('App\\Events\\Orde...', Array)
+#8 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php(266): Illuminate\Events\Dispatcher-&gt;invokeListeners('App\\Events\\Orde...', Array, false)
+#9 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\helpers.php(433): Illuminate\Events\Dispatcher-&gt;dispatch('App\\Events\\Orde...')
+#10 D:\meem-commerce\app\Services\General\OrderService.php(637): event(Object(App\Events\OrderDelivered))
+#11 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Concerns\ManagesTransactions.php(30): App\Services\General\OrderService-&gt;App\Services\General\{closure}(Object(Illuminate\Database\SQLiteConnection))
+#12 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseManager.php(469): Illuminate\Database\Connection-&gt;transaction(Object(Closure))
+#13 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Facades\Facade.php(353): Illuminate\Database\DatabaseManager-&gt;__call('transaction', Array)
+#14 D:\meem-commerce\app\Services\General\OrderService.php(511): Illuminate\Support\Facades\Facade::__callStatic('transaction', Array)
+#15 D:\meem-commerce\packages\marvel\src\Http\Controllers\Order\OrderController.php(93): App\Services\General\OrderService-&gt;changeOrderStatus(NULL, 'delivered', 1)
+#16 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Controller.php(54): Marvel\Http\Controllers\Order\OrderController-&gt;updateStatus(Object(Marvel\Http\Requests\OrderStatusUpdateRequest), '1')
+#17 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\ControllerDispatcher.php(43): Illuminate\Routing\Controller-&gt;callAction('updateStatus', Array)
+#18 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Route.php(259): Illuminate\Routing\ControllerDispatcher-&gt;dispatch(Object(Illuminate\Routing\Route), Object(Marvel\Http\Controllers\Order\OrderController), 'updateStatus')
+#19 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Route.php(205): Illuminate\Routing\Route-&gt;runController()
+#20 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(799): Illuminate\Routing\Route-&gt;run()
+#21 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(141): Illuminate\Routing\Router-&gt;Illuminate\Routing\{closure}(Object(Illuminate\Http\Request))
+#22 D:\meem-commerce\vendor\spatie\laravel-permission\src\Middleware\PermissionMiddleware.php(39): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#23 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Spatie\Permission\Middleware\PermissionMiddleware-&gt;handle(Object(Illuminate\Http\Request), Object(Closure), 'update-order-st...')
+#24 D:\meem-commerce\app\Http\Middleware\CheckLangMiddleware.php(27): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#25 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): App\Http\Middleware\CheckLangMiddleware-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#26 D:\meem-commerce\app\Http\Middleware\ChannelMiddleware.php(25): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#27 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): App\Http\Middleware\ChannelMiddleware-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#28 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\SubstituteBindings.php(50): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#29 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Routing\Middleware\SubstituteBindings-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#30 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(159): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#31 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(125): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequest(Object(Illuminate\Http\Request), Object(Closure), Array)
+#32 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(87): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequestUsingNamedLimiter(Object(Illuminate\Http\Request), Object(Closure), 'admin', Object(Closure))
+#33 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handle(Object(Illuminate\Http\Request), Object(Closure), 'admin')
+#34 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(159): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#35 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(125): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequest(Object(Illuminate\Http\Request), Object(Closure), Array)
+#36 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(87): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequestUsingNamedLimiter(Object(Illuminate\Http\Request), Object(Closure), 'api', Object(Closure))
+#37 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handle(Object(Illuminate\Http\Request), Object(Closure), 'api')
+#38 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Auth\Middleware\Authenticate.php(57): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#39 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Auth\Middleware\Authenticate-&gt;handle(Object(Illuminate\Http\Request), Object(Closure), 'sanctum')
+#40 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse.php(37): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#41 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#42 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Cookie\Middleware\EncryptCookies.php(67): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#43 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Cookie\Middleware\EncryptCookies-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#44 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(116): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#45 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(798): Illuminate\Pipeline\Pipeline-&gt;then(Object(Closure))
+#46 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(777): Illuminate\Routing\Router-&gt;runRouteWithinStack(Object(Illuminate\Routing\Route), Object(Illuminate\Http\Request))
+#47 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(741): Illuminate\Routing\Router-&gt;runRoute(Object(Illuminate\Http\Request), Object(Illuminate\Routing\Route))
+#48 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(730): Illuminate\Routing\Router-&gt;dispatchToRoute(Object(Illuminate\Http\Request))
+#49 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(200): Illuminate\Routing\Router-&gt;dispatch(Object(Illuminate\Http\Request))
+#50 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(141): Illuminate\Foundation\Http\Kernel-&gt;Illuminate\Foundation\Http\{closure}(Object(Illuminate\Http\Request))
+#51 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Http\Middleware\HandleCors.php(62): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#52 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Http\Middleware\HandleCors-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#53 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TransformsRequest.php(21): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#54 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull.php(31): Illuminate\Foundation\Http\Middleware\TransformsRequest-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#55 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#56 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TransformsRequest.php(21): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#57 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TrimStrings.php(40): Illuminate\Foundation\Http\Middleware\TransformsRequest-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#58 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\TrimStrings-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#59 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\ValidatePostSize.php(27): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#60 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\ValidatePostSize-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#61 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance.php(99): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#62 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#63 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Http\Middleware\TrustProxies.php(39): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#64 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Http\Middleware\TrustProxies-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#65 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(116): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#66 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(175): Illuminate\Pipeline\Pipeline-&gt;then(Object(Closure))
+#67 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(144): Illuminate\Foundation\Http\Kernel-&gt;sendRequestThroughRouter(Object(Illuminate\Http\Request))
+#68 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\MakesHttpRequests.php(573): Illuminate\Foundation\Http\Kernel-&gt;handle(Object(Illuminate\Http\Request))
+#69 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\MakesHttpRequests.php(539): Illuminate\Foundation\Testing\TestCase-&gt;call('PATCH', '/api/v1/orders/...', Array, Array, Array, Array, '{"status":"deli...')
+#70 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\MakesHttpRequests.php(437): Illuminate\Foundation\Testing\TestCase-&gt;json('PATCH', '/api/v1/orders/...', Array, Array, 0)
+#71 D:\meem-commerce\tests\Feature\AdminOrderTest.php(556): Illuminate\Foundation\Testing\TestCase-&gt;patchJson('/api/v1/orders/...', Array)
+#72 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestCase.php(1030): Tests\Feature\AdminOrderTest-&gt;test_update_status_completed_to_delivered()
+#73 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php(174): PHPUnit\Framework\TestCase-&gt;runTest()
+#74 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestCase.php(627): Illuminate\Foundation\Testing\TestCase-&gt;runTest()
+#75 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestRunner.php(101): PHPUnit\Framework\TestCase-&gt;runBare()
+#76 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestCase.php(456): PHPUnit\Framework\TestRunner-&gt;run(Object(Tests\Feature\AdminOrderTest))
+#77 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestSuite.php(352): PHPUnit\Framework\TestCase-&gt;run()
+#78 D:\meem-commerce\vendor\phpunit\phpunit\src\TextUI\TestRunner.php(63): PHPUnit\Framework\TestSuite-&gt;run()
+#79 D:\meem-commerce\vendor\phpunit\phpunit\src\TextUI\Application.php(141): PHPUnit\TextUI\TestRunner-&gt;run(Object(PHPUnit\TextUI\Configuration\Configuration), Object(PHPUnit\Runner\ResultCache\DefaultResultCache), Object(PHPUnit\Framework\TestSuite))
+#80 D:\meem-commerce\vendor\phpunit\phpunit\phpunit(90): PHPUnit\TextUI\Application-&gt;run(Array)
+#81 D:\meem-commerce\vendor\bin\phpunit(122): include('D:\\meem-commerc...')
+#82 {main}
+
+Next Illuminate\Contracts\Container\BindingResolutionException: Target class [App\Providers\SendUserOrderDeliveredNotification] does not exist. in D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Container.php:914
+Stack trace:
+#0 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Container.php(795): Illuminate\Container\Container-&gt;build('App\\Providers\\S...')
+#1 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Application.php(955): Illuminate\Container\Container-&gt;resolve('App\\Providers\\S...', Array, true)
+#2 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Container.php(731): Illuminate\Foundation\Application-&gt;resolve('App\\Providers\\S...', Array)
+#3 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Application.php(940): Illuminate\Container\Container-&gt;make('App\\Providers\\S...', Array)
+#4 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php(502): Illuminate\Foundation\Application-&gt;make('App\\Providers\\S...')
+#5 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php(476): Illuminate\Events\Dispatcher-&gt;createClassCallable('App\\Providers\\S...')
+#6 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php(286): Illuminate\Events\Dispatcher-&gt;Illuminate\Events\{closure}('App\\Events\\Orde...', Array)
+#7 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php(266): Illuminate\Events\Dispatcher-&gt;invokeListeners('App\\Events\\Orde...', Array, false)
+#8 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\helpers.php(433): Illuminate\Events\Dispatcher-&gt;dispatch('App\\Events\\Orde...')
+#9 D:\meem-commerce\app\Services\General\OrderService.php(637): event(Object(App\Events\OrderDelivered))
+#10 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Concerns\ManagesTransactions.php(30): App\Services\General\OrderService-&gt;App\Services\General\{closure}(Object(Illuminate\Database\SQLiteConnection))
+#11 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseManager.php(469): Illuminate\Database\Connection-&gt;transaction(Object(Closure))
+#12 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Facades\Facade.php(353): Illuminate\Database\DatabaseManager-&gt;__call('transaction', Array)
+#13 D:\meem-commerce\app\Services\General\OrderService.php(511): Illuminate\Support\Facades\Facade::__callStatic('transaction', Array)
+#14 D:\meem-commerce\packages\marvel\src\Http\Controllers\Order\OrderController.php(93): App\Services\General\OrderService-&gt;changeOrderStatus(NULL, 'delivered', 1)
+#15 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Controller.php(54): Marvel\Http\Controllers\Order\OrderController-&gt;updateStatus(Object(Marvel\Http\Requests\OrderStatusUpdateRequest), '1')
+#16 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\ControllerDispatcher.php(43): Illuminate\Routing\Controller-&gt;callAction('updateStatus', Array)
+#17 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Route.php(259): Illuminate\Routing\ControllerDispatcher-&gt;dispatch(Object(Illuminate\Routing\Route), Object(Marvel\Http\Controllers\Order\OrderController), 'updateStatus')
+#18 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Route.php(205): Illuminate\Routing\Route-&gt;runController()
+#19 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(799): Illuminate\Routing\Route-&gt;run()
+#20 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(141): Illuminate\Routing\Router-&gt;Illuminate\Routing\{closure}(Object(Illuminate\Http\Request))
+#21 D:\meem-commerce\vendor\spatie\laravel-permission\src\Middleware\PermissionMiddleware.php(39): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#22 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Spatie\Permission\Middleware\PermissionMiddleware-&gt;handle(Object(Illuminate\Http\Request), Object(Closure), 'update-order-st...')
+#23 D:\meem-commerce\app\Http\Middleware\CheckLangMiddleware.php(27): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#24 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): App\Http\Middleware\CheckLangMiddleware-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#25 D:\meem-commerce\app\Http\Middleware\ChannelMiddleware.php(25): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#26 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): App\Http\Middleware\ChannelMiddleware-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#27 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\SubstituteBindings.php(50): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#28 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Routing\Middleware\SubstituteBindings-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#29 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(159): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#30 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(125): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequest(Object(Illuminate\Http\Request), Object(Closure), Array)
+#31 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(87): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequestUsingNamedLimiter(Object(Illuminate\Http\Request), Object(Closure), 'admin', Object(Closure))
+#32 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handle(Object(Illuminate\Http\Request), Object(Closure), 'admin')
+#33 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(159): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#34 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(125): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequest(Object(Illuminate\Http\Request), Object(Closure), Array)
+#35 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(87): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequestUsingNamedLimiter(Object(Illuminate\Http\Request), Object(Closure), 'api', Object(Closure))
+#36 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handle(Object(Illuminate\Http\Request), Object(Closure), 'api')
+#37 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Auth\Middleware\Authenticate.php(57): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#38 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Auth\Middleware\Authenticate-&gt;handle(Object(Illuminate\Http\Request), Object(Closure), 'sanctum')
+#39 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse.php(37): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#40 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#41 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Cookie\Middleware\EncryptCookies.php(67): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#42 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Cookie\Middleware\EncryptCookies-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#43 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(116): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#44 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(798): Illuminate\Pipeline\Pipeline-&gt;then(Object(Closure))
+#45 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(777): Illuminate\Routing\Router-&gt;runRouteWithinStack(Object(Illuminate\Routing\Route), Object(Illuminate\Http\Request))
+#46 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(741): Illuminate\Routing\Router-&gt;runRoute(Object(Illuminate\Http\Request), Object(Illuminate\Routing\Route))
+#47 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(730): Illuminate\Routing\Router-&gt;dispatchToRoute(Object(Illuminate\Http\Request))
+#48 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(200): Illuminate\Routing\Router-&gt;dispatch(Object(Illuminate\Http\Request))
+#49 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(141): Illuminate\Foundation\Http\Kernel-&gt;Illuminate\Foundation\Http\{closure}(Object(Illuminate\Http\Request))
+#50 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Http\Middleware\HandleCors.php(62): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#51 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Http\Middleware\HandleCors-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#52 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TransformsRequest.php(21): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#53 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull.php(31): Illuminate\Foundation\Http\Middleware\TransformsRequest-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#54 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#55 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TransformsRequest.php(21): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#56 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TrimStrings.php(40): Illuminate\Foundation\Http\Middleware\TransformsRequest-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#57 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\TrimStrings-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#58 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\ValidatePostSize.php(27): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#59 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\ValidatePostSize-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#60 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance.php(99): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#61 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#62 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Http\Middleware\TrustProxies.php(39): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#63 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Http\Middleware\TrustProxies-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#64 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(116): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#65 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(175): Illuminate\Pipeline\Pipeline-&gt;then(Object(Closure))
+#66 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(144): Illuminate\Foundation\Http\Kernel-&gt;sendRequestThroughRouter(Object(Illuminate\Http\Request))
+#67 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\MakesHttpRequests.php(573): Illuminate\Foundation\Http\Kernel-&gt;handle(Object(Illuminate\Http\Request))
+#68 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\MakesHttpRequests.php(539): Illuminate\Foundation\Testing\TestCase-&gt;call('PATCH', '/api/v1/orders/...', Array, Array, Array, Array, '{"status":"deli...')
+#69 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\MakesHttpRequests.php(437): Illuminate\Foundation\Testing\TestCase-&gt;json('PATCH', '/api/v1/orders/...', Array, Array, 0)
+#70 D:\meem-commerce\tests\Feature\AdminOrderTest.php(556): Illuminate\Foundation\Testing\TestCase-&gt;patchJson('/api/v1/orders/...', Array)
+#71 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestCase.php(1030): Tests\Feature\AdminOrderTest-&gt;test_update_status_completed_to_delivered()
+#72 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php(174): PHPUnit\Framework\TestCase-&gt;runTest()
+#73 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestCase.php(627): Illuminate\Foundation\Testing\TestCase-&gt;runTest()
+#74 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestRunner.php(101): PHPUnit\Framework\TestCase-&gt;runBare()
+#75 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestCase.php(456): PHPUnit\Framework\TestRunner-&gt;run(Object(Tests\Feature\AdminOrderTest))
+#76 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestSuite.php(352): PHPUnit\Framework\TestCase-&gt;run()
+#77 D:\meem-commerce\vendor\phpunit\phpunit\src\TextUI\TestRunner.php(63): PHPUnit\Framework\TestSuite-&gt;run()
+#78 D:\meem-commerce\vendor\phpunit\phpunit\src\TextUI\Application.php(141): PHPUnit\TextUI\TestRunner-&gt;run(Object(PHPUnit\TextUI\Configuration\Configuration), Object(PHPUnit\Runner\ResultCache\DefaultResultCache), Object(PHPUnit\Framework\TestSuite))
+#79 D:\meem-commerce\vendor\phpunit\phpunit\phpunit(90): PHPUnit\TextUI\Application-&gt;run(Array)
+#80 D:\meem-commerce\vendor\bin\phpunit(122): include('D:\\meem-commerc...')
+#81 {main}
+
+----------------------------------------------------------------------------------
+
+Target class [App\Providers\SendUserOrderDeliveredNotification] does not exist.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\AdminOrderTest.php:560
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_update_status_to_cancelled_sets_cancelled_at" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="568" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="4" time="0.224801"/>
+    <testcase name="test_update_status_returns_404_for_nonexistent_order" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="587" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="2" time="0.005233"/>
+    <testcase name="test_update_status_returns_422_for_missing_status" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="599" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.007189"/>
+    <testcase name="test_update_status_returns_422_for_invalid_status" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="611" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.004973"/>
+    <testcase name="test_update_status_returns_422_for_invalid_transition" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="625" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.007092"/>
+    <testcase name="test_update_status_response_includes_order_details" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="644" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="5" time="0.233969"/>
+    <testcase name="test_update_status_response_includes_available_statuses" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="665" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="2" time="0.078436"/>
+    <testsuite name="Tests\Feature\AdminOrderTest::test_update_status_allows_every_matrix_transition" tests="11" assertions="31" errors="0" failures="1" skipped="0" time="1.564430">
+      <testcase name="test_update_status_allows_every_matrix_transition with data set &quot;pending -&gt; pending&quot;" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="685" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.011000"/>
+      <testcase name="test_update_status_allows_every_matrix_transition with data set &quot;pending -&gt; processing&quot;" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="685" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.093837"/>
+      <testcase name="test_update_status_allows_every_matrix_transition with data set &quot;pending -&gt; completed&quot;" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="685" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.301878"/>
+      <testcase name="test_update_status_allows_every_matrix_transition with data set &quot;pending -&gt; cancelled&quot;" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="685" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.300291"/>
+      <testcase name="test_update_status_allows_every_matrix_transition with data set &quot;processing -&gt; processing&quot;" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="685" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.016388"/>
+      <testcase name="test_update_status_allows_every_matrix_transition with data set &quot;processing -&gt; completed&quot;" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="685" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.336051"/>
+      <testcase name="test_update_status_allows_every_matrix_transition with data set &quot;processing -&gt; cancelled&quot;" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="685" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.226442"/>
+      <testcase name="test_update_status_allows_every_matrix_transition with data set &quot;completed -&gt; completed&quot;" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="685" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.243233"/>
+      <testcase name="test_update_status_allows_every_matrix_transition with data set &quot;completed -&gt; delivered&quot;" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="685" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="1" time="0.008684">
+        <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\AdminOrderTest::test_update_status_allows_every_matrix_transition with data set "completed -&gt; delivered"&#13;
+Expected response status code [200] but received 500.
+Failed asserting that 200 is identical to 500.&#13;
+&#13;
+The following exception occurred during the last request:
+
+ReflectionException: Class "App\Providers\SendUserOrderDeliveredNotification" does not exist in D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Container.php:912
+Stack trace:
+#0 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Container.php(912): ReflectionClass-&gt;__construct('App\\Providers\\S...')
+#1 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Container.php(795): Illuminate\Container\Container-&gt;build('App\\Providers\\S...')
+#2 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Application.php(955): Illuminate\Container\Container-&gt;resolve('App\\Providers\\S...', Array, true)
+#3 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Container.php(731): Illuminate\Foundation\Application-&gt;resolve('App\\Providers\\S...', Array)
+#4 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Application.php(940): Illuminate\Container\Container-&gt;make('App\\Providers\\S...', Array)
+#5 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php(502): Illuminate\Foundation\Application-&gt;make('App\\Providers\\S...')
+#6 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php(476): Illuminate\Events\Dispatcher-&gt;createClassCallable('App\\Providers\\S...')
+#7 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php(286): Illuminate\Events\Dispatcher-&gt;Illuminate\Events\{closure}('App\\Events\\Orde...', Array)
+#8 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php(266): Illuminate\Events\Dispatcher-&gt;invokeListeners('App\\Events\\Orde...', Array, false)
+#9 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\helpers.php(433): Illuminate\Events\Dispatcher-&gt;dispatch('App\\Events\\Orde...')
+#10 D:\meem-commerce\app\Services\General\OrderService.php(637): event(Object(App\Events\OrderDelivered))
+#11 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Concerns\ManagesTransactions.php(30): App\Services\General\OrderService-&gt;App\Services\General\{closure}(Object(Illuminate\Database\SQLiteConnection))
+#12 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseManager.php(469): Illuminate\Database\Connection-&gt;transaction(Object(Closure))
+#13 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Facades\Facade.php(353): Illuminate\Database\DatabaseManager-&gt;__call('transaction', Array)
+#14 D:\meem-commerce\app\Services\General\OrderService.php(511): Illuminate\Support\Facades\Facade::__callStatic('transaction', Array)
+#15 D:\meem-commerce\packages\marvel\src\Http\Controllers\Order\OrderController.php(93): App\Services\General\OrderService-&gt;changeOrderStatus(NULL, 'delivered', 1)
+#16 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Controller.php(54): Marvel\Http\Controllers\Order\OrderController-&gt;updateStatus(Object(Marvel\Http\Requests\OrderStatusUpdateRequest), '1')
+#17 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\ControllerDispatcher.php(43): Illuminate\Routing\Controller-&gt;callAction('updateStatus', Array)
+#18 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Route.php(259): Illuminate\Routing\ControllerDispatcher-&gt;dispatch(Object(Illuminate\Routing\Route), Object(Marvel\Http\Controllers\Order\OrderController), 'updateStatus')
+#19 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Route.php(205): Illuminate\Routing\Route-&gt;runController()
+#20 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(799): Illuminate\Routing\Route-&gt;run()
+#21 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(141): Illuminate\Routing\Router-&gt;Illuminate\Routing\{closure}(Object(Illuminate\Http\Request))
+#22 D:\meem-commerce\vendor\spatie\laravel-permission\src\Middleware\PermissionMiddleware.php(39): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#23 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Spatie\Permission\Middleware\PermissionMiddleware-&gt;handle(Object(Illuminate\Http\Request), Object(Closure), 'update-order-st...')
+#24 D:\meem-commerce\app\Http\Middleware\CheckLangMiddleware.php(27): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#25 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): App\Http\Middleware\CheckLangMiddleware-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#26 D:\meem-commerce\app\Http\Middleware\ChannelMiddleware.php(25): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#27 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): App\Http\Middleware\ChannelMiddleware-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#28 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\SubstituteBindings.php(50): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#29 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Routing\Middleware\SubstituteBindings-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#30 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(159): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#31 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(125): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequest(Object(Illuminate\Http\Request), Object(Closure), Array)
+#32 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(87): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequestUsingNamedLimiter(Object(Illuminate\Http\Request), Object(Closure), 'admin', Object(Closure))
+#33 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handle(Object(Illuminate\Http\Request), Object(Closure), 'admin')
+#34 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(159): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#35 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(125): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequest(Object(Illuminate\Http\Request), Object(Closure), Array)
+#36 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(87): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequestUsingNamedLimiter(Object(Illuminate\Http\Request), Object(Closure), 'api', Object(Closure))
+#37 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handle(Object(Illuminate\Http\Request), Object(Closure), 'api')
+#38 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Auth\Middleware\Authenticate.php(57): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#39 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Auth\Middleware\Authenticate-&gt;handle(Object(Illuminate\Http\Request), Object(Closure), 'sanctum')
+#40 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse.php(37): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#41 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#42 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Cookie\Middleware\EncryptCookies.php(67): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#43 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Cookie\Middleware\EncryptCookies-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#44 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(116): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#45 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(798): Illuminate\Pipeline\Pipeline-&gt;then(Object(Closure))
+#46 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(777): Illuminate\Routing\Router-&gt;runRouteWithinStack(Object(Illuminate\Routing\Route), Object(Illuminate\Http\Request))
+#47 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(741): Illuminate\Routing\Router-&gt;runRoute(Object(Illuminate\Http\Request), Object(Illuminate\Routing\Route))
+#48 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(730): Illuminate\Routing\Router-&gt;dispatchToRoute(Object(Illuminate\Http\Request))
+#49 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(200): Illuminate\Routing\Router-&gt;dispatch(Object(Illuminate\Http\Request))
+#50 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(141): Illuminate\Foundation\Http\Kernel-&gt;Illuminate\Foundation\Http\{closure}(Object(Illuminate\Http\Request))
+#51 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Http\Middleware\HandleCors.php(62): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#52 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Http\Middleware\HandleCors-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#53 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TransformsRequest.php(21): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#54 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull.php(31): Illuminate\Foundation\Http\Middleware\TransformsRequest-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#55 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#56 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TransformsRequest.php(21): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#57 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TrimStrings.php(40): Illuminate\Foundation\Http\Middleware\TransformsRequest-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#58 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\TrimStrings-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#59 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\ValidatePostSize.php(27): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#60 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\ValidatePostSize-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#61 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance.php(99): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#62 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#63 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Http\Middleware\TrustProxies.php(39): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#64 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Http\Middleware\TrustProxies-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#65 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(116): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#66 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(175): Illuminate\Pipeline\Pipeline-&gt;then(Object(Closure))
+#67 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(144): Illuminate\Foundation\Http\Kernel-&gt;sendRequestThroughRouter(Object(Illuminate\Http\Request))
+#68 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\MakesHttpRequests.php(573): Illuminate\Foundation\Http\Kernel-&gt;handle(Object(Illuminate\Http\Request))
+#69 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\MakesHttpRequests.php(539): Illuminate\Foundation\Testing\TestCase-&gt;call('PATCH', '/api/v1/orders/...', Array, Array, Array, Array, '{"status":"deli...')
+#70 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\MakesHttpRequests.php(437): Illuminate\Foundation\Testing\TestCase-&gt;json('PATCH', '/api/v1/orders/...', Array, Array, 0)
+#71 D:\meem-commerce\tests\Feature\AdminOrderTest.php(691): Illuminate\Foundation\Testing\TestCase-&gt;patchJson('/api/v1/orders/...', Array)
+#72 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestCase.php(1030): Tests\Feature\AdminOrderTest-&gt;test_update_status_allows_every_matrix_transition('completed', 'delivered')
+#73 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php(174): PHPUnit\Framework\TestCase-&gt;runTest()
+#74 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestCase.php(627): Illuminate\Foundation\Testing\TestCase-&gt;runTest()
+#75 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestRunner.php(101): PHPUnit\Framework\TestCase-&gt;runBare()
+#76 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestCase.php(456): PHPUnit\Framework\TestRunner-&gt;run(Object(Tests\Feature\AdminOrderTest))
+#77 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestSuite.php(352): PHPUnit\Framework\TestCase-&gt;run()
+#78 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestSuite.php(352): PHPUnit\Framework\TestSuite-&gt;run()
+#79 D:\meem-commerce\vendor\phpunit\phpunit\src\TextUI\TestRunner.php(63): PHPUnit\Framework\TestSuite-&gt;run()
+#80 D:\meem-commerce\vendor\phpunit\phpunit\src\TextUI\Application.php(141): PHPUnit\TextUI\TestRunner-&gt;run(Object(PHPUnit\TextUI\Configuration\Configuration), Object(PHPUnit\Runner\ResultCache\DefaultResultCache), Object(PHPUnit\Framework\TestSuite))
+#81 D:\meem-commerce\vendor\phpunit\phpunit\phpunit(90): PHPUnit\TextUI\Application-&gt;run(Array)
+#82 D:\meem-commerce\vendor\bin\phpunit(122): include('D:\\meem-commerc...')
+#83 {main}
+
+Next Illuminate\Contracts\Container\BindingResolutionException: Target class [App\Providers\SendUserOrderDeliveredNotification] does not exist. in D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Container.php:914
+Stack trace:
+#0 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Container.php(795): Illuminate\Container\Container-&gt;build('App\\Providers\\S...')
+#1 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Application.php(955): Illuminate\Container\Container-&gt;resolve('App\\Providers\\S...', Array, true)
+#2 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Container.php(731): Illuminate\Foundation\Application-&gt;resolve('App\\Providers\\S...', Array)
+#3 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Application.php(940): Illuminate\Container\Container-&gt;make('App\\Providers\\S...', Array)
+#4 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php(502): Illuminate\Foundation\Application-&gt;make('App\\Providers\\S...')
+#5 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php(476): Illuminate\Events\Dispatcher-&gt;createClassCallable('App\\Providers\\S...')
+#6 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php(286): Illuminate\Events\Dispatcher-&gt;Illuminate\Events\{closure}('App\\Events\\Orde...', Array)
+#7 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php(266): Illuminate\Events\Dispatcher-&gt;invokeListeners('App\\Events\\Orde...', Array, false)
+#8 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\helpers.php(433): Illuminate\Events\Dispatcher-&gt;dispatch('App\\Events\\Orde...')
+#9 D:\meem-commerce\app\Services\General\OrderService.php(637): event(Object(App\Events\OrderDelivered))
+#10 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Concerns\ManagesTransactions.php(30): App\Services\General\OrderService-&gt;App\Services\General\{closure}(Object(Illuminate\Database\SQLiteConnection))
+#11 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseManager.php(469): Illuminate\Database\Connection-&gt;transaction(Object(Closure))
+#12 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Facades\Facade.php(353): Illuminate\Database\DatabaseManager-&gt;__call('transaction', Array)
+#13 D:\meem-commerce\app\Services\General\OrderService.php(511): Illuminate\Support\Facades\Facade::__callStatic('transaction', Array)
+#14 D:\meem-commerce\packages\marvel\src\Http\Controllers\Order\OrderController.php(93): App\Services\General\OrderService-&gt;changeOrderStatus(NULL, 'delivered', 1)
+#15 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Controller.php(54): Marvel\Http\Controllers\Order\OrderController-&gt;updateStatus(Object(Marvel\Http\Requests\OrderStatusUpdateRequest), '1')
+#16 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\ControllerDispatcher.php(43): Illuminate\Routing\Controller-&gt;callAction('updateStatus', Array)
+#17 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Route.php(259): Illuminate\Routing\ControllerDispatcher-&gt;dispatch(Object(Illuminate\Routing\Route), Object(Marvel\Http\Controllers\Order\OrderController), 'updateStatus')
+#18 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Route.php(205): Illuminate\Routing\Route-&gt;runController()
+#19 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(799): Illuminate\Routing\Route-&gt;run()
+#20 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(141): Illuminate\Routing\Router-&gt;Illuminate\Routing\{closure}(Object(Illuminate\Http\Request))
+#21 D:\meem-commerce\vendor\spatie\laravel-permission\src\Middleware\PermissionMiddleware.php(39): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#22 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Spatie\Permission\Middleware\PermissionMiddleware-&gt;handle(Object(Illuminate\Http\Request), Object(Closure), 'update-order-st...')
+#23 D:\meem-commerce\app\Http\Middleware\CheckLangMiddleware.php(27): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#24 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): App\Http\Middleware\CheckLangMiddleware-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#25 D:\meem-commerce\app\Http\Middleware\ChannelMiddleware.php(25): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#26 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): App\Http\Middleware\ChannelMiddleware-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#27 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\SubstituteBindings.php(50): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#28 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Routing\Middleware\SubstituteBindings-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#29 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(159): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#30 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(125): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequest(Object(Illuminate\Http\Request), Object(Closure), Array)
+#31 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(87): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequestUsingNamedLimiter(Object(Illuminate\Http\Request), Object(Closure), 'admin', Object(Closure))
+#32 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handle(Object(Illuminate\Http\Request), Object(Closure), 'admin')
+#33 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(159): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#34 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(125): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequest(Object(Illuminate\Http\Request), Object(Closure), Array)
+#35 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Middleware\ThrottleRequests.php(87): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handleRequestUsingNamedLimiter(Object(Illuminate\Http\Request), Object(Closure), 'api', Object(Closure))
+#36 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Routing\Middleware\ThrottleRequests-&gt;handle(Object(Illuminate\Http\Request), Object(Closure), 'api')
+#37 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Auth\Middleware\Authenticate.php(57): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#38 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Auth\Middleware\Authenticate-&gt;handle(Object(Illuminate\Http\Request), Object(Closure), 'sanctum')
+#39 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse.php(37): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#40 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#41 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Cookie\Middleware\EncryptCookies.php(67): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#42 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Cookie\Middleware\EncryptCookies-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#43 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(116): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#44 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(798): Illuminate\Pipeline\Pipeline-&gt;then(Object(Closure))
+#45 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(777): Illuminate\Routing\Router-&gt;runRouteWithinStack(Object(Illuminate\Routing\Route), Object(Illuminate\Http\Request))
+#46 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(741): Illuminate\Routing\Router-&gt;runRoute(Object(Illuminate\Http\Request), Object(Illuminate\Routing\Route))
+#47 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Routing\Router.php(730): Illuminate\Routing\Router-&gt;dispatchToRoute(Object(Illuminate\Http\Request))
+#48 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(200): Illuminate\Routing\Router-&gt;dispatch(Object(Illuminate\Http\Request))
+#49 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(141): Illuminate\Foundation\Http\Kernel-&gt;Illuminate\Foundation\Http\{closure}(Object(Illuminate\Http\Request))
+#50 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Http\Middleware\HandleCors.php(62): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#51 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Http\Middleware\HandleCors-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#52 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TransformsRequest.php(21): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#53 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull.php(31): Illuminate\Foundation\Http\Middleware\TransformsRequest-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#54 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#55 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TransformsRequest.php(21): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#56 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TrimStrings.php(40): Illuminate\Foundation\Http\Middleware\TransformsRequest-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#57 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\TrimStrings-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#58 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\ValidatePostSize.php(27): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#59 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\ValidatePostSize-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#60 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance.php(99): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#61 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#62 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Http\Middleware\TrustProxies.php(39): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#63 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Http\Middleware\TrustProxies-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))
+#64 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(116): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))
+#65 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(175): Illuminate\Pipeline\Pipeline-&gt;then(Object(Closure))
+#66 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(144): Illuminate\Foundation\Http\Kernel-&gt;sendRequestThroughRouter(Object(Illuminate\Http\Request))
+#67 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\MakesHttpRequests.php(573): Illuminate\Foundation\Http\Kernel-&gt;handle(Object(Illuminate\Http\Request))
+#68 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\MakesHttpRequests.php(539): Illuminate\Foundation\Testing\TestCase-&gt;call('PATCH', '/api/v1/orders/...', Array, Array, Array, Array, '{"status":"deli...')
+#69 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\MakesHttpRequests.php(437): Illuminate\Foundation\Testing\TestCase-&gt;json('PATCH', '/api/v1/orders/...', Array, Array, 0)
+#70 D:\meem-commerce\tests\Feature\AdminOrderTest.php(691): Illuminate\Foundation\Testing\TestCase-&gt;patchJson('/api/v1/orders/...', Array)
+#71 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestCase.php(1030): Tests\Feature\AdminOrderTest-&gt;test_update_status_allows_every_matrix_transition('completed', 'delivered')
+#72 D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php(174): PHPUnit\Framework\TestCase-&gt;runTest()
+#73 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestCase.php(627): Illuminate\Foundation\Testing\TestCase-&gt;runTest()
+#74 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestRunner.php(101): PHPUnit\Framework\TestCase-&gt;runBare()
+#75 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestCase.php(456): PHPUnit\Framework\TestRunner-&gt;run(Object(Tests\Feature\AdminOrderTest))
+#76 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestSuite.php(352): PHPUnit\Framework\TestCase-&gt;run()
+#77 D:\meem-commerce\vendor\phpunit\phpunit\src\Framework\TestSuite.php(352): PHPUnit\Framework\TestSuite-&gt;run()
+#78 D:\meem-commerce\vendor\phpunit\phpunit\src\TextUI\TestRunner.php(63): PHPUnit\Framework\TestSuite-&gt;run()
+#79 D:\meem-commerce\vendor\phpunit\phpunit\src\TextUI\Application.php(141): PHPUnit\TextUI\TestRunner-&gt;run(Object(PHPUnit\TextUI\Configuration\Configuration), Object(PHPUnit\Runner\ResultCache\DefaultResultCache), Object(PHPUnit\Framework\TestSuite))
+#80 D:\meem-commerce\vendor\phpunit\phpunit\phpunit(90): PHPUnit\TextUI\Application-&gt;run(Array)
+#81 D:\meem-commerce\vendor\bin\phpunit(122): include('D:\\meem-commerc...')
+#82 {main}
+
+----------------------------------------------------------------------------------
+
+Target class [App\Providers\SendUserOrderDeliveredNotification] does not exist.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\AdminOrderTest.php:695
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+      </testcase>
+      <testcase name="test_update_status_allows_every_matrix_transition with data set &quot;delivered -&gt; delivered&quot;" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="685" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.008061"/>
+      <testcase name="test_update_status_allows_every_matrix_transition with data set &quot;cancelled -&gt; cancelled&quot;" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="685" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.018564"/>
+    </testsuite>
+    <testsuite name="Tests\Feature\AdminOrderTest::test_update_status_rejects_every_matrix_forbidden_transition" tests="14" assertions="42" errors="0" failures="0" skipped="0" time="0.104871">
+      <testcase name="test_update_status_rejects_every_matrix_forbidden_transition with data set &quot;pending -&gt; delivered&quot;" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="706" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.010279"/>
+      <testcase name="test_update_status_rejects_every_matrix_forbidden_transition with data set &quot;processing -&gt; pending&quot;" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="706" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.007159"/>
+      <testcase name="test_update_status_rejects_every_matrix_forbidden_transition with data set &quot;processing -&gt; delivered&quot;" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="706" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.007066"/>
+      <testcase name="test_update_status_rejects_every_matrix_forbidden_transition with data set &quot;completed -&gt; pending&quot;" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="706" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.006934"/>
+      <testcase name="test_update_status_rejects_every_matrix_forbidden_transition with data set &quot;completed -&gt; processing&quot;" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="706" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.008202"/>
+      <testcase name="test_update_status_rejects_every_matrix_forbidden_transition with data set &quot;completed -&gt; cancelled&quot;" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="706" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.008434"/>
+      <testcase name="test_update_status_rejects_every_matrix_forbidden_transition with data set &quot;delivered -&gt; pending&quot;" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="706" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.008282"/>
+      <testcase name="test_update_status_rejects_every_matrix_forbidden_transition with data set &quot;delivered -&gt; processing&quot;" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="706" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.007958"/>
+      <testcase name="test_update_status_rejects_every_matrix_forbidden_transition with data set &quot;delivered -&gt; completed&quot;" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="706" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.006390"/>
+      <testcase name="test_update_status_rejects_every_matrix_forbidden_transition with data set &quot;delivered -&gt; cancelled&quot;" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="706" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.006306"/>
+      <testcase name="test_update_status_rejects_every_matrix_forbidden_transition with data set &quot;cancelled -&gt; pending&quot;" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="706" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.006273"/>
+      <testcase name="test_update_status_rejects_every_matrix_forbidden_transition with data set &quot;cancelled -&gt; processing&quot;" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="706" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.008281"/>
+      <testcase name="test_update_status_rejects_every_matrix_forbidden_transition with data set &quot;cancelled -&gt; completed&quot;" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="706" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.007038"/>
+      <testcase name="test_update_status_rejects_every_matrix_forbidden_transition with data set &quot;cancelled -&gt; delivered&quot;" file="D:\meem-commerce\tests\Feature\AdminOrderTest.php" line="706" class="Tests\Feature\AdminOrderTest" classname="Tests.Feature.AdminOrderTest" assertions="3" time="0.006269"/>
+    </testsuite>
+  </testsuite>
+</testsuites>

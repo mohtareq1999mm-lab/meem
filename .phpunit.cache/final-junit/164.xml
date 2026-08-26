@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Faqs\FaqCrudTest" file="D:\meem-commerce\tests\Feature\Faqs\FaqCrudTest.php" tests="7" assertions="16" errors="0" failures="0" skipped="0" time="0.092910">
+    <testcase name="can_create_faq" file="D:\meem-commerce\tests\Feature\Faqs\FaqCrudTest.php" line="72" class="Tests\Feature\Faqs\FaqCrudTest" classname="Tests.Feature.Faqs.FaqCrudTest" assertions="3" time="0.044935"/>
+    <testcase name="can_list_faqs" file="D:\meem-commerce\tests\Feature\Faqs\FaqCrudTest.php" line="88" class="Tests\Feature\Faqs\FaqCrudTest" classname="Tests.Feature.Faqs.FaqCrudTest" assertions="3" time="0.011895"/>
+    <testcase name="can_show_faq" file="D:\meem-commerce\tests\Feature\Faqs\FaqCrudTest.php" line="101" class="Tests\Feature\Faqs\FaqCrudTest" classname="Tests.Feature.Faqs.FaqCrudTest" assertions="2" time="0.007057"/>
+    <testcase name="can_update_faq" file="D:\meem-commerce\tests\Feature\Faqs\FaqCrudTest.php" line="115" class="Tests\Feature\Faqs\FaqCrudTest" classname="Tests.Feature.Faqs.FaqCrudTest" assertions="3" time="0.010535"/>
+    <testcase name="can_delete_faq" file="D:\meem-commerce\tests\Feature\Faqs\FaqCrudTest.php" line="133" class="Tests\Feature\Faqs\FaqCrudTest" classname="Tests.Feature.Faqs.FaqCrudTest" assertions="3" time="0.006880"/>
+    <testcase name="show_returns_404_for_nonexistent_faq" file="D:\meem-commerce\tests\Feature\Faqs\FaqCrudTest.php" line="149" class="Tests\Feature\Faqs\FaqCrudTest" classname="Tests.Feature.Faqs.FaqCrudTest" assertions="1" time="0.006233"/>
+    <testcase name="delete_returns_404_for_nonexistent_faq" file="D:\meem-commerce\tests\Feature\Faqs\FaqCrudTest.php" line="157" class="Tests\Feature\Faqs\FaqCrudTest" classname="Tests.Feature.Faqs.FaqCrudTest" assertions="1" time="0.005375"/>
+  </testsuite>
+</testsuites>

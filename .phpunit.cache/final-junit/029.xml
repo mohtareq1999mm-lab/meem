@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\BugFixesValidationTest" file="D:\meem-commerce\tests\Feature\BugFixesValidationTest.php" tests="13" assertions="44" errors="0" failures="0" skipped="1" time="0.238605">
+    <testcase name="permission_enum_has_issue_debit_note_constant" file="D:\meem-commerce\tests\Feature\BugFixesValidationTest.php" line="282" class="Tests\Feature\BugFixesValidationTest" classname="Tests.Feature.BugFixesValidationTest" assertions="1" time="0.008188"/>
+    <testcase name="issue_debit_note_permission_can_be_assigned_to_role" file="D:\meem-commerce\tests\Feature\BugFixesValidationTest.php" line="288" class="Tests\Feature\BugFixesValidationTest" classname="Tests.Feature.BugFixesValidationTest" assertions="1" time="0.003410"/>
+    <testcase name="shipment_permissions_exist_in_enum" file="D:\meem-commerce\tests\Feature\BugFixesValidationTest.php" line="295" class="Tests\Feature\BugFixesValidationTest" classname="Tests.Feature.BugFixesValidationTest" assertions="4" time="0.000456"/>
+    <testcase name="checkout_error_callback_checks_gateway_result_before_marking_failed" file="D:\meem-commerce\tests\Feature\BugFixesValidationTest.php" line="304" class="Tests\Feature\BugFixesValidationTest" classname="Tests.Feature.BugFixesValidationTest" assertions="3" time="0.036219"/>
+    <testcase name="checkout_error_callback_marks_failed_when_gateway_reports_failure" file="D:\meem-commerce\tests\Feature\BugFixesValidationTest.php" line="351" class="Tests\Feature\BugFixesValidationTest" classname="Tests.Feature.BugFixesValidationTest" assertions="4" time="0.007433"/>
+    <testcase name="correct_invoice_dispatches_event_and_queues_pdf" file="D:\meem-commerce\tests\Feature\BugFixesValidationTest.php" line="400" class="Tests\Feature\BugFixesValidationTest" classname="Tests.Feature.BugFixesValidationTest" assertions="5" time="0.011007"/>
+    <testcase name="generate_invoice_pdf_job_creates_pdf_file" file="D:\meem-commerce\tests\Feature\BugFixesValidationTest.php" line="463" class="Tests\Feature\BugFixesValidationTest" classname="Tests.Feature.BugFixesValidationTest" assertions="5" time="0.163135"/>
+    <testcase name="event_service_provider_does_not_have_duplicate_marvel_order_cancelled" file="D:\meem-commerce\tests\Feature\BugFixesValidationTest.php" line="520" class="Tests\Feature\BugFixesValidationTest" classname="Tests.Feature.BugFixesValidationTest" assertions="5" time="0.001095"/>
+    <testcase name="payment_status_uses_consistent_logic_for_online_payments" file="D:\meem-commerce\tests\Feature\BugFixesValidationTest.php" line="544" class="Tests\Feature\BugFixesValidationTest" classname="Tests.Feature.BugFixesValidationTest" assertions="2" time="0.002171"/>
+    <testcase name="payment_status_uses_consistent_logic_for_cod_payments" file="D:\meem-commerce\tests\Feature\BugFixesValidationTest.php" line="571" class="Tests\Feature\BugFixesValidationTest" classname="Tests.Feature.BugFixesValidationTest" assertions="2" time="0.001417"/>
+    <testcase name="payment_status_respects_database_column" file="D:\meem-commerce\tests\Feature\BugFixesValidationTest.php" line="590" class="Tests\Feature\BugFixesValidationTest" classname="Tests.Feature.BugFixesValidationTest" assertions="1" time="0.001000"/>
+    <testcase name="correct_invoice_request_validates_override_keys" file="D:\meem-commerce\tests\Feature\BugFixesValidationTest.php" line="607" class="Tests\Feature\BugFixesValidationTest" classname="Tests.Feature.BugFixesValidationTest" assertions="11" time="0.001565"/>
+    <testcase name="issue_debit_note_route_requires_permission" file="D:\meem-commerce\tests\Feature\BugFixesValidationTest.php" line="626" class="Tests\Feature\BugFixesValidationTest" classname="Tests.Feature.BugFixesValidationTest" assertions="0" time="0.001509">
+      <skipped/>
+    </testcase>
+  </testsuite>
+</testsuites>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\DebugPickupTest" file="D:\meem-commerce\tests\Feature\DebugPickupTest.php" tests="1" assertions="0" errors="0" failures="0" skipped="0" time="0.389949">
+    <testcase name="test_debug" file="D:\meem-commerce\tests\Feature\DebugPickupTest.php" line="22" class="Tests\Feature\DebugPickupTest" classname="Tests.Feature.DebugPickupTest" assertions="0" time="0.389949"/>
+  </testsuite>
+</testsuites>

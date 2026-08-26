@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Categories\CategoryResourceTest" file="D:\meem-commerce\tests\Feature\Categories\CategoryResourceTest.php" tests="6" assertions="32" errors="0" failures="0" skipped="0" time="0.120366">
+    <testcase name="test_index_returns_paginated_response" file="D:\meem-commerce\tests\Feature\Categories\CategoryResourceTest.php" line="38" class="Tests\Feature\Categories\CategoryResourceTest" classname="Tests.Feature.Categories.CategoryResourceTest" assertions="13" time="0.060444"/>
+    <testcase name="test_index_response_contains_expected_fields" file="D:\meem-commerce\tests\Feature\Categories\CategoryResourceTest.php" line="65" class="Tests\Feature\Categories\CategoryResourceTest" classname="Tests.Feature.Categories.CategoryResourceTest" assertions="9" time="0.011847"/>
+    <testcase name="test_index_response_omits_details_and_children" file="D:\meem-commerce\tests\Feature\Categories\CategoryResourceTest.php" line="85" class="Tests\Feature\Categories\CategoryResourceTest" classname="Tests.Feature.Categories.CategoryResourceTest" assertions="1" time="0.010799"/>
+    <testcase name="test_show_response_includes_details" file="D:\meem-commerce\tests\Feature\Categories\CategoryResourceTest.php" line="97" class="Tests\Feature\Categories\CategoryResourceTest" classname="Tests.Feature.Categories.CategoryResourceTest" assertions="2" time="0.011025"/>
+    <testcase name="test_show_response_includes_children_when_loaded" file="D:\meem-commerce\tests\Feature\Categories\CategoryResourceTest.php" line="113" class="Tests\Feature\Categories\CategoryResourceTest" classname="Tests.Feature.Categories.CategoryResourceTest" assertions="1" time="0.014894"/>
+    <testcase name="test_resource_types_in_response" file="D:\meem-commerce\tests\Feature\Categories\CategoryResourceTest.php" line="125" class="Tests\Feature\Categories\CategoryResourceTest" classname="Tests.Feature.Categories.CategoryResourceTest" assertions="6" time="0.011356"/>
+  </testsuite>
+</testsuites>

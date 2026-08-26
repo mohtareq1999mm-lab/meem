@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Unit\FrontendCachePayloadTest" file="D:\meem-commerce\tests\Unit\FrontendCachePayloadTest.php" tests="8" assertions="20" errors="0" failures="0" skipped="0" time="0.030552">
+    <testcase name="it_creates_payload_with_resource" file="D:\meem-commerce\tests\Unit\FrontendCachePayloadTest.php" line="12" class="Tests\Unit\FrontendCachePayloadTest" classname="Tests.Unit.FrontendCachePayloadTest" assertions="1" time="0.025723"/>
+    <testcase name="it_generates_uuid_as_request_id" file="D:\meem-commerce\tests\Unit\FrontendCachePayloadTest.php" line="22" class="Tests\Unit\FrontendCachePayloadTest" classname="Tests.Unit.FrontendCachePayloadTest" assertions="2" time="0.001427"/>
+    <testcase name="it_accepts_custom_request_id" file="D:\meem-commerce\tests\Unit\FrontendCachePayloadTest.php" line="33" class="Tests\Unit\FrontendCachePayloadTest" classname="Tests.Unit.FrontendCachePayloadTest" assertions="1" time="0.000502"/>
+    <testcase name="it_generates_iso8601_timestamp" file="D:\meem-commerce\tests\Unit\FrontendCachePayloadTest.php" line="44" class="Tests\Unit\FrontendCachePayloadTest" classname="Tests.Unit.FrontendCachePayloadTest" assertions="2" time="0.000773"/>
+    <testcase name="it_accepts_custom_occurred_at" file="D:\meem-commerce\tests\Unit\FrontendCachePayloadTest.php" line="55" class="Tests\Unit\FrontendCachePayloadTest" classname="Tests.Unit.FrontendCachePayloadTest" assertions="1" time="0.000317"/>
+    <testcase name="to_array_returns_correct_structure" file="D:\meem-commerce\tests\Unit\FrontendCachePayloadTest.php" line="66" class="Tests\Unit\FrontendCachePayloadTest" classname="Tests.Unit.FrontendCachePayloadTest" assertions="5" time="0.000553"/>
+    <testcase name="to_array_has_exactly_four_fields" file="D:\meem-commerce\tests\Unit\FrontendCachePayloadTest.php" line="84" class="Tests\Unit\FrontendCachePayloadTest" classname="Tests.Unit.FrontendCachePayloadTest" assertions="5" time="0.000821"/>
+    <testcase name="to_array_does_not_include_event_or_action" file="D:\meem-commerce\tests\Unit\FrontendCachePayloadTest.php" line="100" class="Tests\Unit\FrontendCachePayloadTest" classname="Tests.Unit.FrontendCachePayloadTest" assertions="3" time="0.000435"/>
+  </testsuite>
+</testsuites>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Notifications\AsyncQueuePersistenceAuditTest" file="D:\meem-commerce\tests\Feature\Notifications\AsyncQueuePersistenceAuditTest.php" tests="4" assertions="11" errors="0" failures="1" skipped="0" time="0.090929">
+    <testcase name="test_two_channel_notification_queues_two_independent_jobs" file="D:\meem-commerce\tests\Feature\Notifications\AsyncQueuePersistenceAuditTest.php" line="73" class="Tests\Feature\Notifications\AsyncQueuePersistenceAuditTest" classname="Tests.Feature.Notifications.AsyncQueuePersistenceAuditTest" assertions="1" time="0.042932">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\Notifications\AsyncQueuePersistenceAuditTest::test_two_channel_notification_queues_two_independent_jobs&#13;
+Expected 2 SendQueuedNotifications jobs (database + broadcast).
+Failed asserting that actual size 3 matches expected size 2.
+&#13;
+D:\meem-commerce\tests\Feature\Notifications\AsyncQueuePersistenceAuditTest.php:82
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_real_queue_processes_database_job_and_broadcast_job" file="D:\meem-commerce\tests\Feature\Notifications\AsyncQueuePersistenceAuditTest.php" line="106" class="Tests\Feature\Notifications\AsyncQueuePersistenceAuditTest" classname="Tests.Feature.Notifications.AsyncQueuePersistenceAuditTest" assertions="7" time="0.017203"/>
+    <testcase name="test_missing_notifications_table_broadcast_still_reaches_pusher" file="D:\meem-commerce\tests\Feature\Notifications\AsyncQueuePersistenceAuditTest.php" line="142" class="Tests\Feature\Notifications\AsyncQueuePersistenceAuditTest" classname="Tests.Feature.Notifications.AsyncQueuePersistenceAuditTest" assertions="2" time="0.019640"/>
+    <testcase name="test_database_persistence_does_not_depend_on_broadcast_success" file="D:\meem-commerce\tests\Feature\Notifications\AsyncQueuePersistenceAuditTest.php" line="177" class="Tests\Feature\Notifications\AsyncQueuePersistenceAuditTest" classname="Tests.Feature.Notifications.AsyncQueuePersistenceAuditTest" assertions="1" time="0.011154"/>
+  </testsuite>
+</testsuites>

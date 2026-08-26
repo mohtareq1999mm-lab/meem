@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Currency\OrderItemSnapshotTest" file="D:\meem-commerce\tests\Feature\Currency\OrderItemSnapshotTest.php" tests="4" assertions="22" errors="0" failures="0" skipped="0" time="0.122925">
+    <testcase name="order_items_store_both_catalog_and_effective_amounts" file="D:\meem-commerce\tests\Feature\Currency\OrderItemSnapshotTest.php" line="78" class="Tests\Feature\Currency\OrderItemSnapshotTest" classname="Tests.Feature.Currency.OrderItemSnapshotTest" assertions="9" time="0.080106"/>
+    <testcase name="order_currency_never_leaks_into_the_catalog_amounts" file="D:\meem-commerce\tests\Feature\Currency\OrderItemSnapshotTest.php" line="104" class="Tests\Feature\Currency\OrderItemSnapshotTest" classname="Tests.Feature.Currency.OrderItemSnapshotTest" assertions="4" time="0.015996"/>
+    <testcase name="historical_orders_keep_their_snapshot_when_rates_change" file="D:\meem-commerce\tests\Feature\Currency\OrderItemSnapshotTest.php" line="126" class="Tests\Feature\Currency\OrderItemSnapshotTest" classname="Tests.Feature.Currency.OrderItemSnapshotTest" assertions="7" time="0.012051"/>
+    <testcase name="checkout_fails_when_the_effective_currency_has_no_rate" file="D:\meem-commerce\tests\Feature\Currency\OrderItemSnapshotTest.php" line="156" class="Tests\Feature\Currency\OrderItemSnapshotTest" classname="Tests.Feature.Currency.OrderItemSnapshotTest" assertions="2" time="0.014772"/>
+  </testsuite>
+</testsuites>

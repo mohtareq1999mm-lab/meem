@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\ProductAdminTest" file="D:\meem-commerce\tests\Feature\ProductAdminTest.php" tests="17" assertions="17" errors="0" failures="0" skipped="0" time="0.228731">
+    <testcase name="test_create_product_requires_admin" file="D:\meem-commerce\tests\Feature\ProductAdminTest.php" line="86" class="Tests\Feature\ProductAdminTest" classname="Tests.Feature.ProductAdminTest" assertions="1" time="0.051302"/>
+    <testcase name="test_create_product_requires_auth" file="D:\meem-commerce\tests\Feature\ProductAdminTest.php" line="96" class="Tests\Feature\ProductAdminTest" classname="Tests.Feature.ProductAdminTest" assertions="1" time="0.004405"/>
+    <testcase name="test_create_product_validates_required_fields" file="D:\meem-commerce\tests\Feature\ProductAdminTest.php" line="104" class="Tests\Feature\ProductAdminTest" classname="Tests.Feature.ProductAdminTest" assertions="1" time="0.018029"/>
+    <testcase name="test_create_product_requires_name" file="D:\meem-commerce\tests\Feature\ProductAdminTest.php" line="117" class="Tests\Feature\ProductAdminTest" classname="Tests.Feature.ProductAdminTest" assertions="1" time="0.007256"/>
+    <testcase name="test_create_product_requires_price" file="D:\meem-commerce\tests\Feature\ProductAdminTest.php" line="126" class="Tests\Feature\ProductAdminTest" classname="Tests.Feature.ProductAdminTest" assertions="1" time="0.005720"/>
+    <testcase name="test_update_product_requires_admin" file="D:\meem-commerce\tests\Feature\ProductAdminTest.php" line="139" class="Tests\Feature\ProductAdminTest" classname="Tests.Feature.ProductAdminTest" assertions="1" time="0.010540"/>
+    <testcase name="test_update_product_changes_price" file="D:\meem-commerce\tests\Feature\ProductAdminTest.php" line="157" class="Tests\Feature\ProductAdminTest" classname="Tests.Feature.ProductAdminTest" assertions="1" time="0.020717"/>
+    <testcase name="test_update_nonexistent_product_returns_404" file="D:\meem-commerce\tests\Feature\ProductAdminTest.php" line="175" class="Tests\Feature\ProductAdminTest" classname="Tests.Feature.ProductAdminTest" assertions="1" time="0.007664"/>
+    <testcase name="test_delete_product_requires_admin" file="D:\meem-commerce\tests\Feature\ProductAdminTest.php" line="188" class="Tests\Feature\ProductAdminTest" classname="Tests.Feature.ProductAdminTest" assertions="1" time="0.006268"/>
+    <testcase name="test_delete_product_success" file="D:\meem-commerce\tests\Feature\ProductAdminTest.php" line="203" class="Tests\Feature\ProductAdminTest" classname="Tests.Feature.ProductAdminTest" assertions="1" time="0.009042"/>
+    <testcase name="test_delete_nonexistent_product_returns_404" file="D:\meem-commerce\tests\Feature\ProductAdminTest.php" line="218" class="Tests\Feature\ProductAdminTest" classname="Tests.Feature.ProductAdminTest" assertions="1" time="0.009900"/>
+    <testcase name="test_public_product_list_returns_paginated_results" file="D:\meem-commerce\tests\Feature\ProductAdminTest.php" line="229" class="Tests\Feature\ProductAdminTest" classname="Tests.Feature.ProductAdminTest" assertions="1" time="0.019420"/>
+    <testcase name="test_public_product_list_filters_by_type" file="D:\meem-commerce\tests\Feature\ProductAdminTest.php" line="243" class="Tests\Feature\ProductAdminTest" classname="Tests.Feature.ProductAdminTest" assertions="1" time="0.017217"/>
+    <testcase name="test_public_product_by_slug" file="D:\meem-commerce\tests\Feature\ProductAdminTest.php" line="262" class="Tests\Feature\ProductAdminTest" classname="Tests.Feature.ProductAdminTest" assertions="1" time="0.010277"/>
+    <testcase name="test_public_product_by_slug_returns_404_for_missing" file="D:\meem-commerce\tests\Feature\ProductAdminTest.php" line="279" class="Tests\Feature\ProductAdminTest" classname="Tests.Feature.ProductAdminTest" assertions="1" time="0.003746"/>
+    <testcase name="test_admin_can_toggle_product_status" file="D:\meem-commerce\tests\Feature\ProductAdminTest.php" line="289" class="Tests\Feature\ProductAdminTest" classname="Tests.Feature.ProductAdminTest" assertions="1" time="0.013644"/>
+    <testcase name="test_inactive_product_not_in_public_list" file="D:\meem-commerce\tests\Feature\ProductAdminTest.php" line="308" class="Tests\Feature\ProductAdminTest" classname="Tests.Feature.ProductAdminTest" assertions="1" time="0.013584"/>
+  </testsuite>
+</testsuites>

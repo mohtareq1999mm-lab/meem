@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Notifications\OrderNotificationE2ETest" file="D:\meem-commerce\tests\Feature\Notifications\OrderNotificationE2ETest.php" tests="8" assertions="36" errors="1" failures="0" skipped="0" time="0.187020">
+    <testcase name="test_order_created_flow_notifies_user_and_admin_in_db_and_broadcast" file="D:\meem-commerce\tests\Feature\Notifications\OrderNotificationE2ETest.php" line="23" class="Tests\Feature\Notifications\OrderNotificationE2ETest" classname="Tests.Feature.Notifications.OrderNotificationE2ETest" assertions="15" time="0.072624"/>
+    <testcase name="test_order_created_does_not_notify_inactive_admin" file="D:\meem-commerce\tests\Feature\Notifications\OrderNotificationE2ETest.php" line="66" class="Tests\Feature\Notifications\OrderNotificationE2ETest" classname="Tests.Feature.Notifications.OrderNotificationE2ETest" assertions="2" time="0.012071"/>
+    <testcase name="test_payment_succeeded_flow_notifies_user_in_db_and_broadcast" file="D:\meem-commerce\tests\Feature\Notifications\OrderNotificationE2ETest.php" line="78" class="Tests\Feature\Notifications\OrderNotificationE2ETest" classname="Tests.Feature.Notifications.OrderNotificationE2ETest" assertions="6" time="0.024144"/>
+    <testcase name="test_payment_failed_flow_notifies_user_in_db_and_broadcast" file="D:\meem-commerce\tests\Feature\Notifications\OrderNotificationE2ETest.php" line="101" class="Tests\Feature\Notifications\OrderNotificationE2ETest" classname="Tests.Feature.Notifications.OrderNotificationE2ETest" assertions="4" time="0.013478"/>
+    <testcase name="test_order_cancelled_flow_notifies_user_in_db_and_broadcast" file="D:\meem-commerce\tests\Feature\Notifications\OrderNotificationE2ETest.php" line="116" class="Tests\Feature\Notifications\OrderNotificationE2ETest" classname="Tests.Feature.Notifications.OrderNotificationE2ETest" assertions="4" time="0.011772"/>
+    <testcase name="test_order_delivered_flow_notifies_user_in_db_and_broadcast" file="D:\meem-commerce\tests\Feature\Notifications\OrderNotificationE2ETest.php" line="131" class="Tests\Feature\Notifications\OrderNotificationE2ETest" classname="Tests.Feature.Notifications.OrderNotificationE2ETest" assertions="0" time="0.028378">
+      <error type="TypeError">Tests\Feature\Notifications\OrderNotificationE2ETest::test_order_delivered_flow_notifies_user_in_db_and_broadcast&#13;
+TypeError: App\Listeners\SendUserOrderDeliveredNotification::handle(): Argument #1 ($event) must be of type App\Events\OrderDelivered, Marvel\Events\OrderDelivered given, called in D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\CallQueuedListener.php on line 107
+&#13;
+D:\meem-commerce\app\Listeners\SendUserOrderDeliveredNotification.php:14
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\CallQueuedListener.php:107
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:36
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Util.php:41
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:93
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:35
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Container.php:662
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Bus\Dispatcher.php:128
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:141
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:116
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Bus\Dispatcher.php:132
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\CallQueuedHandler.php:123
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:141
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:116
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\CallQueuedHandler.php:122
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\CallQueuedHandler.php:70
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\Jobs\Job.php:98
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\SyncQueue.php:43
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Queue\Queue.php:58
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:633
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:552
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:478
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:286
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:266
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\helpers.php:433
+D:\meem-commerce\tests\Feature\Notifications\OrderNotificationE2ETest.php:142
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</error>
+    </testcase>
+    <testcase name="test_refund_approved_flow_notifies_user_in_db_and_broadcast" file="D:\meem-commerce\tests\Feature\Notifications\OrderNotificationE2ETest.php" line="152" class="Tests\Feature\Notifications\OrderNotificationE2ETest" classname="Tests.Feature.Notifications.OrderNotificationE2ETest" assertions="4" time="0.018111"/>
+    <testcase name="test_refund_approved_does_not_notify_admin_customer" file="D:\meem-commerce\tests\Feature\Notifications\OrderNotificationE2ETest.php" line="168" class="Tests\Feature\Notifications\OrderNotificationE2ETest" classname="Tests.Feature.Notifications.OrderNotificationE2ETest" assertions="1" time="0.006441"/>
+  </testsuite>
+</testsuites>

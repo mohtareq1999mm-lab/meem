@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Categories\CategoryFeaturedTest" file="D:\meem-commerce\tests\Feature\Categories\CategoryFeaturedTest.php" tests="5" assertions="12" errors="0" failures="0" skipped="0" time="0.099283">
+    <testcase name="test_toggle_featured_requires_update_permission" file="D:\meem-commerce\tests\Feature\Categories\CategoryFeaturedTest.php" line="39" class="Tests\Feature\Categories\CategoryFeaturedTest" classname="Tests.Feature.Categories.CategoryFeaturedTest" assertions="1" time="0.051810"/>
+    <testcase name="test_toggle_featured_works_with_update_permission" file="D:\meem-commerce\tests\Feature\Categories\CategoryFeaturedTest.php" line="55" class="Tests\Feature\Categories\CategoryFeaturedTest" classname="Tests.Feature.Categories.CategoryFeaturedTest" assertions="3" time="0.018606"/>
+    <testcase name="test_toggle_featured_twice_reverts" file="D:\meem-commerce\tests\Feature\Categories\CategoryFeaturedTest.php" line="76" class="Tests\Feature\Categories\CategoryFeaturedTest" classname="Tests.Feature.Categories.CategoryFeaturedTest" assertions="2" time="0.018814"/>
+    <testcase name="test_toggle_featured_validates_id_required" file="D:\meem-commerce\tests\Feature\Categories\CategoryFeaturedTest.php" line="95" class="Tests\Feature\Categories\CategoryFeaturedTest" classname="Tests.Feature.Categories.CategoryFeaturedTest" assertions="3" time="0.005100"/>
+    <testcase name="test_toggle_featured_validates_id_exists" file="D:\meem-commerce\tests\Feature\Categories\CategoryFeaturedTest.php" line="104" class="Tests\Feature\Categories\CategoryFeaturedTest" classname="Tests.Feature.Categories.CategoryFeaturedTest" assertions="3" time="0.004953"/>
+  </testsuite>
+</testsuites>

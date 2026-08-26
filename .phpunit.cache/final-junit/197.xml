@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Invoice\InvoiceVerifyEndpointTest" file="D:\meem-commerce\tests\Feature\Invoice\InvoiceVerifyEndpointTest.php" tests="5" assertions="23" errors="0" failures="0" skipped="0" time="0.475975">
+    <testcase name="test_unauthenticated_request_returns_401" file="D:\meem-commerce\tests\Feature\Invoice\InvoiceVerifyEndpointTest.php" line="81" class="Tests\Feature\Invoice\InvoiceVerifyEndpointTest" classname="Tests.Feature.Invoice.InvoiceVerifyEndpointTest" assertions="1" time="0.226930"/>
+    <testcase name="test_authentic_invoice_returns_200_with_invoice_data" file="D:\meem-commerce\tests\Feature\Invoice\InvoiceVerifyEndpointTest.php" line="88" class="Tests\Feature\Invoice\InvoiceVerifyEndpointTest" classname="Tests.Feature.Invoice.InvoiceVerifyEndpointTest" assertions="12" time="0.093705"/>
+    <testcase name="test_tampered_invoice_returns_409" file="D:\meem-commerce\tests\Feature\Invoice\InvoiceVerifyEndpointTest.php" line="120" class="Tests\Feature\Invoice\InvoiceVerifyEndpointTest" classname="Tests.Feature.Invoice.InvoiceVerifyEndpointTest" assertions="4" time="0.070012"/>
+    <testcase name="test_unknown_uuid_returns_404_envelope" file="D:\meem-commerce\tests\Feature\Invoice\InvoiceVerifyEndpointTest.php" line="134" class="Tests\Feature\Invoice\InvoiceVerifyEndpointTest" classname="Tests.Feature.Invoice.InvoiceVerifyEndpointTest" assertions="2" time="0.005586"/>
+    <testcase name="test_repeated_verification_increments_verify_count" file="D:\meem-commerce\tests\Feature\Invoice\InvoiceVerifyEndpointTest.php" line="143" class="Tests\Feature\Invoice\InvoiceVerifyEndpointTest" classname="Tests.Feature.Invoice.InvoiceVerifyEndpointTest" assertions="4" time="0.079742"/>
+  </testsuite>
+</testsuites>

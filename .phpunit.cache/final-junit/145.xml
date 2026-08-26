@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Currency\GatewayCurrencySupportTest" file="D:\meem-commerce\tests\Feature\Currency\GatewayCurrencySupportTest.php" tests="5" assertions="23" errors="0" failures="0" skipped="0" time="0.052582">
+    <testcase name="supports_currency_accepts_the_configured_codes" file="D:\meem-commerce\tests\Feature\Currency\GatewayCurrencySupportTest.php" line="48" class="Tests\Feature\Currency\GatewayCurrencySupportTest" classname="Tests.Feature.Currency.GatewayCurrencySupportTest" assertions="7" time="0.005274"/>
+    <testcase name="supports_currency_rejects_unknown_codes" file="D:\meem-commerce\tests\Feature\Currency\GatewayCurrencySupportTest.php" line="58" class="Tests\Feature\Currency\GatewayCurrencySupportTest" classname="Tests.Feature.Currency.GatewayCurrencySupportTest" assertions="2" time="0.000637"/>
+    <testcase name="create_invoice_is_blocked_for_an_unsupported_currency" file="D:\meem-commerce\tests\Feature\Currency\GatewayCurrencySupportTest.php" line="67" class="Tests\Feature\Currency\GatewayCurrencySupportTest" classname="Tests.Feature.Currency.GatewayCurrencySupportTest" assertions="4" time="0.023908"/>
+    <testcase name="refund_is_blocked_for_an_unsupported_currency" file="D:\meem-commerce\tests\Feature\Currency\GatewayCurrencySupportTest.php" line="86" class="Tests\Feature\Currency\GatewayCurrencySupportTest" classname="Tests.Feature.Currency.GatewayCurrencySupportTest" assertions="4" time="0.008353"/>
+    <testcase name="online_payment_returns_422_without_a_transaction_for_an_unsupported_currency" file="D:\meem-commerce\tests\Feature\Currency\GatewayCurrencySupportTest.php" line="97" class="Tests\Feature\Currency\GatewayCurrencySupportTest" classname="Tests.Feature.Currency.GatewayCurrencySupportTest" assertions="6" time="0.014410"/>
+  </testsuite>
+</testsuites>

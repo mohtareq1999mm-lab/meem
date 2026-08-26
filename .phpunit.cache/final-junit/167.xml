@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Faqs\FaqResourceTest" file="D:\meem-commerce\tests\Feature\Faqs\FaqResourceTest.php" tests="7" assertions="33" errors="0" failures="0" skipped="0" time="0.103758">
+    <testcase name="index_returns_paginated_response" file="D:\meem-commerce\tests\Feature\Faqs\FaqResourceTest.php" line="72" class="Tests\Feature\Faqs\FaqResourceTest" classname="Tests.Feature.Faqs.FaqResourceTest" assertions="9" time="0.047372"/>
+    <testcase name="index_response_contains_expected_fields" file="D:\meem-commerce\tests\Feature\Faqs\FaqResourceTest.php" line="93" class="Tests\Feature\Faqs\FaqResourceTest" classname="Tests.Feature.Faqs.FaqResourceTest" assertions="6" time="0.006468"/>
+    <testcase name="index_response_returns_translated_string_not_raw_json" file="D:\meem-commerce\tests\Feature\Faqs\FaqResourceTest.php" line="109" class="Tests\Feature\Faqs\FaqResourceTest" classname="Tests.Feature.Faqs.FaqResourceTest" assertions="2" time="0.007198"/>
+    <testcase name="show_response_includes_id_title_and_description" file="D:\meem-commerce\tests\Feature\Faqs\FaqResourceTest.php" line="121" class="Tests\Feature\Faqs\FaqResourceTest" classname="Tests.Feature.Faqs.FaqResourceTest" assertions="7" time="0.007336"/>
+    <testcase name="show_response_does_not_include_internal_fields" file="D:\meem-commerce\tests\Feature\Faqs\FaqResourceTest.php" line="140" class="Tests\Feature\Faqs\FaqResourceTest" classname="Tests.Feature.Faqs.FaqResourceTest" assertions="3" time="0.011211"/>
+    <testcase name="response_has_correct_envelope" file="D:\meem-commerce\tests\Feature\Faqs\FaqResourceTest.php" line="153" class="Tests\Feature\Faqs\FaqResourceTest" classname="Tests.Feature.Faqs.FaqResourceTest" assertions="5" time="0.014111"/>
+    <testcase name="response_type_is_json" file="D:\meem-commerce\tests\Feature\Faqs\FaqResourceTest.php" line="167" class="Tests\Feature\Faqs\FaqResourceTest" classname="Tests.Feature.Faqs.FaqResourceTest" assertions="1" time="0.010062"/>
+  </testsuite>
+</testsuites>

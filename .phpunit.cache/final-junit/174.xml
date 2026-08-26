@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\FileOperations\ExportBroadcastTest" file="D:\meem-commerce\tests\Feature\FileOperations\ExportBroadcastTest.php" tests="5" assertions="21" errors="0" failures="0" skipped="0" time="0.149030">
+    <testcase name="test_category_export_broadcasts_completed_after_db_transition" file="D:\meem-commerce\tests\Feature\FileOperations\ExportBroadcastTest.php" line="20" class="Tests\Feature\FileOperations\ExportBroadcastTest" classname="Tests.Feature.FileOperations.ExportBroadcastTest" assertions="8" time="0.112243"/>
+    <testcase name="test_category_export_failed_hook_broadcasts_once_on_transition" file="D:\meem-commerce\tests\Feature\FileOperations\ExportBroadcastTest.php" line="42" class="Tests\Feature\FileOperations\ExportBroadcastTest" classname="Tests.Feature.FileOperations.ExportBroadcastTest" assertions="4" time="0.002749"/>
+    <testcase name="test_brand_export_broadcasts_completed_after_db_transition" file="D:\meem-commerce\tests\Feature\FileOperations\ExportBroadcastTest.php" line="60" class="Tests\Feature\FileOperations\ExportBroadcastTest" classname="Tests.Feature.FileOperations.ExportBroadcastTest" assertions="5" time="0.030176"/>
+    <testcase name="test_brand_export_failed_hook_broadcasts_once_on_transition" file="D:\meem-commerce\tests\Feature\FileOperations\ExportBroadcastTest.php" line="80" class="Tests\Feature\FileOperations\ExportBroadcastTest" classname="Tests.Feature.FileOperations.ExportBroadcastTest" assertions="3" time="0.002163"/>
+    <testcase name="test_terminal_export_does_not_re_broadcast_on_retry" file="D:\meem-commerce\tests\Feature\FileOperations\ExportBroadcastTest.php" line="94" class="Tests\Feature\FileOperations\ExportBroadcastTest" classname="Tests.Feature.FileOperations.ExportBroadcastTest" assertions="1" time="0.001699"/>
+  </testsuite>
+</testsuites>

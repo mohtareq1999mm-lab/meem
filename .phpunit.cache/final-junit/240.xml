@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\SiteReviews\SiteReviewRelationshipsTest" file="D:\meem-commerce\tests\Feature\SiteReviews\SiteReviewRelationshipsTest.php" tests="7" assertions="21" errors="0" failures="0" skipped="0" time="0.110281">
+    <testcase name="user_relationship_returns_the_author" file="D:\meem-commerce\tests\Feature\SiteReviews\SiteReviewRelationshipsTest.php" line="13" class="Tests\Feature\SiteReviews\SiteReviewRelationshipsTest" classname="Tests.Feature.SiteReviews.SiteReviewRelationshipsTest" assertions="4" time="0.027172"/>
+    <testcase name="moderator_relationship_returns_the_admin" file="D:\meem-commerce\tests\Feature\SiteReviews\SiteReviewRelationshipsTest.php" line="25" class="Tests\Feature\SiteReviews\SiteReviewRelationshipsTest" classname="Tests.Feature.SiteReviews.SiteReviewRelationshipsTest" assertions="4" time="0.042328"/>
+    <testcase name="moderator_relationship_is_null_for_pending_reviews" file="D:\meem-commerce\tests\Feature\SiteReviews\SiteReviewRelationshipsTest.php" line="37" class="Tests\Feature\SiteReviews\SiteReviewRelationshipsTest" classname="Tests.Feature.SiteReviews.SiteReviewRelationshipsTest" assertions="2" time="0.002577"/>
+    <testcase name="moderator_relationship_uses_moderated_by_column" file="D:\meem-commerce\tests\Feature\SiteReviews\SiteReviewRelationshipsTest.php" line="46" class="Tests\Feature\SiteReviews\SiteReviewRelationshipsTest" classname="Tests.Feature.SiteReviews.SiteReviewRelationshipsTest" assertions="2" time="0.027051"/>
+    <testcase name="factory_pending_state_has_no_moderator" file="D:\meem-commerce\tests\Feature\SiteReviews\SiteReviewRelationshipsTest.php" line="56" class="Tests\Feature\SiteReviews\SiteReviewRelationshipsTest" classname="Tests.Feature.SiteReviews.SiteReviewRelationshipsTest" assertions="3" time="0.002308"/>
+    <testcase name="factory_approved_state_has_moderator" file="D:\meem-commerce\tests\Feature\SiteReviews\SiteReviewRelationshipsTest.php" line="66" class="Tests\Feature\SiteReviews\SiteReviewRelationshipsTest" classname="Tests.Feature.SiteReviews.SiteReviewRelationshipsTest" assertions="3" time="0.004508"/>
+    <testcase name="factory_rejected_state_has_moderator" file="D:\meem-commerce\tests\Feature\SiteReviews\SiteReviewRelationshipsTest.php" line="76" class="Tests\Feature\SiteReviews\SiteReviewRelationshipsTest" classname="Tests.Feature.SiteReviews.SiteReviewRelationshipsTest" assertions="3" time="0.004338"/>
+  </testsuite>
+</testsuites>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\UserPromotionFlashSaleNotificationTest" file="D:\meem-commerce\tests\Feature\UserPromotionFlashSaleNotificationTest.php" tests="18" assertions="38" errors="0" failures="2" skipped="0" time="0.077971">
+    <testcase name="test_promotion_created_active_dispatches_event" file="D:\meem-commerce\tests\Feature\UserPromotionFlashSaleNotificationTest.php" line="145" class="Tests\Feature\UserPromotionFlashSaleNotificationTest" classname="Tests.Feature.UserPromotionFlashSaleNotificationTest" assertions="1" time="0.017809"/>
+    <testcase name="test_promotion_created_inactive_does_not_dispatch_event" file="D:\meem-commerce\tests\Feature\UserPromotionFlashSaleNotificationTest.php" line="158" class="Tests\Feature\UserPromotionFlashSaleNotificationTest" classname="Tests.Feature.UserPromotionFlashSaleNotificationTest" assertions="1" time="0.001224"/>
+    <testcase name="test_promotion_created_active_with_future_start_date_dispatches_immediately" file="D:\meem-commerce\tests\Feature\UserPromotionFlashSaleNotificationTest.php" line="169" class="Tests\Feature\UserPromotionFlashSaleNotificationTest" classname="Tests.Feature.UserPromotionFlashSaleNotificationTest" assertions="1" time="0.000906"/>
+    <testcase name="test_promotion_activated_false_to_true_dispatches_event" file="D:\meem-commerce\tests\Feature\UserPromotionFlashSaleNotificationTest.php" line="180" class="Tests\Feature\UserPromotionFlashSaleNotificationTest" classname="Tests.Feature.UserPromotionFlashSaleNotificationTest" assertions="1" time="0.000851"/>
+    <testcase name="test_promotion_true_to_true_does_not_dispatch_event" file="D:\meem-commerce\tests\Feature\UserPromotionFlashSaleNotificationTest.php" line="193" class="Tests\Feature\UserPromotionFlashSaleNotificationTest" classname="Tests.Feature.UserPromotionFlashSaleNotificationTest" assertions="1" time="0.000482"/>
+    <testcase name="test_promotion_true_to_false_does_not_dispatch_event" file="D:\meem-commerce\tests\Feature\UserPromotionFlashSaleNotificationTest.php" line="206" class="Tests\Feature\UserPromotionFlashSaleNotificationTest" classname="Tests.Feature.UserPromotionFlashSaleNotificationTest" assertions="1" time="0.000886"/>
+    <testcase name="test_flash_sale_created_active_dispatches_event" file="D:\meem-commerce\tests\Feature\UserPromotionFlashSaleNotificationTest.php" line="221" class="Tests\Feature\UserPromotionFlashSaleNotificationTest" classname="Tests.Feature.UserPromotionFlashSaleNotificationTest" assertions="1" time="0.001881"/>
+    <testcase name="test_flash_sale_created_inactive_does_not_dispatch_event" file="D:\meem-commerce\tests\Feature\UserPromotionFlashSaleNotificationTest.php" line="234" class="Tests\Feature\UserPromotionFlashSaleNotificationTest" classname="Tests.Feature.UserPromotionFlashSaleNotificationTest" assertions="1" time="0.000887"/>
+    <testcase name="test_flash_sale_created_active_with_future_start_date_dispatches_immediately" file="D:\meem-commerce\tests\Feature\UserPromotionFlashSaleNotificationTest.php" line="245" class="Tests\Feature\UserPromotionFlashSaleNotificationTest" classname="Tests.Feature.UserPromotionFlashSaleNotificationTest" assertions="1" time="0.001279"/>
+    <testcase name="test_flash_sale_activated_false_to_true_dispatches_event" file="D:\meem-commerce\tests\Feature\UserPromotionFlashSaleNotificationTest.php" line="256" class="Tests\Feature\UserPromotionFlashSaleNotificationTest" classname="Tests.Feature.UserPromotionFlashSaleNotificationTest" assertions="1" time="0.000880"/>
+    <testcase name="test_flash_sale_true_to_true_does_not_dispatch_event" file="D:\meem-commerce\tests\Feature\UserPromotionFlashSaleNotificationTest.php" line="269" class="Tests\Feature\UserPromotionFlashSaleNotificationTest" classname="Tests.Feature.UserPromotionFlashSaleNotificationTest" assertions="1" time="0.000540"/>
+    <testcase name="test_flash_sale_true_to_false_does_not_dispatch_event" file="D:\meem-commerce\tests\Feature\UserPromotionFlashSaleNotificationTest.php" line="282" class="Tests\Feature\UserPromotionFlashSaleNotificationTest" classname="Tests.Feature.UserPromotionFlashSaleNotificationTest" assertions="1" time="0.001285"/>
+    <testcase name="test_promotion_listener_notifies_users_only" file="D:\meem-commerce\tests\Feature\UserPromotionFlashSaleNotificationTest.php" line="297" class="Tests\Feature\UserPromotionFlashSaleNotificationTest" classname="Tests.Feature.UserPromotionFlashSaleNotificationTest" assertions="9" time="0.022422"/>
+    <testcase name="test_promotion_listener_fan_out_to_multiple_users" file="D:\meem-commerce\tests\Feature\UserPromotionFlashSaleNotificationTest.php" line="314" class="Tests\Feature\UserPromotionFlashSaleNotificationTest" classname="Tests.Feature.UserPromotionFlashSaleNotificationTest" assertions="3" time="0.005007"/>
+    <testcase name="test_promotion_notification_payload_and_channels" file="D:\meem-commerce\tests\Feature\UserPromotionFlashSaleNotificationTest.php" line="331" class="Tests\Feature\UserPromotionFlashSaleNotificationTest" classname="Tests.Feature.UserPromotionFlashSaleNotificationTest" assertions="1" time="0.009281">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\UserPromotionFlashSaleNotificationTest::test_promotion_notification_payload_and_channels&#13;
+Failed asserting that two arrays are equal.
+--- Expected
++++ Actual
+@@ @@
+ Array (
+     0 =&gt; 'database'
+-    1 =&gt; 'broadcast'
++    1 =&gt; 'fcm'
++    2 =&gt; 'broadcast'
+ )
+&#13;
+D:\meem-commerce\tests\Feature\UserPromotionFlashSaleNotificationTest.php:337
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_flash_sale_listener_notifies_users_only" file="D:\meem-commerce\tests\Feature\UserPromotionFlashSaleNotificationTest.php" line="353" class="Tests\Feature\UserPromotionFlashSaleNotificationTest" classname="Tests.Feature.UserPromotionFlashSaleNotificationTest" assertions="9" time="0.005769"/>
+    <testcase name="test_flash_sale_listener_fan_out_to_multiple_users" file="D:\meem-commerce\tests\Feature\UserPromotionFlashSaleNotificationTest.php" line="370" class="Tests\Feature\UserPromotionFlashSaleNotificationTest" classname="Tests.Feature.UserPromotionFlashSaleNotificationTest" assertions="3" time="0.005475"/>
+    <testcase name="test_flash_sale_notification_payload_and_channels" file="D:\meem-commerce\tests\Feature\UserPromotionFlashSaleNotificationTest.php" line="387" class="Tests\Feature\UserPromotionFlashSaleNotificationTest" classname="Tests.Feature.UserPromotionFlashSaleNotificationTest" assertions="1" time="0.001104">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\UserPromotionFlashSaleNotificationTest::test_flash_sale_notification_payload_and_channels&#13;
+Failed asserting that two arrays are equal.
+--- Expected
++++ Actual
+@@ @@
+ Array (
+     0 =&gt; 'database'
+-    1 =&gt; 'broadcast'
++    1 =&gt; 'fcm'
++    2 =&gt; 'broadcast'
+ )
+&#13;
+D:\meem-commerce\tests\Feature\UserPromotionFlashSaleNotificationTest.php:393
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+  </testsuite>
+</testsuites>

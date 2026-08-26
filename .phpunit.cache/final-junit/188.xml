@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Invoice\AdminInvoiceCancelTest" file="D:\meem-commerce\tests\Feature\Invoice\AdminInvoiceCancelTest.php" tests="6" assertions="22" errors="0" failures="0" skipped="0" time="0.122543">
+    <testcase name="test_cancel_persists_terminal_state_reason_and_timeline" file="D:\meem-commerce\tests\Feature\Invoice\AdminInvoiceCancelTest.php" line="27" class="Tests\Feature\Invoice\AdminInvoiceCancelTest" classname="Tests.Feature.Invoice.AdminInvoiceCancelTest" assertions="6" time="0.068934"/>
+    <testcase name="test_cancel_is_rejected_without_reason" file="D:\meem-commerce\tests\Feature\Invoice\AdminInvoiceCancelTest.php" line="50" class="Tests\Feature\Invoice\AdminInvoiceCancelTest" classname="Tests.Feature.Invoice.AdminInvoiceCancelTest" assertions="4" time="0.010817"/>
+    <testcase name="test_cancel_rejects_reason_over_500_chars" file="D:\meem-commerce\tests\Feature\Invoice\AdminInvoiceCancelTest.php" line="62" class="Tests\Feature\Invoice\AdminInvoiceCancelTest" classname="Tests.Feature.Invoice.AdminInvoiceCancelTest" assertions="3" time="0.010053"/>
+    <testcase name="test_repeated_cancel_is_idempotently_rejected_with_business_422" file="D:\meem-commerce\tests\Feature\Invoice\AdminInvoiceCancelTest.php" line="71" class="Tests\Feature\Invoice\AdminInvoiceCancelTest" classname="Tests.Feature.Invoice.AdminInvoiceCancelTest" assertions="5" time="0.013353"/>
+    <testcase name="test_cancelled_invoice_cannot_be_corrected_afterwards" file="D:\meem-commerce\tests\Feature\Invoice\AdminInvoiceCancelTest.php" line="97" class="Tests\Feature\Invoice\AdminInvoiceCancelTest" classname="Tests.Feature.Invoice.AdminInvoiceCancelTest" assertions="2" time="0.014515"/>
+    <testcase name="test_regression_inv003_cancel_nonexistent_invoice_returns_404_without_leaking_fqcn" file="D:\meem-commerce\tests\Feature\Invoice\AdminInvoiceCancelTest.php" line="115" class="Tests\Feature\Invoice\AdminInvoiceCancelTest" classname="Tests.Feature.Invoice.AdminInvoiceCancelTest" assertions="2" time="0.004871"/>
+  </testsuite>
+</testsuites>

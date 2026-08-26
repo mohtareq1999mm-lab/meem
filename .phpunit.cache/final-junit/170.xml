@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Faqs\FaqValidationTest" file="D:\meem-commerce\tests\Feature\Faqs\FaqValidationTest.php" tests="3" assertions="5" errors="0" failures="0" skipped="0" time="0.054231">
+    <testcase name="update_accepts_partial_data" file="D:\meem-commerce\tests\Feature\Faqs\FaqValidationTest.php" line="72" class="Tests\Feature\Faqs\FaqValidationTest" classname="Tests.Feature.Faqs.FaqValidationTest" assertions="2" time="0.042598"/>
+    <testcase name="update_accepts_status_field" file="D:\meem-commerce\tests\Feature\Faqs\FaqValidationTest.php" line="88" class="Tests\Feature\Faqs\FaqValidationTest" classname="Tests.Feature.Faqs.FaqValidationTest" assertions="2" time="0.006143"/>
+    <testcase name="update_allows_same_title_for_self" file="D:\meem-commerce\tests\Feature\Faqs\FaqValidationTest.php" line="104" class="Tests\Feature\Faqs\FaqValidationTest" classname="Tests.Feature.Faqs.FaqValidationTest" assertions="1" time="0.005490"/>
+  </testsuite>
+</testsuites>

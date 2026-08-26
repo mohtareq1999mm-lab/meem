@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\FlashSales\FlashSaleReorderTest" file="D:\meem-commerce\tests\Feature\FlashSales\FlashSaleReorderTest.php" tests="3" assertions="4" errors="0" failures="0" skipped="0" time="0.608469">
+    <testcase name="can_reorder_flash_sales" file="D:\meem-commerce\tests\Feature\FlashSales\FlashSaleReorderTest.php" line="71" class="Tests\Feature\FlashSales\FlashSaleReorderTest" classname="Tests.Feature.FlashSales.FlashSaleReorderTest" assertions="2" time="0.365480"/>
+    <testcase name="reorder_updates_order_column" file="D:\meem-commerce\tests\Feature\FlashSales\FlashSaleReorderTest.php" line="86" class="Tests\Feature\FlashSales\FlashSaleReorderTest" classname="Tests.Feature.FlashSales.FlashSaleReorderTest" assertions="1" time="0.234940"/>
+    <testcase name="reorder_validates_flash_sales_required" file="D:\meem-commerce\tests\Feature\FlashSales\FlashSaleReorderTest.php" line="102" class="Tests\Feature\FlashSales\FlashSaleReorderTest" classname="Tests.Feature.FlashSales.FlashSaleReorderTest" assertions="1" time="0.008049"/>
+  </testsuite>
+</testsuites>

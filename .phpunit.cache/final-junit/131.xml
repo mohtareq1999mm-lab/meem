@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Contacts\ContactReplyTest" file="D:\meem-commerce\tests\Feature\Contacts\ContactReplyTest.php" tests="5" assertions="9" errors="0" failures="0" skipped="0" time="0.067830">
+    <testcase name="can_send_reply" file="D:\meem-commerce\tests\Feature\Contacts\ContactReplyTest.php" line="72" class="Tests\Feature\Contacts\ContactReplyTest" classname="Tests.Feature.Contacts.ContactReplyTest" assertions="2" time="0.039818"/>
+    <testcase name="reply_creates_new_contact_record_with_same_email" file="D:\meem-commerce\tests\Feature\Contacts\ContactReplyTest.php" line="91" class="Tests\Feature\Contacts\ContactReplyTest" classname="Tests.Feature.Contacts.ContactReplyTest" assertions="1" time="0.006705"/>
+    <testcase name="reply_record_is_marked_as_read_and_replayed" file="D:\meem-commerce\tests\Feature\Contacts\ContactReplyTest.php" line="110" class="Tests\Feature\Contacts\ContactReplyTest" classname="Tests.Feature.Contacts.ContactReplyTest" assertions="3" time="0.005167"/>
+    <testcase name="reply_returns_404_for_nonexistent_contact" file="D:\meem-commerce\tests\Feature\Contacts\ContactReplyTest.php" line="130" class="Tests\Feature\Contacts\ContactReplyTest" classname="Tests.Feature.Contacts.ContactReplyTest" assertions="1" time="0.010659"/>
+    <testcase name="original_contact_is_not_marked_as_read_or_replayed" file="D:\meem-commerce\tests\Feature\Contacts\ContactReplyTest.php" line="141" class="Tests\Feature\Contacts\ContactReplyTest" classname="Tests.Feature.Contacts.ContactReplyTest" assertions="2" time="0.005482"/>
+  </testsuite>
+</testsuites>

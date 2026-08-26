@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\OrderStatusLifecycleTest" file="D:\meem-commerce\tests\Feature\OrderStatusLifecycleTest.php" tests="15" assertions="43" errors="1" failures="0" skipped="0" time="1.269731">
+    <testcase name="completing_to_delivered_dispatches_order_delivered_once" file="D:\meem-commerce\tests\Feature\OrderStatusLifecycleTest.php" line="308" class="Tests\Feature\OrderStatusLifecycleTest" classname="Tests.Feature.OrderStatusLifecycleTest" assertions="3" time="0.022803"/>
+    <testcase name="re_delivering_same_order_does_not_duplicate_delivered_event" file="D:\meem-commerce\tests\Feature\OrderStatusLifecycleTest.php" line="323" class="Tests\Feature\OrderStatusLifecycleTest" classname="Tests.Feature.OrderStatusLifecycleTest" assertions="1" time="0.025018"/>
+    <testcase name="admin_completion_via_canonical_transition_emits_payment_succeeded_once" file="D:\meem-commerce\tests\Feature\OrderStatusLifecycleTest.php" line="340" class="Tests\Feature\OrderStatusLifecycleTest" classname="Tests.Feature.OrderStatusLifecycleTest" assertions="6" time="0.004068"/>
+    <testcase name="gateway_callback_path_does_not_emit_payment_succeeded_from_transition" file="D:\meem-commerce\tests\Feature\OrderStatusLifecycleTest.php" line="360" class="Tests\Feature\OrderStatusLifecycleTest" classname="Tests.Feature.OrderStatusLifecycleTest" assertions="2" time="0.193077"/>
+    <testcase name="mark_cod_as_paid_fires_order_status_changed_and_single_payment_succeeded" file="D:\meem-commerce\tests\Feature\OrderStatusLifecycleTest.php" line="379" class="Tests\Feature\OrderStatusLifecycleTest" classname="Tests.Feature.OrderStatusLifecycleTest" assertions="5" time="0.068632"/>
+    <testcase name="mark_cashier_as_paid_fires_order_status_changed_and_single_payment_succeeded" file="D:\meem-commerce\tests\Feature\OrderStatusLifecycleTest.php" line="399" class="Tests\Feature\OrderStatusLifecycleTest" classname="Tests.Feature.OrderStatusLifecycleTest" assertions="4" time="0.066874"/>
+    <testcase name="cancellation_still_dispatches_both_events" file="D:\meem-commerce\tests\Feature\OrderStatusLifecycleTest.php" line="420" class="Tests\Feature\OrderStatusLifecycleTest" classname="Tests.Feature.OrderStatusLifecycleTest" assertions="3" time="0.065653"/>
+    <testcase name="status_transitions_work_for_pickup_order_without_delivery_address" file="D:\meem-commerce\tests\Feature\OrderStatusLifecycleTest.php" line="437" class="Tests\Feature\OrderStatusLifecycleTest" classname="Tests.Feature.OrderStatusLifecycleTest" assertions="3" time="0.238067"/>
+    <testcase name="pending_to_processing_creates_invoice_once_without_payment_success" file="D:\meem-commerce\tests\Feature\OrderStatusLifecycleTest.php" line="463" class="Tests\Feature\OrderStatusLifecycleTest" classname="Tests.Feature.OrderStatusLifecycleTest" assertions="3" time="0.070132"/>
+    <testcase name="pending_to_completed_creates_exactly_one_invoice_and_one_payment_success" file="D:\meem-commerce\tests\Feature\OrderStatusLifecycleTest.php" line="478" class="Tests\Feature\OrderStatusLifecycleTest" classname="Tests.Feature.OrderStatusLifecycleTest" assertions="2" time="0.066819"/>
+    <testcase name="pending_to_cancelled_creates_invoice_without_payment_success" file="D:\meem-commerce\tests\Feature\OrderStatusLifecycleTest.php" line="492" class="Tests\Feature\OrderStatusLifecycleTest" classname="Tests.Feature.OrderStatusLifecycleTest" assertions="2" time="0.214510"/>
+    <testcase name="later_transitions_never_duplicate_the_invoice" file="D:\meem-commerce\tests\Feature\OrderStatusLifecycleTest.php" line="506" class="Tests\Feature\OrderStatusLifecycleTest" classname="Tests.Feature.OrderStatusLifecycleTest" assertions="2" time="0.083045">
+      <error type="Illuminate\Contracts\Container\BindingResolutionException">Tests\Feature\OrderStatusLifecycleTest::later_transitions_never_duplicate_the_invoice&#13;
+Illuminate\Contracts\Container\BindingResolutionException: Target class [App\Providers\SendUserOrderDeliveredNotification] does not exist.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Container.php:912
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Container.php:795
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Application.php:955
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Container\Container.php:731
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Application.php:940
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:502
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:476
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:286
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Events\Dispatcher.php:266
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Testing\Fakes\EventFake.php:304
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\helpers.php:433
+D:\meem-commerce\app\Services\General\OrderService.php:637
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\Concerns\ManagesTransactions.php:30
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Database\DatabaseManager.php:469
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Support\Facades\Facade.php:353
+D:\meem-commerce\app\Services\General\OrderService.php:511
+D:\meem-commerce\tests\Feature\OrderStatusLifecycleTest.php:519
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</error>
+    </testcase>
+    <testcase name="same_status_reassignment_does_not_create_invoice" file="D:\meem-commerce\tests\Feature\OrderStatusLifecycleTest.php" line="526" class="Tests\Feature\OrderStatusLifecycleTest" classname="Tests.Feature.OrderStatusLifecycleTest" assertions="2" time="0.005899"/>
+    <testcase name="mark_cod_produces_exactly_one_invoice_and_one_payment_succeeded" file="D:\meem-commerce\tests\Feature\OrderStatusLifecycleTest.php" line="539" class="Tests\Feature\OrderStatusLifecycleTest" classname="Tests.Feature.OrderStatusLifecycleTest" assertions="3" time="0.074252"/>
+    <testcase name="gateway_opt_out_path_still_creates_the_invoice_from_the_transition" file="D:\meem-commerce\tests\Feature\OrderStatusLifecycleTest.php" line="555" class="Tests\Feature\OrderStatusLifecycleTest" classname="Tests.Feature.OrderStatusLifecycleTest" assertions="2" time="0.070882"/>
+  </testsuite>
+</testsuites>

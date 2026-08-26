@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Unit\FastShippingScopeTest" file="D:\meem-commerce\tests\Unit\FastShippingScopeTest.php" tests="4" assertions="4" errors="0" failures="0" skipped="0" time="0.014305">
+    <testcase name="it_applies_where_clause_when_channel_is_fast_shipping" file="D:\meem-commerce\tests\Unit\FastShippingScopeTest.php" line="33" class="Tests\Unit\FastShippingScopeTest" classname="Tests.Unit.FastShippingScopeTest" assertions="1" time="0.013103"/>
+    <testcase name="it_does_not_apply_where_clause_when_channel_is_home" file="D:\meem-commerce\tests\Unit\FastShippingScopeTest.php" line="48" class="Tests\Unit\FastShippingScopeTest" classname="Tests.Unit.FastShippingScopeTest" assertions="1" time="0.000488"/>
+    <testcase name="it_does_not_apply_where_clause_when_channel_is_disabled" file="D:\meem-commerce\tests\Unit\FastShippingScopeTest.php" line="62" class="Tests\Unit\FastShippingScopeTest" classname="Tests.Unit.FastShippingScopeTest" assertions="1" time="0.000348"/>
+    <testcase name="it_does_not_apply_when_context_not_set" file="D:\meem-commerce\tests\Unit\FastShippingScopeTest.php" line="76" class="Tests\Unit\FastShippingScopeTest" classname="Tests.Unit.FastShippingScopeTest" assertions="1" time="0.000366"/>
+  </testsuite>
+</testsuites>

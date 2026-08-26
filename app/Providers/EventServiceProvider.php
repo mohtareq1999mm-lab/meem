@@ -48,6 +48,10 @@ use App\Listeners\SendUserCouponAssignedNotification;
 use App\Listeners\SendUserCouponAvailableNotification;
 use App\Listeners\SendUserCouponUsedNotification;
 use App\Listeners\SendUserOrderCancelledNotification;
+// Phase 0 (#18): this listener reference was also unqualified — without the
+// import it resolved to the nonexistent App\Providers\SendUserOrder-
+// DeliveredNotification once the event key below became resolvable.
+use App\Listeners\SendUserOrderDeliveredNotification;
 use App\Listeners\SendUserOrderCreatedNotification;
 use App\Listeners\SendUserPaymentFailedNotification;
 use App\Listeners\SendUserPaymentSucceededNotification;

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\StaticPages\StaticPageNPlusOneTest" file="D:\meem-commerce\tests\Feature\StaticPages\StaticPageNPlusOneTest.php" tests="4" assertions="11" errors="0" failures="0" skipped="0" time="0.102565">
+    <testcase name="test_public_index_query_count_is_constant_regardless_of_sections" file="D:\meem-commerce\tests\Feature\StaticPages\StaticPageNPlusOneTest.php" line="105" class="Tests\Feature\StaticPages\StaticPageNPlusOneTest" classname="Tests.Feature.StaticPages.StaticPageNPlusOneTest" assertions="3" time="0.035372"/>
+    <testcase name="test_public_show_query_count_is_constant" file="D:\meem-commerce\tests\Feature\StaticPages\StaticPageNPlusOneTest.php" line="120" class="Tests\Feature\StaticPages\StaticPageNPlusOneTest" classname="Tests.Feature.StaticPages.StaticPageNPlusOneTest" assertions="2" time="0.011580"/>
+    <testcase name="test_admin_index_query_count_is_constant" file="D:\meem-commerce\tests\Feature\StaticPages\StaticPageNPlusOneTest.php" line="132" class="Tests\Feature\StaticPages\StaticPageNPlusOneTest" classname="Tests.Feature.StaticPages.StaticPageNPlusOneTest" assertions="3" time="0.039943"/>
+    <testcase name="test_repeated_index_requests_are_served_from_cache_with_zero_queries" file="D:\meem-commerce\tests\Feature\StaticPages\StaticPageNPlusOneTest.php" line="146" class="Tests\Feature\StaticPages\StaticPageNPlusOneTest" classname="Tests.Feature.StaticPages.StaticPageNPlusOneTest" assertions="3" time="0.015670"/>
+  </testsuite>
+</testsuites>

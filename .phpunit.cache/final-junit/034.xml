@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\CheckoutConcurrencyStressTest" file="D:\meem-commerce\tests\Feature\CheckoutConcurrencyStressTest.php" tests="8" assertions="20" errors="0" failures="0" skipped="0" time="0.584508">
+    <testcase name="coupon_limiter_enforced_under_stress" file="D:\meem-commerce\tests\Feature\CheckoutConcurrencyStressTest.php" line="88" class="Tests\Feature\CheckoutConcurrencyStressTest" classname="Tests.Feature.CheckoutConcurrencyStressTest" assertions="2" time="0.164341"/>
+    <testcase name="promotion_limiter_enforced_under_stress" file="D:\meem-commerce\tests\Feature\CheckoutConcurrencyStressTest.php" line="110" class="Tests\Feature\CheckoutConcurrencyStressTest" classname="Tests.Feature.CheckoutConcurrencyStressTest" assertions="1" time="0.162163"/>
+    <testcase name="inventory_consistency_through_reserve_release_cycle" file="D:\meem-commerce\tests\Feature\CheckoutConcurrencyStressTest.php" line="132" class="Tests\Feature\CheckoutConcurrencyStressTest" classname="Tests.Feature.CheckoutConcurrencyStressTest" assertions="5" time="0.017617"/>
+    <testcase name="database_lock_prevents_double_reservation" file="D:\meem-commerce\tests\Feature\CheckoutConcurrencyStressTest.php" line="162" class="Tests\Feature\CheckoutConcurrencyStressTest" classname="Tests.Feature.CheckoutConcurrencyStressTest" assertions="2" time="0.011843"/>
+    <testcase name="concurrent_coupon_usage_tracked_correctly" file="D:\meem-commerce\tests\Feature\CheckoutConcurrencyStressTest.php" line="186" class="Tests\Feature\CheckoutConcurrencyStressTest" classname="Tests.Feature.CheckoutConcurrencyStressTest" assertions="2" time="0.153828"/>
+    <testcase name="multiple_reservations_respect_stock_limit" file="D:\meem-commerce\tests\Feature\CheckoutConcurrencyStressTest.php" line="217" class="Tests\Feature\CheckoutConcurrencyStressTest" classname="Tests.Feature.CheckoutConcurrencyStressTest" assertions="3" time="0.042953"/>
+    <testcase name="stock_exhaustion_blocks_new_reservation" file="D:\meem-commerce\tests\Feature\CheckoutConcurrencyStressTest.php" line="247" class="Tests\Feature\CheckoutConcurrencyStressTest" classname="Tests.Feature.CheckoutConcurrencyStressTest" assertions="2" time="0.013177"/>
+    <testcase name="release_restores_available_stock" file="D:\meem-commerce\tests\Feature\CheckoutConcurrencyStressTest.php" line="271" class="Tests\Feature\CheckoutConcurrencyStressTest" classname="Tests.Feature.CheckoutConcurrencyStressTest" assertions="3" time="0.018586"/>
+  </testsuite>
+</testsuites>

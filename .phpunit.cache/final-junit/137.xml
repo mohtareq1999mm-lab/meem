@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Currency\BaseCurrencyTest" file="D:\meem-commerce\tests\Feature\Currency\BaseCurrencyTest.php" tests="8" assertions="26" errors="0" failures="0" skipped="0" time="0.278877">
+    <testcase name="admin_can_set_a_new_base_currency" file="D:\meem-commerce\tests\Feature\Currency\BaseCurrencyTest.php" line="15" class="Tests\Feature\Currency\BaseCurrencyTest" classname="Tests.Feature.Currency.BaseCurrencyTest" assertions="5" time="0.101278"/>
+    <testcase name="set_base_syncs_options_currency_field" file="D:\meem-commerce\tests\Feature\Currency\BaseCurrencyTest.php" line="30" class="Tests\Feature\Currency\BaseCurrencyTest" classname="Tests.Feature.Currency.BaseCurrencyTest" assertions="4" time="0.026675"/>
+    <testcase name="base_code_is_reflected_by_currency_service" file="D:\meem-commerce\tests\Feature\Currency\BaseCurrencyTest.php" line="46" class="Tests\Feature\Currency\BaseCurrencyTest" classname="Tests.Feature.Currency.BaseCurrencyTest" assertions="4" time="0.027921"/>
+    <testcase name="inactive_currency_cannot_be_set_as_base" file="D:\meem-commerce\tests\Feature\Currency\BaseCurrencyTest.php" line="59" class="Tests\Feature\Currency\BaseCurrencyTest" classname="Tests.Feature.Currency.BaseCurrencyTest" assertions="4" time="0.026069"/>
+    <testcase name="currency_without_a_rate_cannot_be_set_as_base" file="D:\meem-commerce\tests\Feature\Currency\BaseCurrencyTest.php" line="77" class="Tests\Feature\Currency\BaseCurrencyTest" classname="Tests.Feature.Currency.BaseCurrencyTest" assertions="4" time="0.028688"/>
+    <testcase name="set_base_for_missing_currency_returns_404" file="D:\meem-commerce\tests\Feature\Currency\BaseCurrencyTest.php" line="94" class="Tests\Feature\Currency\BaseCurrencyTest" classname="Tests.Feature.Currency.BaseCurrencyTest" assertions="1" time="0.027648"/>
+    <testcase name="set_base_requires_permission" file="D:\meem-commerce\tests\Feature\Currency\BaseCurrencyTest.php" line="103" class="Tests\Feature\Currency\BaseCurrencyTest" classname="Tests.Feature.Currency.BaseCurrencyTest" assertions="1" time="0.014001"/>
+    <testcase name="set_base_flushes_frontend_price_caches" file="D:\meem-commerce\tests\Feature\Currency\BaseCurrencyTest.php" line="113" class="Tests\Feature\Currency\BaseCurrencyTest" classname="Tests.Feature.Currency.BaseCurrencyTest" assertions="3" time="0.026598"/>
+  </testsuite>
+</testsuites>

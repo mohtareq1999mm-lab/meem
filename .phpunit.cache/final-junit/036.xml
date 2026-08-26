@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\CheckoutRegressionTest" file="D:\meem-commerce\tests\Feature\CheckoutRegressionTest.php" tests="9" assertions="39" errors="0" failures="0" skipped="0" time="1.889832">
+    <testcase name="checkout_uses_current_product_price_not_stale_cart_price" file="D:\meem-commerce\tests\Feature\CheckoutRegressionTest.php" line="505" class="Tests\Feature\CheckoutRegressionTest" classname="Tests.Feature.CheckoutRegressionTest" assertions="7" time="0.260818"/>
+    <testcase name="checkout_recalculates_price_when_flash_sale_starts" file="D:\meem-commerce\tests\Feature\CheckoutRegressionTest.php" line="529" class="Tests\Feature\CheckoutRegressionTest" classname="Tests.Feature.CheckoutRegressionTest" assertions="6" time="0.262366"/>
+    <testcase name="checkout_uses_product_price_when_flash_sale_ends" file="D:\meem-commerce\tests\Feature\CheckoutRegressionTest.php" line="561" class="Tests\Feature\CheckoutRegressionTest" classname="Tests.Feature.CheckoutRegressionTest" assertions="4" time="0.240382"/>
+    <testcase name="checkout_with_variant_uses_current_variant_price" file="D:\meem-commerce\tests\Feature\CheckoutRegressionTest.php" line="601" class="Tests\Feature\CheckoutRegressionTest" classname="Tests.Feature.CheckoutRegressionTest" assertions="4" time="0.166367"/>
+    <testcase name="checkout_refreshes_promotion_price_from_current_data" file="D:\meem-commerce\tests\Feature\CheckoutRegressionTest.php" line="642" class="Tests\Feature\CheckoutRegressionTest" classname="Tests.Feature.CheckoutRegressionTest" assertions="5" time="0.251246"/>
+    <testcase name="checkout_rejects_expired_coupon_and_clears_it" file="D:\meem-commerce\tests\Feature\CheckoutRegressionTest.php" line="674" class="Tests\Feature\CheckoutRegressionTest" classname="Tests.Feature.CheckoutRegressionTest" assertions="4" time="0.257080"/>
+    <testcase name="checkout_stores_price_snapshot_immutable" file="D:\meem-commerce\tests\Feature\CheckoutRegressionTest.php" line="705" class="Tests\Feature\CheckoutRegressionTest" classname="Tests.Feature.CheckoutRegressionTest" assertions="4" time="0.192458"/>
+    <testcase name="deductStock_decrements_correct_variation_column" file="D:\meem-commerce\tests\Feature\CheckoutRegressionTest.php" line="727" class="Tests\Feature\CheckoutRegressionTest" classname="Tests.Feature.CheckoutRegressionTest" assertions="1" time="0.006838"/>
+    <testcase name="checkout_coupon_locked_during_validation" file="D:\meem-commerce\tests\Feature\CheckoutRegressionTest.php" line="748" class="Tests\Feature\CheckoutRegressionTest" classname="Tests.Feature.CheckoutRegressionTest" assertions="4" time="0.252276"/>
+  </testsuite>
+</testsuites>

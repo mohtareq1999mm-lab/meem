@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\PickupLocationTest" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" tests="31" assertions="78" errors="0" failures="1" skipped="0" time="0.293011">
+    <testcase name="admin_can_list_pickup_locations" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="176" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="9" time="0.073765"/>
+    <testcase name="admin_can_create_pickup_location" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="195" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="1" time="0.023185">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\PickupLocationTest::admin_can_create_pickup_location&#13;
+Expected response status code [200] but received 422.
+Failed asserting that 200 is identical to 422.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\PickupLocationTest.php:213
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="admin_can_show_pickup_location" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="224" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="2" time="0.006509"/>
+    <testcase name="admin_can_update_pickup_location" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="243" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="2" time="0.008533"/>
+    <testcase name="admin_can_delete_pickup_location" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="265" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="2" time="0.007303"/>
+    <testcase name="store_requires_store_name" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="284" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="2" time="0.004009"/>
+    <testcase name="store_requires_address" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="298" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="2" time="0.004344"/>
+    <testcase name="store_requires_phone" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="312" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="2" time="0.003885"/>
+    <testcase name="store_accepts_valid_email" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="326" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="2" time="0.004840"/>
+    <testcase name="store_validates_display_order_is_integer" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="342" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="2" time="0.004663"/>
+    <testcase name="unauthenticated_user_cannot_access_admin_endpoints" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="360" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="4" time="0.006672"/>
+    <testcase name="customer_cannot_create_pickup_location" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="376" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="1" time="0.004294"/>
+    <testcase name="customer_cannot_delete_pickup_location" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="390" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="1" time="0.003575"/>
+    <testcase name="public_can_list_active_pickup_locations" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="401" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="3" time="0.006992"/>
+    <testcase name="public_can_show_active_pickup_location" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="424" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="2" time="0.004765"/>
+    <testcase name="public_cannot_show_inactive_pickup_location" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="440" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="1" time="0.005517"/>
+    <testcase name="returns_404_for_nonexistent_pickup_location" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="457" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="3" time="0.015461"/>
+    <testcase name="pickup_locations_are_ordered_by_display_order" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="474" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="2" time="0.010577"/>
+    <testcase name="admin_can_search_pickup_locations" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="505" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="3" time="0.009729"/>
+    <testcase name="creating_pickup_location_as_default_resets_previous_default" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="530" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="3" time="0.011806"/>
+    <testcase name="setting_new_default_via_update_resets_others" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="563" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="3" time="0.009260"/>
+    <testcase name="updating_default_location_fields_preserves_is_default" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="597" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="2" time="0.007435"/>
+    <testcase name="only_one_default_pickup_location_exists_at_a_time" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="622" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="1" time="0.005266"/>
+    <testcase name="deleting_default_location_promotes_next_by_id" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="652" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="3" time="0.009473"/>
+    <testcase name="deleting_non_default_location_keeps_default" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="681" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="2" time="0.007278"/>
+    <testcase name="admin_resource_exposes_is_default" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="709" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="6" time="0.008462"/>
+    <testcase name="public_resource_exposes_is_default" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="731" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="5" time="0.005455"/>
+    <testcase name="service_returns_default_pickup_location" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="751" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="2" time="0.004598"/>
+    <testcase name="service_returns_null_when_no_active_default_exists" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="775" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="1" time="0.002614"/>
+    <testcase name="store_validates_is_default_is_boolean" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="792" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="2" time="0.006011"/>
+    <testcase name="creating_pickup_location_without_is_default_is_not_default" file="D:\meem-commerce\tests\Feature\PickupLocationTest.php" line="808" class="Tests\Feature\PickupLocationTest" classname="Tests.Feature.PickupLocationTest" assertions="2" time="0.006733"/>
+  </testsuite>
+</testsuites>

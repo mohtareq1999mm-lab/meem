@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\UserOrderDetailTest" file="D:\meem-commerce\tests\Feature\UserOrderDetailTest.php" tests="6" assertions="18" errors="0" failures="0" skipped="0" time="0.097706">
+    <testcase name="test_show_requires_authentication" file="D:\meem-commerce\tests\Feature\UserOrderDetailTest.php" line="98" class="Tests\Feature\UserOrderDetailTest" classname="Tests.Feature.UserOrderDetailTest" assertions="1" time="0.040396"/>
+    <testcase name="test_show_returns_own_order_details" file="D:\meem-commerce\tests\Feature\UserOrderDetailTest.php" line="107" class="Tests\Feature\UserOrderDetailTest" classname="Tests.Feature.UserOrderDetailTest" assertions="7" time="0.035341"/>
+    <testcase name="test_show_returns_404_for_another_users_order" file="D:\meem-commerce\tests\Feature\UserOrderDetailTest.php" line="125" class="Tests\Feature\UserOrderDetailTest" classname="Tests.Feature.UserOrderDetailTest" assertions="2" time="0.003897"/>
+    <testcase name="test_show_returns_404_for_nonexistent_order" file="D:\meem-commerce\tests\Feature\UserOrderDetailTest.php" line="137" class="Tests\Feature\UserOrderDetailTest" classname="Tests.Feature.UserOrderDetailTest" assertions="2" time="0.003654"/>
+    <testcase name="test_show_does_not_expose_another_users_order_by_changing_id" file="D:\meem-commerce\tests\Feature\UserOrderDetailTest.php" line="147" class="Tests\Feature\UserOrderDetailTest" classname="Tests.Feature.UserOrderDetailTest" assertions="5" time="0.008821"/>
+    <testcase name="test_show_does_not_accept_user_id_from_request" file="D:\meem-commerce\tests\Feature\UserOrderDetailTest.php" line="164" class="Tests\Feature\UserOrderDetailTest" classname="Tests.Feature.UserOrderDetailTest" assertions="1" time="0.005598"/>
+  </testsuite>
+</testsuites>

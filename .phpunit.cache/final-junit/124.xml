@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Categories\CategorySoftDeleteTest" file="D:\meem-commerce\tests\Feature\Categories\CategorySoftDeleteTest.php" tests="5" assertions="9" errors="0" failures="0" skipped="0" time="0.100068">
+    <testcase name="test_category_uses_soft_deletes" file="D:\meem-commerce\tests\Feature\Categories\CategorySoftDeleteTest.php" line="36" class="Tests\Feature\Categories\CategorySoftDeleteTest" classname="Tests.Feature.Categories.CategorySoftDeleteTest" assertions="2" time="0.014667"/>
+    <testcase name="test_deleted_category_not_in_index" file="D:\meem-commerce\tests\Feature\Categories\CategorySoftDeleteTest.php" line="49" class="Tests\Feature\Categories\CategorySoftDeleteTest" classname="Tests.Feature.Categories.CategorySoftDeleteTest" assertions="2" time="0.048474"/>
+    <testcase name="test_show_returns_404_for_soft_deleted_category" file="D:\meem-commerce\tests\Feature\Categories\CategorySoftDeleteTest.php" line="67" class="Tests\Feature\Categories\CategorySoftDeleteTest" classname="Tests.Feature.Categories.CategorySoftDeleteTest" assertions="1" time="0.012674"/>
+    <testcase name="test_force_delete_removes_permanently" file="D:\meem-commerce\tests\Feature\Categories\CategorySoftDeleteTest.php" line="82" class="Tests\Feature\Categories\CategorySoftDeleteTest" classname="Tests.Feature.Categories.CategorySoftDeleteTest" assertions="1" time="0.011506"/>
+    <testcase name="test_multiple_soft_deletes" file="D:\meem-commerce\tests\Feature\Categories\CategorySoftDeleteTest.php" line="95" class="Tests\Feature\Categories\CategorySoftDeleteTest" classname="Tests.Feature.Categories.CategorySoftDeleteTest" assertions="3" time="0.012747"/>
+  </testsuite>
+</testsuites>

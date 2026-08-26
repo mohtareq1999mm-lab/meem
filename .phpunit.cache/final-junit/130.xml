@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Contacts\ContactRegressionTest" file="D:\meem-commerce\tests\Feature\Contacts\ContactRegressionTest.php" tests="10" assertions="21" errors="0" failures="0" skipped="0" time="0.081886">
+    <testcase name="b1_soft_delete_does_not_hard_delete" file="D:\meem-commerce\tests\Feature\Contacts\ContactRegressionTest.php" line="75" class="Tests\Feature\Contacts\ContactRegressionTest" classname="Tests.Feature.Contacts.ContactRegressionTest" assertions="2" time="0.005271"/>
+    <testcase name="b2_contact_uses_soft_deletes" file="D:\meem-commerce\tests\Feature\Contacts\ContactRegressionTest.php" line="91" class="Tests\Feature\Contacts\ContactRegressionTest" classname="Tests.Feature.Contacts.ContactRegressionTest" assertions="1" time="0.000948"/>
+    <testcase name="b3_store_creates_contact_successfully" file="D:\meem-commerce\tests\Feature\Contacts\ContactRegressionTest.php" line="98" class="Tests\Feature\Contacts\ContactRegressionTest" classname="Tests.Feature.Contacts.ContactRegressionTest" assertions="1" time="0.040898"/>
+    <testcase name="b4_contact_us_route_works" file="D:\meem-commerce\tests\Feature\Contacts\ContactRegressionTest.php" line="113" class="Tests\Feature\Contacts\ContactRegressionTest" classname="Tests.Feature.Contacts.ContactRegressionTest" assertions="1" time="0.003520"/>
+    <testcase name="b5_index_filters_by_read" file="D:\meem-commerce\tests\Feature\Contacts\ContactRegressionTest.php" line="128" class="Tests\Feature\Contacts\ContactRegressionTest" classname="Tests.Feature.Contacts.ContactRegressionTest" assertions="3" time="0.010684"/>
+    <testcase name="b6_index_filters_by_unread" file="D:\meem-commerce\tests\Feature\Contacts\ContactRegressionTest.php" line="141" class="Tests\Feature\Contacts\ContactRegressionTest" classname="Tests.Feature.Contacts.ContactRegressionTest" assertions="3" time="0.005624"/>
+    <testcase name="b7_index_filters_by_replay" file="D:\meem-commerce\tests\Feature\Contacts\ContactRegressionTest.php" line="154" class="Tests\Feature\Contacts\ContactRegressionTest" classname="Tests.Feature.Contacts.ContactRegressionTest" assertions="2" time="0.005885"/>
+    <testcase name="b8_translation_keys_exist" file="D:\meem-commerce\tests\Feature\Contacts\ContactRegressionTest.php" line="166" class="Tests\Feature\Contacts\ContactRegressionTest" classname="Tests.Feature.Contacts.ContactRegressionTest" assertions="5" time="0.001742"/>
+    <testcase name="b9_read_and_unread_filters_are_exclusive" file="D:\meem-commerce\tests\Feature\Contacts\ContactRegressionTest.php" line="183" class="Tests\Feature\Contacts\ContactRegressionTest" classname="Tests.Feature.Contacts.ContactRegressionTest" assertions="2" time="0.006358"/>
+    <testcase name="b10_contact_message_received_triggers_admin_notification" file="D:\meem-commerce\tests\Feature\Contacts\ContactRegressionTest.php" line="194" class="Tests\Feature\Contacts\ContactRegressionTest" classname="Tests.Feature.Contacts.ContactRegressionTest" assertions="1" time="0.000957"/>
+  </testsuite>
+</testsuites>

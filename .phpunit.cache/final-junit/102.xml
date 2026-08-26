@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\UserStaffMiscTest" file="D:\meem-commerce\tests\Feature\UserStaffMiscTest.php" tests="13" assertions="17" errors="0" failures="7" skipped="0" time="0.188152">
+    <testcase name="test_license_key_verification_fails_without_key" file="D:\meem-commerce\tests\Feature\UserStaffMiscTest.php" line="148" class="Tests\Feature\UserStaffMiscTest" classname="Tests.Feature.UserStaffMiscTest" assertions="1" time="0.048875">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\UserStaffMiscTest::test_license_key_verification_fails_without_key&#13;
+Expected response status code [422] but received 404.
+Failed asserting that 422 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\UserStaffMiscTest.php:153
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_license_key_verification_requires_string" file="D:\meem-commerce\tests\Feature\UserStaffMiscTest.php" line="156" class="Tests\Feature\UserStaffMiscTest" classname="Tests.Feature.UserStaffMiscTest" assertions="1" time="0.006365">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\UserStaffMiscTest::test_license_key_verification_requires_string&#13;
+Expected response status code [422] but received 404.
+Failed asserting that 422 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\UserStaffMiscTest.php:162
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_staffs_endpoint_requires_shop_id" file="D:\meem-commerce\tests\Feature\UserStaffMiscTest.php" line="169" class="Tests\Feature\UserStaffMiscTest" classname="Tests.Feature.UserStaffMiscTest" assertions="1" time="0.006759">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\UserStaffMiscTest::test_staffs_endpoint_requires_shop_id&#13;
+Expected response status code [403] but received 404.
+Failed asserting that 403 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\UserStaffMiscTest.php:174
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_staffs_endpoint_requires_auth" file="D:\meem-commerce\tests\Feature\UserStaffMiscTest.php" line="177" class="Tests\Feature\UserStaffMiscTest" classname="Tests.Feature.UserStaffMiscTest" assertions="1" time="0.006134">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\UserStaffMiscTest::test_staffs_endpoint_requires_auth&#13;
+Expected response status code [401] but received 404.
+Failed asserting that 401 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\UserStaffMiscTest.php:179
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_my_staffs_requires_auth" file="D:\meem-commerce\tests\Feature\UserStaffMiscTest.php" line="186" class="Tests\Feature\UserStaffMiscTest" classname="Tests.Feature.UserStaffMiscTest" assertions="1" time="0.006275">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\UserStaffMiscTest::test_my_staffs_requires_auth&#13;
+Expected response status code [401] but received 404.
+Failed asserting that 401 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\UserStaffMiscTest.php:188
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_all_staffs_requires_auth" file="D:\meem-commerce\tests\Feature\UserStaffMiscTest.php" line="195" class="Tests\Feature\UserStaffMiscTest" classname="Tests.Feature.UserStaffMiscTest" assertions="1" time="0.006660">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\UserStaffMiscTest::test_all_staffs_requires_auth&#13;
+Expected response status code [401] but received 404.
+Failed asserting that 401 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\UserStaffMiscTest.php:197
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_verification_notification_requires_auth" file="D:\meem-commerce\tests\Feature\UserStaffMiscTest.php" line="204" class="Tests\Feature\UserStaffMiscTest" classname="Tests.Feature.UserStaffMiscTest" assertions="1" time="0.006990">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\UserStaffMiscTest::test_verification_notification_requires_auth&#13;
+Expected response status code [401] but received 404.
+Failed asserting that 401 is identical to 404.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:146
+D:\meem-commerce\tests\Feature\UserStaffMiscTest.php:207
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_index_filters_by_type" file="D:\meem-commerce\tests\Feature\UserStaffMiscTest.php" line="214" class="Tests\Feature\UserStaffMiscTest" classname="Tests.Feature.UserStaffMiscTest" assertions="2" time="0.030468"/>
+    <testcase name="test_index_filters_users_flag" file="D:\meem-commerce\tests\Feature\UserStaffMiscTest.php" line="231" class="Tests\Feature\UserStaffMiscTest" classname="Tests.Feature.UserStaffMiscTest" assertions="3" time="0.012223"/>
+    <testcase name="test_index_filters_admins_flag" file="D:\meem-commerce\tests\Feature\UserStaffMiscTest.php" line="249" class="Tests\Feature\UserStaffMiscTest" classname="Tests.Feature.UserStaffMiscTest" assertions="2" time="0.024118"/>
+    <testcase name="test_index_sorts_by_name_asc" file="D:\meem-commerce\tests\Feature\UserStaffMiscTest.php" line="264" class="Tests\Feature\UserStaffMiscTest" classname="Tests.Feature.UserStaffMiscTest" assertions="1" time="0.012249"/>
+    <testcase name="test_index_sorts_by_name_desc" file="D:\meem-commerce\tests\Feature\UserStaffMiscTest.php" line="273" class="Tests\Feature\UserStaffMiscTest" classname="Tests.Feature.UserStaffMiscTest" assertions="1" time="0.010394"/>
+    <testcase name="test_fetch_users_by_store_owner_permission" file="D:\meem-commerce\tests\Feature\UserStaffMiscTest.php" line="286" class="Tests\Feature\UserStaffMiscTest" classname="Tests.Feature.UserStaffMiscTest" assertions="1" time="0.010644"/>
+  </testsuite>
+</testsuites>

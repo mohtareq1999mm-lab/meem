@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Pages\SectionReorderEdgeTest" file="D:\meem-commerce\tests\Feature\Pages\SectionReorderEdgeTest.php" tests="4" assertions="6" errors="0" failures="0" skipped="0" time="0.084620">
+    <testcase name="test_reorder_with_empty_array_returns_422" file="D:\meem-commerce\tests\Feature\Pages\SectionReorderEdgeTest.php" line="99" class="Tests\Feature\Pages\SectionReorderEdgeTest" classname="Tests.Feature.Pages.SectionReorderEdgeTest" assertions="1" time="0.049063"/>
+    <testcase name="test_reorder_with_duplicate_ids_returns_422" file="D:\meem-commerce\tests\Feature\Pages\SectionReorderEdgeTest.php" line="108" class="Tests\Feature\Pages\SectionReorderEdgeTest" classname="Tests.Feature.Pages.SectionReorderEdgeTest" assertions="1" time="0.011213"/>
+    <testcase name="test_reorder_with_non_integer_ids_returns_422" file="D:\meem-commerce\tests\Feature\Pages\SectionReorderEdgeTest.php" line="118" class="Tests\Feature\Pages\SectionReorderEdgeTest" classname="Tests.Feature.Pages.SectionReorderEdgeTest" assertions="1" time="0.008964"/>
+    <testcase name="test_partial_reorder_keeps_unlisted_sections_in_relative_position" file="D:\meem-commerce\tests\Feature\Pages\SectionReorderEdgeTest.php" line="127" class="Tests\Feature\Pages\SectionReorderEdgeTest" classname="Tests.Feature.Pages.SectionReorderEdgeTest" assertions="3" time="0.015380"/>
+  </testsuite>
+</testsuites>

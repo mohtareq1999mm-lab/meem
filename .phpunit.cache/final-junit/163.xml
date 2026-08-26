@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Faqs\FaqAuthorizationTest" file="D:\meem-commerce\tests\Feature\Faqs\FaqAuthorizationTest.php" tests="10" assertions="18" errors="0" failures="0" skipped="0" time="0.147492">
+    <testcase name="user_with_view_only_can_index_and_show" file="D:\meem-commerce\tests\Feature\Faqs\FaqAuthorizationTest.php" line="99" class="Tests\Feature\Faqs\FaqAuthorizationTest" classname="Tests.Feature.Faqs.FaqAuthorizationTest" assertions="2" time="0.053583"/>
+    <testcase name="user_with_view_only_cannot_create" file="D:\meem-commerce\tests\Feature\Faqs\FaqAuthorizationTest.php" line="110" class="Tests\Feature\Faqs\FaqAuthorizationTest" classname="Tests.Feature.Faqs.FaqAuthorizationTest" assertions="1" time="0.009630"/>
+    <testcase name="user_with_view_only_cannot_update" file="D:\meem-commerce\tests\Feature\Faqs\FaqAuthorizationTest.php" line="122" class="Tests\Feature\Faqs\FaqAuthorizationTest" classname="Tests.Feature.Faqs.FaqAuthorizationTest" assertions="1" time="0.008228"/>
+    <testcase name="user_with_view_only_cannot_delete" file="D:\meem-commerce\tests\Feature\Faqs\FaqAuthorizationTest.php" line="134" class="Tests\Feature\Faqs\FaqAuthorizationTest" classname="Tests.Feature.Faqs.FaqAuthorizationTest" assertions="1" time="0.007791"/>
+    <testcase name="user_with_view_only_cannot_reorder" file="D:\meem-commerce\tests\Feature\Faqs\FaqAuthorizationTest.php" line="144" class="Tests\Feature\Faqs\FaqAuthorizationTest" classname="Tests.Feature.Faqs.FaqAuthorizationTest" assertions="1" time="0.009076"/>
+    <testcase name="user_with_create_only_can_create" file="D:\meem-commerce\tests\Feature\Faqs\FaqAuthorizationTest.php" line="155" class="Tests\Feature\Faqs\FaqAuthorizationTest" classname="Tests.Feature.Faqs.FaqAuthorizationTest" assertions="4" time="0.020473"/>
+    <testcase name="user_with_update_only_can_update" file="D:\meem-commerce\tests\Feature\Faqs\FaqAuthorizationTest.php" line="179" class="Tests\Feature\Faqs\FaqAuthorizationTest" classname="Tests.Feature.Faqs.FaqAuthorizationTest" assertions="3" time="0.010469"/>
+    <testcase name="user_with_update_only_can_reorder" file="D:\meem-commerce\tests\Feature\Faqs\FaqAuthorizationTest.php" line="202" class="Tests\Feature\Faqs\FaqAuthorizationTest" classname="Tests.Feature.Faqs.FaqAuthorizationTest" assertions="1" time="0.010132"/>
+    <testcase name="user_with_delete_only_can_delete" file="D:\meem-commerce\tests\Feature\Faqs\FaqAuthorizationTest.php" line="219" class="Tests\Feature\Faqs\FaqAuthorizationTest" classname="Tests.Feature.Faqs.FaqAuthorizationTest" assertions="3" time="0.009221"/>
+    <testcase name="user_with_no_faq_permissions_gets_forbidden" file="D:\meem-commerce\tests\Feature\Faqs\FaqAuthorizationTest.php" line="240" class="Tests\Feature\Faqs\FaqAuthorizationTest" classname="Tests.Feature.Faqs.FaqAuthorizationTest" assertions="1" time="0.008889"/>
+  </testsuite>
+</testsuites>

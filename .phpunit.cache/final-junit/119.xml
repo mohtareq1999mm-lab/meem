@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Categories\CategoryProductsCountConsistencyTest" file="D:\meem-commerce\tests\Feature\Categories\CategoryProductsCountConsistencyTest.php" tests="4" assertions="13" errors="0" failures="0" skipped="0" time="0.132950">
+    <testcase name="test_products_count_matches_products_array_length" file="D:\meem-commerce\tests\Feature\Categories\CategoryProductsCountConsistencyTest.php" line="31" class="Tests\Feature\Categories\CategoryProductsCountConsistencyTest" classname="Tests.Feature.Categories.CategoryProductsCountConsistencyTest" assertions="4" time="0.092816"/>
+    <testcase name="test_products_count_matches_when_all_products_qualify" file="D:\meem-commerce\tests\Feature\Categories\CategoryProductsCountConsistencyTest.php" line="84" class="Tests\Feature\Categories\CategoryProductsCountConsistencyTest" classname="Tests.Feature.Categories.CategoryProductsCountConsistencyTest" assertions="3" time="0.019949"/>
+    <testcase name="test_products_count_is_zero_when_all_products_are_fast_shipping_only" file="D:\meem-commerce\tests\Feature\Categories\CategoryProductsCountConsistencyTest.php" line="122" class="Tests\Feature\Categories\CategoryProductsCountConsistencyTest" classname="Tests.Feature.Categories.CategoryProductsCountConsistencyTest" assertions="3" time="0.011209"/>
+    <testcase name="test_products_count_is_zero_when_no_products_attached" file="D:\meem-commerce\tests\Feature\Categories\CategoryProductsCountConsistencyTest.php" line="148" class="Tests\Feature\Categories\CategoryProductsCountConsistencyTest" classname="Tests.Feature.Categories.CategoryProductsCountConsistencyTest" assertions="3" time="0.008976"/>
+  </testsuite>
+</testsuites>

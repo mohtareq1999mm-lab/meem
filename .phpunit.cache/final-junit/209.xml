@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Notifications\NotificationQueueTest" file="D:\meem-commerce\tests\Feature\Notifications\NotificationQueueTest.php" tests="4" assertions="43" errors="0" failures="0" skipped="0" time="0.063583">
+    <testcase name="test_order_created_listeners_are_queued_on_meem_medium" file="D:\meem-commerce\tests\Feature\Notifications\NotificationQueueTest.php" line="24" class="Tests\Feature\Notifications\NotificationQueueTest" classname="Tests.Feature.Notifications.NotificationQueueTest" assertions="2" time="0.026655"/>
+    <testcase name="test_user_notification_is_queued_on_meem_medium" file="D:\meem-commerce\tests\Feature\Notifications\NotificationQueueTest.php" line="45" class="Tests\Feature\Notifications\NotificationQueueTest" classname="Tests.Feature.Notifications.NotificationQueueTest" assertions="3" time="0.017690"/>
+    <testcase name="test_admin_login_notification_uses_meem_high_queue" file="D:\meem-commerce\tests\Feature\Notifications\NotificationQueueTest.php" line="66" class="Tests\Feature\Notifications\NotificationQueueTest" classname="Tests.Feature.Notifications.NotificationQueueTest" assertions="2" time="0.002632"/>
+    <testcase name="test_all_user_notifications_are_queued_on_meem_medium" file="D:\meem-commerce\tests\Feature\Notifications\NotificationQueueTest.php" line="84" class="Tests\Feature\Notifications\NotificationQueueTest" classname="Tests.Feature.Notifications.NotificationQueueTest" assertions="36" time="0.016606"/>
+  </testsuite>
+</testsuites>

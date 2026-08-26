@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\FrontendCacheWebhookIntegrationTest" file="D:\meem-commerce\tests\Feature\FrontendCacheWebhookIntegrationTest.php" tests="5" assertions="5" errors="0" failures="0" skipped="0" time="0.075837">
+    <testcase name="event_triggers_job_via_listener" file="D:\meem-commerce\tests\Feature\FrontendCacheWebhookIntegrationTest.php" line="29" class="Tests\Feature\FrontendCacheWebhookIntegrationTest" classname="Tests.Feature.FrontendCacheWebhookIntegrationTest" assertions="1" time="0.056952"/>
+    <testcase name="full_job_to_http_chain_succeeds" file="D:\meem-commerce\tests\Feature\FrontendCacheWebhookIntegrationTest.php" line="43" class="Tests\Feature\FrontendCacheWebhookIntegrationTest" classname="Tests.Feature.FrontendCacheWebhookIntegrationTest" assertions="1" time="0.015971"/>
+    <testcase name="disabled_webhook_does_not_send_http_request" file="D:\meem-commerce\tests\Feature\FrontendCacheWebhookIntegrationTest.php" line="63" class="Tests\Feature\FrontendCacheWebhookIntegrationTest" classname="Tests.Feature.FrontendCacheWebhookIntegrationTest" assertions="1" time="0.000596"/>
+    <testcase name="it_generates_valid_signature" file="D:\meem-commerce\tests\Feature\FrontendCacheWebhookIntegrationTest.php" line="80" class="Tests\Feature\FrontendCacheWebhookIntegrationTest" classname="Tests.Feature.FrontendCacheWebhookIntegrationTest" assertions="1" time="0.001234"/>
+    <testcase name="sync_dispatch_executes_webhook_immediately" file="D:\meem-commerce\tests\Feature\FrontendCacheWebhookIntegrationTest.php" line="103" class="Tests\Feature\FrontendCacheWebhookIntegrationTest" classname="Tests.Feature.FrontendCacheWebhookIntegrationTest" assertions="1" time="0.001085"/>
+  </testsuite>
+</testsuites>

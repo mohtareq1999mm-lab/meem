@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Notifications\UserOrderNotificationRealE2ETest" file="D:\meem-commerce\tests\Feature\Notifications\UserOrderNotificationRealE2ETest.php" tests="13" assertions="128" errors="0" failures="9" skipped="0" time="0.578623">
+    <testcase name="test_a_real_login_authenticates_test_user" file="D:\meem-commerce\tests\Feature\Notifications\UserOrderNotificationRealE2ETest.php" line="135" class="Tests\Feature\Notifications\UserOrderNotificationRealE2ETest" classname="Tests.Feature.Notifications.UserOrderNotificationRealE2ETest" assertions="8" time="0.084878"/>
+    <testcase name="test_b_auth_user_is_the_real_notifiable_model" file="D:\meem-commerce\tests\Feature\Notifications\UserOrderNotificationRealE2ETest.php" line="153" class="Tests\Feature\Notifications\UserOrderNotificationRealE2ETest" classname="Tests.Feature.Notifications.UserOrderNotificationRealE2ETest" assertions="8" time="0.016487"/>
+    <testcase name="test_c_real_http_order_flow_creates_order_for_test_user" file="D:\meem-commerce\tests\Feature\Notifications\UserOrderNotificationRealE2ETest.php" line="172" class="Tests\Feature\Notifications\UserOrderNotificationRealE2ETest" classname="Tests.Feature.Notifications.UserOrderNotificationRealE2ETest" assertions="11" time="0.099317"/>
+    <testcase name="test_d_real_order_fires_order_created_event" file="D:\meem-commerce\tests\Feature\Notifications\UserOrderNotificationRealE2ETest.php" line="194" class="Tests\Feature\Notifications\UserOrderNotificationRealE2ETest" classname="Tests.Feature.Notifications.UserOrderNotificationRealE2ETest" assertions="10" time="0.044601">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\Notifications\UserOrderNotificationRealE2ETest::test_d_real_order_fires_order_created_event&#13;
+OrderCreated must have fired during the real checkout.
+Failed asserting that an array is not empty.
+&#13;
+D:\meem-commerce\tests\Feature\Notifications\UserOrderNotificationRealE2ETest.php:212
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_e_listener_sends_notification_to_test_user" file="D:\meem-commerce\tests\Feature\Notifications\UserOrderNotificationRealE2ETest.php" line="221" class="Tests\Feature\Notifications\UserOrderNotificationRealE2ETest" classname="Tests.Feature.Notifications.UserOrderNotificationRealE2ETest" assertions="10" time="0.037062">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\Notifications\UserOrderNotificationRealE2ETest::test_e_listener_sends_notification_to_test_user&#13;
+Failed asserting that an array is not empty.
+&#13;
+D:\meem-commerce\tests\Feature\Notifications\UserOrderNotificationRealE2ETest.php:245
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_f_real_flow_queues_one_job_per_channel_on_meem_medium" file="D:\meem-commerce\tests\Feature\Notifications\UserOrderNotificationRealE2ETest.php" line="257" class="Tests\Feature\Notifications\UserOrderNotificationRealE2ETest" classname="Tests.Feature.Notifications.UserOrderNotificationRealE2ETest" assertions="7" time="0.009962"/>
+    <testcase name="test_g_h_i_real_order_inserts_notifications_row_for_test_user" file="D:\meem-commerce\tests\Feature\Notifications\UserOrderNotificationRealE2ETest.php" line="280" class="Tests\Feature\Notifications\UserOrderNotificationRealE2ETest" classname="Tests.Feature.Notifications.UserOrderNotificationRealE2ETest" assertions="10" time="0.042065">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\Notifications\UserOrderNotificationRealE2ETest::test_g_h_i_real_order_inserts_notifications_row_for_test_user&#13;
+No notifications row was inserted for test@gmail.com after the real order.
+Failed asserting that null is not null.
+&#13;
+D:\meem-commerce\tests\Feature\Notifications\UserOrderNotificationRealE2ETest.php:298
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_j_real_order_visible_via_notifications_rest_api" file="D:\meem-commerce\tests\Feature\Notifications\UserOrderNotificationRealE2ETest.php" line="313" class="Tests\Feature\Notifications\UserOrderNotificationRealE2ETest" classname="Tests.Feature.Notifications.UserOrderNotificationRealE2ETest" assertions="12" time="0.045105">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\Notifications\UserOrderNotificationRealE2ETest::test_j_real_order_visible_via_notifications_rest_api&#13;
+Failed asserting that 0 is identical to 1.
+&#13;
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\AssertableJsonString.php:243
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:683
+D:\meem-commerce\tests\Feature\Notifications\UserOrderNotificationRealE2ETest.php:328
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_k_real_order_broadcast_reaches_private_user_channel" file="D:\meem-commerce\tests\Feature\Notifications\UserOrderNotificationRealE2ETest.php" line="337" class="Tests\Feature\Notifications\UserOrderNotificationRealE2ETest" classname="Tests.Feature.Notifications.UserOrderNotificationRealE2ETest" assertions="11" time="0.044583">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\Notifications\UserOrderNotificationRealE2ETest::test_k_real_order_broadcast_reaches_private_user_channel&#13;
+No broadcast to private-users.1 with event order.created was recorded.
+Failed asserting that an array is not empty.
+&#13;
+D:\meem-commerce\tests\Feature\Notifications\NotificationE2ETestCase.php:412
+D:\meem-commerce\tests\Feature\Notifications\UserOrderNotificationRealE2ETest.php:349
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_l_full_e2e_real_order_reaches_db_and_pusher" file="D:\meem-commerce\tests\Feature\Notifications\UserOrderNotificationRealE2ETest.php" line="371" class="Tests\Feature\Notifications\UserOrderNotificationRealE2ETest" classname="Tests.Feature.Notifications.UserOrderNotificationRealE2ETest" assertions="10" time="0.039936">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\Notifications\UserOrderNotificationRealE2ETest::test_l_full_e2e_real_order_reaches_db_and_pusher&#13;
+Failed asserting that null is not null.
+&#13;
+D:\meem-commerce\tests\Feature\Notifications\UserOrderNotificationRealE2ETest.php:389
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_m_real_order_production_divergence_broadcast_ok_database_fails" file="D:\meem-commerce\tests\Feature\Notifications\UserOrderNotificationRealE2ETest.php" line="418" class="Tests\Feature\Notifications\UserOrderNotificationRealE2ETest" classname="Tests.Feature.Notifications.UserOrderNotificationRealE2ETest" assertions="11" time="0.037900">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\Notifications\UserOrderNotificationRealE2ETest::test_m_real_order_production_divergence_broadcast_ok_database_fails&#13;
+Expected 2 SendQueuedNotifications jobs (database + broadcast).
+Failed asserting that actual size 1 matches expected size 2.
+&#13;
+D:\meem-commerce\tests\Feature\Notifications\UserOrderNotificationRealE2ETest.php:475
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_n_other_user_cannot_read_test_user_notification" file="D:\meem-commerce\tests\Feature\Notifications\UserOrderNotificationRealE2ETest.php" line="506" class="Tests\Feature\Notifications\UserOrderNotificationRealE2ETest" classname="Tests.Feature.Notifications.UserOrderNotificationRealE2ETest" assertions="10" time="0.038137">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\Notifications\UserOrderNotificationRealE2ETest::test_n_other_user_cannot_read_test_user_notification&#13;
+Failed asserting that null is not null.
+&#13;
+D:\meem-commerce\tests\Feature\Notifications\UserOrderNotificationRealE2ETest.php:517
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+    <testcase name="test_o_full_pipeline_no_failed_jobs_in_sync_path" file="D:\meem-commerce\tests\Feature\Notifications\UserOrderNotificationRealE2ETest.php" line="536" class="Tests\Feature\Notifications\UserOrderNotificationRealE2ETest" classname="Tests.Feature.Notifications.UserOrderNotificationRealE2ETest" assertions="10" time="0.038590">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">Tests\Feature\Notifications\UserOrderNotificationRealE2ETest::test_o_full_pipeline_no_failed_jobs_in_sync_path&#13;
+No order.created notification was stored for user 1.
+Failed asserting that null is not null.
+&#13;
+D:\meem-commerce\tests\Feature\Notifications\NotificationE2ETestCase.php:377
+D:\meem-commerce\tests\Feature\Notifications\UserOrderNotificationRealE2ETest.php:546
+D:\meem-commerce\vendor\laravel\framework\src\Illuminate\Foundation\Testing\TestCase.php:174</failure>
+    </testcase>
+  </testsuite>
+</testsuites>

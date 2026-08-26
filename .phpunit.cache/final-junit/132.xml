@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Contacts\ContactResourceTest" file="D:\meem-commerce\tests\Feature\Contacts\ContactResourceTest.php" tests="6" assertions="44" errors="0" failures="0" skipped="0" time="0.072898">
+    <testcase name="index_returns_paginated_response" file="D:\meem-commerce\tests\Feature\Contacts\ContactResourceTest.php" line="73" class="Tests\Feature\Contacts\ContactResourceTest" classname="Tests.Feature.Contacts.ContactResourceTest" assertions="10" time="0.034354"/>
+    <testcase name="index_response_contains_expected_fields" file="D:\meem-commerce\tests\Feature\Contacts\ContactResourceTest.php" line="96" class="Tests\Feature\Contacts\ContactResourceTest" classname="Tests.Feature.Contacts.ContactResourceTest" assertions="7" time="0.005483"/>
+    <testcase name="show_response_has_correct_structure" file="D:\meem-commerce\tests\Feature\Contacts\ContactResourceTest.php" line="113" class="Tests\Feature\Contacts\ContactResourceTest" classname="Tests.Feature.Contacts.ContactResourceTest" assertions="9" time="0.005452"/>
+    <testcase name="is_read_and_is_replay_are_booleans" file="D:\meem-commerce\tests\Feature\Contacts\ContactResourceTest.php" line="139" class="Tests\Feature\Contacts\ContactResourceTest" classname="Tests.Feature.Contacts.ContactResourceTest" assertions="2" time="0.005539"/>
+    <testcase name="response_has_correct_envelope" file="D:\meem-commerce\tests\Feature\Contacts\ContactResourceTest.php" line="151" class="Tests\Feature\Contacts\ContactResourceTest" classname="Tests.Feature.Contacts.ContactResourceTest" assertions="5" time="0.005182"/>
+    <testcase name="create_returns_500_due_to_event_type_mismatch" file="D:\meem-commerce\tests\Feature\Contacts\ContactResourceTest.php" line="165" class="Tests\Feature\Contacts\ContactResourceTest" classname="Tests.Feature.Contacts.ContactResourceTest" assertions="11" time="0.016888"/>
+  </testsuite>
+</testsuites>

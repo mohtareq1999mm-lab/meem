@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Categories\CategoryCrudTest" file="D:\meem-commerce\tests\Feature\Categories\CategoryCrudTest.php" tests="7" assertions="17" errors="0" failures="0" skipped="0" time="0.122904">
+    <testcase name="test_can_create_category_via_model" file="D:\meem-commerce\tests\Feature\Categories\CategoryCrudTest.php" line="36" class="Tests\Feature\Categories\CategoryCrudTest" classname="Tests.Feature.Categories.CategoryCrudTest" assertions="3" time="0.011052"/>
+    <testcase name="test_can_list_categories" file="D:\meem-commerce\tests\Feature\Categories\CategoryCrudTest.php" line="55" class="Tests\Feature\Categories\CategoryCrudTest" classname="Tests.Feature.Categories.CategoryCrudTest" assertions="3" time="0.053110"/>
+    <testcase name="test_can_show_category" file="D:\meem-commerce\tests\Feature\Categories\CategoryCrudTest.php" line="69" class="Tests\Feature\Categories\CategoryCrudTest" classname="Tests.Feature.Categories.CategoryCrudTest" assertions="3" time="0.011350"/>
+    <testcase name="test_can_update_category" file="D:\meem-commerce\tests\Feature\Categories\CategoryCrudTest.php" line="87" class="Tests\Feature\Categories\CategoryCrudTest" classname="Tests.Feature.Categories.CategoryCrudTest" assertions="3" time="0.021617"/>
+    <testcase name="test_can_delete_category" file="D:\meem-commerce\tests\Feature\Categories\CategoryCrudTest.php" line="107" class="Tests\Feature\Categories\CategoryCrudTest" classname="Tests.Feature.Categories.CategoryCrudTest" assertions="3" time="0.011425"/>
+    <testcase name="test_show_returns_404_for_nonexistent_category" file="D:\meem-commerce\tests\Feature\Categories\CategoryCrudTest.php" line="123" class="Tests\Feature\Categories\CategoryCrudTest" classname="Tests.Feature.Categories.CategoryCrudTest" assertions="1" time="0.004879"/>
+    <testcase name="test_delete_returns_404_for_nonexistent_category" file="D:\meem-commerce\tests\Feature\Categories\CategoryCrudTest.php" line="131" class="Tests\Feature\Categories\CategoryCrudTest" classname="Tests.Feature.Categories.CategoryCrudTest" assertions="1" time="0.009472"/>
+  </testsuite>
+</testsuites>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Pages\SectionEndpointContractTest" file="D:\meem-commerce\tests\Feature\Pages\SectionEndpointContractTest.php" tests="7" assertions="75" errors="0" failures="0" skipped="0" time="0.188129">
+    <testcase name="test_each_seeded_section_type_generates_a_matching_general_endpoint" file="D:\meem-commerce\tests\Feature\Pages\SectionEndpointContractTest.php" line="108" class="Tests\Feature\Pages\SectionEndpointContractTest" classname="Tests.Feature.Pages.SectionEndpointContractTest" assertions="11" time="0.048735"/>
+    <testcase name="test_stored_endpoint_is_ignored_and_generated_endpoint_is_authoritative" file="D:\meem-commerce\tests\Feature\Pages\SectionEndpointContractTest.php" line="129" class="Tests\Feature\Pages\SectionEndpointContractTest" classname="Tests.Feature.Pages.SectionEndpointContractTest" assertions="2" time="0.007284"/>
+    <testcase name="test_products_section_with_best_product_sales_resolves_to_real_products" file="D:\meem-commerce\tests\Feature\Pages\SectionEndpointContractTest.php" line="139" class="Tests\Feature\Pages\SectionEndpointContractTest" classname="Tests.Feature.Pages.SectionEndpointContractTest" assertions="4" time="0.054775"/>
+    <testcase name="test_products_section_with_new_arrivals_resolves_to_real_products" file="D:\meem-commerce\tests\Feature\Pages\SectionEndpointContractTest.php" line="157" class="Tests\Feature\Pages\SectionEndpointContractTest" classname="Tests.Feature.Pages.SectionEndpointContractTest" assertions="4" time="0.017856"/>
+    <testcase name="test_banners_section_endpoint_returns_real_banner_data" file="D:\meem-commerce\tests\Feature\Pages\SectionEndpointContractTest.php" line="175" class="Tests\Feature\Pages\SectionEndpointContractTest" classname="Tests.Feature.Pages.SectionEndpointContractTest" assertions="4" time="0.010034"/>
+    <testcase name="test_brands_section_endpoint_returns_real_brand_data" file="D:\meem-commerce\tests\Feature\Pages\SectionEndpointContractTest.php" line="197" class="Tests\Feature\Pages\SectionEndpointContractTest" classname="Tests.Feature.Pages.SectionEndpointContractTest" assertions="4" time="0.009892"/>
+    <testcase name="test_resolved_endpoints_are_registered_public_routes" file="D:\meem-commerce\tests\Feature\Pages\SectionEndpointContractTest.php" line="219" class="Tests\Feature\Pages\SectionEndpointContractTest" classname="Tests.Feature.Pages.SectionEndpointContractTest" assertions="46" time="0.039553"/>
+  </testsuite>
+</testsuites>

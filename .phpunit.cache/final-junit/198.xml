@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Invoice\MyInvoicesEndpointTest" file="D:\meem-commerce\tests\Feature\Invoice\MyInvoicesEndpointTest.php" tests="9" assertions="81" errors="0" failures="0" skipped="0" time="1.168990">
+    <testcase name="test_returns_paginated_lightweight_summaries" file="D:\meem-commerce\tests\Feature\Invoice\MyInvoicesEndpointTest.php" line="79" class="Tests\Feature\Invoice\MyInvoicesEndpointTest" classname="Tests.Feature.Invoice.MyInvoicesEndpointTest" assertions="34" time="0.373087"/>
+    <testcase name="test_snapshot_and_all_subfields_are_never_emitted" file="D:\meem-commerce\tests\Feature\Invoice\MyInvoicesEndpointTest.php" line="108" class="Tests\Feature\Invoice\MyInvoicesEndpointTest" classname="Tests.Feature.Invoice.MyInvoicesEndpointTest" assertions="14" time="0.255544"/>
+    <testcase name="test_lists_only_the_authenticated_users_invoices" file="D:\meem-commerce\tests\Feature\Invoice\MyInvoicesEndpointTest.php" line="128" class="Tests\Feature\Invoice\MyInvoicesEndpointTest" classname="Tests.Feature.Invoice.MyInvoicesEndpointTest" assertions="3" time="0.130018"/>
+    <testcase name="test_guest_gets_401" file="D:\meem-commerce\tests\Feature\Invoice\MyInvoicesEndpointTest.php" line="145" class="Tests\Feature\Invoice\MyInvoicesEndpointTest" classname="Tests.Feature.Invoice.MyInvoicesEndpointTest" assertions="1" time="0.011349"/>
+    <testcase name="test_detail_endpoint_still_includes_snapshot" file="D:\meem-commerce\tests\Feature\Invoice\MyInvoicesEndpointTest.php" line="151" class="Tests\Feature\Invoice\MyInvoicesEndpointTest" classname="Tests.Feature.Invoice.MyInvoicesEndpointTest" assertions="4" time="0.076142"/>
+    <testcase name="test_view_and_download_urls_are_signed" file="D:\meem-commerce\tests\Feature\Invoice\MyInvoicesEndpointTest.php" line="166" class="Tests\Feature\Invoice\MyInvoicesEndpointTest" classname="Tests.Feature.Invoice.MyInvoicesEndpointTest" assertions="7" time="0.072399"/>
+    <testcase name="test_guest_can_follow_signed_view_and_download_urls" file="D:\meem-commerce\tests\Feature\Invoice\MyInvoicesEndpointTest.php" line="194" class="Tests\Feature\Invoice\MyInvoicesEndpointTest" classname="Tests.Feature.Invoice.MyInvoicesEndpointTest" assertions="8" time="0.085862"/>
+    <testcase name="test_tampered_signed_urls_are_rejected" file="D:\meem-commerce\tests\Feature\Invoice\MyInvoicesEndpointTest.php" line="230" class="Tests\Feature\Invoice\MyInvoicesEndpointTest" classname="Tests.Feature.Invoice.MyInvoicesEndpointTest" assertions="5" time="0.073868"/>
+    <testcase name="test_admin_show_endpoint_remains_unchanged" file="D:\meem-commerce\tests\Feature\Invoice\MyInvoicesEndpointTest.php" line="268" class="Tests\Feature\Invoice\MyInvoicesEndpointTest" classname="Tests.Feature.Invoice.MyInvoicesEndpointTest" assertions="5" time="0.090721"/>
+  </testsuite>
+</testsuites>

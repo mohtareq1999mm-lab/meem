@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Categories\CategoryImportProgressRealPusherTest" file="D:\meem-commerce\tests\Feature\Categories\CategoryImportProgressRealPusherTest.php" tests="2" assertions="10" errors="0" failures="0" skipped="0" time="0.532485">
+    <testcase name="test_real_pusher_receives_explicit_progress_object" file="D:\meem-commerce\tests\Feature\Categories\CategoryImportProgressRealPusherTest.php" line="121" class="Tests\Feature\Categories\CategoryImportProgressRealPusherTest" classname="Tests.Feature.Categories.CategoryImportProgressRealPusherTest" assertions="5" time="0.310555"/>
+    <testcase name="test_real_pusher_receives_terminal_100_percent_object" file="D:\meem-commerce\tests\Feature\Categories\CategoryImportProgressRealPusherTest.php" line="148" class="Tests\Feature\Categories\CategoryImportProgressRealPusherTest" classname="Tests.Feature.Categories.CategoryImportProgressRealPusherTest" assertions="5" time="0.221930"/>
+  </testsuite>
+</testsuites>

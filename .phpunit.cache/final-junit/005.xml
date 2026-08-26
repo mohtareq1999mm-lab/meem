@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Unit\ExampleTest" file="D:\meem-commerce\tests\Unit\ExampleTest.php" tests="1" assertions="1" errors="0" failures="0" skipped="0" time="0.003278">
+    <testcase name="testBasicTest" file="D:\meem-commerce\tests\Unit\ExampleTest.php" line="14" class="Tests\Unit\ExampleTest" classname="Tests.Unit.ExampleTest" assertions="1" time="0.003278"/>
+  </testsuite>
+</testsuites>

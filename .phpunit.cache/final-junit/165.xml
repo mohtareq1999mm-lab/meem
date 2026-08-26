@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Tests\Feature\Faqs\FaqRegressionTest" file="D:\meem-commerce\tests\Feature\Faqs\FaqRegressionTest.php" tests="9" assertions="24" errors="0" failures="0" skipped="0" time="0.071901">
+    <testcase name="b1_soft_delete_does_not_hard_delete" file="D:\meem-commerce\tests\Feature\Faqs\FaqRegressionTest.php" line="72" class="Tests\Feature\Faqs\FaqRegressionTest" classname="Tests.Feature.Faqs.FaqRegressionTest" assertions="2" time="0.005877"/>
+    <testcase name="b2_resource_returns_translated_name_on_index" file="D:\meem-commerce\tests\Feature\Faqs\FaqRegressionTest.php" line="84" class="Tests\Feature\Faqs\FaqRegressionTest" classname="Tests.Feature.Faqs.FaqRegressionTest" assertions="3" time="0.036684"/>
+    <testcase name="b3_model_uses_soft_deletes" file="D:\meem-commerce\tests\Feature\Faqs\FaqRegressionTest.php" line="99" class="Tests\Feature\Faqs\FaqRegressionTest" classname="Tests.Feature.Faqs.FaqRegressionTest" assertions="1" time="0.000538"/>
+    <testcase name="b4_model_has_translatable_fields" file="D:\meem-commerce\tests\Feature\Faqs\FaqRegressionTest.php" line="106" class="Tests\Feature\Faqs\FaqRegressionTest" classname="Tests.Feature.Faqs.FaqRegressionTest" assertions="4" time="0.001078"/>
+    <testcase name="b5_model_uses_sortable_trait" file="D:\meem-commerce\tests\Feature\Faqs\FaqRegressionTest.php" line="116" class="Tests\Feature\Faqs\FaqRegressionTest" classname="Tests.Feature.Faqs.FaqRegressionTest" assertions="1" time="0.000452"/>
+    <testcase name="b6_translation_keys_exist" file="D:\meem-commerce\tests\Feature\Faqs\FaqRegressionTest.php" line="123" class="Tests\Feature\Faqs\FaqRegressionTest" classname="Tests.Feature.Faqs.FaqRegressionTest" assertions="4" time="0.001883"/>
+    <testcase name="b7_faq_search_by_title" file="D:\meem-commerce\tests\Feature\Faqs\FaqRegressionTest.php" line="147" class="Tests\Feature\Faqs\FaqRegressionTest" classname="Tests.Feature.Faqs.FaqRegressionTest" assertions="3" time="0.010919"/>
+    <testcase name="b8_faq_sorting_by_title_asc" file="D:\meem-commerce\tests\Feature\Faqs\FaqRegressionTest.php" line="161" class="Tests\Feature\Faqs\FaqRegressionTest" classname="Tests.Feature.Faqs.FaqRegressionTest" assertions="3" time="0.007142"/>
+    <testcase name="b9_faq_sorting_by_title_desc" file="D:\meem-commerce\tests\Feature\Faqs\FaqRegressionTest.php" line="175" class="Tests\Feature\Faqs\FaqRegressionTest" classname="Tests.Feature.Faqs.FaqRegressionTest" assertions="3" time="0.007328"/>
+  </testsuite>
+</testsuites>
