@@ -51,6 +51,7 @@ class OrderService
         private PromotionService $promotionService,
         private OrderCreationService $orderCreationService,
         private CartInventoryService $cartInventoryService,
+        private \App\Services\Inventory\OrderReservationService $orderReservationService,
         private \App\Services\Invoice\InvoiceService $invoiceService,
     ) {}
 
@@ -128,42 +129,37 @@ class OrderService
     public function calcInvoicePrice($request)
     {
         try {
-            DB::beginTransaction();
-            $cart = $this->getCartUser();
-            if (!$cart) {
-                DB::rollBack();
-                throw new \InvalidArgumentException(__('checkout.cart_not_found')); 
-            }
-            if ($cart->items->isEmpty()) {
-                DB::rollBack();
-                throw new \InvalidArgumentException(__('checkout.cart_empty'));
-            }
-            if ($cart->coupon) {
-                $validation = CouponOrchestrator::validateByCode($cart->coupon, $request->user(), $cart->items);
-                if (!$validation['valid']) {
-                    $cart->update(['coupon' => null]);
+            return DB::transaction(function () use ($request) {
+                $cart = $this->getCartUser();
+                if (!$cart) {
+                    throw new \InvalidArgumentException(__('checkout.cart_not_found'));
                 }
-            }
-            $checkoutTotals = $this->calculateCheckoutTotals(
-                $cart,
-                (int) $request->input('selected_promotion_id') ?: null,
-                (int) $request->input('selected_gift_product_id') ?: null,
-                ShippingMethod::SCHEDULED,
-            );
+                if ($cart->items->isEmpty()) {
+                    throw new \InvalidArgumentException(__('checkout.cart_empty'));
+                }
+                if ($cart->coupon) {
+                    $validation = CouponOrchestrator::validateByCode($cart->coupon, $request->user(), $cart->items);
+                    if (!$validation['valid']) {
+                        $cart->update(['coupon' => null]);
+                    }
+                }
+                $checkoutTotals = $this->calculateCheckoutTotals(
+                    $cart,
+                    (int) $request->input('selected_promotion_id') ?: null,
+                    (int) $request->input('selected_gift_product_id') ?: null,
+                    ShippingMethod::SCHEDULED,
+                );
 
-            $shippingInfo = $this->resolveShippingPrice((int) $request->input('governorate_id') ?: null);
-            $shippingPrice = $this->resolveShippingChargeForCart($cart, $checkoutTotals, $shippingInfo);
-            $shippingPrice = $this->resolveFreeShippingByCoupon($checkoutTotals->couponDiscountType, $shippingPrice);
+                $shippingInfo = $this->resolveShippingPrice((int) $request->input('governorate_id') ?: null);
+                $shippingPrice = $this->resolveShippingChargeForCart($cart, $checkoutTotals, $shippingInfo);
+                $shippingPrice = $this->resolveFreeShippingByCoupon($checkoutTotals->couponDiscountType, $shippingPrice);
 
-            $finalTotal = round((float) $checkoutTotals->finalTotal + $shippingPrice, 2);
-            $cart->update(['total_price' => $finalTotal]);
-            DB::commit();
-            return $cart->total_price;
-        } catch (\InvalidArgumentException $e) {
-            DB::rollBack();
-            throw $e;
+                $finalTotal = round((float) $checkoutTotals->finalTotal + $shippingPrice, 2);
+                $cart->update(['total_price' => $finalTotal]);
+
+                return $cart->total_price;
+            });
         } catch (\Exception $e) {
-            DB::rollBack();
             report($e);
             throw new \InvalidArgumentException($e->getMessage(), 0, $e);
         }
@@ -171,20 +167,22 @@ class OrderService
 
     public function addItemsInOrder($request)
     {
+        $checkoutTotals = null;
+
         try {
-            DB::beginTransaction();
+            $order = DB::transaction(function () use ($request, &$checkoutTotals) {
+                $cart = Cart::query()
+                    ->where('user_id', auth()->id())
+                    ->where('status', 'active')
+                    ->lockForUpdate()
+                    ->with(['items' => fn($q) => $q->where('shipping_method', ShippingMethod::SCHEDULED), 'items.product.flash_sales' => fn($q) => $q->valid(), 'items.productVariant'])
+                    ->first();
 
-            $cart = Cart::query()
-                ->where('user_id', auth()->id())
-                ->where('status', 'active')
-                ->lockForUpdate()
-                ->with(['items' => fn($q) => $q->where('shipping_method', ShippingMethod::SCHEDULED), 'items.product.flash_sales' => fn($q) => $q->valid(), 'items.productVariant'])
-                ->first();
-
-            if (!$cart || $cart->items->isEmpty()) {
-                DB::rollBack();
-                return null;
-            }
+                // Re-read under lock: a concurrent checkout may have committed
+                // and emptied this cart while we waited. Fail cleanly.
+                if (!$cart || $cart->items->isEmpty()) {
+                    throw new \App\Exceptions\CartEmptyException(CART_NOT_FOUND);
+                }
 
             $this->refreshCartItemPrices($cart);
 
@@ -205,13 +203,15 @@ class OrderService
                 }
             }
 
-            $selectedPromotionId = $cart->items
+            // Prefer the explicit request selection; fall back to promotion
+            // metadata persisted on cart lines by earlier pricing previews.
+            $selectedPromotionId = (int) $request->input('selected_promotion_id') ?: ($cart->items
                 ->firstWhere(fn($item) => !is_null($item->promotion_id))
-                ?->promotion_id;
+                ?->promotion_id);
 
-            $selectedGiftProductId = $cart->items
+            $selectedGiftProductId = (int) $request->input('selected_gift_product_id') ?: ($cart->items
                 ->firstWhere('is_gift', true)
-                ?->product_id;
+                ?->product_id);
 
             $checkoutTotals = $this->calculateCheckoutTotals(
                 $cart,
@@ -222,7 +222,6 @@ class OrderService
 
             $minimumOrderAmount = (float) (Settings::first()?->minimum_order_amount ?? 0);
             if ($minimumOrderAmount > 0 && $checkoutTotals->subtotal < $minimumOrderAmount) {
-                DB::rollBack();
                 throw new \InvalidArgumentException(
                     __('Minimum order amount is :amount', ['amount' => $minimumOrderAmount])
                 );
@@ -244,23 +243,34 @@ class OrderService
                 $orderData, $cart, $checkoutTotals, null, null, null, $shippingPrice, $governorateId,
             );
             if (!$order) {
-                DB::rollBack();
-                return null;
+                throw new \RuntimeException('Order creation failed.');
             }
-            if (!$this->orderCreationService->createOrderItems($order, $cart)) {
-                DB::rollBack();
-                return null;
+            if (!$this->orderCreationService->createOrderItems($order, $cart, $checkoutTotals->giftItems)) {
+                throw new \RuntimeException('Order item creation failed.');
             }
-            $this->orderCreationService->finalizeOrder($order, $checkoutTotals);
 
-            DB::commit();
+            // The ORDER now owns the inventory reservation. Any failure here
+            // (insufficient stock) aborts the whole transaction: no Order, no
+            // reservation, and the CartItems survive untouched for retry.
+            $this->orderReservationService->reserveForOrder($order);
+
+            // Reservation succeeded — the ordered slice leaves the cart.
+            // The cart row itself always survives as a reusable container.
+            $this->cartInventoryService->clearCheckedOutSlice($cart, ShippingMethod::SCHEDULED);
 
             return $order->load(['orderItems.product', 'orderItems.productVariant']);
+            });
+
+            // Listeners must never observe an order whose reservation failed:
+            // dispatch strictly after commit.
+            $this->orderCreationService->finalizeOrder($order, $checkoutTotals);
+
+            return $order;
+        } catch (\App\Exceptions\CartEmptyException $e) {
+            throw $e;
         } catch (\InvalidArgumentException $e) {
-            DB::rollBack();
             throw $e;
         } catch (\Exception $e) {
-            DB::rollBack();
             report($e);
             return null;
         }
@@ -402,52 +412,6 @@ class OrderService
         return CouponCalculator::calculate($coupon, (float) $totalPrice);
     }
 
-    /** @deprecated Replaced by calculateCheckoutTotals() which re-validates promotion. Kept for backward compatibility. Remove after 1 release cycle. */
-    private function getCheckoutTotalsFromCart(Cart $cart): CheckoutTotals
-    {
-        $items = $cart->items->reject(fn($item) => (bool) ($item->is_gift ?? false));
-
-        $subtotal = round((float) $items->sum(function ($item) {
-            $baseLineTotal = ((float) ($item->price ?? 0)) * ((int) ($item->quantity ?? 0));
-            if ($baseLineTotal > 0) {
-                return $baseLineTotal;
-            }
-            return (float) ($item->total_price ?? 0);
-        }), 2);
-
-        $promotionDiscount = round((float) $items->sum(fn($item) => (float) ($item->discount_amount ?? 0)), 2);
-        $finalTotal = round((float) $items->sum('total_price'), 2);
-
-        $promotionItem = $items->first(fn($item) => !is_null($item->promotion_id));
-        $promotionData = null;
-        if ($promotionItem) {
-            $promotion = Promotion::query()->find((int) $promotionItem->promotion_id);
-            $promotionData = $promotion ? [
-                'id' => (int) $promotion->id,
-                'type' => $promotion->type_amount,
-                'code' => $promotion->code,
-            ] : null;
-        }
-
-        $couponDiscountType = null;
-        if ($cart->coupon) {
-        $coupon = Coupon::valid()->where('code', $cart->coupon)->first();
-            if ($coupon) {
-                $couponDiscountType = $coupon->discount_type;
-            }
-        }
-
-        return new CheckoutTotals(
-            subtotal: $subtotal,
-            promotionDiscount: $promotionDiscount,
-            couponDiscount: round(max(0, $subtotal - $promotionDiscount - $finalTotal), 2),
-            finalTotal: $finalTotal,
-            promotion: $promotionData,
-            giftItems: [],
-            couponDiscountType: $couponDiscountType,
-        );
-    }
-
     private function refreshCartItemPrices(Cart $cart): void
     {
         $pricingService = app(ProductPricingService::class);
@@ -509,21 +473,6 @@ class OrderService
         );
     }
 
-
-    public function clearCart(?int $userId = null): bool
-    {
-        $targetUserId = $userId ?? auth()->id();
-        if (!$targetUserId) {
-            return false;
-        }
-
-        $cart = Cart::query()->where('user_id', $targetUserId)->first();
-        if (!$cart) {
-            return false;
-        }
-
-        return $this->cartInventoryService->releaseCart($cart, true);
-    }
 
     private static array $allowedOrderTransitions = [
         'pending' => ['pending', 'processing', 'completed', 'cancelled'],
@@ -670,6 +619,11 @@ private function canTransitionOrderStatus(string $from, string $to): bool
             }
 
             if ($status === 'cancelled' && $previousStatus !== 'cancelled') {
+                // Unpaid orders own an active reservation — release it exactly
+                // once here. Paid orders are committed; release is a safe no-op
+                // and the existing paid-restoration listener handles restock.
+                $this->orderReservationService->release($order);
+
                 $this->promotionService->decrementUsage($order->promotion_id ? (int) $order->promotion_id : null);
             }
 
@@ -715,7 +669,9 @@ private function canTransitionOrderStatus(string $from, string $to): bool
 
             $this->finalizePromotionUsageAfterPayment($order);
 
-            $this->finalizeInventoryAfterPayment($order);
+            // Commit THIS order's reservation — the order snapshot is the only
+            // inventory source; the current cart is never consulted.
+            $this->orderReservationService->commit($order);
 
             // Canonical transition: validation, column sync, coupon usage,
             // OrderStatusChanged, and the single PaymentSucceeded emission.
@@ -744,32 +700,14 @@ private function canTransitionOrderStatus(string $from, string $to): bool
 
             $this->finalizePromotionUsageAfterPayment($order);
 
-            $this->finalizeInventoryAfterPayment($order);
+            // Commit THIS order's reservation — the order snapshot is the only
+            // inventory source; the current cart is never consulted.
+            $this->orderReservationService->commit($order);
 
             // Canonical transition: validation, column sync, coupon usage,
             // OrderStatusChanged, and the single PaymentSucceeded emission.
             $this->changeOrderStatus(null, 'completed', $order->id);
         });
-    }
-
-    private function finalizeInventoryAfterPayment(Order $order): void
-    {
-        try {
-            $cart = Cart::query()
-                ->where('user_id', $order->user_id)
-                ->where('status', 'active')
-                ->first();
-
-            if ($cart) {
-                $shippingMethod = $order->shipping_method ?? ShippingMethod::SCHEDULED;
-                $this->cartInventoryService->finalizeItemsByShippingMethod($cart, $shippingMethod);
-            } else {
-                $this->cartInventoryService->deductStockForOrder($order);
-            }
-        } catch (\Throwable $e) {
-            report($e);
-            throw $e;
-        }
     }
 
     /**

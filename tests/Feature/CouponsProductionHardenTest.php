@@ -39,6 +39,7 @@ use Tests\TestCase;
 
 class CouponsProductionHardenTest extends TestCase
 {
+
     use DatabaseTransactions, WithInvoiceTables;
 
     private const PREFIX = '/api/v1/general';
@@ -232,6 +233,10 @@ $table->decimal('total_price', 10, 2)->default(0);
             $table->string('pickup_location_phone')->nullable();
             $table->string('pickup_location_coordinates')->nullable();
             $table->timestamp('inventory_restored_at')->nullable();
+                                    $table->string('inventory_state', 16)->default('none');
+            $table->timestamp('inventory_reserved_at')->nullable();
+            $table->timestamp('reservation_expires_at')->nullable();
+            $table->index(['status', 'reservation_expires_at']);
             $table->timestamps();
             $table->softDeletes();
         });
@@ -444,6 +449,17 @@ $table->decimal('product_total_price', 10, 2)->default(0);
         $this->createInvoiceTables();
 
         $this->seedBaseData();
+        // FCM channel resolves user device tokens during notification fanout.
+        if (!Schema::hasTable('device_tokens')) {
+            Schema::create('device_tokens', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+                $table->string('token')->unique();
+                $table->string('device_type')->nullable();
+                $table->timestamps();
+            });
+        }
+
     }
 
     private function seedBaseData(): void
@@ -987,7 +1003,7 @@ $table->decimal('product_total_price', 10, 2)->default(0);
 
         $order = $this->checkout();
         $this->assertNotNull($order);
-        // expired coupon cleared — full price 200 + 30 shipping = 230
+        // expired coupon cleared ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â full price 200 + 30 shipping = 230
         $this->assertEquals(230.00, (float) $order->total_price);
         $this->assertNull($order->coupon);
     }
@@ -1031,7 +1047,7 @@ $table->decimal('product_total_price', 10, 2)->default(0);
 
         $order = $this->checkout();
         $this->assertNotNull($order);
-        // unassigned coupon cleared — full price 200 + 30 shipping = 230
+        // unassigned coupon cleared ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â full price 200 + 30 shipping = 230
         $this->assertEquals(230.00, (float) $order->total_price);
         $this->assertNull($order->coupon);
     }
@@ -1135,7 +1151,7 @@ $table->decimal('product_total_price', 10, 2)->default(0);
         $coupon->refresh();
         $this->assertEquals(1, $coupon->used);
 
-        // Second usage — should be blocked by unique constraint
+        // Second usage ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â should be blocked by unique constraint
         $order2 = Order::create([
             'user_id' => $this->customer->id,
             'name' => 'Test',

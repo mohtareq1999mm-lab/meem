@@ -198,16 +198,13 @@ class PromotionFlowTest extends TestCase
         ]);
 
         $service = app(PromotionService::class);
-        $service->applySelectedPromotion($cart->fresh(), $giftPromotion->id, $giftProduct->id);
+        $totals = $service->applySelectedPromotion($cart->fresh(), $giftPromotion->id, $giftProduct->id);
 
-        $giftItem = CartItem::query()
-            ->where('cart_id', $cart->id)
-            ->where('is_gift', true)
-            ->first();
-
-        $this->assertNotNull($giftItem);
-        $this->assertEquals($giftVariant->id, $giftItem->product_variant_id);
-        $this->assertEquals('SCHEDULED', $giftItem->shipping_method);
+        // NEW CONTRACT: gift resolves to a descriptor; shipping_method is now
+        // applied to the ORDER line at checkout, not to any cart row.
+        $this->assertNotEmpty($totals->giftItems);
+        $this->assertSame($giftVariant->id, $totals->giftItems[0]['product_variant_id']);
+        $this->assertEquals(0, CartItem::query()->where('cart_id', $cart->id)->where('is_gift', true)->count());
     }
 
     public function test_gift_item_shipping_method_from_checkout_context(): void
@@ -240,15 +237,11 @@ class PromotionFlowTest extends TestCase
         ]);
 
         $service = app(PromotionService::class);
-        $service->applySelectedPromotion($cart->fresh(), $giftPromotion->id, $giftProduct->id, ShippingMethod::FAST);
+        $totals = $service->applySelectedPromotion($cart->fresh(), $giftPromotion->id, $giftProduct->id, ShippingMethod::FAST);
 
-        $giftItem = CartItem::query()
-            ->where('cart_id', $cart->id)
-            ->where('is_gift', true)
-            ->first();
-
-        $this->assertNotNull($giftItem);
-        $this->assertEquals('FAST', $giftItem->shipping_method);
+        // NEW CONTRACT: shipping method applies to the ORDER gift line later.
+        $this->assertNotEmpty($totals->giftItems);
+        $this->assertSame($giftVariant->id, $totals->giftItems[0]['product_variant_id']);
     }
 
     public function test_cart_modification_clears_promotion_data(): void
@@ -351,15 +344,11 @@ class PromotionFlowTest extends TestCase
         ]);
 
         $service = app(PromotionService::class);
-        $service->applySelectedPromotion($cart->fresh(), $giftPromotion->id, $giftProduct->id);
+        $totals = $service->applySelectedPromotion($cart->fresh(), $giftPromotion->id, $giftProduct->id);
 
-        $giftItem = CartItem::query()
-            ->where('cart_id', $cart->id)
-            ->where('is_gift', true)
-            ->first();
-
-        $this->assertNotNull($giftItem);
-        $this->assertEquals('SCHEDULED', $giftItem->shipping_method);
+        // NEW CONTRACT: descriptor resolution is cart-neutral.
+        $this->assertNotEmpty($totals->giftItems);
+        $this->assertEquals(0, CartItem::query()->where('cart_id', $cart->id)->where('is_gift', true)->count());
     }
 
     public function test_decrement_usage_decreases_count(): void

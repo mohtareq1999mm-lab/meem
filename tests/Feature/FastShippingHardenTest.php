@@ -25,6 +25,7 @@ use Tests\TestCase;
 
 class FastShippingHardenTest extends TestCase
 {
+
     use DatabaseTransactions;
 
     private const PREFIX = '/api/v1';
@@ -180,6 +181,10 @@ class FastShippingHardenTest extends TestCase
             $table->string('pickup_location_phone')->nullable();
             $table->string('pickup_location_coordinates')->nullable();
             $table->timestamp('inventory_restored_at')->nullable();
+                                    $table->string('inventory_state', 16)->default('none');
+            $table->timestamp('inventory_reserved_at')->nullable();
+            $table->timestamp('reservation_expires_at')->nullable();
+            $table->index(['status', 'reservation_expires_at']);
             $table->timestamps();
             $table->softDeletes();
         });
@@ -354,6 +359,17 @@ class FastShippingHardenTest extends TestCase
             $table->timestamps();
             $table->softDeletes();
         });
+        // FCM channel resolves user device tokens during notification fanout.
+        if (!Schema::hasTable('device_tokens')) {
+            Schema::create('device_tokens', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+                $table->string('token')->unique();
+                $table->string('device_type')->nullable();
+                $table->timestamps();
+            });
+        }
+
     }
 
     private function seedBaseData(): void
@@ -608,15 +624,15 @@ class FastShippingHardenTest extends TestCase
 
         $response = $this->postJson(self::PREFIX . '/general/fast-shipping/checkout', [
             'name' => 'Test User',
-            'user_phone' => '01000000000',
-            'user_email' => 'test@test.com',
-            'address' => ['street' => 'Test St', 'city' => 'Cairo'],
+            'user_phone' => '01000000001',
+            'user_email' => 'test@example.com',
+            'address' => ['street' => '1'],
             'governorate_id' => 1,
             'payment_method' => 'cod',
-
         ]);
 
-        $response->assertStatus(400);
+        // NEW CONTRACT: stock is enforced at order reservation → controlled 422.
+        $response->assertStatus(422);
     }
 
     // ========== Cache Key Isolation ==========

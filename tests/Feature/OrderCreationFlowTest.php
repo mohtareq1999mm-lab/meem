@@ -22,6 +22,7 @@ use Tests\TestCase;
 
 class OrderCreationFlowTest extends TestCase
 {
+
     use DatabaseTransactions;
 
     private User $user;
@@ -171,6 +172,10 @@ Schema::create('users', function (Blueprint $table) {
             $table->decimal('price', 10, 2)->default(0);
             $table->decimal('total_price', 10, 2)->default(0);
             $table->string('status')->default('pending');
+                                    $table->string('inventory_state', 16)->default('none');
+            $table->timestamp('inventory_reserved_at')->nullable();
+            $table->timestamp('reservation_expires_at')->nullable();
+            $table->index(['status', 'reservation_expires_at']);
             $table->timestamps();
             $table->softDeletes();
             $table->timestamp('inventory_restored_at')->nullable();
@@ -256,6 +261,17 @@ Schema::create('users', function (Blueprint $table) {
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
             $table->timestamps();
         });
+        // FCM channel resolves user device tokens during notification fanout.
+        if (!Schema::hasTable('device_tokens')) {
+            Schema::create('device_tokens', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+                $table->string('token')->unique();
+                $table->string('device_type')->nullable();
+                $table->timestamps();
+            });
+        }
+
     }
 
     private function seedBaseData(): void
@@ -557,7 +573,7 @@ Schema::create('users', function (Blueprint $table) {
         $orderItem = $order->orderItems()->first();
         $this->assertNotNull($orderItem);
 
-        // Should NOT be 50 (raw discount_amount) — should be 100 (computed: 200 - 50% = 100)
+        // Should NOT be 50 (raw discount_amount) ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â should be 100 (computed: 200 - 50% = 100)
         $this->assertNotEquals(50.00, $orderItem->product_discount_price);
         $this->assertEquals(100.00, $orderItem->product_discount_price);
     }
@@ -587,8 +603,8 @@ Schema::create('users', function (Blueprint $table) {
         $orderItem = $order->orderItems()->first();
         $this->assertNotNull($orderItem);
 
-        // Variant price = 130, flash 20% off → 130 - 26 = 104
-        // Should NOT use product price 100 → 100 - 20 = 80
+        // Variant price = 130, flash 20% off ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ 130 - 26 = 104
+        // Should NOT use product price 100 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ 100 - 20 = 80
         $this->assertNotEquals(80.00, $orderItem->product_flash_sale_price);
         $this->assertEquals(104.00, $orderItem->product_flash_sale_price);
     }
@@ -616,8 +632,8 @@ Schema::create('users', function (Blueprint $table) {
         $orderItem = $order->orderItems()->first();
         $this->assertNotNull($orderItem);
 
-        // Variant price = 130, fixed rate 25 off → 130 - 25 = 105
-        // Should NOT use product price 100 → 100 - 25 = 75
+        // Variant price = 130, fixed rate 25 off ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ 130 - 25 = 105
+        // Should NOT use product price 100 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ 100 - 25 = 75
         $this->assertNotEquals(75.00, $orderItem->product_flash_sale_price);
         $this->assertEquals(105.00, $orderItem->product_flash_sale_price);
     }
@@ -646,7 +662,7 @@ Schema::create('users', function (Blueprint $table) {
         $this->assertNotNull($orderItem);
 
         // Variant price = 130, final price = 99.99
-        // Should NOT use product price 100 → 100 - 99.99 = 0.01
+        // Should NOT use product price 100 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ 100 - 99.99 = 0.01
         $this->assertEquals(99.99, $orderItem->product_flash_sale_price);
     }
 
@@ -671,8 +687,8 @@ Schema::create('users', function (Blueprint $table) {
         $orderItem = $order->orderItems()->first();
         $this->assertNotNull($orderItem);
 
-        // Variant price = 130, 20% off → 130 - 26 = 104
-        // Should NOT use product price 100 → 100 - 20 = 80
+        // Variant price = 130, 20% off ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ 130 - 26 = 104
+        // Should NOT use product price 100 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ 100 - 20 = 80
         $this->assertNotEquals(80.00, $orderItem->product_discount_price);
         $this->assertEquals(104.00, $orderItem->product_discount_price);
     }
@@ -698,8 +714,8 @@ Schema::create('users', function (Blueprint $table) {
         $orderItem = $order->orderItems()->first();
         $this->assertNotNull($orderItem);
 
-        // Variant price = 130, $15 off → 130 - 15 = 115
-        // Should NOT use product price 100 → 100 - 15 = 85
+        // Variant price = 130, $15 off ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ 130 - 15 = 115
+        // Should NOT use product price 100 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ 100 - 15 = 85
         $this->assertNotEquals(85.00, $orderItem->product_discount_price);
         $this->assertEquals(115.00, $orderItem->product_discount_price);
     }
@@ -729,9 +745,9 @@ Schema::create('users', function (Blueprint $table) {
         $orderItem = $order->orderItems()->first();
         $this->assertNotNull($orderItem);
 
-        // Flash sale is active: product price = 100, 10% flash → 90
+        // Flash sale is active: product price = 100, 10% flash ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ 90
         $this->assertEquals(90.00, $orderItem->product_flash_sale_price);
-        // Flash sale overrides normal discount — discount price is null
+        // Flash sale overrides normal discount ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â discount price is null
         $this->assertNull($orderItem->product_discount_price);
     }
 
@@ -756,7 +772,7 @@ Schema::create('users', function (Blueprint $table) {
         $orderItem = $order->orderItems()->first();
         $this->assertNotNull($orderItem);
 
-        // Variant has no price → falls back to product price = 100, 20% off → 80
+        // Variant has no price ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ falls back to product price = 100, 20% off ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ 80
         $this->assertEquals(80.00, $orderItem->product_discount_price);
     }
 

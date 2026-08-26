@@ -18,6 +18,13 @@ use Marvel\Enums\ProductType;
 use Marvel\Enums\ShippingMethod;
 use Tests\TestCase;
 
+/**
+ * NEW CONTRACT: carts no longer expire and never own inventory.
+ *
+ * reserved_at / expires_at are an ABANDONED-CART ACTIVITY WINDOW used only by
+ * analytics and notifications (cart:notify-abandoned). There is no reaper:
+ * nothing ever deletes cart items or releases stock based on time.
+ */
 class CartExpirationTest extends TestCase
 {
     use RefreshDatabase;
@@ -39,7 +46,6 @@ class CartExpirationTest extends TestCase
         }
 
         $this->user = User::factory()->create();
-
         $this->product = Product::create([
             'name' => 'Expiration Product',
             'slug' => 'expiration-product-' . Str::uuid(),
@@ -62,87 +68,59 @@ class CartExpirationTest extends TestCase
             'expires_at' => now()->addDays(3),
         ]);
 
-        $item = CartItem::create([
+        CartItem::create([
             'cart_id' => $cart->id,
             'product_id' => $this->product->id,
             'quantity' => 1,
             'price' => $this->product->price,
             'total_price' => $this->product->price,
-            'reserved_quantity' => 1,
             'shipping_method' => ShippingMethod::SCHEDULED,
         ]);
-
-        DB::table('products')
-            ->where('id', $this->product->id)
-            ->update(['reserved_quantity' => 1]);
 
         return $cart->load('items');
     }
 
     /** @test */
-    public function expire_carts_releases_reserved_stock(): void
-    {
-        $this->createActiveCartWithReservation();
-        Carbon::setTestNow(now()->addDays(4));
-
-        $service = app(CartInventoryService::class);
-        $expiredCount = $service->expireCarts();
-
-        $this->assertEquals(1, $expiredCount);
-        $this->assertEquals(0, $this->product->fresh()->reserved_quantity);
-    }
-
-    /** @test */
-    public function expire_carts_marks_cart_as_expired(): void
+    public function stale_activity_window_does_not_expire_the_cart(): void
     {
         $cart = $this->createActiveCartWithReservation();
-        Carbon::setTestNow(now()->addDays(4));
+
+        Carbon::setTestNow(now()->addDays(30));
 
         $service = app(CartInventoryService::class);
-        $service->expireCarts();
+        $this->assertEquals(0, method_exists($service, 'expireCarts') ? $service->expireCarts() : 0);
 
-        $this->assertEquals('expired', $cart->fresh()->status);
+        $cart->refresh();
+        $this->assertEquals('active', $cart->status, 'Carts are never auto-expired');
+        $this->assertEquals(1, $cart->items()->count(), 'Items survive regardless of window');
+        $this->assertEquals(0, $this->product->refresh()->reserved_quantity);
     }
 
     /** @test */
-    public function expire_carts_deletes_cart_items(): void
+    public function abandoned_cart_notification_window_semantics_hold(): void
     {
+        // NotifyAbandonedCarts selects: active + reserved_at < -24h +
+        // expires_at > now + reminder not sent.
         $cart = $this->createActiveCartWithReservation();
-        Carbon::setTestNow(now()->addDays(4));
+        $cart->update(['reserved_at' => now()->subHours(25)]);
 
-        $service = app(CartInventoryService::class);
-        $service->expireCarts();
+        $eligible = Cart::query()
+            ->where('status', 'active')
+            ->whereNotNull('reserved_at')
+            ->where('reserved_at', '<', now()->subHours(24))
+            ->where('expires_at', '>', now())
+            ->whereNull('reminder_sent_at')
+            ->exists();
 
-        $this->assertEquals(0, $cart->fresh()->items()->count());
-    }
+        $this->assertTrue($eligible, 'Stale but unexpired carts remain notify-eligible');
 
-    /** @test */
-    public function active_cart_not_expired_before_ttl(): void
-    {
-        $this->createActiveCartWithReservation();
-
-        $service = app(CartInventoryService::class);
-        $expiredCount = $service->expireCarts();
-
-        $this->assertEquals(0, $expiredCount);
-        $this->assertEquals(1, $this->product->fresh()->reserved_quantity);
-    }
-
-    /** @test */
-    public function expire_carts_skips_carts_without_expires_at(): void
-    {
-        $cart = Cart::create([
-            'user_id' => $this->user->id,
-            'status' => 'active',
-            'total_price' => 100,
-            'reserved_at' => now()->subDays(10),
-        ]);
-
-        $service = app(CartInventoryService::class);
-        $expiredCount = $service->expireCarts();
-
-        $this->assertEquals(0, $expiredCount);
-        $this->assertEquals('active', $cart->fresh()->status);
+        // After the window lapses naturally the cart falls out — no action needed.
+        $cart->update(['expires_at' => now()->subHour()]);
+        $stillEligible = Cart::query()
+            ->where('status', 'active')
+            ->where('expires_at', '>', now())
+            ->exists();
+        $this->assertFalse($stillEligible);
     }
 
     /** @test */
@@ -170,54 +148,30 @@ class CartExpirationTest extends TestCase
     }
 
     /** @test */
-    public function expired_carts_can_be_recreated(): void
+    public function inventory_counters_never_move_through_any_cart_lifecycle(): void
     {
-        $cart = $this->createActiveCartWithReservation();
-        Carbon::setTestNow(now()->addDays(4));
-
         $service = app(CartInventoryService::class);
-        $service->expireCarts();
-        $this->assertEquals('expired', $cart->fresh()->status);
 
-        $cart->fresh()->items()->delete();
-        $cart->delete();
-        Carbon::setTestNow();
+        // Add
+        DB::transaction(fn () => $service->incrementItem(
+            Cart::create(['user_id' => $this->user->id, 'status' => 'active']),
+            $this->product->fresh(), null, 3
+        ));
+        $this->assertEquals(0, $this->product->refresh()->reserved_quantity);
+        $this->assertEquals(10, $this->product->stock_quantity);
+        $this->assertEquals(0, $this->product->sold_quantity);
 
-        $newCart = Cart::create([
-            'user_id' => $this->user->id,
-            'status' => 'active',
-            'total_price' => $this->product->price,
-        ]);
+        // Reduce
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        DB::transaction(fn () => $service->decrementItem($cart, $this->product->fresh(), null, 1));
+        $this->assertEquals(0, $this->product->refresh()->reserved_quantity);
 
-        DB::transaction(function () use ($newCart, $service) {
-            $service->incrementItem($newCart, $this->product, null, 1, [], ShippingMethod::SCHEDULED);
-        });
-
-        $this->assertEquals(1, $this->product->fresh()->reserved_quantity);
-    }
-
-    /** @test */
-    public function cart_expired_before_finalize_releases_stock(): void
-    {
-        $this->createActiveCartWithReservation();
-        Carbon::setTestNow(now()->addDays(4));
-
-        $service = app(CartInventoryService::class);
-        $service->expireCarts();
-
-        $this->assertEquals(0, $this->product->fresh()->reserved_quantity);
-
-        $anotherUser = User::factory()->create();
-        $newCart = Cart::create([
-            'user_id' => $anotherUser->id,
-            'status' => 'active',
-            'total_price' => $this->product->price,
-        ]);
-
-        DB::transaction(function () use ($newCart, $service) {
-            $service->incrementItem($newCart, $this->product, null, 1, [], ShippingMethod::SCHEDULED);
-        });
-
-        $this->assertEquals(1, $this->product->fresh()->reserved_quantity);
+        // Clear
+        $service->releaseCart($cart->fresh(), true);
+        $this->assertEquals(0, $this->product->refresh()->reserved_quantity);
+        $this->assertEquals(10, $this->product->stock_quantity);
+        $this->assertEquals(0, $this->product->sold_quantity);
+        $this->assertNotNull(Cart::find($cart->id), 'Cart row survives clearing');
+        $this->assertEquals(0, $cart->items()->count());
     }
 }

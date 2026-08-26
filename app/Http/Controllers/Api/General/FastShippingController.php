@@ -47,12 +47,6 @@ class FastShippingController extends Controller
         }
 
         try {
-            $this->cartInventoryService->ensureCartReservation($cart);
-        } catch (\Throwable $e) {
-            return $this->apiResponse($e->getMessage(), 400, false);
-        }
-
-        try {
             $order = $this->fastShippingService->createFastOrder($request);
         } catch (\InvalidArgumentException $e) {
             return $this->apiResponse($e->getMessage(), 422, false);

@@ -37,7 +37,8 @@
         "spatie/laravel-translatable": "*",
         "stevebauman/purify": "6.0.2",
         "symfony/http-client": "6.3.7",
-        "symfony/mailgun-mailer": "6.3.6"
+        "symfony/mailgun-mailer": "6.3.6",
+        "vladimir-yuldashev/laravel-queue-rabbitmq": "^15.0"
     },
     "require-dev": {
         "fakerphp/faker": "1.21.0",

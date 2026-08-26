@@ -8,6 +8,7 @@ use App\DTOs\CheckoutTotals;
 use App\Events\OrderCancelled;
 use App\Services\Checkout\OrderCreationService;
 use App\Services\General\CartInventoryService;
+use App\Services\Inventory\OrderReservationService;
 use App\Services\Coupon\CouponCalculator;
 use App\Services\Coupon\CouponOrchestrator;
 use App\Services\General\OrderService;
@@ -804,51 +805,68 @@ class ProductionReadinessAuditTest extends TestCase
     /** @test */
     public function cart_expiration_releases_inventory(): void
     {
+        // NEW CONTRACT: the ORDER owns the reservation; expiry releases it.
         $this->authenticate();
         $qty = 3;
-        $cart = $this->makeCart($qty);
 
-        // Reset item reserved_quantity to 0 so ensureCartReservation must reserve
-        $cart->items()->update(['reserved_quantity' => 0]);
+        $order = \Marvel\Database\Models\Order::create([
+            'user_id' => $this->user->id,
+            'name' => 'PRA', 'user_phone' => '01', 'user_email' => $this->user->email,
+            'address' => '{}', 'total_price' => 100, 'status' => 'pending',
+        ]);
+        $order->orderItems()->create([
+            'product_id' => $this->product->id,
+            'product_name' => $this->product->name,
+            'product_quantity' => $qty,
+            'product_price' => 100,
+            'product_total_price' => 100 * $qty,
+        ]);
 
-        // Reserve inventory via ensureCartReservation
-        $inventoryService = app(CartInventoryService::class);
-        $cart = $inventoryService->ensureCartReservation($cart);
+        /** @var OrderReservationService $reservations */
+        $reservations = app(OrderReservationService::class);
+        $reservations->reserveForOrder($order->refresh());
 
-        $this->assertEquals($qty, $cart->items->first()->reserved_quantity);
         $initialStock = $this->product->stock_quantity;
         $this->assertEquals($qty, $this->product->fresh()->reserved_quantity);
 
-        // Ensure the cart's expires_at is in the past so expireSingleCart proceeds
-        $cart->forceFill(['expires_at' => now()->subDay()])->save();
-
-        // Expire the cart
-        $inventoryService->expireSingleCart($cart);
+        $reservations->release($order->refresh());
 
         $productAfter = $this->product->fresh();
         $this->assertEquals(0, $productAfter->reserved_quantity);
         $this->assertEquals($initialStock, $productAfter->stock_quantity);
-        $this->assertEquals('expired', $cart->fresh()->status);
+        $this->assertEquals(\Marvel\Database\Models\Order::INVENTORY_STATE_RELEASED, $order->fresh()->inventory_state);
     }
 
     /** @test */
     public function already_expired_cart_not_double_released(): void
     {
         $this->authenticate();
-        $cart = $this->makeCart(2);
-        $inventoryService = app(CartInventoryService::class);
-        $cart = $inventoryService->ensureCartReservation($cart);
 
-        // Expire twice
-        $inventoryService->expireSingleCart($cart);
-        $productAfterFirst = $this->product->fresh()->reserved_quantity;
+        $order = \Marvel\Database\Models\Order::create([
+            'user_id' => $this->user->id,
+            'name' => 'PRA2', 'user_phone' => '01', 'user_email' => $this->user->email,
+            'address' => '{}', 'total_price' => 100, 'status' => 'pending',
+        ]);
+        $order->orderItems()->create([
+            'product_id' => $this->product->id,
+            'product_name' => $this->product->name,
+            'product_quantity' => 2,
+            'product_price' => 100,
+            'product_total_price' => 200,
+        ]);
 
-        // The cart is now expired - items deleted
-        $inventoryService->expireSingleCart($cart->fresh());
+        /** @var OrderReservationService $reservations */
+        $reservations = app(OrderReservationService::class);
+        $reservations->reserveForOrder($order->refresh());
 
-        // Reserved quantity should not go negative
+        // Release twice — the second must be a no-op.
+        $this->assertTrue($reservations->release($order->refresh()));
+        $afterFirst = $this->product->fresh()->reserved_quantity;
+
+        $this->assertFalse($reservations->release($order->refresh()));
+
         $this->assertEquals(0, $this->product->fresh()->reserved_quantity);
-        $this->assertEquals($productAfterFirst, $this->product->fresh()->reserved_quantity);
+        $this->assertEquals($afterFirst, $this->product->fresh()->reserved_quantity);
     }
 
     // =========================================================================

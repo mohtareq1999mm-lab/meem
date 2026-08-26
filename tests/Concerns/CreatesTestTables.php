@@ -482,6 +482,10 @@ Schema::create('categories', function (Blueprint $table) {
             $table->string('pickup_location_phone')->nullable();
             $table->string('pickup_location_coordinates')->nullable();
             $table->timestamp('inventory_restored_at')->nullable();
+                                    $table->string('inventory_state', 16)->default('none');
+            $table->timestamp('inventory_reserved_at')->nullable();
+            $table->timestamp('reservation_expires_at')->nullable();
+            $table->index(['status', 'reservation_expires_at']);
             $table->timestamps();
             $table->softDeletes();
         });

@@ -11,6 +11,7 @@ use App\Http\Resources\Order\OrderResource;
 use App\Models\Invoice;
 use App\Services\General\CartInventoryService;
 use App\Services\General\OrderService;
+use App\Services\Inventory\OrderReservationService;
 use App\Services\Payment\PaymentCheckoutHandler;
 use App\Services\Payment\PaymentGatewayFactory;
 use App\Events\OrderCancelled;
@@ -22,9 +23,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Order;
 use Marvel\Database\Models\Transaction;
-use Marvel\Database\Models\User;
 use Marvel\Enums\PaymentStatus;
-use Marvel\Enums\ShippingMethod;
 use Marvel\Http\Requests\OrderCreateRequest;
 use Marvel\Traits\ApiResponse;
 
@@ -37,6 +36,7 @@ class OrderController extends Controller
     public function __construct(
         OrderService $orderService,
         CartInventoryService $cartInventoryService,
+        private OrderReservationService $orderReservationService,
         private PaymentGatewayFactory $paymentGatewayFactory,
         private PaymentCheckoutHandler $paymentCheckoutHandler,
     ) {
@@ -94,12 +94,6 @@ class OrderController extends Controller
             return $this->apiResponse(CART_NOT_FOUND, 400, false);
         }
 
-        try {
-            $this->cartInventoryService->ensureCartReservation($cart);
-        } catch (\Throwable $e) {
-            return $this->apiResponse($e->getMessage(), 400, false);
-        }
-
         $paymentMethod = $request->input('payment_method', 'online');
         $gateway = $request->input('gateway', config('payment.default_gateway', 'myfatoorah'));
         $fulfillmentType = $request->input('fulfillment_type', 'delivery');
@@ -116,6 +110,9 @@ class OrderController extends Controller
 
         try {
             $order = $this->orderService->addItemsInOrder($request);
+        } catch (\App\Exceptions\CartEmptyException $e) {
+            // Concurrent/previous checkout already consumed this cart.
+            return $this->apiResponse(CART_NOT_FOUND, 400, false);
         } catch (\InvalidArgumentException $e) {
             return $this->apiResponse($e->getMessage(), 422, false);
         }
@@ -380,15 +377,9 @@ class OrderController extends Controller
                 $lockedOrder->update($orderUpdateData);
             }
 
-            if ($user = User::find($lockedOrder->user_id)) {
-                $cart = $this->cartInventoryService->getActiveCartForUser($user);
-                if ($cart) {
-                    $shippingMethod = $lockedOrder->shipping_method ?? ShippingMethod::SCHEDULED;
-                    $this->cartInventoryService->finalizeItemsByShippingMethod($cart, $shippingMethod);
-                } else {
-                    $this->cartInventoryService->deductStockForOrder($lockedOrder);
-                }
-            }
+            // Commit THIS order's reservation. The order snapshot is the only
+            // inventory source — the current cart is never read here.
+            $this->orderReservationService->commit($lockedOrder);
 
             $this->orderService->finalizePromotionUsageAfterPayment($lockedOrder);
 

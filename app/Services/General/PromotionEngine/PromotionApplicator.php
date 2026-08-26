@@ -4,20 +4,23 @@ declare(strict_types=1);
 
 namespace App\Services\General\PromotionEngine;
 
-use App\Services\General\CartInventoryService;
 use App\Services\General\PromotionEngine\Outcome\DiscountOutcome;
-use App\Services\General\PromotionEngine\Outcome\GiftOutcome;
-use App\Services\General\PromotionEngine\DTOs\GiftItem;
 use App\Services\General\PromotionEngine\Outcome\PromotionOutcome;
 use Marvel\Database\Models\Promotion;
-use Marvel\Database\Models\Product;
 use App\Services\General\PromotionEngine\PromotionEligibilityResolver;
 use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Cart;
 
+/**
+ * Applies DISCOUNT outcomes to cart line pricing.
+ *
+ * Gift promotions are intentionally NOT handled here anymore: they resolve to
+ * order-line descriptors (see PromotionService::applySelectedPromotion) and are
+ * materialized + inventory-reserved atomically with the Order at checkout.
+ */
 class PromotionApplicator
 {
-    public function __construct(private CartInventoryService $inventoryService, private PromotionEligibilityResolver $resolver) {}
+    public function __construct(private PromotionEligibilityResolver $resolver) {}
 
     /**
      * Apply a computed outcome to the cart in a safe transaction.
@@ -131,48 +134,6 @@ class PromotionApplicator
 $cart->forceFill(['total_price' => round($discountedSubtotalCents / 100.0, 2)])->save();
 
                 return ['discount' => $amountCents / 100.0, 'gift_items' => []];
-            }
-
-            if ($outcome instanceof GiftOutcome) {
-                $reserved = [];
-                foreach ($outcome->giftItems as $gift) {
-                    if (!$gift instanceof GiftItem) {
-                        continue;
-                    }
-
-                    // lock product row prior to reservation
-                    $product = Product::query()->whereKey($gift->productId)->lockForUpdate()->first();
-                    if (!$product) {
-                        continue;
-                    }
-
-                    try {
-                        $item = $this->inventoryService->reserveGiftItem(
-                            $cart,
-                            $product,
-                            $promotion,
-                            max(1, (int) $gift->quantity),
-                            $gift->productVariantId,
-                            $shippingMethod,
-                        );
-                        $reserved[] = $item->id;
-                        break;
-                    } catch (\Throwable $e) {
-                        report($e);
-                        continue;
-                    }
-                }
-
-                // ensure cart totals saved (gifts priced at 0) using current DB state
-                $discountedSubtotalCents = (int) round(Cart::whereKey($cart->id)
-                    ->with(['items'])
-                    ->firstOrFail()
-                    ->items
-                    ->reject(fn($i) => (bool) ($i->is_gift ?? false))
-                    ->sum(fn($item) => (float) ($item->total_price ?? 0)) * 100);
-
-$cart->forceFill(['total_price' => round($discountedSubtotalCents / 100.0, 2)])->save();
-                return ['discount' => 0.0, 'gift_items' => $reserved];
             }
 
             return ['discount' => 0.0, 'gift_items' => []];

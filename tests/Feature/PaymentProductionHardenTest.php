@@ -287,6 +287,10 @@ Schema::create('users', function (Blueprint $table) {
             $table->string('promotion_type')->nullable();
             $table->decimal('promotion_discount', 10, 2)->nullable();
             $table->string('status')->default('pending');
+                                    $table->string('inventory_state', 16)->default('none');
+            $table->timestamp('inventory_reserved_at')->nullable();
+            $table->timestamp('reservation_expires_at')->nullable();
+            $table->index(['status', 'reservation_expires_at']);
             $table->timestamps();
             $table->softDeletes();
             $table->timestamp('inventory_restored_at')->nullable();
@@ -453,6 +457,15 @@ Schema::create('users', function (Blueprint $table) {
             $table->string('event')->nullable();
             $table->timestamps();
             $table->index('log_name');
+        });
+
+        // PaymentSucceeded listeners resolve user device tokens (FCM channel).
+        Schema::create('device_tokens', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->string('token')->unique();
+            $table->string('device_type')->nullable();
+            $table->timestamps();
         });
     }
 
@@ -898,17 +911,20 @@ public function callback_amount_mismatch_does_not_cancel_order()
     {
         Event::fake([OrderCancelled::class, PaymentFailed::class]);
 
-        $cutoff = now()->subHours(73);
-        Carbon::setTestNow($cutoff);
         $order = $this->createOrderWithPendingTransaction('cod');
-        $order->created_at = $cutoff->subHour();
-        $order->save();
-        Carbon::setTestNow();
+
+        // NEW eligibility: an ACTIVE order-owned reservation past its 24h expiry.
+        $order->forceFill([
+            'inventory_state' => Order::INVENTORY_STATE_ACTIVE,
+            'inventory_reserved_at' => now()->subHours(25),
+            'reservation_expires_at' => now()->subMinute(),
+        ])->save();
 
         $this->artisan('orders:cancel-unpaid')
             ->assertExitCode(0);
 
         $this->assertEquals('cancelled', $order->fresh()->status);
+        $this->assertEquals(Order::INVENTORY_STATE_RELEASED, $order->fresh()->inventory_state);
 
         Event::assertDispatched(OrderCancelled::class);
         Event::assertDispatched(PaymentFailed::class);
@@ -917,35 +933,36 @@ public function callback_amount_mismatch_does_not_cancel_order()
     /** @test */
     public function cancel_unpaid_orders_restores_finalized_stock()
     {
+        // RENAMED SEMANTICS: cancel-unpaid RELEASES the order's active
+        // reservation (stock was never deducted pre-payment).
         $initialStock = 5;
         $this->product->stock_quantity = $initialStock;
+        $this->product->reserved_quantity = 1;
         $this->product->save();
 
-        $cutoff = now()->subHours(73);
-        Carbon::setTestNow($cutoff);
         $order = $this->createOrderWithPendingTransaction('cod');
-        $order->created_at = $cutoff->subHour();
-        $order->save();
-
-        $orderTransaction = $order->transactions()->first();
-
-        DB::transaction(function () use ($order) {
-            $product = Product::whereKey($this->product->id)->lockForUpdate()->first();
-            $product->stock_quantity = $product->stock_quantity - 1;
-            $product->reserved_quantity = $product->reserved_quantity - 1;
-            $product->sold_quantity = $product->sold_quantity + 1;
-            $product->save();
-        });
-
-        Carbon::setTestNow();
+        $order->orderItems()->create([
+            'product_id' => $this->product->id,
+            'product_name' => $this->product->name,
+            'product_quantity' => 1,
+            'product_price' => 100,
+            'product_total_price' => 100,
+        ]);
+        $order->forceFill([
+            'inventory_state' => Order::INVENTORY_STATE_ACTIVE,
+            'inventory_reserved_at' => now()->subHours(25),
+            'reservation_expires_at' => now()->subMinute(),
+        ])->save();
 
         $this->artisan('orders:cancel-unpaid')
             ->assertExitCode(0);
 
         $this->assertEquals('cancelled', $order->fresh()->status);
+        $this->assertEquals(Order::INVENTORY_STATE_RELEASED, $order->fresh()->inventory_state);
 
-        $restoredStock = $this->product->fresh()->stock_quantity;
-        \Log::info('Stock after cancel-unpaid: initial=' . $initialStock . ' restored=' . $restoredStock);
+        $restoredStock = $this->product->fresh();
+        $this->assertEquals($initialStock, $restoredStock->stock_quantity, 'Physical stock untouched on release');
+        $this->assertEquals(0, $restoredStock->reserved_quantity, 'Reservation released exactly once');
     }
 
     // =============================================
@@ -1084,12 +1101,12 @@ public function mark_paid_response_has_correct_structure()
     {
         Event::fake([OrderCancelled::class, PaymentFailed::class]);
 
-        $cutoff = now()->subHours(73);
-        Carbon::setTestNow($cutoff);
         $order = $this->createOrderWithPendingTransaction('cod');
-        $order->created_at = $cutoff->subHour();
-        $order->save();
-        Carbon::setTestNow();
+        $order->forceFill([
+            'inventory_state' => Order::INVENTORY_STATE_ACTIVE,
+            'inventory_reserved_at' => now()->subHours(25),
+            'reservation_expires_at' => now()->subMinute(),
+        ])->save();
 
         $this->artisan('orders:cancel-unpaid')
             ->assertExitCode(0);
@@ -1417,11 +1434,26 @@ public function mark_paid_response_has_correct_structure()
         $invoiceId = 'INV-STOCK-DUP';
         $order = $this->createOrderWithPendingTransaction('online', $invoiceId, gateway: 'myfatoorah');
 
+        // NEW MODEL fixture: the ORDER owns an active reservation.
         $this->product->stock_quantity = 10;
         $this->product->reserved_quantity = 1;
         $this->product->sold_quantity = 0;
         $this->product->save();
 
+        $order->orderItems()->create([
+            'product_id' => $this->product->id,
+            'product_name' => $this->product->name,
+            'product_quantity' => 1,
+            'product_price' => 100,
+            'product_total_price' => 100,
+        ]);
+        $order->forceFill([
+            'inventory_state' => Order::INVENTORY_STATE_ACTIVE,
+            'inventory_reserved_at' => now()->subHour(),
+            'reservation_expires_at' => now()->addDay(),
+        ])->save();
+
+        // A cart may exist for FUTURE shopping — payment must ignore it.
         $cart = Cart::create([
             'user_id' => $this->user->id,
             'status' => 'active',
@@ -1435,7 +1467,6 @@ public function mark_paid_response_has_correct_structure()
             'price' => 100.00,
             'total_price' => 100.00,
             'shipping_method' => 'SCHEDULED',
-            'reserved_quantity' => 1,
         ]);
 
         $mockGateway = \Mockery::mock(PaymentGatewayContract::class);
@@ -1551,31 +1582,27 @@ public function mark_paid_response_has_correct_structure()
         $this->product->sold_quantity = 0;
         $this->product->save();
 
-        $cart = Cart::create([
-            'user_id' => $this->user->id,
-            'status' => 'active',
-            'total_price' => 100.00,
-        ]);
-
-        CartItem::create([
-            'cart_id' => $cart->id,
+        $order->orderItems()->create([
             'product_id' => $this->product->id,
-            'quantity' => 1,
-            'price' => 100.00,
-            'total_price' => 100.00,
-            'shipping_method' => 'SCHEDULED',
-            'reserved_quantity' => 1,
+            'product_name' => $this->product->name,
+            'product_quantity' => 1,
+            'product_price' => 100,
+            'product_total_price' => 100,
         ]);
+        $order->forceFill([
+            'inventory_state' => Order::INVENTORY_STATE_ACTIVE,
+            'inventory_reserved_at' => now()->subHour(),
+            'reservation_expires_at' => now()->addDay(),
+        ])->save();
 
-        $cartInventoryMock = \Mockery::mock(\App\Services\General\CartInventoryService::class);
-        $cartInventoryMock->shouldReceive('getActiveCartForUser')
-            ->once()
-            ->andReturn($cart);
-        $cartInventoryMock->shouldReceive('finalizeItemsByShippingMethod')
+        // Force the reservation COMMIT step to explode — the whole payment
+        // transaction must roll back atomically.
+        $reservationMock = \Mockery::mock(\App\Services\Inventory\OrderReservationService::class);
+        $reservationMock->shouldReceive('commit')
             ->once()
             ->andThrow(new \RuntimeException('Simulated inventory failure'));
 
-        $this->app->instance(\App\Services\General\CartInventoryService::class, $cartInventoryMock);
+        $this->app->instance(\App\Services\Inventory\OrderReservationService::class, $reservationMock);
 
         $mockGateway = \Mockery::mock(PaymentGatewayContract::class);
         $mockGateway->shouldReceive('verifyPayment')

@@ -99,7 +99,11 @@ class DigitalCartCheckoutTest extends TestCase
         if (!Schema::hasTable('orders')) {
             Schema::create('orders', function (Blueprint $table) {
                 $table->id();
-                $table->timestamps();
+                $table->softDeletes();
+            $table->string('inventory_state', 16)->default('none');
+            $table->timestamp('inventory_reserved_at')->nullable();
+            $table->timestamp('reservation_expires_at')->nullable();
+            $table->timestamps();
             });
         }
 
@@ -169,15 +173,24 @@ class DigitalCartCheckoutTest extends TestCase
 
     public function test_physical_inventory_behavior_is_unchanged()
     {
+        // NEW CONTRACT: cart adds never reserve; the ORDER does.
         $cart = $this->makeCart();
         $physical = $this->makeProduct('PHYSICAL', stock: 2);
 
         $this->inventory->incrementItem($cart, $physical, null, 2);
-        $this->assertSame(2, (int) $physical->fresh()->reserved_quantity);
+        $this->assertSame(0, (int) $physical->fresh()->reserved_quantity);
 
-        // Exceeding physical stock still throws.
+        // Exceeding physical stock no longer throws at cart level Ã¢â‚¬â€
+        // it throws atomically at order reservation.
+        $order = \Marvel\Database\Models\Order::create([]);
+        \Marvel\Database\Models\OrderProduct::create([
+            'order_id' => $order->id,
+            'product_id' => $physical->id,
+            'product_quantity' => 3,
+        ]);
+
         $this->expectException(\Exception::class);
-        $this->inventory->incrementItem($cart, $physical, null, 1);
+        app(\App\Services\Inventory\OrderReservationService::class)->reserveForOrder($order->refresh());
     }
 
     public function test_finalization_decrements_only_physical_stock_in_mixed_cart()
@@ -189,7 +202,32 @@ class DigitalCartCheckoutTest extends TestCase
         $this->inventory->incrementItem($cart, $physical, null, 2);
         $this->inventory->incrementItem($cart, $digital, null, 1);
 
-        $this->inventory->finalizeCart($cart->fresh());
+        // Reservation now happens on the ORDER (mixed cart: physical reserves,
+        // digital skips).
+        $order = \Marvel\Database\Models\Order::create([]);
+        \Marvel\Database\Models\OrderProduct::create([
+            'order_id' => $order->id,
+            'product_id' => $physical->id,
+            'product_quantity' => 2,
+            'item_type' => 'PHYSICAL',
+        ]);
+        \Marvel\Database\Models\OrderProduct::create([
+            'order_id' => $order->id,
+            'product_id' => $digital->id,
+            'product_quantity' => 1,
+            'item_type' => 'DIGITAL',
+        ]);
+
+        app(\App\Services\Inventory\OrderReservationService::class)->reserveForOrder($order->refresh());
+
+        $physical->refresh();
+        $digital->refresh();
+
+        $this->assertSame(7, (int) $physical->stock_quantity, 'Stock untouched by reservation');
+        $this->assertSame(2, (int) $physical->reserved_quantity);
+        $this->assertSame(0, (int) $digital->reserved_quantity, 'Digital holds nothing');
+
+        app(\App\Services\Inventory\OrderReservationService::class)->commit($order->refresh());
 
         $physical->refresh();
         $digital->refresh();
@@ -212,7 +250,8 @@ class DigitalCartCheckoutTest extends TestCase
             'item_type' => 'DIGITAL',
         ]);
 
-        $this->inventory->deductStockForOrder($order->fresh());
+        app(\App\Services\Inventory\OrderReservationService::class)->reserveForOrder($order->fresh());
+        app(\App\Services\Inventory\OrderReservationService::class)->commit($order->fresh());
 
         $this->assertSame(9, (int) $digital->fresh()->stock_quantity);
         $this->assertSame(0, (int) $digital->fresh()->sold_quantity);
@@ -266,7 +305,7 @@ class DigitalCartCheckoutTest extends TestCase
             ['price' => 30.0, 'free_shipping_over' => 100.0, 'governorate_id' => 1],
         );
 
-        // Physical subtotal (50) < free-shipping threshold (100) → normal price.
+        // Physical subtotal (50) < free-shipping threshold (100) Ã¢â€ â€™ normal price.
         $this->assertSame(30.0, $shipping);
     }
 
@@ -276,7 +315,7 @@ class DigitalCartCheckoutTest extends TestCase
         $digital = $this->makeProduct('DIGITAL', stock: 0);
         $physical = $this->makeProduct('PHYSICAL', stock: 10);
 
-        // Digital line worth 500 would cross any threshold on its own —
+        // Digital line worth 500 would cross any threshold on its own Ã¢â‚¬â€
         // only physical lines count.
         $this->inventory->incrementItem($cart, $digital, null, 20);
         $this->inventory->incrementItem($cart, $physical, null, 1);
@@ -296,13 +335,13 @@ class DigitalCartCheckoutTest extends TestCase
             ['price' => 30.0, 'free_shipping_over' => 100.0, 'governorate_id' => 1],
         );
 
-        // Physical subtotal is only 25 → below threshold → charged.
+        // Physical subtotal is only 25 Ã¢â€ â€™ below threshold Ã¢â€ â€™ charged.
         $this->assertSame(30.0, $shipping);
     }
 
     public function test_cod_and_cashier_remain_allowed_for_digital_orders()
     {
-        // D3: validation whitelist unchanged — cod / pay_at_cashier accepted.
+        // D3: validation whitelist unchanged Ã¢â‚¬â€ cod / pay_at_cashier accepted.
         $request = \Illuminate\Http\Request::create('/', 'POST', ['payment_method' => 'cod']);
         $rules = (new \Marvel\Http\Requests\OrderCreateRequest())->rules();
 

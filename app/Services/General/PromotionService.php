@@ -8,13 +8,11 @@ use App\DTOs\CheckoutTotals;
 use App\Services\General\PromotionEngine\PromotionEligibilityResolver;
 use App\Services\General\PromotionEngine\PromotionApplicator;
 use App\Services\General\PromotionEngine\Outcome\DiscountOutcome;
-use App\Services\General\PromotionEngine\Outcome\GiftOutcome;
 use App\Services\General\PromotionEngine\DTOs\GiftItem;
 use App\Services\General\PromotionEngine\PromotionResult;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Cart;
-use Marvel\Database\Models\Product;
 use Marvel\Database\Models\Promotion;
 use Marvel\Enums\ShippingMethod;
 
@@ -22,7 +20,6 @@ class PromotionService
 {
     public function __construct(
         private PromotionEligibilityResolver $resolver,
-        private CartInventoryService $inventoryService,
         private PromotionApplicator $applicator,
     ) {}
 
@@ -56,7 +53,7 @@ class PromotionService
 
     public function applySelectedPromotion(Cart $cart, ?int $promotionId, ?int $selectedGiftProductId = null, ?string $shippingMethod = null): CheckoutTotals
     {
-        $this->removeGiftItems($cart);
+        $this->removeLegacyGiftRows($cart);
         $cart->items->load(['product', 'productVariant']);
 
         $subtotal = $this->subtotal($cart);
@@ -100,12 +97,25 @@ class PromotionService
             }
 
             if (!empty($result->giftItems)) {
+                // Gift promotions resolve to ORDER-LINE DESCRIPTORS only.
+                // The cart is never mutated and no inventory is reserved here —
+                // the gift line is created and reserved atomically with the
+                // Order during checkout (OrderReservationService).
                 $selectedGiftItem = $this->resolveSelectedGiftItem($result->giftItems, $selectedGiftProductId);
-                $giftOutcome = new GiftOutcome([$selectedGiftItem]);
-                $giftDetails = $this->applicator->applyOutcome($cart, $promotion, $giftOutcome, $shippingMethod);
-                $itemIds = $cart->items->pluck('id');
-                $cart->refresh();
-                $cart->load(['items' => fn($q) => $q->whereIn('id', $itemIds), 'items.product', 'items.productVariant']);
+                $giftDetails = [
+                    'discount' => 0.0,
+                    'gift_items' => [[
+                        'product_id' => $selectedGiftItem->productId,
+                        'product_variant_id' => $selectedGiftItem->productVariantId,
+                        'quantity' => max(1, (int) $selectedGiftItem->quantity),
+                        'promotion_id' => $promotion->id,
+                    ]],
+                ];
+            } elseif ($selectedGiftProductId) {
+                // The user explicitly requested a gift the engine could not
+                // offer (e.g. out of stock). Fail loudly instead of silently
+                // dropping the promised gift from the order.
+                throw new \InvalidArgumentException('Selected gift product is not available for this promotion.');
             }
         } else {
             return $this->clearPromotionFromCart($cart);
@@ -131,7 +141,7 @@ class PromotionService
 
     public function clearPromotionFromCart(Cart $cart): CheckoutTotals
     {
-        $this->removeGiftItems($cart);
+        $this->removeLegacyGiftRows($cart);
         $cart->items()
             ->where(function ($q) {
                 $q->whereNotNull('promotion_id')->orWhere('discount_amount', '>', 0);
@@ -200,34 +210,13 @@ class PromotionService
             ?->decrement('usage');
     }
 
-    private function removeGiftItems(Cart $cart): void
+    /**
+     * Purge legacy gift CartItems (pre order-owned-reservation artifacts).
+     * No inventory release: carts no longer own reservations.
+     */
+    private function removeLegacyGiftRows(Cart $cart): void
     {
-        $cart->items()
-            ->where('is_gift', true)
-            ->get()
-            ->each(fn($item) => $this->inventoryService->releaseItem($item, true));
-    }
-
-    private function applyGiftItems(Cart $cart, PromotionResult $result): void
-    {
-        foreach ($result->giftItems as $giftItem) {
-            $product = Product::query()
-                ->whereKey($giftItem['product_id'])
-                ->lockForUpdate()
-                ->first();
-
-            if (!$product) {
-                continue;
-            }
-
-            $this->inventoryService->reserveGiftItem(
-                $cart,
-                $product,
-                $result->promotion,
-                max(1, (int) $giftItem['quantity']),
-                $giftItem['product_variant_id'] ?? null
-            );
-        }
+        $cart->items()->where('is_gift', true)->delete();
     }
 
     private function subtotal(Cart $cart): float

@@ -27,6 +27,7 @@ use Tests\TestCase;
 
 class PaymentCallbackStressTest extends TestCase
 {
+
     use DatabaseTransactions;
 
     private const PREFIX = '/api/v1/general';
@@ -204,6 +205,10 @@ class PaymentCallbackStressTest extends TestCase
             $table->decimal('fast_shipping_fee', 10, 2)->default(0);
             $table->unsignedBigInteger('pickup_location_id')->nullable();
             $table->timestamp('inventory_restored_at')->nullable();
+                                    $table->string('inventory_state', 16)->default('none');
+            $table->timestamp('inventory_reserved_at')->nullable();
+            $table->timestamp('reservation_expires_at')->nullable();
+            $table->index(['status', 'reservation_expires_at']);
             $table->timestamps();
             $table->softDeletes();
         });
@@ -320,6 +325,17 @@ class PaymentCallbackStressTest extends TestCase
             $table->index('user_id', 'idx_invoices_user_id');
             $table->index('status', 'idx_invoices_status');
         });
+        // FCM channel resolves user device tokens during notification fanout.
+        if (!Schema::hasTable('device_tokens')) {
+            Schema::create('device_tokens', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+                $table->string('token')->unique();
+                $table->string('device_type')->nullable();
+                $table->timestamps();
+            });
+        }
+
     }
 
     private function createOrderWithPendingTransaction(

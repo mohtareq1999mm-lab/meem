@@ -25,6 +25,7 @@ use Tests\TestCase;
 
 class NotificationTest extends TestCase
 {
+
     use DatabaseTransactions;
 
     private const GUARD = 'api';
@@ -147,6 +148,10 @@ class NotificationTest extends TestCase
             $table->decimal('total_price', 10, 2)->nullable();
             $table->softDeletes();
             $table->timestamp('inventory_restored_at')->nullable();
+                                    $table->string('inventory_state', 16)->default('none');
+            $table->timestamp('inventory_reserved_at')->nullable();
+            $table->timestamp('reservation_expires_at')->nullable();
+            $table->index(['status', 'reservation_expires_at']);
             $table->timestamps();
         });
 
@@ -162,6 +167,17 @@ class NotificationTest extends TestCase
             $table->timestamps();
             $table->index('log_name');
         });
+        // FCM channel resolves user device tokens during notification fanout.
+        if (!Schema::hasTable('device_tokens')) {
+            Schema::create('device_tokens', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+                $table->string('token')->unique();
+                $table->string('device_type')->nullable();
+                $table->timestamps();
+            });
+        }
+
     }
 
     private function createSuperAdmin(): User

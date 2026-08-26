@@ -99,33 +99,34 @@ input CardInput {
     email: String
 }
 
-input CreateOrderInput {
-    customer_contact: String! @rules(apply: ["required"])
-    products: [ConnectProductOrderPivot!]! @rules(apply: ["required"])
-    amount: Float! @rules(apply: ["required"])
-    sales_tax: Float!
-    total: Float! @rules(apply: ["required"])
-    paid_total: Float! @rules(apply: ["required"])
-    payment_id: String
-    payment_gateway: PaymentGatewayType! @rules(apply: ["required"])
-    altered_payment_gateway: String
-    payment_sub_gateway: String
-    coupon_id: ID
-    shop_id: ID
-    customer_id: ID
-    discount: Float
-    use_wallet_points: Boolean
-    delivery_fee: Float
-    delivery_time: String
-    customer_name: String
-    card: CardInput
-    token: String
-    billing_address: UserAddressInput!
-    shipping_address: UserAddressInput!
-    language: String
-    note: String
-    isFullWalletPayment: Boolean
-}
+# D2-disabled: legacy GraphQL order creation (bypassed carts + reservation).
+# input CreateOrderInput {
+#     customer_contact: String! @rules(apply: ["required"])
+#     products: [ConnectProductOrderPivot!]! @rules(apply: ["required"])
+#     amount: Float! @rules(apply: ["required"])
+#     sales_tax: Float!
+#     total: Float! @rules(apply: ["required"])
+#     paid_total: Float! @rules(apply: ["required"])
+#     payment_id: String
+#     payment_gateway: PaymentGatewayType! @rules(apply: ["required"])
+#     altered_payment_gateway: String
+#     payment_sub_gateway: String
+#     coupon_id: ID
+#     shop_id: ID
+#     customer_id: ID
+#     discount: Float
+#     use_wallet_points: Boolean
+#     delivery_fee: Float
+#     delivery_time: String
+#     customer_name: String
+#     card: CardInput
+#     token: String
+#     billing_address: UserAddressInput!
+#     shipping_address: UserAddressInput!
+#     language: String
+#     note: String
+#     isFullWalletPayment: Boolean
+# }
 
 input TranslatedLanguage {
     subtotal: String
@@ -176,10 +177,10 @@ input CreateOrderPaymentInput {
 
 extend type Mutation {
     deleteOrder(id: ID!): Order @delete @can(ability: "super_admin")
-    createOrder(input: CreateOrderInput! @spread): Order
-        @field(resolver: "OrderMutator@store")
-    createOrderPayment(input: CreateOrderPaymentInput! @spread): Boolean
-        @field(resolver: "OrderMutator@createOrderPayment")
+    # D2: createOrder / createOrderPayment are permanently disabled.
+    # The REST checkout flow (POST /api/v1/general/checkout) is the single
+    # authoritative Order creation + inventory reservation path. The legacy
+    # GraphQL order creation bypassed carts and inventory reservation.
     updateOrder(input: UpdateOrderInput! @spread): Order
         @field(resolver: "OrderMutator@update")
 }

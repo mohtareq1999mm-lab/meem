@@ -3,7 +3,7 @@
 return [
     'default_gateway' => env('DEFAULT_PAYMENT_GATEWAY', 'myfatoorah'),
     'default_currency' => env('DEFAULT_CURRENCY', 'KWD'),
-    'order_timeout_hours' => env('ORDER_TIMEOUT_HOURS', 72),
+    'order_timeout_hours' => env('ORDER_TIMEOUT_HOURS', 24),
 
     'gateways' => [
         'myfatoorah' => [

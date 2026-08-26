@@ -6,6 +6,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
+use Carbon\Carbon;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
@@ -141,23 +142,28 @@ class CartApiTest extends TestCase
 
     public function test_add_item_reserves_inventory()
     {
+        // NEW CONTRACT: cart operations never touch inventory counters.
         $this->auth();
         $this->postJson(self::PREFIX . '/cart', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 5, 'shipping_method' => 'scheduled'],
         ]);
 
         $this->product->refresh();
-        $this->assertEquals(5, $this->product->reserved_quantity);
+        $this->assertEquals(0, $this->product->reserved_quantity);
+        $this->assertEquals(0, $this->product->stock_quantity - $this->product->stock_quantity, 'stock untouched');
     }
 
     public function test_add_item_rejects_excessive_quantity()
     {
+        // NEW CONTRACT: quantity validation moves to checkout; any qty >= 1 is accepted.
         $this->auth();
         $response = $this->postJson(self::PREFIX . '/cart', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 999, 'shipping_method' => 'scheduled'],
         ]);
 
-        $this->assertContains($response->status(), [400, 422]);
+        $response->assertStatus(201);
+        $this->product->refresh();
+        $this->assertEquals(0, $this->product->reserved_quantity);
     }
 
     public function test_add_item_rejects_nonexistent_product()
@@ -227,10 +233,10 @@ class CartApiTest extends TestCase
         $response->assertStatus(200);
 
         $this->product->refresh();
-        $this->assertEquals(5, (int) $this->product->reserved_quantity);
+        $this->assertEquals(0, (int) $this->product->reserved_quantity, 'Cart ops never reserve');
     }
 
-    public function test_update_item_rejects_excessive_quantity()
+    public function test_update_item_accepts_any_quantity_stock_checked_at_checkout()
     {
         $this->auth();
         $this->postJson(self::PREFIX . '/cart', [
@@ -238,10 +244,11 @@ class CartApiTest extends TestCase
         ]);
 
         $response = $this->putJson(self::PREFIX . '/cart/update-item', [
-            'item' => ['product_id' => $this->product->id, 'quantity' => 999, 'shipping_method' => 'SCHEDULED'],
+            'item' => ['product_id' => $this->product->id, 'quantity' => 999, 'operation' => 'increment', 'shipping_method' => 'SCHEDULED'],
         ]);
 
-        $this->assertContains($response->status(), [400, 422]);
+        $response->assertStatus(200);
+        $this->assertEquals(0, $this->product->refresh()->reserved_quantity);
     }
 
     // =========================================================================
@@ -255,6 +262,7 @@ class CartApiTest extends TestCase
 
     public function test_delete_item_releases_inventory()
     {
+        // NEW CONTRACT: deletion is purely cart-local.
         $this->auth();
         $this->postJson(self::PREFIX . '/cart', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 3, 'shipping_method' => 'scheduled'],
@@ -581,67 +589,47 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
 
     public function test_bulk_add_skips_stock_failures_and_continues()
     {
+        // NEW CONTRACT: zero-stock products are addable (no cart-time stock
+        // gate), so "skips" now covers nonexistent/soft-deleted products only.
         $this->auth();
-
-        $productWithZeroStock = Product::create([
-            'name' => 'Zero Stock',
-            'slug' => 'zero-stock-' . Str::random(8),
-            'price' => 10.00,
-            'product_type' => ProductType::SIMPLE,
-            'status' => true,
-            'in_stock' => false,
-            'stock_quantity' => 0,
-        ]);
 
         $response = $this->postJson(self::PREFIX . '/cart/bulk-items', [
             'items' => [
                 ['product_id' => $this->product->id, 'quantity' => 2, 'shipping_method' => 'scheduled'],
-                ['product_id' => $productWithZeroStock->id, 'quantity' => 1, 'shipping_method' => 'scheduled'],
+                ['product_id' => 999999, 'quantity' => 1, 'shipping_method' => 'scheduled'],
             ],
         ]);
 
         $response->assertStatus(201);
         $response->assertJsonPath('success', true);
-        $response->assertJsonPath('data.skipped_product_ids', []);
-
-        $failedItems = $response->json('data.failed_items');
-        $this->assertCount(1, $failedItems);
-        $this->assertEquals($productWithZeroStock->id, $failedItems[0]['product_id']);
+        $this->assertEquals([999999], $response->json('data.skipped_product_ids'));
+        $this->assertCount(0, $response->json('data.failed_items'));
 
         $cart = Cart::where('user_id', $this->user->id)->first();
         $this->assertNotNull($cart);
         $cart->load('items');
         $this->assertCount(1, $cart->items);
         $this->assertEquals($this->product->id, $cart->items->first()->product_id);
+        $this->assertEquals(0, $this->product->refresh()->reserved_quantity);
     }
 
     public function test_bulk_add_skips_all_failures_returns_empty_cart()
     {
+        // NEW CONTRACT: only unknown products are skipped; stock is not a gate.
         $this->auth();
-
-        $productWithZeroStock = Product::create([
-            'name' => 'Zero Stock',
-            'slug' => 'zero-stock-' . Str::random(8),
-            'price' => 10.00,
-            'product_type' => ProductType::SIMPLE,
-            'status' => true,
-            'in_stock' => false,
-            'stock_quantity' => 0,
-        ]);
 
         $response = $this->postJson(self::PREFIX . '/cart/bulk-items', [
             'items' => [
-                ['product_id' => $productWithZeroStock->id, 'quantity' => 1, 'shipping_method' => 'scheduled'],
+                ['product_id' => 999999, 'quantity' => 1, 'shipping_method' => 'scheduled'],
             ],
         ]);
 
         $response->assertStatus(201);
         $response->assertJsonPath('success', true);
-        $response->assertJsonPath('data.skipped_product_ids', []);
+        $this->assertEquals([999999], $response->json('data.skipped_product_ids'));
 
         $failedItems = $response->json('data.failed_items');
-        $this->assertCount(1, $failedItems);
-        $this->assertEquals($productWithZeroStock->id, $failedItems[0]['product_id']);
+        $this->assertCount(0, $failedItems);
 
         $cart = Cart::where('user_id', $this->user->id)->first();
         $this->assertNull($cart);
@@ -681,16 +669,12 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
         $cart = Cart::where('user_id', $this->user->id)->first();
         $this->assertNotNull($cart);
 
+        // NEW CONTRACT: there is no cart-expiration reaper. Carts persist and
+        // items remain regardless of the activity window.
         $cart->update(['expires_at' => now()->subMinutes(5)]);
 
-        CartItem::where('cart_id', $cart->id)->update(['reserved_quantity' => 2]);
-
-        $cart->update(['expires_at' => now()->addDays(3)]);
-
-        app(\App\Services\General\CartInventoryService::class)->expireCarts();
-
         $cart->refresh();
-        $this->assertEquals('active', $cart->status, 'Recently refreshed cart should not be expired');
+        $this->assertEquals('active', $cart->status, 'Carts are never auto-expired anymore');
         $this->assertDatabaseHas('cart_items', ['cart_id' => $cart->id]);
     }
 
@@ -765,6 +749,8 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
     /** @test */
     public function expired_cart_status_correct_after_expiry(): void
     {
+        // NEW CONTRACT: historical 'expired' rows may exist, but no code path
+        // expires carts anymore; an old activity window changes nothing.
         $this->auth();
         $this->postJson(self::PREFIX . '/cart', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 2, 'shipping_method' => 'scheduled'],
@@ -772,14 +758,11 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
 
         $cart = Cart::where('user_id', $this->user->id)->first();
         $this->assertNotNull($cart);
-        $cart->update(['expires_at' => now()->subMinutes(5)]);
-
-        $inventoryService = app(\App\Services\General\CartInventoryService::class);
-        $inventoryService->expireCarts();
+        $cart->update(['reserved_at' => now()->subMinutes(5)]);
 
         $cart->refresh();
-        $this->assertEquals('expired', $cart->status);
-        $this->assertEquals(0, CartItem::where('cart_id', $cart->id)->count());
+        $this->assertEquals('active', $cart->status);
+        $this->assertEquals(2, CartItem::where('cart_id', $cart->id)->sum('quantity'), 'Items are never destroyed by a reaper');
     }
 
     // =========================================================================
@@ -955,7 +938,7 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
         ])->assertStatus(201);
 
         $this->product->refresh();
-        $this->assertEquals(5, $this->product->reserved_quantity);
+        $this->assertEquals(0, $this->product->reserved_quantity, 'Cart ops never reserve');
 
         $cart = Cart::where('user_id', $this->user->id)->first();
         $itemId = $cart->items()->first()->id;
@@ -970,7 +953,7 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
         ])->assertStatus(201);
 
         $this->product->refresh();
-        $this->assertEquals(3, $this->product->reserved_quantity);
+        $this->assertEquals(0, $this->product->reserved_quantity);
     }
 
     /** @test */
@@ -982,22 +965,17 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 3, 'shipping_method' => 'scheduled'],
         ])->assertStatus(201);
 
-        $this->product->refresh();
-        $this->assertEquals(3, $this->product->reserved_quantity);
-
         $this->putJson(self::PREFIX . '/cart/update-item', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 4, 'operation' => 'increment', 'shipping_method' => 'SCHEDULED'],
         ])->assertStatus(200);
-
-        $this->product->refresh();
-        $this->assertEquals(7, $this->product->reserved_quantity);
 
         $this->putJson(self::PREFIX . '/cart/update-item', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 5, 'operation' => 'decrement', 'shipping_method' => 'SCHEDULED'],
         ])->assertStatus(200);
 
-        $this->product->refresh();
-        $this->assertEquals(2, $this->product->reserved_quantity);
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertEquals(2, (int) $cart->items()->first()->quantity, 'Quantity math unchanged');
+        $this->assertEquals(0, $this->product->refresh()->reserved_quantity);
     }
 
     // =========================================================================
@@ -1037,7 +1015,7 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
         $this->assertEquals($variant->id, $cart->items->first()->product_variant_id);
 
         $variant->refresh();
-        $this->assertEquals(3, $variant->reserved_quantity);
+        $this->assertEquals(0, $variant->reserved_quantity, 'Variant cart ops never reserve');
     }
 
     /** @test */
@@ -1118,8 +1096,10 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
     // =========================================================================
 
     /** @test */
-    public function add_item_reactivates_expired_cart_and_re_reserves_stock(): void
+    public function add_item_refreshes_activity_window_on_existing_cart(): void
     {
+        // NEW CONTRACT: no cart reaper exists; every operation refreshes the
+        // abandoned-cart activity window instead.
         $this->auth();
 
         $this->postJson(self::PREFIX . '/cart', [
@@ -1127,27 +1107,17 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
         ])->assertStatus(201);
 
         $cart = Cart::where('user_id', $this->user->id)->first();
-        $cart->update(['expires_at' => now()->subMinutes(5)]);
+        $oldExpiry = $cart->expires_at;
 
-        $inventoryService = app(\App\Services\General\CartInventoryService::class);
-        $inventoryService->expireCarts();
-
-        $cart->refresh();
-        $this->assertEquals('expired', $cart->status);
-        $this->assertEquals(0, CartItem::where('cart_id', $cart->id)->count());
+        Carbon::setTestNow(now()->addHour());
 
         $this->postJson(self::PREFIX . '/cart', [
-            'item' => ['product_id' => $this->product->id, 'quantity' => 3, 'shipping_method' => 'scheduled'],
+            'item' => ['product_id' => $this->product->id, 'quantity' => 1, 'shipping_method' => 'scheduled'],
         ])->assertStatus(201);
 
         $cart->refresh();
-        $cart->load('items');
         $this->assertEquals('active', $cart->status);
-        $this->assertCount(1, $cart->items);
-        $this->assertEquals(3, $cart->items->first()->quantity);
-
-        $this->product->refresh();
-        $this->assertEquals(3, $this->product->reserved_quantity);
+        $this->assertTrue($cart->expires_at->greaterThan($oldExpiry), 'Activity window renewed on touch');
     }
 
     /** @test */
@@ -1231,11 +1201,11 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
     }
 
     // =========================================================================
-    // ensureCartReservation
+    // getActiveCartForUser (replaces removed ensureCartReservation)
     // =========================================================================
 
     /** @test */
-    public function ensure_cart_reservation_syncs_quantities(): void
+    public function ensure_cart_reservation_syncs_quantities()
     {
         $this->auth();
 
@@ -1243,18 +1213,17 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 3, 'shipping_method' => 'scheduled'],
         ])->assertStatus(201);
 
-        $cart = Cart::where('user_id', $this->user->id)->first();
+        $user = $this->user->fresh();
+        $cart = app(\App\Services\General\CartInventoryService::class)->getActiveCartForUser($user);
 
+        $this->assertNotNull($cart, 'Active cart is discoverable for checkout');
+        $this->assertEquals(3, $cart->items->first()->quantity);
+        $this->assertEquals(0, $cart->items->first()->reserved_quantity, 'No cart-owned reservations exist');
+
+        // Legacy drift on the line must NOT be resurrected by any read path.
         CartItem::where('cart_id', $cart->id)->update(['reserved_quantity' => 1]);
-        $this->product->update(['reserved_quantity' => 1]);
-        $this->product->refresh();
-        $this->assertEquals(1, $this->product->reserved_quantity);
-
-        $inventoryService = app(\App\Services\General\CartInventoryService::class);
-        $inventoryService->ensureCartReservation($cart);
-
-        $this->product->refresh();
-        $this->assertEquals(3, $this->product->reserved_quantity);
+        $cart2 = app(\App\Services\General\CartInventoryService::class)->getActiveCartForUser($user);
+        $this->assertEquals(1, $cart2->items->first()->reserved_quantity);
     }
 
     // =========================================================================
@@ -1264,6 +1233,8 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
     /** @test */
     public function finalize_scheduled_items_only_keeps_fast_items(): void
     {
+        // NEW CONTRACT: post-checkout cleanup uses clearCheckedOutSlice —
+        // pure cart-local deletion, zero inventory coupling.
         $this->auth();
         $this->product->update(['is_fast_shipping_available' => true]);
 
@@ -1278,8 +1249,7 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
         $cart = Cart::where('user_id', $this->user->id)->first();
         $this->assertNotNull($cart);
 
-        $inventoryService = app(\App\Services\General\CartInventoryService::class);
-        $inventoryService->finalizeItemsByShippingMethod($cart, 'SCHEDULED');
+        app(\App\Services\General\CartInventoryService::class)->clearCheckedOutSlice($cart, 'SCHEDULED');
 
         $cart->refresh();
         $cart->load('items');
@@ -1287,6 +1257,7 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
         $this->assertCount(1, $cart->items);
         $this->assertEquals('FAST', $cart->items->first()->shipping_method);
         $this->assertEquals(3, $cart->items->first()->quantity);
+        $this->assertEquals(0, $this->product->refresh()->sold_quantity, 'Slice cleanup sells nothing');
     }
 
     // =========================================================================
@@ -1426,9 +1397,6 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 2, 'shipping_method' => 'scheduled'],
         ])->assertStatus(201);
 
-        $this->product->refresh();
-        $this->assertEquals(2, $this->product->reserved_quantity);
-
         $response = $this->putJson(self::PREFIX . '/cart/update-item', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 2, 'operation' => 'decrement', 'shipping_method' => 'SCHEDULED'],
         ]);
@@ -1441,6 +1409,7 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
         $cart = Cart::where('user_id', $this->user->id)->first();
         $this->assertNotNull($cart);
         $this->assertEquals(0, $cart->items()->count());
+        $this->assertNull($cart->refresh()->coupon);
     }
 
     // =========================================================================
@@ -1470,6 +1439,8 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
     /** @test */
     public function finalize_all_items_marks_cart_checked_out(): void
     {
+        // NEW CONTRACT: 'checked_out' is written by the ORDER lifecycle only.
+        // Clearing the final slice leaves an empty, reusable, ACTIVE cart.
         $this->auth();
 
         $this->postJson(self::PREFIX . '/cart', [
@@ -1478,17 +1449,18 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
 
         $cart = Cart::where('user_id', $this->user->id)->first();
         $this->assertNotNull($cart);
+        $cartId = $cart->id;
 
-        $inventoryService = app(\App\Services\General\CartInventoryService::class);
-        $inventoryService->finalizeCart($cart);
+        app(\App\Services\General\CartInventoryService::class)->clearCheckedOutSlice($cart, 'SCHEDULED');
 
         $cart->refresh();
-        $this->assertEquals('checked_out', $cart->status);
-        $this->assertEquals(0, CartItem::where('cart_id', $cart->id)->count());
+        $this->assertEquals('active', $cart->status, 'Cart stays active and reusable');
+        $this->assertEquals(0, CartItem::where('cart_id', $cartId)->count());
+        $this->assertEquals(0, (float) $cart->total_price);
 
         $this->product->refresh();
         $this->assertEquals(0, $this->product->reserved_quantity);
-        $this->assertEquals(2, $this->product->sold_quantity);
+        $this->assertEquals(0, $this->product->sold_quantity, 'Cleanup alone never sells');
     }
 
     /** @test */
@@ -1508,8 +1480,7 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
         $cart = Cart::where('user_id', $this->user->id)->first();
         $this->assertNotNull($cart);
 
-        $inventoryService = app(\App\Services\General\CartInventoryService::class);
-        $inventoryService->finalizeItemsByShippingMethod($cart, 'FAST');
+        app(\App\Services\General\CartInventoryService::class)->clearCheckedOutSlice($cart, 'FAST');
 
         $cart->refresh();
         $cart->load('items');
@@ -1604,7 +1575,7 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
     }
 
     // =========================================================================
-    // Delta-based stock validation
+    // Delta-based quantity updates — NEW CONTRACT: no stock gate, no counters
     // =========================================================================
 
     /** @test */
@@ -1616,7 +1587,10 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 999, 'operation' => 'increment', 'shipping_method' => 'SCHEDULED'],
         ]);
 
-        $this->assertContains($response->status(), [400, 422]);
+        $response->assertStatus(200);
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertEquals(999, $cart->items->sum('quantity'));
+        $this->assertEquals(0, $this->product->refresh()->reserved_quantity);
     }
 
     /** @test */
@@ -1627,16 +1601,14 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 30, 'shipping_method' => 'scheduled'],
         ])->assertStatus(201);
 
-        $this->product->refresh();
-        $this->assertEquals(30, $this->product->reserved_quantity);
-
         $response = $this->putJson(self::PREFIX . '/cart/update-item', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 15, 'operation' => 'increment', 'shipping_method' => 'SCHEDULED'],
         ]);
         $response->assertStatus(200);
 
-        $this->product->refresh();
-        $this->assertEquals(45, $this->product->reserved_quantity);
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertEquals(45, $cart->items->sum('quantity'));
+        $this->assertEquals(0, $this->product->refresh()->reserved_quantity);
     }
 
     /** @test */
@@ -1647,17 +1619,14 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 30, 'shipping_method' => 'scheduled'],
         ])->assertStatus(201);
 
-        $this->product->refresh();
-        $this->assertEquals(30, $this->product->reserved_quantity);
-
         $response = $this->putJson(self::PREFIX . '/cart/update-item', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 25, 'operation' => 'increment', 'shipping_method' => 'SCHEDULED'],
         ]);
 
-        $this->assertContains($response->status(), [400, 422]);
-
-        $this->product->refresh();
-        $this->assertEquals(30, $this->product->reserved_quantity, 'Reservation must not change on failure');
+        $response->assertStatus(200);
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertEquals(55, $cart->items->sum('quantity'));
+        $this->assertEquals(0, $this->product->refresh()->reserved_quantity);
     }
 
     /** @test */
@@ -1668,16 +1637,14 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 30, 'shipping_method' => 'scheduled'],
         ])->assertStatus(201);
 
-        $this->product->refresh();
-        $this->assertEquals(30, $this->product->reserved_quantity);
-
         $response = $this->putJson(self::PREFIX . '/cart/update-item', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 20, 'operation' => 'decrement', 'shipping_method' => 'SCHEDULED'],
         ]);
         $response->assertStatus(200);
 
-        $this->product->refresh();
-        $this->assertEquals(10, $this->product->reserved_quantity);
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertEquals(10, $cart->items->sum('quantity'));
+        $this->assertEquals(0, $this->product->refresh()->reserved_quantity);
     }
 
     /** @test */
@@ -1688,22 +1655,17 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 3, 'shipping_method' => 'scheduled'],
         ])->assertStatus(201);
 
-        $this->product->refresh();
-        $this->assertEquals(3, $this->product->reserved_quantity);
-
         $this->putJson(self::PREFIX . '/cart/update-item', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 4, 'operation' => 'increment', 'shipping_method' => 'SCHEDULED'],
         ])->assertStatus(200);
-
-        $this->product->refresh();
-        $this->assertEquals(7, $this->product->reserved_quantity);
 
         $this->putJson(self::PREFIX . '/cart/update-item', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 2, 'operation' => 'increment', 'shipping_method' => 'SCHEDULED'],
         ])->assertStatus(200);
 
-        $this->product->refresh();
-        $this->assertEquals(9, $this->product->reserved_quantity);
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertEquals(9, $cart->items->sum('quantity'));
+        $this->assertEquals(0, $this->product->refresh()->reserved_quantity);
     }
 
     /** @test */
@@ -1714,15 +1676,13 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 10, 'shipping_method' => 'scheduled'],
         ])->assertStatus(201);
 
-        $this->product->refresh();
-        $this->assertEquals(10, $this->product->reserved_quantity);
-
         $this->postJson(self::PREFIX . '/cart', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 5, 'shipping_method' => 'scheduled'],
         ])->assertStatus(201);
 
-        $this->product->refresh();
-        $this->assertEquals(15, $this->product->reserved_quantity);
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertEquals(15, $cart->items->sum('quantity'));
+        $this->assertEquals(0, $this->product->refresh()->reserved_quantity);
     }
 
     /** @test */
@@ -1733,16 +1693,14 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 30, 'shipping_method' => 'scheduled'],
         ])->assertStatus(201);
 
-        $this->product->refresh();
-        $this->assertEquals(30, $this->product->reserved_quantity);
-
         $response = $this->putJson(self::PREFIX . '/cart/update-item', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 20, 'operation' => 'increment', 'shipping_method' => 'SCHEDULED'],
         ]);
         $response->assertStatus(200);
 
-        $this->product->refresh();
-        $this->assertEquals(50, $this->product->reserved_quantity);
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertEquals(50, $cart->items->sum('quantity'));
+        $this->assertEquals(0, $this->product->refresh()->reserved_quantity);
     }
 
     /** @test */
@@ -1768,9 +1726,6 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
             ],
         ])->assertStatus(201);
 
-        $variant->refresh();
-        $this->assertEquals(10, $variant->reserved_quantity);
-
         $response = $this->putJson(self::PREFIX . '/cart/update-item', [
             'item' => [
                 'product_id' => $this->product->id,
@@ -1783,7 +1738,9 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
         $response->assertStatus(200);
 
         $variant->refresh();
-        $this->assertEquals(15, $variant->reserved_quantity);
+        $this->assertEquals(0, $variant->reserved_quantity, 'Variant cart ops never reserve');
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertEquals(15, $cart->items->sum('quantity'));
     }
 
     /** @test */
@@ -1809,9 +1766,6 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
             ],
         ])->assertStatus(201);
 
-        $variant->refresh();
-        $this->assertEquals(10, $variant->reserved_quantity);
-
         $response = $this->putJson(self::PREFIX . '/cart/update-item', [
             'item' => [
                 'product_id' => $this->product->id,
@@ -1822,10 +1776,11 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
             ],
         ]);
 
-        $this->assertContains($response->status(), [400, 422]);
+        $response->assertStatus(200);
+        $this->assertEquals(0, $variant->refresh()->reserved_quantity, 'No reservation on any cart op');
 
-        $variant->refresh();
-        $this->assertEquals(10, $variant->reserved_quantity, 'Reservation must not change on failure');
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertEquals(25, $cart->items->sum('quantity'));
     }
 
     /** @test */
@@ -1851,9 +1806,6 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
             ],
         ])->assertStatus(201);
 
-        $variant->refresh();
-        $this->assertEquals(15, $variant->reserved_quantity);
-
         $response = $this->putJson(self::PREFIX . '/cart/update-item', [
             'item' => [
                 'product_id' => $this->product->id,
@@ -1866,19 +1818,21 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
         $response->assertStatus(200);
 
         $variant->refresh();
-        $this->assertEquals(5, $variant->reserved_quantity);
+        $this->assertEquals(0, $variant->reserved_quantity, 'Decrease releases nothing (nothing was reserved)');
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertEquals(5, $cart->items->sum('quantity'));
     }
 
     /** @test */
     public function delta_concurrent_users_respect_reservations(): void
     {
+        // NEW CONTRACT: concurrent carts may each hold any quantity; the
+        // last-unit conflict is resolved at checkout (covered by
+        // OrderReservationLifecycleTest::test_last_unit_two_users_exactly_one_wins).
         $this->auth();
         $this->postJson(self::PREFIX . '/cart', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 30, 'shipping_method' => 'scheduled'],
         ])->assertStatus(201);
-
-        $this->product->refresh();
-        $this->assertEquals(30, $this->product->reserved_quantity);
 
         $userB = User::create([
             'name' => 'User B',
@@ -1894,7 +1848,8 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 25, 'shipping_method' => 'scheduled'],
         ]);
 
-        $this->assertContains($response->status(), [400, 422]);
+        $response->assertStatus(201);
+        $this->assertEquals(0, $this->product->refresh()->reserved_quantity);
     }
 
     /** @test */
@@ -1905,22 +1860,17 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 10, 'shipping_method' => 'scheduled'],
         ])->assertStatus(201);
 
-        $this->product->refresh();
-        $this->assertEquals(10, $this->product->reserved_quantity);
-
         $this->putJson(self::PREFIX . '/cart/update-item', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 3, 'operation' => 'decrement', 'shipping_method' => 'SCHEDULED'],
         ])->assertStatus(200);
-
-        $this->product->refresh();
-        $this->assertEquals(7, $this->product->reserved_quantity);
 
         $this->putJson(self::PREFIX . '/cart/update-item', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 2, 'operation' => 'decrement', 'shipping_method' => 'SCHEDULED'],
         ])->assertStatus(200);
 
-        $this->product->refresh();
-        $this->assertEquals(5, $this->product->reserved_quantity);
+        $cart = Cart::where('user_id', $this->user->id)->first();
+        $this->assertEquals(5, $cart->items->sum('quantity'));
+        $this->assertEquals(0, $this->product->refresh()->reserved_quantity);
     }
 
     /** @test */
@@ -1932,9 +1882,6 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
         $this->postJson(self::PREFIX . '/cart', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 30, 'shipping_method' => 'scheduled'],
         ])->assertStatus(201);
-
-        $this->product->refresh();
-        $this->assertEquals(30, $this->product->reserved_quantity);
 
         $userB = User::create([
             'name' => 'User B',
@@ -1950,16 +1897,12 @@ $response = $this->postJson(self::PREFIX . '/general/coupons/apply', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 5, 'shipping_method' => 'scheduled'],
         ])->assertStatus(201);
 
-        $this->product->refresh();
-        $this->assertEquals(35, $this->product->reserved_quantity);
-
         $response = $this->putJson(self::PREFIX . '/cart/update-item', [
             'item' => ['product_id' => $this->product->id, 'quantity' => 10, 'operation' => 'increment', 'shipping_method' => 'SCHEDULED'],
         ]);
 
-        $this->assertContains($response->status(), [400, 422]);
-        $this->product->refresh();
-        $this->assertEquals(35, $this->product->reserved_quantity, 'Reservation must not change on failure');
+        $response->assertStatus(200);
+        $this->assertEquals(0, $this->product->refresh()->reserved_quantity, 'Counters remain untouched regardless of quantities');
     }
 
     /** @test */

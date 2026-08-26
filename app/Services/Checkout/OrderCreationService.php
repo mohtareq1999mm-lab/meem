@@ -163,12 +163,18 @@ class OrderCreationService
         return $order->fresh();
     }
 
-    public function createOrderItems(Order $order, Cart $cart): bool
+    public function createOrderItems(Order $order, Cart $cart, array $giftItems = []): bool
     {
         // Resolved once — schema lookups must not run per order item.
         $hasItemTypeColumn = \Illuminate\Support\Facades\Schema::hasColumn('order_products', 'item_type');
 
         foreach ($cart->items as $item) {
+            // Gift lines come exclusively from promotion descriptors now;
+            // legacy gift cart rows are never snapshotted.
+            if ((bool) ($item->is_gift ?? false)) {
+                continue;
+            }
+
             try {
 $quantity = max(1, (int) ($item->quantity ?? 0));
                 $lineTotal = (float) ($item->total_price ?? 0);
@@ -237,14 +243,71 @@ $quantity = max(1, (int) ($item->quantity ?? 0));
                 return false;
             }
         }
+
+        if (!empty($giftItems)) {
+            foreach ($giftItems as $gift) {
+                try {
+                    $giftProduct = \Marvel\Database\Models\Product::query()->find((int) ($gift['product_id'] ?? 0));
+                    if (!$giftProduct) {
+                        return false;
+                    }
+
+                    $giftVariantId = isset($gift['product_variant_id']) && $gift['product_variant_id'] !== null
+                        ? (int) $gift['product_variant_id']
+                        : null;
+                    $giftVariant = $giftVariantId ? \Marvel\Database\Models\ProductVariant::query()->find($giftVariantId) : null;
+                    if ($giftVariantId && !$giftVariant) {
+                        return false;
+                    }
+
+                    $quantity = max(1, (int) ($gift['quantity'] ?? 1));
+
+                    $orderItemData = [
+                        'product_id' => $giftProduct->id,
+                        'product_variant_id' => $giftVariant?->id,
+                        'product_name' => $giftProduct->name ?? 'No Name',
+                        'product_quantity' => $quantity,
+                        'product_price' => 0,
+                        'product_total_price' => 0,
+                        'product_sku' => $giftProduct->sku ?? null,
+                        'promotion_discount_amount' => 0,
+                        'attributes' => null,
+                        'is_gift' => true,
+                        'promotion_id' => $gift['promotion_id'] ?? null,
+                    ];
+
+                    if ($hasItemTypeColumn) {
+                        $orderItemData['item_type'] = $giftProduct->item_type ?? \Marvel\Enums\ItemType::PHYSICAL;
+                    }
+
+                    if (Schema::hasColumn('order_products', 'currency_code')) {
+                        $orderItemData = array_merge($orderItemData, [
+                            'currency_code' => $order->currency_code ?? $this->currencyService->getEffectiveCode(),
+                            'catalog_currency_code' => $this->currencyService->getCatalogCode(),
+                            'catalog_price' => 0,
+                            'catalog_total_price' => 0,
+                        ]);
+                    }
+
+                    $orderItem = $order->orderItems()->create($orderItemData);
+
+                    if (!$orderItem) {
+                        return false;
+                    }
+                } catch (\Exception $e) {
+                    report($e);
+                    return false;
+                }
+            }
+        }
         return true;
     }
 
-    public function syncOrderItems(Order $order, Cart $cart): bool
+    public function syncOrderItems(Order $order, Cart $cart, array $giftItems = []): bool
     {
         $order->orderItems()->delete();
 
-        return $this->createOrderItems($order, $cart);
+        return $this->createOrderItems($order, $cart, $giftItems);
     }
 
     public function updateTransactionAmount(Order $order): void

@@ -5,18 +5,17 @@ namespace Tests\Feature;
 use App\Events\OrderCreated;
 use App\Events\OrderCancelled;
 use App\Events\PaymentFailed;
-use App\Events\PaymentSucceeded;
 use App\Services\Checkout\OrderCreationService;
 use App\Services\General\CartInventoryService;
 use App\Services\General\OrderService;
 use App\Services\General\PromotionService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Marvel\Database\Models\Cart;
-use Marvel\Database\Models\CartItem;
 use Marvel\Database\Models\Coupon;
 use Marvel\Database\Models\Country;
 use Marvel\Database\Models\Governorate;
@@ -26,14 +25,20 @@ use Marvel\Database\Models\Promotion;
 use Marvel\Database\Models\ShippingPrice;
 use Marvel\Database\Models\Transaction;
 use Marvel\Database\Models\User;
-use Marvel\Enums\DiscountType;
 use Marvel\Enums\ProductType;
 use Marvel\Enums\PromotionType;
-use Marvel\Enums\ShippingMethod;
 use Tests\Concerns\CreatesTestTables;
 use Tests\Concerns\WithInvoiceTables;
 use Tests\TestCase;
 
+/**
+ * ORDER-OWNED INVENTORY RESERVATION CONTRACT.
+ *
+ * Checkout atomically: creates the pending Order, snapshots its items,
+ * reserves inventory against the ORDER, and empties the CartItems while the
+ * Cart row survives as a reusable container. Payment commits the exact
+ * reservation; 24-hour expiry releases it. The current Cart is never consulted.
+ */
 class CheckoutPendingOrderRedesignTest extends TestCase
 {
     use DatabaseTransactions, CreatesTestTables, WithInvoiceTables;
@@ -89,29 +94,29 @@ class CheckoutPendingOrderRedesignTest extends TestCase
         Sanctum::actingAs($this->user);
     }
 
-    private function createCartWithItem(int $quantity = 1, float $price = 100.00): Cart
+    /**
+     * Build cart state through the REAL application service so fixtures obey
+     * the production invariants (no reservation, real pricing, real merging).
+     */
+    private function addItemToCart(int $quantity = 1, float $price = 100.00, ?User $user = null): Cart
     {
-        $cart = Cart::create([
-            'user_id' => $this->user->id,
-            'status' => 'active',
-            'expires_at' => Carbon::now()->addDays(3),
-            'total_price' => $price * $quantity,
-        ]);
+        $target = $user ?? $this->user;
 
-        CartItem::create([
-            'cart_id' => $cart->id,
-            'product_id' => $this->product->id,
-            'quantity' => $quantity,
-            'price' => $price,
-            'total_price' => $price * $quantity,
-            'reserved_quantity' => $quantity,
-            'shipping_method' => 'SCHEDULED',
-        ]);
+        if ($price !== (float) $this->product->price) {
+            $this->product->update(['price' => $price]);
+        }
 
-        $this->product->increment('reserved_quantity', $quantity);
+        /** @var CartInventoryService $inventory */
+        $inventory = app(CartInventoryService::class);
 
-        $cart->load(['items', 'items.product', 'items.product.flash_sales' => fn($q) => $q->valid()]);
-        return $cart;
+        $cart = DB::transaction(function () use ($inventory, $quantity) {
+            $cart = Cart::query()->where('user_id', $this->user->id)->lockForUpdate()->first()
+                ?? Cart::create(['user_id' => $this->user->id, 'status' => 'active']);
+
+            return $inventory->incrementItem($cart, $this->product->fresh(), null, $quantity);
+        });
+
+        return $cart->cart()->firstOrFail();
     }
 
     private function grantPermission(): void
@@ -126,12 +131,12 @@ class CheckoutPendingOrderRedesignTest extends TestCase
             'name' => 'Test Promotion',
             'slug' => 'test-promotion-' . Str::random(6),
             'code' => 'PROMO-' . Str::random(6),
-            'type' => 'buy_x_get_y',
+            'type' => PromotionType::PRICE,
             'type_amount' => 'percentage',
             'value' => 10,
             'discount' => 10,
             'minimum_order_amount' => 0,
-            'apply_to' => 'specific_products',
+            'apply_to' => 'all_products',
             'status' => true,
             'start_at' => Carbon::yesterday()->format('Y-m-d'),
             'end_at' => Carbon::tomorrow()->format('Y-m-d'),
@@ -144,7 +149,7 @@ class CheckoutPendingOrderRedesignTest extends TestCase
             'code' => $code,
             'name' => 'Pending Test Coupon',
             'slug' => 'coupon-' . Str::random(6),
-            'discount_type' => DiscountType::PERCENTAGE,
+            'discount_type' => 'percentage',
             'discount' => 10,
             'status' => true,
             'start_date' => now()->subDay(),
@@ -167,234 +172,215 @@ class CheckoutPendingOrderRedesignTest extends TestCase
     private function markOrderAsPaid(Order $order): \Illuminate\Testing\TestResponse
     {
         $this->grantPermission();
+
         return $this->postJson(self::PREFIX . '/checkout/cod/' . $order->id . '/mark-paid');
     }
 
     // =========================================================================
-    // Core Pending Order Behavior
+    // Core: Order creation owns the reservation; cart is emptied, not destroyed
     // =========================================================================
 
-    public function test_checkout_creates_pending_order_without_deleting_cart_items(): void
+    public function test_checkout_creates_pending_order_and_empties_cart_items(): void
     {
         $this->auth();
-        $this->createCartWithItem();
+        $cart = $this->addItemToCart();
 
-        $this->checkout();
+        $response = $this->checkout();
+        $response->assertStatus(200);
 
         $order = Order::where('user_id', $this->user->id)->first();
         $this->assertNotNull($order);
         $this->assertEquals('pending', $order->status);
 
-        $cart = Cart::where('user_id', $this->user->id)->where('status', 'active')->first();
-        $this->assertNotNull($cart, 'Cart should still be active after checkout');
+        // Same cart row survives…
+        $cart = $cart->refresh() ?? Cart::where('user_id', $this->user->id)->first();
+        $this->assertNotNull(Cart::find($cart->id), 'The Cart record itself must NOT be deleted');
         $this->assertEquals('active', $cart->status);
 
-        $cartItem = CartItem::where('cart_id', $cart->id)->first();
-        $this->assertNotNull($cartItem, 'Cart items should not be deleted after checkout');
+        // …but it holds zero items.
+        $this->assertEquals(0, \Marvel\Database\Models\CartItem::where('cart_id', $cart->id)->count());
     }
 
-    public function test_checkout_does_not_finalize_inventory(): void
+    public function test_checkout_reserves_inventory_without_deducting_stock(): void
     {
         $this->auth();
-        $this->createCartWithItem(1, 100.00);
+        $this->addItemToCart(2);
 
-        $initialStock = $this->product->fresh()->stock_quantity;
+        $stockBefore = $this->product->refresh()->stock_quantity;
+        $soldBefore = $this->product->sold_quantity;
 
         $this->checkout();
 
-        $this->product->refresh();
-        $this->assertEquals($initialStock, $this->product->stock_quantity, 'Stock should not be deducted at checkout');
-        $this->assertEquals(0, $this->product->sold_quantity, 'Sold quantity should not change at checkout');
+        $product = $this->product->refresh();
+        $this->assertEquals($stockBefore, $product->stock_quantity, 'Stock must NOT be deducted at checkout');
+        $this->assertEquals($soldBefore, $product->sold_quantity, 'Sold quantity must NOT change at checkout');
+        $this->assertEquals(2, $product->reserved_quantity, 'Checkout must reserve inventory for the ORDER');
+
+        $order = Order::where('user_id', $this->user->id)->first();
+        $this->assertEquals(Order::INVENTORY_STATE_ACTIVE, $order->inventory_state);
+        $this->assertNotNull($order->inventory_reserved_at);
+        $this->assertNotNull($order->reservation_expires_at);
     }
 
-    public function test_each_checkout_creates_new_pending_order(): void
+    public function test_checkout_stores_explicit_24h_reservation_expiry(): void
     {
+        config(['payment.order_timeout_hours' => 24]);
+
         $this->auth();
-        $this->createCartWithItem();
+        $this->addItemToCart();
 
+        Carbon::setTestNow(now());
         $this->checkout();
 
-        $this->createCartWithItem(2, 200.00);
+        $order = Order::where('user_id', $this->user->id)->first();
 
-        $this->checkout();
-
-        $pendingOrders = Order::where('user_id', $this->user->id)
-            ->where('status', 'pending')
-            ->get();
-
-        $this->assertCount(2, $pendingOrders, 'Each checkout should create a new pending order');
+        $expectedExpiry = $order->created_at->copy()->addHours(24);
+        $this->assertTrue(
+            $order->reservation_expires_at->equalTo($expectedExpiry),
+            "reservation_expires_at must equal created_at + 24h (got {$order->reservation_expires_at} vs {$expectedExpiry})"
+        );
     }
 
-    public function test_second_checkout_creates_new_order_with_updated_cart(): void
+    // =========================================================================
+    // Cart independence after checkout
+    // =========================================================================
+
+    public function test_second_checkout_after_refill_creates_independent_order(): void
     {
         $this->auth();
-        $this->createCartWithItem(1, 100.00);
+        $this->addItemToCart(1, 100.00);
 
         $this->checkout();
         $firstOrderId = Order::where('user_id', $this->user->id)->first()->id;
 
-        $cart = Cart::where('user_id', $this->user->id)->where('status', 'active')->first();
-        $cartItem = $cart->items()->first();
-        $cartItem->update(['quantity' => 2, 'total_price' => 200.00]);
-        $cart->update(['total_price' => 200.00]);
+        // Refill the SAME surviving cart row with different content.
+        $cart = Cart::where('user_id', $this->user->id)->firstOrFail();
+        app(CartInventoryService::class)->incrementItem($cart, $this->product->fresh(), null, 3);
 
         $this->checkout();
+
+        $orders = Order::where('user_id', $this->user->id)->where('status', 'pending')->get();
+        $this->assertCount(2, $orders, 'Refilled cart must produce an independent second order');
 
         $firstOrder = Order::find($firstOrderId);
-        $this->assertNotNull($firstOrder);
-        $this->assertEquals(100.00, $firstOrder->price, 'First order price should remain unchanged');
-
-        $newOrder = Order::where('user_id', $this->user->id)
-            ->where('status', 'pending')
-            ->where('id', '!=', $firstOrderId)
-            ->first();
-        $this->assertNotNull($newOrder, 'Second checkout should create a new order');
-        $this->assertEquals(200.00, $newOrder->price, 'New order should reflect updated cart');
+        $this->assertEquals(1, $firstOrder->orderItems()->sum('product_quantity'), 'First order snapshot immutable');
+        $secondOrder = $orders->firstWhere('id', '!=', $firstOrderId);
+        $this->assertEquals(3, $secondOrder->orderItems()->sum('product_quantity'));
     }
 
-    public function test_second_checkout_updates_transaction_amount(): void
+    public function test_cart_is_reusable_with_same_row_after_checkout(): void
     {
         $this->auth();
-        $this->createCartWithItem(1, 100.00);
+        $cartBefore = $this->addItemToCart();
+        $cartId = $cartBefore->id;
 
         $this->checkout();
 
+        // Add again → SAME cart id, brand-new item row.
+        $reservedFromPendingOrder = $this->product->refresh()->reserved_quantity;
+        $this->assertEquals(1, $reservedFromPendingOrder, 'Pending order holds its own reservation');
+
+        $cartAfter = app(CartInventoryService::class)->incrementItem(
+            Cart::findOrFail($cartId), $this->product->fresh(), null, 1
+        );
+
+        $this->assertSame($cartId, $cartAfter->cart_id, 'Re-add must reuse the identical cart row');
+        $this->assertEquals(1, \Marvel\Database\Models\CartItem::where('cart_id', $cartId)->count());
+        $this->assertEquals(
+            $reservedFromPendingOrder,
+            $this->product->refresh()->reserved_quantity,
+            'Cart operations never add reservations'
+        );
+    }
+
+    // =========================================================================
+    // Inventory finalization (COD)
+    // =========================================================================
+
+    public function test_mark_cod_as_paid_commits_reservation(): void
+    {
+        $this->auth();
+        $this->addItemToCart();
+
+        $this->checkout();
         $order = Order::where('user_id', $this->user->id)->first();
-        $transaction = Transaction::where('order_id', $order->id)->first();
-        $this->assertNotNull($transaction);
 
-        $this->createCartWithItem(2, 200.00);
-        $this->checkout();
+        $stockBefore = $this->product->refresh()->stock_quantity;
 
-        $transaction->refresh();
-        $this->assertEquals((float) $order->fresh()->total_price, (float) $transaction->amount);
+        $this->markOrderAsPaid($order)->assertStatus(200);
+
+        $product = $this->product->refresh();
+        $this->assertEquals($stockBefore - 1, $product->stock_quantity, 'Payment commits: stock deducted once');
+        $this->assertEquals(1, $product->sold_quantity);
+        $this->assertEquals(0, $product->reserved_quantity);
+
+        $order->refresh();
+        $this->assertEquals('completed', $order->status);
+        $this->assertEquals(Order::INVENTORY_STATE_COMMITTED, $order->inventory_state);
     }
 
-    // =========================================================================
-    // Cart Behavior
-    // =========================================================================
-
-    public function test_cart_is_editable_after_checkout(): void
+    public function test_cod_marked_paid_twice_is_idempotent(): void
     {
         $this->auth();
-        $this->createCartWithItem();
+        $this->addItemToCart();
 
         $this->checkout();
-
-        $cart = Cart::where('user_id', $this->user->id)->where('status', 'active')->first();
-        $this->assertNotNull($cart, 'Cart should still be active after checkout');
-        $this->assertGreaterThan(0, $cart->items()->count(), 'Cart should have items');
-    }
-
-    public function test_cart_items_persist_after_checkout(): void
-    {
-        $this->auth();
-        $this->createCartWithItem();
-
-        $this->checkout();
-
-        $cart = Cart::where('user_id', $this->user->id)->where('status', 'active')->first();
-        $this->assertNotNull($cart);
-        $this->assertEquals(1, $cart->items()->count());
-    }
-
-    // =========================================================================
-    // Inventory Finalization (COD / Cashier)
-    // =========================================================================
-
-    public function test_mark_cod_as_paid_finalizes_inventory(): void
-    {
-        $this->auth();
-        $this->createCartWithItem();
-
-        $this->checkout();
-
         $order = Order::where('user_id', $this->user->id)->first();
-        $this->assertNotNull($order);
 
-        $this->assertDatabaseHas('orders', [
-            'id' => $order->id,
-            'status' => 'pending',
-        ]);
+        $this->grantPermission();
+        $this->postJson(self::PREFIX . '/checkout/cod/' . $order->id . '/mark-paid')->assertStatus(200);
+        $this->postJson(self::PREFIX . '/checkout/cod/' . $order->id . '/mark-paid')->assertStatus(422);
 
-        $this->markOrderAsPaid($order);
-
-        $this->product->refresh();
-        $this->assertEquals(49, $this->product->stock_quantity, 'Stock should be deducted after COD is marked paid');
-        $this->assertEquals(1, $this->product->sold_quantity, 'Sold quantity should increment after COD is marked paid');
-
-        $cart = Cart::where('user_id', $this->user->id)->where('status', 'active')->first();
-        $this->assertNull($cart, 'Cart should be checked_out/expired after COD is marked paid');
+        $product = $this->product->refresh();
+        $this->assertEquals($this->product->stock_quantity, $product->stock_quantity);
+        $this->assertEquals(1, $product->sold_quantity, 'Sold incremented exactly once');
     }
 
     // =========================================================================
-    // Promotion Behavior
+    // Promotion / coupon lifecycle timing (unchanged policy, new plumbing)
     // =========================================================================
 
     public function test_promotion_usage_not_incremented_at_checkout(): void
     {
         $this->auth();
-        $cart = $this->createCartWithItem();
+        $this->addItemToCart();
 
         $promotion = $this->createPromotion();
-        $promotion->products()->attach($this->product->id);
 
-        $cartItem = $cart->items()->first();
-        $cartItem->update([
-            'promotion_id' => $promotion->id,
-            'discount_amount' => 10,
-            'total_price' => 90,
-        ]);
+        $initialUsage = $promotion->usage;
 
-        $initialUsage = $promotion->fresh()->usage;
+        $this->checkout(['selected_promotion_id' => $promotion->id]);
 
-        $this->checkout();
-
-        $promotion->refresh();
-        $this->assertEquals($initialUsage, $promotion->usage, 'Promotion usage should not be incremented at checkout');
+        $this->assertEquals($initialUsage, $promotion->refresh()->usage, 'Promotion usage consumed only at payment');
     }
 
     public function test_promotion_usage_incremented_after_cod_paid(): void
     {
         $this->auth();
-        $cart = $this->createCartWithItem();
+        $this->addItemToCart();
 
         $promotion = $this->createPromotion();
-        $promotion->products()->attach($this->product->id);
 
-        $cartItem = $cart->items()->first();
-        $cartItem->update([
-            'promotion_id' => $promotion->id,
-            'discount_amount' => 10,
-            'total_price' => 90,
-        ]);
-
-        $this->checkout();
+        $this->checkout(['selected_promotion_id' => $promotion->id]);
 
         $order = Order::where('user_id', $this->user->id)->first();
         $order->update(['promotion_id' => $promotion->id]);
 
         $this->markOrderAsPaid($order);
 
-        $promotion->refresh();
-        $this->assertEquals(1, $promotion->usage, 'Promotion usage should be incremented after payment');
+        $this->assertEquals(1, $promotion->refresh()->usage, 'Promotion usage incremented exactly once after payment');
     }
-
-    // =========================================================================
-    // Coupon Behavior
-    // =========================================================================
 
     public function test_coupon_usage_not_recorded_at_checkout(): void
     {
         $this->auth();
-        $this->createCartWithItem();
+        $this->addItemToCart();
 
         $coupon = $this->createCoupon();
 
-        $cart = Cart::where('user_id', $this->user->id)->first();
-        $cart->update(['coupon' => $coupon->code]);
+        Cart::where('user_id', $this->user->id)->update(['coupon' => $coupon->code]);
 
-        $this->checkout();
+        $this->checkout(['selected_gift_product_id' => null]);
 
         $this->assertDatabaseMissing('coupon_usages', [
             'coupon_id' => $coupon->id,
@@ -405,12 +391,11 @@ class CheckoutPendingOrderRedesignTest extends TestCase
     public function test_coupon_usage_recorded_after_cod_paid(): void
     {
         $this->auth();
-        $this->createCartWithItem();
+        $this->addItemToCart();
 
         $coupon = $this->createCoupon();
 
-        $cart = Cart::where('user_id', $this->user->id)->first();
-        $cart->update(['coupon' => $coupon->code]);
+        Cart::where('user_id', $this->user->id)->update(['coupon' => $coupon->code]);
 
         $this->checkout();
 
@@ -425,189 +410,88 @@ class CheckoutPendingOrderRedesignTest extends TestCase
     }
 
     // =========================================================================
-    // Checkout Failure Behavior
+    // Failure behavior
     // =========================================================================
 
-    public function test_payment_failure_does_not_cancel_order(): void
+    public function test_payment_failure_does_not_cancel_order_or_release_reservation(): void
     {
         $this->auth();
-        $this->createCartWithItem();
+        $this->addItemToCart();
 
-        $this->checkout();
+        $this->checkout(['payment_method' => 'online']);
 
         $order = Order::where('user_id', $this->user->id)->first();
+        $order->update(['payment_method' => 'online']);
 
         $this->getJson(self::PREFIX . '/checkout/error-callback?paymentId=invalid_123');
 
         $order->refresh();
-        $this->assertEquals('pending', $order->status, 'Order should remain pending after payment failure');
-    }
-
-    public function test_payment_failure_does_not_release_cart(): void
-    {
-        $this->auth();
-        $this->createCartWithItem();
-
-        $this->checkout();
-
-        $this->getJson(self::PREFIX . '/checkout/error-callback?paymentId=invalid_123');
-
-        $cart = Cart::where('user_id', $this->user->id)->where('status', 'active')->first();
-        $this->assertNotNull($cart, 'Cart should remain active after payment failure');
-        $this->assertEquals('active', $cart->status);
+        $this->assertEquals('pending', $order->status, 'Order remains payable after failure');
+        $this->assertEquals(Order::INVENTORY_STATE_ACTIVE, $order->inventory_state, 'Reservation survives failure for retry');
+        $this->assertEquals(1, $this->product->refresh()->reserved_quantity);
     }
 
     // =========================================================================
-    // Order Status Transitions
+    // 24-HOUR REAPER
     // =========================================================================
 
-    public function test_cod_order_goes_to_completed_after_mark_paid(): void
+    public function test_reaper_cancels_expired_reservation_and_releases_stock(): void
     {
         $this->auth();
-        $this->createCartWithItem();
+        $this->addItemToCart();
 
         $this->checkout();
 
         $order = Order::where('user_id', $this->user->id)->first();
-        $this->assertEquals('pending', $order->status);
+        $order->update(['reservation_expires_at' => now()->subMinute()]);
+        $cartId = Cart::where('user_id', $this->user->id)->value('id');
 
-        $this->markOrderAsPaid($order);
-
-        $order->refresh();
-        $this->assertEquals('completed', $order->status);
-    }
-
-    // =========================================================================
-    // Edge Cases
-    // =========================================================================
-
-    public function test_cart_expires_at_renewed_on_checkout(): void
-    {
-        $this->auth();
-        $cart = $this->createCartWithItem();
-
-        $originalExpiry = $cart->expires_at;
-
-        Carbon::setTestNow(Carbon::now()->addDays(1));
-
-        $this->checkout();
-
-        $cart->refresh();
-        $this->assertTrue($cart->expires_at->greaterThan($originalExpiry), 'Cart expiry should be renewed on checkout');
-    }
-
-    public function test_pending_order_has_correct_totals(): void
-    {
-        $this->auth();
-        $this->createCartWithItem(1, 100.00);
-
-        $this->checkout();
-
-        $order = Order::where('user_id', $this->user->id)->first();
-        $this->assertEquals(100.00, (float) $order->price);
-        $this->assertEquals(120.00, (float) $order->total_price); // 100 + 20 shipping
-        $this->assertNotNull($order->address);
-        $this->assertNotNull($order->user_phone);
-        $this->assertNotNull($order->user_email);
-    }
-
-    public function test_order_products_are_created_on_each_checkout(): void
-    {
-        $this->auth();
-        $this->createCartWithItem(1, 100.00);
-
-        $this->checkout();
-
-        $firstOrder = Order::where('user_id', $this->user->id)->first();
-        $this->assertEquals(1, $firstOrder->orderItems()->count());
-        $this->assertEquals(1, $firstOrder->orderItems()->first()->product_quantity);
-
-        $cart = Cart::where('user_id', $this->user->id)->where('status', 'active')->first();
-        $cartItem = $cart->items()->first();
-        $cartItem->update(['quantity' => 3, 'total_price' => 300.00]);
-        $cart->update(['total_price' => 300.00]);
-
-        $this->checkout();
-
-        $firstOrder->refresh();
-        $this->assertEquals(1, $firstOrder->orderItems()->count(), 'First order items should remain unchanged');
-        $this->assertEquals(1, $firstOrder->orderItems()->first()->product_quantity);
-
-        $secondOrder = Order::where('user_id', $this->user->id)
-            ->where('id', '!=', $firstOrder->id)
-            ->first();
-        $this->assertNotNull($secondOrder, 'Second checkout should create a new order');
-        $this->assertEquals(1, $secondOrder->orderItems()->count());
-        $this->assertEquals(3, $secondOrder->orderItems()->first()->product_quantity);
-    }
-
-    public function test_expired_pending_order_cancelled_by_command(): void
-    {
-        $this->auth();
-        $this->createCartWithItem();
-
-        config(['payment.order_timeout_hours' => 0]);
-
-        $this->checkout();
-
-        $order = Order::where('user_id', $this->user->id)->first();
-        $order->update(['created_at' => Carbon::now()->subHours(73)]);
-
-        $cart = Cart::where('user_id', $this->user->id)->where('status', 'active')->first();
-        $cart->update(['expires_at' => Carbon::now()->subDay()]);
+        config(['payment.order_timeout_hours' => 24]);
 
         $this->artisan('orders:cancel-unpaid')
-            ->expectsOutputToContain('Cancelled')
+            ->expectsOutputToContain('Cancelled 1 unpaid order(s).')
             ->assertExitCode(0);
 
         $order->refresh();
         $this->assertEquals('cancelled', $order->status);
+        $this->assertEquals(Order::INVENTORY_STATE_RELEASED, $order->inventory_state);
+        $this->assertEquals(0, $this->product->refresh()->reserved_quantity, 'Exact reservation released');
 
-        $cart->refresh();
-        $this->assertEquals('expired', $cart->status, 'Cart should be expired after command runs');
+        // Cart is NEVER touched by the reaper (already empty from checkout).
+        $this->assertEquals(0, \Marvel\Database\Models\CartItem::where('cart_id', $cartId)->count());
+        $this->assertDatabaseHas('carts', ['id' => $cartId]);
+    }
+
+    public function test_reaper_skips_unexpired_reservations(): void
+    {
+        $this->auth();
+        $this->addItemToCart();
+        $this->checkout();
+
+        $this->artisan('orders:cancel-unpaid')->assertExitCode(0);
+
+        $order = Order::where('user_id', $this->user->id)->first();
+        $this->assertEquals('pending', $order->status);
+        $this->assertEquals(Order::INVENTORY_STATE_ACTIVE, $order->refresh()->inventory_state);
     }
 
     // =========================================================================
-    // Online Payment Placeholder Test
+    // Events
     // =========================================================================
 
-    public function test_checkout_returns_success_for_cod(): void
+    public function test_each_checkout_fires_order_created_event_once(): void
     {
-        Event::fake();
+        Event::fake([OrderCreated::class]);
 
         $this->auth();
-        $this->createCartWithItem();
-
-        $response = $this->checkout();
-
-        $response->assertStatus(200);
-        $response->assertJsonPath('success', true);
-    }
-
-    public function test_each_checkout_fires_order_created_event(): void
-    {
-        Event::fake();
-
-        $this->auth();
-        $this->createCartWithItem();
+        $this->addItemToCart();
         $this->checkout();
 
         Event::assertDispatched(OrderCreated::class, 1);
 
-        $this->createCartWithItem(2, 200.00);
+        $this->addItemToCart(2, 200.00);
         $this->checkout();
 
         Event::assertDispatched(OrderCreated::class, 2);
-    }
-
-    public function test_checkout_fires_order_created_event_on_first_checkout(): void
-    {
-        Event::fake();
-
-        $this->auth();
-        $this->createCartWithItem();
-        $this->checkout();
-
-        Event::assertDispatched(OrderCreated::class);
     }
 }

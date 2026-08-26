@@ -20,6 +20,7 @@ use Tests\TestCase;
 
 class OrderStatusLifecycleTest extends TestCase
 {
+
     use DatabaseTransactions;
 
     private User $customer;
@@ -71,6 +72,10 @@ class OrderStatusLifecycleTest extends TestCase
             $table->unsignedBigInteger('promotion_id')->nullable();
             $table->unsignedBigInteger('governorate_id')->nullable();
             $table->timestamp('inventory_restored_at')->nullable();
+                                    $table->string('inventory_state', 16)->default('none');
+            $table->timestamp('inventory_reserved_at')->nullable();
+            $table->timestamp('reservation_expires_at')->nullable();
+            $table->index(['status', 'reservation_expires_at']);
             $table->timestamps();
             $table->softDeletes();
         });
@@ -247,6 +252,17 @@ class OrderStatusLifecycleTest extends TestCase
             $table->timestamps();
             $table->index('log_name');
         });
+        // FCM channel resolves user device tokens during notification fanout.
+        if (!Schema::hasTable('device_tokens')) {
+            Schema::create('device_tokens', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+                $table->string('token')->unique();
+                $table->string('device_type')->nullable();
+                $table->timestamps();
+            });
+        }
+
     }
 
     private function seedBaseData(): void
@@ -544,7 +560,7 @@ class OrderStatusLifecycleTest extends TestCase
         $tx = $this->createTransaction($order, 'online');
         $service = app(OrderService::class);
 
-        // Callback owns PaymentSucceeded (emit=false) — the invoice must still
+        // Callback owns PaymentSucceeded (emit=false) ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â the invoice must still
         // be created by the first-leave-pending rule inside the transition.
         $service->changeOrderStatus($tx->invoice_id, 'completed', null, false);
 

@@ -7,18 +7,34 @@ use Exception;
 use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Cart;
 use Marvel\Database\Models\CartItem;
-use Marvel\Database\Models\Order;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\ProductVariant;
-use Marvel\Database\Models\Promotion;
 use Marvel\Database\Models\User;
 use Marvel\Enums\ShippingMethod;
 use Marvel\Services\Pricing\ProductPricingService;
 
+/**
+ * Cart lifecycle service.
+ *
+ * The cart is ONLY the user's current shopping selection:
+ * CRUD, duplicate merging, quantity validation, pricing snapshots and
+ * abandoned-cart activity tracking. It NEVER touches inventory counters
+ * (products/product_variants.reserved_quantity) — inventory reservation
+ * belongs to the Order via App\Services\Inventory\OrderReservationService.
+ *
+ * Note: the historical class name is retained to limit blast radius; the
+ * "inventory" responsibility now lives exclusively in OrderReservationService.
+ */
 class CartInventoryService
 {
-    private const CART_TTL_DAYS = 3;
+    /** Activity window used purely for abandoned-cart analytics/notifications. */
+    private const CART_ACTIVITY_TTL_DAYS = 3;
 
+    /**
+     * Add quantity to a cart line (merging duplicates by product+variant+method).
+     * Stock availability is intentionally NOT checked here — it is validated
+     * and reserved atomically at checkout against the created Order.
+     */
     public function incrementItem(Cart $cart, Product $product, ?ProductVariant $variant, int $quantity, array $attributes = [], string $shippingMethod = ShippingMethod::SCHEDULED): CartItem
     {
         $productName = is_array($product->name) ? ($product->name[app()->getLocale()] ?? $product->name['en'] ?? '') : $product->name;
@@ -26,30 +42,15 @@ class CartInventoryService
         return DB::transaction(function () use ($cart, $product, $variant, $quantity, $attributes, $shippingMethod, $productName) {
             $cart = Cart::whereKey($cart->id)->lockForUpdate()->firstOrFail();
             $item = $this->findCartItemForLock($cart, $product->id, $variant?->id, $shippingMethod);
-            $existingQuantity = (int) ($item?->quantity ?? 0);
-            $reservedQuantity = (int) ($item?->reserved_quantity ?? 0);
-            $desiredQuantity = $existingQuantity + $quantity;
-            $delta = $desiredQuantity - $reservedQuantity;
+            $desiredQuantity = (int) ($item?->quantity ?? 0) + max(1, $quantity);
 
-            // D1 — DIGITAL products have unlimited availability and never
-            // touch physical reservation counters.
-            if (!$this->isDigital($product) && $delta > 0) {
-                $stock = $variant
-                    ? ProductVariant::query()->whereKey($variant->id)->lockForUpdate()->firstOrFail()
-                    : Product::query()->whereKey($product->id)->lockForUpdate()->firstOrFail();
-
-                $availableStock = max(0, (int) ($stock->stock_quantity ?? 0) - (int) ($stock->reserved_quantity ?? 0));
-
-                if ($availableStock < $delta) {
-                    $errorKey = $variant ? 'message.ERROR.VARIANT_STOCK_EXCEEDED' : 'message.ERROR.PRODUCT_STOCK_EXCEEDED';
-                    throw new Exception(__($errorKey, ['product_name' => $productName]));
-                }
-            }
-
-            return $this->reserveItem($cart, $product, $variant, $quantity, 'add', $attributes, $shippingMethod);
+            return $this->upsertItem($cart, $item, $product, $variant, $desiredQuantity, $attributes, $shippingMethod);
         });
     }
 
+    /**
+     * Reduce a cart line by quantity. Deleting when the remainder drops below 1.
+     */
     public function decrementItem(Cart $cart, Product $product, ?ProductVariant $variant, int $quantity, string $shippingMethod = ShippingMethod::SCHEDULED): ?CartItem
     {
         return DB::transaction(function () use ($cart, $product, $variant, $quantity, $shippingMethod) {
@@ -60,58 +61,148 @@ class CartInventoryService
                 throw new Exception(INVALID_ITEM_DATA);
             }
 
-            $targetQuantity = (int) $item->quantity - $quantity;
+            $targetQuantity = (int) $item->quantity - max(1, $quantity);
 
             if ($targetQuantity >= 1) {
-                return $this->reserveItem($cart, $product, $variant, $targetQuantity, 'set', $item->attributes ?: [], $shippingMethod);
+                return $this->upsertItem($cart, $item, $product, $variant, $targetQuantity, $item->attributes ?: [], $shippingMethod);
             }
 
-            if (!$this->isDigital($product)) {
-                $stock = $variant
-                    ? ProductVariant::query()->whereKey($variant->id)->lockForUpdate()->firstOrFail()
-                    : Product::query()->whereKey($product->id)->lockForUpdate()->firstOrFail();
-
-                $this->releaseStock($stock, (int) $item->reserved_quantity);
-            }
-
-            $item->delete();
-
-            $remaining = CartItem::where('cart_id', $cart->id)->lockForUpdate()->count();
-            if ($remaining === 0) {
-                Cart::whereKey($cart->id)->lockForUpdate()->update(['coupon' => null]);
-            }
-
-            $this->touchCartReservation($cart);
-
-            return null;
+            return $this->deleteItemAndTidy($item, $cart);
         });
     }
 
-    protected function reserveItem(Cart $cart, Product $product, ?ProductVariant $variant, int $quantity, string $mode = 'add', array $attributes = [], string $shippingMethod = ShippingMethod::SCHEDULED): CartItem
+    /**
+     * Remove a single cart line. $deleteItem=false is accepted for backward
+     * compatibility and is a safe no-op: carts no longer hold reservations.
+     */
+    public function releaseItem(CartItem $item, bool $deleteItem = false): bool
     {
-        return DB::transaction(function () use ($cart, $product, $variant, $quantity, $mode, $attributes, $shippingMethod) {
+        if (!$deleteItem) {
+            return true;
+        }
+
+        return DB::transaction(function () use ($item) {
+            $item = CartItem::whereKey($item->id)->lockForUpdate()->firstOrFail();
+            $cartId = $item->cart_id;
+            $deleted = (bool) $item->delete();
+
+            if ($deleted) {
+                $this->tidyCartAfterRemoval($cartId);
+            }
+
+            return $deleted;
+        });
+    }
+
+    /**
+     * Clear every cart line (user "clear cart"). The Cart row itself always survives.
+     */
+    public function releaseCart(Cart $cart, bool $deleteItems = false): bool
+    {
+        return DB::transaction(function () use ($cart, $deleteItems) {
+            $cart = Cart::whereKey($cart->id)->lockForUpdate()->with('items')->firstOrFail();
+
+            if ($deleteItems) {
+                $cart->items()->each(fn (CartItem $item) => $item->delete());
+            }
+
+            $cart->update([
+                'status' => 'active',
+                'coupon' => null,
+                'reserved_at' => null,
+                'expires_at' => null,
+                'total_price' => 0,
+            ]);
+
+            return true;
+        });
+    }
+
+    /**
+     * Post-checkout cleanup: delete the ordered shipping-method slice (plus any
+     * legacy gift artifacts), clear coupon/totals when nothing remains, and park
+     * the activity window so empty carts never trigger abandoned-cart notices.
+     * Purely cart-local — inventory was already reserved on the ORDER.
+     */
+    public function clearCheckedOutSlice(Cart $cart, string $shippingMethod): void
+    {
+        DB::transaction(function () use ($cart, $shippingMethod) {
+            $locked = Cart::whereKey($cart->id)->lockForUpdate()->firstOrFail();
+
+            CartItem::query()
+                ->where('cart_id', $locked->id)
+                ->where(function ($q) use ($shippingMethod) {
+                    $q->where('shipping_method', $shippingMethod)
+                        ->orWhere('is_gift', true);
+                })
+                ->delete();
+
+            $remaining = CartItem::where('cart_id', $locked->id)->lockForUpdate()->get();
+
+            if ($remaining->isEmpty()) {
+                $locked->update([
+                    'status' => 'active',
+                    'coupon' => null,
+                    'total_price' => 0,
+                    'reserved_at' => null,
+                    'expires_at' => null,
+                ]);
+
+                return;
+            }
+
+            // A fast-shipping slice remains — keep the cart shoppable.
+            $locked->update([
+                'status' => 'active',
+                'total_price' => round((float) $remaining->sum('total_price'), 2),
+                'reserved_at' => now(),
+                'expires_at' => Carbon::now()->addDays(self::CART_ACTIVITY_TTL_DAYS),
+            ]);
+        });
+    }
+
+    /**
+     * Fetch the user's active cart with everything checkout pricing needs.
+     * Read-only: performs no reservation or inventory work.
+     */
+    public function getActiveCartForUser(User $user): ?Cart
+    {
+        return Cart::query()
+            ->where('user_id', $user->id)
+            ->where('status', 'active')
+            ->with([
+                'items.product.flash_sales' => fn($q) => $q->valid(),
+                'items.productVariant.attributeProducts.attributeValue.attribute',
+            ])
+            ->first();
+    }
+
+    /**
+     * Abandoned-cart/activity touch. This is NOT a reservation: it only keeps
+     * the analytics/notification window (reserved_at/expires_at) fresh.
+     */
+    public function touchActivity(Cart $cart): void
+    {
+        $cart->update([
+            'status' => 'active',
+            'reserved_at' => now(),
+            'expires_at' => Carbon::now()->addDays(self::CART_ACTIVITY_TTL_DAYS),
+        ]);
+    }
+
+    /** Backward-compatible alias for the historical internal name. */
+    private function touchCartReservation(Cart $cart): void
+    {
+        $this->touchActivity($cart);
+    }
+
+    private function upsertItem(Cart $cart, ?CartItem $item, Product $product, ?ProductVariant $variant, int $desiredQuantity, array $attributes, string $shippingMethod): CartItem
+    {
+        return DB::transaction(function () use ($cart, $item, $product, $variant, $desiredQuantity, $attributes, $shippingMethod) {
             $cart = Cart::whereKey($cart->id)->lockForUpdate()->firstOrFail();
-            $item = $this->findCartItemForLock($cart, $product->id, $variant?->id, $shippingMethod);
-            $desiredQuantity = $mode === 'set'
-                ? $quantity
-                : (($item?->quantity ?? 0) + $quantity);
 
             if ($desiredQuantity < 1) {
                 throw new Exception(__(QUANTITY_MINIMUM));
-            }
-
-            $stock = $this->lockInventoryRow($product, $variant);
-            $reservedQuantity = (int) ($item?->reserved_quantity ?? 0);
-            $delta = $desiredQuantity - $reservedQuantity;
-
-            $digital = $this->isDigital($product);
-
-            if (!$digital) {
-                if ($delta > 0) {
-                    $this->reserveStock($stock, $delta);
-                } elseif ($delta < 0) {
-                    $this->releaseStock($stock, abs($delta));
-                }
             }
 
             $price = $variant
@@ -126,8 +217,6 @@ class CartInventoryService
                 'product_id' => $product->id,
                 'product_variant_id' => $variant?->id,
                 'quantity' => $desiredQuantity,
-                // Digital lines never hold a physical reservation.
-                'reserved_quantity' => $digital ? 0 : $desiredQuantity,
                 'price' => $price,
                 'total_price' => round($price * $desiredQuantity, 2),
                 'attributes' => $variant ? $this->getVariantAttributes($variant) : ($attributes ?: null),
@@ -150,446 +239,23 @@ class CartInventoryService
         });
     }
 
-    public function reserveGiftItem(Cart $cart, Product $product, Promotion $promotion, int $quantity, ?int $productVariantId = null, ?string $shippingMethod = null): CartItem
+    private function deleteItemAndTidy(CartItem $item, Cart $cart): ?CartItem
     {
-        return DB::transaction(function () use ($cart, $product, $promotion, $quantity, $productVariantId, $shippingMethod) {
-            $cart = Cart::whereKey($cart->id)->lockForUpdate()->firstOrFail();
-            $item = CartItem::query()
-                ->where('cart_id', $cart->id)
-                ->where('product_id', $product->id)
-                ->where('promotion_id', $promotion->id)
-                ->where('is_gift', true)
-                ->lockForUpdate()
-                ->first();
+        $cartId = $item->cart_id;
+        $item->delete();
+        $this->tidyCartAfterRemoval($cartId);
+        $this->touchCartReservation($cart->refresh());
 
-            $variant = null;
-            if (method_exists($product, 'isSimple') && !$product->isSimple()) {
-                if ($productVariantId) {
-                    $variant = $product->variations()
-                        ->whereKey($productVariantId)
-                        ->lockForUpdate()
-                        ->first();
-
-                    if (!$variant) {
-                        throw new Exception(__(GIFT_VARIANT_NOT_AVAILABLE));
-                    }
-                } elseif ($item?->product_variant_id) {
-                    $variant = ProductVariant::query()
-                        ->whereKey($item->product_variant_id)
-                        ->lockForUpdate()
-                        ->first();
-
-                    if (!$variant) {
-                        $item?->delete();
-                        $item = null;
-                    }
-                }
-
-                if (!$variant && !$productVariantId) {
-                    $variant = $product->variations()
-                        ->whereRaw('(COALESCE(stock_quantity, 0) - COALESCE(reserved_quantity, 0)) > 0')
-                        ->orderBy('id')
-                        ->lockForUpdate()
-                        ->first();
-                }
-
-                if (!$variant) {
-                    throw new Exception(__(GIFT_VARIANT_NO_STOCK));
-                }
-            }
-
-            $desiredQuantity = max(1, $quantity);
-            $stock = $this->lockInventoryRow($product, $variant);
-            $reservedQuantity = (int) ($item?->reserved_quantity ?? 0);
-            $delta = $desiredQuantity - $reservedQuantity;
-
-            if ($delta > 0) {
-                $this->reserveStock($stock, $delta);
-            } elseif ($delta < 0) {
-                $this->releaseStock($stock, abs($delta));
-            }
-
-            $payload = [
-                'product_id' => $product->id,
-                'product_variant_id' => $variant?->id,
-                'quantity' => $desiredQuantity,
-                'reserved_quantity' => $desiredQuantity,
-                'price' => 0,
-                'total_price' => 0,
-                'attributes' => null,
-                'is_gift' => true,
-                'promotion_id' => $promotion->id,
-                'shipping_method' => $shippingMethod ?? ShippingMethod::SCHEDULED,
-            ];
-
-            if ($item) {
-                $item->update($payload);
-                $this->touchCartReservation($cart);
-
-                return $item->refresh();
-            }
-
-            $item = $cart->items()->create($payload);
-            $this->touchCartReservation($cart);
-
-            return $item;
-        });
+        return null;
     }
 
-    public function releaseItem(CartItem $item, bool $deleteItem = false): bool
+    /** Clear the cart coupon once the last line is gone. */
+    private function tidyCartAfterRemoval(int $cartId): void
     {
-        return DB::transaction(function () use ($item, $deleteItem) {
-            $item = CartItem::whereKey($item->id)->lockForUpdate()->firstOrFail();
-            if ($item->reserved_quantity > 0 && !$this->isDigital($item->product)) {
-                $stock = $this->lockInventoryRowByItem($item);
-                $this->releaseStock($stock, (int) $item->reserved_quantity);
-            }
-
-            if ($deleteItem) {
-                $cartId = $item->cart_id;
-                $deleted = (bool) $item->delete();
-                if ($deleted) {
-                    $remaining = CartItem::where('cart_id', $cartId)->lockForUpdate()->count();
-                    if ($remaining === 0) {
-                        Cart::whereKey($cartId)->lockForUpdate()->update(['coupon' => null]);
-                    }
-                }
-                return $deleted;
-            }
-
-            return (bool) $item->update(['reserved_quantity' => 0]);
-        });
-    }
-
-    public function releaseCart(Cart $cart, bool $deleteItems = false): bool
-    {
-        return DB::transaction(function () use ($cart, $deleteItems) {
-            $cart = Cart::whereKey($cart->id)->lockForUpdate()->with('items')->firstOrFail();
-
-            foreach ($cart->items as $item) {
-                $this->releaseItem($item, $deleteItems);
-            }
-
-            $cart->update([
-                'status' => 'active',
-                'expires_at' => null,
-                'reserved_at' => null,
-                'total_price' => $deleteItems ? 0 : $cart->items()->sum('total_price'),
-            ]);
-
-            return true;
-        });
-    }
-
-    public function finalizeCart(Cart $cart): bool
-    {
-        return DB::transaction(function () use ($cart) {
-            $cart = Cart::whereKey($cart->id)->lockForUpdate()->with('items')->firstOrFail();
-
-            foreach ($cart->items as $item) {
-                if ($item->reserved_quantity > 0 && !$this->isDigital($item->product)) {
-                    $stock = $this->lockInventoryRowByItem($item);
-                    $this->finalizeStock($stock, (int) $item->reserved_quantity);
-                }
-
-                $item->delete();
-            }
-
-            $cart->update([
-                'status' => 'checked_out',
-                'expires_at' => null,
-                'reserved_at' => null,
-                'total_price' => 0,
-            ]);
-
-            return true;
-        });
-    }
-
-    public function finalizeItemsByShippingMethod(Cart $cart, string $shippingMethod): bool
-    {
-        return DB::transaction(function () use ($cart, $shippingMethod) {
-            $cart = Cart::whereKey($cart->id)->lockForUpdate()->firstOrFail();
-
-            $items = CartItem::where('cart_id', $cart->id)
-                ->where('shipping_method', $shippingMethod)
-                ->lockForUpdate()
-                ->get();
-
-            foreach ($items as $item) {
-                if ($item->reserved_quantity > 0 && !$this->isDigital($item->product)) {
-                    $stock = $this->lockInventoryRowByItem($item);
-                    $this->finalizeStock($stock, (int) $item->reserved_quantity);
-                }
-
-                $item->delete();
-            }
-
-$remainingItems = CartItem::where('cart_id', $cart->id)
-                ->lockForUpdate()
-                ->get();
-
-            $cart->update([
-                'status' => $remainingItems->isEmpty() ? 'checked_out' : 'active',
-                'expires_at' => null,
-                'reserved_at' => null,
-                'total_price' => round((float) $remainingItems->sum('total_price'), 2),
-            ]);
-
-            return true;
-        });
-    }
-
-    public function deductStockForOrder(Order $order): void
-    {
-        DB::transaction(function () use ($order) {
-            try {
-                $order->load(['orderItems.product', 'orderItems.productVariant']);
-            } catch (\Throwable $e) {
-                return;
-            }
-
-            if ($order->orderItems->isEmpty()) {
-                return;
-            }
-
-            foreach ($order->orderItems as $orderItem) {
-                $quantity = (int) $orderItem->product_quantity;
-                if ($quantity < 1) {
-                    continue;
-                }
-
-                // D1 — digital order lines never deduct physical stock.
-                $snapshotType = null;
-                try {
-                    $snapshotType = \Illuminate\Support\Facades\Schema::hasColumn('order_products', 'item_type')
-                        ? $orderItem->item_type
-                        : null;
-                } catch (\Throwable $e) {
-                    $snapshotType = null;
-                }
-
-                if ($snapshotType === \Marvel\Enums\ItemType::DIGITAL) {
-                    continue;
-                }
-
-                $product = $orderItem->product;
-                if ($product && ($product->item_type ?? \Marvel\Enums\ItemType::PHYSICAL) === \Marvel\Enums\ItemType::DIGITAL) {
-                    continue;
-                }
-                if ($orderItem->product_variant_id && $orderItem->productVariant) {
-                    $variant = ProductVariant::query()
-                        ->whereKey($orderItem->product_variant_id)
-                        ->lockForUpdate()
-                        ->firstOrFail();
-
-                    $physicalQuantity = (int) ($variant->stock_quantity ?? 0);
-                    if ($physicalQuantity < $quantity) {
-                        $variant->stock_quantity = 0;
-                    } else {
-                        $variant->stock_quantity = $physicalQuantity - $quantity;
-                    }
-                    $variant->reserved_quantity = max(0, (int) ($variant->reserved_quantity ?? 0) - $quantity);
-                    $variant->sold_quantity = (int) ($variant->sold_quantity ?? 0) + $quantity;
-                    $variant->in_stock = $variant->stock_quantity > 0;
-                    $variant->save();
-                } elseif ($product) {
-                    $product = Product::query()
-                        ->whereKey($product->id)
-                        ->lockForUpdate()
-                        ->firstOrFail();
-
-                    $physicalQuantity = (int) ($product->stock_quantity ?? 0);
-                    if ($physicalQuantity < $quantity) {
-                        $product->stock_quantity = 0;
-                    } else {
-                        $product->stock_quantity = $physicalQuantity - $quantity;
-                    }
-                    $product->reserved_quantity = max(0, (int) ($product->reserved_quantity ?? 0) - $quantity);
-                    $product->sold_quantity = (int) ($product->sold_quantity ?? 0) + $quantity;
-                    $product->in_stock = $product->stock_quantity > 0;
-                    $product->save();
-                }
-            }
-        });
-    }
-
-    public function expireCarts(): int
-    {
-        $expiredCount = 0;
-        Cart::query()
-            ->where('status', 'active')
-            ->whereNotNull('expires_at')
-            ->where('expires_at', '<=', now())
-            ->orderBy('id')
-            ->chunkById(100, function ($carts) use (&$expiredCount) {
-                foreach ($carts as $cart) {
-                    $this->expireCart($cart);
-                    $expiredCount++;
-                }
-            });
-
-        return $expiredCount;
-    }
-
-    public function ensureCartReservation(Cart $cart): Cart
-    {
-        return DB::transaction(function () use ($cart) {
-            $cart = Cart::whereKey($cart->id)
-                ->lockForUpdate()
-                ->with(['items.product', 'items.productVariant.attributeProducts.attributeValue.attribute'])->firstOrFail();
-            foreach ($cart->items as $item) {
-                $this->syncCartItemReservation($item);
-            }
-
-            $this->touchCartReservation($cart);
-
-            return $cart->refresh();
-        });
-    }
-
-    public function getActiveCartForUser(User $user): ?Cart
-    {
-        return Cart::query()
-            ->where('user_id', $user->id)
-            ->where('status', 'active')
-            ->with([
-                'items.product.flash_sales' => fn($q) => $q->valid(),
-                'items.productVariant.attributeProducts.attributeValue.attribute',
-            ])
-            ->first();
-    }
-
-    private function syncCartItemReservation(CartItem $item): void
-    {
-        $item = CartItem::whereKey($item->id)->lockForUpdate()->firstOrFail();
-
-        // D1 — digital lines hold no reservation and pass unlimited stock.
-        if ($this->isDigital($item->product)) {
-            if ($item->reserved_quantity !== 0) {
-                $item->update(['reserved_quantity' => 0]);
-            }
-            return;
+        $remaining = CartItem::where('cart_id', $cartId)->lockForUpdate()->count();
+        if ($remaining === 0) {
+            Cart::whereKey($cartId)->lockForUpdate()->update(['coupon' => null]);
         }
-
-        $stock = $this->lockInventoryRowByItem($item);
-        $desiredQuantity = (int) $item->quantity;
-        $reservedQuantity = (int) $item->reserved_quantity;
-        $delta = $desiredQuantity - $reservedQuantity;
-
-        if ($delta > 0) {
-            $this->reserveStock($stock, $delta);
-        } elseif ($delta < 0) {
-            $this->releaseStock($stock, abs($delta));
-        } else {
-            $physicalQuantity = (int) ($stock->stock_quantity ?? 0);
-            if ($physicalQuantity < $desiredQuantity) {
-                throw new Exception(__(QUANTITY_EXCEEDS_STOCK));
-            }
-        }
-
-        if ($delta !== 0) {
-            $item->update(['reserved_quantity' => $desiredQuantity]);
-        }
-    }
-
-    public function expireSingleCart(Cart $cart): void
-    {
-        $this->expireCart($cart);
-    }
-
-    private function expireCart(Cart $cart): void
-    {
-        DB::transaction(function () use ($cart) {
-            $cart = Cart::whereKey($cart->id)->lockForUpdate()->with('items')->firstOrFail();
-
-            if ($cart->expires_at && $cart->expires_at->isFuture()) {
-                return;
-            }
-
-            foreach ($cart->items as $item) {
-                if ($item->reserved_quantity > 0 && !$this->isDigital($item->product)) {
-                    $stock = $this->lockInventoryRowByItem($item);
-                    $this->releaseStock($stock, (int) $item->reserved_quantity);
-                }
-            }
-
-            $cart->items()->delete();
-            $cart->update([
-                'status' => 'expired',
-                'expires_at' => null,
-                'reserved_at' => null,
-                'total_price' => 0,
-            ]);
-        });
-    }
-
-    private function lockInventoryRow(Product $product, ?ProductVariant $variant)
-    {
-        if ($variant) {
-            return ProductVariant::query()->whereKey($variant->id)->lockForUpdate()->firstOrFail();
-        }
-
-        return Product::query()->whereKey($product->id)->lockForUpdate()->firstOrFail();
-    }
-
-    private function lockInventoryRowByItem(CartItem $item)
-    {
-        if ($item->product_variant_id) {
-            return ProductVariant::query()->whereKey($item->product_variant_id)->lockForUpdate()->firstOrFail();
-        }
-
-        return Product::query()->whereKey($item->product_id)->lockForUpdate()->firstOrFail();
-    }
-
-    private function reserveStock($stock, int $quantity): void
-    {
-        if ($quantity < 1) {
-            return;
-        }
-
-        $availableStock = $this->getAvailableStock($stock);
-        if ($availableStock < $quantity) {
-            throw new Exception(__(QUANTITY_EXCEEDS_STOCK));
-        }
-
-        $stock->reserved_quantity = (int) ($stock->reserved_quantity ?? 0) + $quantity;
-        $stock->in_stock = $availableStock - $quantity > 0;
-        $stock->save();
-    }
-
-    private function releaseStock($stock, int $quantity): void
-    {
-        if ($quantity < 1) {
-            return;
-        }
-
-        $stock->reserved_quantity = max(0, (int) ($stock->reserved_quantity ?? 0) - $quantity);
-        $stock->in_stock = $this->getAvailableStock($stock) > 0;
-        $stock->save();
-    }
-
-    private function finalizeStock($stock, int $quantity): void
-    {
-        if ($quantity < 1) {
-            return;
-        }
-        $reservedQuantity = (int) ($stock->reserved_quantity ?? 0);
-        $physicalQuantity = (int) ($stock->stock_quantity ?? 0);
-
-        if ($reservedQuantity < $quantity) {
-            throw new Exception(__(RESERVED_STOCK_INSUFFICIENT));
-        }
-
-        if ($physicalQuantity < $quantity) {
-            throw new Exception(__(PHYSICAL_STOCK_INSUFFICIENT));
-        }
-
-        $stock->stock_quantity = $physicalQuantity - $quantity;
-        $stock->reserved_quantity = $reservedQuantity - $quantity;
-        $stock->sold_quantity = (int) ($stock->sold_quantity ?? 0) + $quantity;
-        $stock->in_stock = $this->getAvailableStock($stock) > 0;
-        $stock->save();
     }
 
     private function findCartItemForLock(Cart $cart, int $productId, ?int $variantId, ?string $shippingMethod = null): ?CartItem
@@ -611,26 +277,6 @@ $remainingItems = CartItem::where('cart_id', $cart->id)
         }
 
         return $query->first();
-    }
-
-    private function touchCartReservation(Cart $cart): void
-    {
-        $cart->update([
-            'status' => 'active',
-            'reserved_at' => now(),
-            'expires_at' => Carbon::now()->addDays(self::CART_TTL_DAYS),
-        ]);
-    }
-
-    private function isDigital(?Product $product): bool
-    {
-        return $product !== null
-            && ($product->item_type ?? \Marvel\Enums\ItemType::PHYSICAL) === \Marvel\Enums\ItemType::DIGITAL;
-    }
-
-    private function getAvailableStock($stock): int
-    {
-        return max(0, (int) ($stock->stock_quantity ?? 0) - (int) ($stock->reserved_quantity ?? 0));
     }
 
     private function getVariantAttributes(ProductVariant $variant): array

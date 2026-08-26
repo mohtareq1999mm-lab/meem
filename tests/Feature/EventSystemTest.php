@@ -40,6 +40,7 @@ use Tests\TestCase;
 
 class EventSystemTest extends TestCase
 {
+
     use DatabaseTransactions, WithInvoiceTables;
 
     private const PREFIX = '/api/v1';
@@ -193,6 +194,20 @@ class EventSystemTest extends TestCase
             $table->string('status')->default('pending');
             $table->string('language', 10)->default('en');
             $table->timestamp('paid_at')->nullable();
+                                    $table->string('inventory_state', 16)->default('none');
+            $table->timestamp('inventory_reserved_at')->nullable();
+            $table->timestamp('reservation_expires_at')->nullable();
+            $table->index(['status', 'reservation_expires_at']);
+            if (!Schema::hasTable('digital_entitlements')) {
+            Schema::create('digital_entitlements', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('order_id')->nullable()->constrained('orders')->nullOnDelete();
+                $table->unsignedBigInteger('order_item_id')->nullable();
+                $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+                $table->string('status')->default('pending');
+                $table->timestamps();
+            });
+        }
             $table->timestamps();
             $table->unsignedBigInteger('parent_id')->nullable();
             $table->softDeletes();
@@ -311,6 +326,17 @@ class EventSystemTest extends TestCase
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
             $table->timestamps();
         });
+        // FCM channel resolves user device tokens during notification fanout.
+        if (!Schema::hasTable('device_tokens')) {
+            Schema::create('device_tokens', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+                $table->string('token')->unique();
+                $table->string('device_type')->nullable();
+                $table->timestamps();
+            });
+        }
+
     }
 
     private function seedBaseData(): void

@@ -265,14 +265,10 @@ class PromotionProductionHardenTest extends TestCase
         $service = app(PromotionService::class);
         $totals = $service->applySelectedPromotion($cart->fresh(), $giftPromotion->id, $giftProduct->id);
 
-        $giftItem = CartItem::query()
-            ->where('cart_id', $cart->id)
-            ->where('is_gift', true)
-            ->first();
-
-        $this->assertNotNull($giftItem);
-        $this->assertEquals($giftProduct->id, $giftItem->product_id);
-        $this->assertEquals(0, $giftItem->price);
+        // NEW CONTRACT: gift becomes an ORDER-LINE DESCRIPTOR; the cart is untouched.
+        $this->assertNotEmpty($totals->giftItems);
+        $this->assertEquals($giftProduct->id, $totals->giftItems[0]['product_id']);
+        $this->assertEquals(0, CartItem::query()->where('cart_id', $cart->id)->where('is_gift', true)->count());
         $this->assertTrue($totals->hasPromotion());
     }
 
@@ -305,15 +301,13 @@ class PromotionProductionHardenTest extends TestCase
             'product_variant_id' => $giftVariant->id,
         ]);
 
+        // NEW CONTRACT: an explicitly selected OOS gift fails loudly instead
+        // of silently disappearing from the order.
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Selected gift product is not available');
+
         $service = app(PromotionService::class);
-        $totals = $service->applySelectedPromotion($cart->fresh(), $giftPromotion->id, $outOfStockGift->id);
-
-        $giftItems = CartItem::query()
-            ->where('cart_id', $cart->id)
-            ->where('is_gift', true)
-            ->get();
-
-        $this->assertTrue($giftItems->isEmpty(), 'Gift item should not be added when stock is 0');
+        $service->applySelectedPromotion($cart->fresh(), $giftPromotion->id, $outOfStockGift->id);
     }
 
     /** @test */
@@ -374,16 +368,11 @@ class PromotionProductionHardenTest extends TestCase
         $service = app(PromotionService::class);
         $totals = $service->applySelectedPromotion($cart->fresh(), $giftPromotion->id, $giftProduct->id);
 
-        $giftItem = CartItem::query()
-            ->where('cart_id', $cart->id)
-            ->where('is_gift', true)
-            ->first();
-
-        $this->assertNotNull($giftItem);
-        $this->assertEquals($giftProduct->id, $giftItem->product_id);
-        $this->assertNull($giftItem->product_variant_id);
-        $this->assertEquals(0, $giftItem->price);
+        $this->assertNotEmpty($totals->giftItems);
+        $this->assertEquals($giftProduct->id, $totals->giftItems[0]['product_id']);
+        $this->assertNull($totals->giftItems[0]['product_variant_id']);
         $this->assertTrue($totals->hasPromotion());
+        $this->assertEquals(0, CartItem::query()->where('cart_id', $cart->id)->where('is_gift', true)->count());
     }
 
     /** @test */
@@ -418,14 +407,9 @@ class PromotionProductionHardenTest extends TestCase
         $service = app(PromotionService::class);
         $totals = $service->applySelectedPromotion($cart->fresh(), $giftPromotion->id, $giftProduct->id);
 
-        $giftItem = CartItem::query()
-            ->where('cart_id', $cart->id)
-            ->where('is_gift', true)
-            ->first();
-
-        $this->assertNotNull($giftItem);
-        $this->assertEquals($giftProduct->id, $giftItem->product_id);
-        $this->assertEquals($giftVariant->id, $giftItem->product_variant_id);
+        $this->assertNotEmpty($totals->giftItems);
+        $this->assertEquals($giftProduct->id, $totals->giftItems[0]['product_id']);
+        $this->assertEquals($giftVariant->id, $totals->giftItems[0]['product_variant_id']);
         $this->assertTrue($totals->hasPromotion());
     }
 
@@ -878,21 +862,13 @@ class PromotionProductionHardenTest extends TestCase
         ]);
 
         $service = app(PromotionService::class);
-        $service->applySelectedPromotion($cart->fresh(), $giftPromotion->id, $giftProduct->id);
+        $totals = $service->applySelectedPromotion($cart->fresh(), $giftPromotion->id, $giftProduct->id);
 
-        $giftItem = CartItem::query()
-            ->where('cart_id', $cart->id)
-            ->where('is_gift', true)
-            ->first();
+        // NEW CONTRACT: descriptor carries the gift product id.
+        $this->assertNotEmpty($totals->giftItems);
+        $this->assertEquals($giftProduct->id, $totals->giftItems[0]['product_id']);
 
-        $this->assertNotNull($giftItem);
-        $this->assertEquals($giftProduct->id, $giftItem->product_id);
-
-        $selectedProductId = $cart->items()
-            ->firstWhere('is_gift', true)
-            ?->product_id;
-
-        $this->assertEquals($giftProduct->id, $selectedProductId);
+        $this->assertEquals(0, CartItem::query()->where('cart_id', $cart->id)->where('is_gift', true)->count());
     }
 
     /** @test */
@@ -939,11 +915,13 @@ class PromotionProductionHardenTest extends TestCase
     /** @test */
     public function simple_gift_reserves_inventory(): void
     {
+        // NEW CONTRACT: gift reservation happens on the ORDER via
+        // OrderReservationService — simple (variant-less) gifts included.
         $user = $this->makeUser();
         Sanctum::actingAs($user);
 
         $cartProduct = $this->makeSimpleProduct('Item', 100, 10);
-        $cart = $this->makeCartWithItem($user, $cartProduct, 100);
+        $this->makeCartWithItem($user, $cartProduct, 100);
 
         $giftProduct = $this->makeSimpleProduct('Simple Gift', 30, 5);
 
@@ -960,21 +938,25 @@ class PromotionProductionHardenTest extends TestCase
         ]);
         $promotion->giftProducts()->attach($giftProduct->id, ['quantity' => 1]);
 
-        $inventoryService = app(CartInventoryService::class);
-        $item = $inventoryService->reserveGiftItem(
-            $cart->fresh(),
-            $giftProduct,
-            $promotion,
-            1,
-            null,
-            ShippingMethod::SCHEDULED,
-        );
+        $order = \Marvel\Database\Models\Order::create([
+            'user_id' => $user->id, 'name' => 'G', 'user_phone' => '01',
+            'user_email' => $user->email, 'address' => '{}',
+            'price' => 100, 'total_price' => 100, 'status' => 'pending',
+        ]);
+        $order->orderItems()->create([
+            'product_id' => $giftProduct->id,
+            'product_name' => $giftProduct->name,
+            'product_quantity' => 1,
+            'product_price' => 0,
+            'product_total_price' => 0,
+            'is_gift' => true,
+            'promotion_id' => $promotion->id,
+        ]);
 
-        $this->assertNotNull($item);
-        $this->assertEquals($giftProduct->id, $item->product_id);
-        $this->assertNull($item->product_variant_id);
-        $this->assertTrue((bool) $item->is_gift);
-        $this->assertEquals(0, $item->price);
+        app(\App\Services\Inventory\OrderReservationService::class)->reserveForOrder($order->refresh());
+
+        $this->assertEquals(1, $giftProduct->fresh()->reserved_quantity);
+        $this->assertEquals(0, $cartProduct->fresh()->reserved_quantity - $cartProduct->reserved_quantity + $cartProduct->reserved_quantity - $cartProduct->reserved_quantity); // no-op guard
     }
 
     // =========================================================================
@@ -1311,16 +1293,11 @@ class PromotionProductionHardenTest extends TestCase
 
         $service = app(PromotionService::class);
 
-        // First application: creates item with variant A
+        // First resolution: descriptor points at variant A
         $firstTotals = $service->applySelectedPromotion($cart->fresh(), $promotion->id, $giftProduct->id);
 
-        $firstItem = CartItem::query()
-            ->where('cart_id', $cart->id)
-            ->where('is_gift', true)
-            ->first();
-
-        $this->assertNotNull($firstItem);
-        $this->assertEquals($giftVariantA->id, $firstItem->product_variant_id);
+        $this->assertNotEmpty($firstTotals->giftItems);
+        $this->assertEquals($giftVariantA->id, $firstTotals->giftItems[0]['product_variant_id']);
 
         // Second application: same user switches to variant B
         $promotion->giftProducts()->sync([
@@ -1332,15 +1309,10 @@ class PromotionProductionHardenTest extends TestCase
 
         $secondTotals = $service->applySelectedPromotion($cart->fresh(), $promotion->id, $giftProduct->id);
 
-        $secondItem = CartItem::query()
-            ->where('cart_id', $cart->id)
-            ->where('is_gift', true)
-            ->first();
-
-        $this->assertNotNull($secondItem);
+        $this->assertNotEmpty($secondTotals->giftItems);
         $this->assertEquals(
             $giftVariantB->id,
-            $secondItem->product_variant_id,
+            $secondTotals->giftItems[0]['product_variant_id'],
             'Selected variant B should not be overwritten by old item variant A'
         );
     }

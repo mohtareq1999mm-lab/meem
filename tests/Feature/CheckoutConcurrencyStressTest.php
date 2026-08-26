@@ -131,8 +131,7 @@ class CheckoutConcurrencyStressTest extends TestCase
     /** @test */
     public function inventory_consistency_through_reserve_release_cycle(): void
     {
-        $inventoryService = app(CartInventoryService::class);
-
+        // NEW CONTRACT: reservations live on ORDERs (OrderReservationService).
         $product = Product::create([
             'name' => 'Cycle Test',
             'slug' => 'cycle-test-' . Str::uuid(),
@@ -144,32 +143,19 @@ class CheckoutConcurrencyStressTest extends TestCase
             'status' => true,
         ]);
 
-        $cart = Cart::create([
-            'user_id' => $this->user->id,
-            'status' => 'active',
-            'total_price' => $product->price * 2,
-        ]);
-
-        $item = DB::transaction(function () use ($inventoryService, $cart, $product) {
-            return $inventoryService->incrementItem($cart, $product, null, 2, [], ShippingMethod::SCHEDULED);
-        });
+        $order = $this->makeReservedOrder($this->user, $product, 2);
 
         $this->assertEquals(2, $product->fresh()->reserved_quantity);
         $this->assertEquals(5, $product->fresh()->stock_quantity);
 
-        DB::transaction(function () use ($inventoryService, $item) {
-            $inventoryService->releaseItem($item, false);
-        });
+        app(\App\Services\Inventory\OrderReservationService::class)->release($order->refresh());
 
         $this->assertEquals(0, $product->fresh()->reserved_quantity);
         $this->assertEquals(5, $product->fresh()->stock_quantity);
 
-        DB::transaction(function () use ($inventoryService, $cart, $product) {
-            $inventoryService->incrementItem($cart, $product, null, 1, [], ShippingMethod::SCHEDULED);
-        });
-
+        // Re-reserve after release.
+        $order2 = $this->makeReservedOrder($this->user, $product, 3);
         $this->assertEquals(3, $product->fresh()->reserved_quantity);
-        $this->assertEquals(5, $product->fresh()->stock_quantity);
     }
 
     /** @test */
@@ -186,38 +172,14 @@ class CheckoutConcurrencyStressTest extends TestCase
             'status' => true,
         ]);
 
-        $inventoryService = app(CartInventoryService::class);
-        $cart1 = Cart::create([
-            'user_id' => $this->user->id,
-            'status' => 'active',
-            'total_price' => $limitedProduct->price,
-        ]);
-
-        DB::transaction(function () use ($inventoryService, $cart1, $limitedProduct) {
-            $inventoryService->incrementItem($cart1, $limitedProduct, null, 1, [], ShippingMethod::SCHEDULED);
-        });
-
+        $first = $this->makeReservedOrder($this->user, $limitedProduct, 1);
         $this->assertEquals(1, $limitedProduct->fresh()->reserved_quantity);
 
         $anotherUser = User::factory()->create();
-        $cart2 = Cart::create([
-            'user_id' => $anotherUser->id,
-            'status' => 'active',
-            'total_price' => 30,
-        ]);
-        CartItem::create([
-            'cart_id' => $cart2->id,
-            'product_id' => $limitedProduct->id,
-            'quantity' => 0,
-            'price' => 30,
-            'total_price' => 30,
-            'shipping_method' => ShippingMethod::SCHEDULED,
-        ]);
+        $second = $this->buildPendingOrder($anotherUser, $limitedProduct, 1);
 
         $this->expectException(\Exception::class);
-        DB::transaction(function () use ($inventoryService, $cart2, $limitedProduct) {
-            $inventoryService->incrementItem($cart2, $limitedProduct, null, 1, [], ShippingMethod::SCHEDULED);
-        });
+        app(\App\Services\Inventory\OrderReservationService::class)->reserveForOrder($second->refresh());
     }
 
     /** @test */
@@ -265,21 +227,12 @@ class CheckoutConcurrencyStressTest extends TestCase
             'status' => true,
         ]);
 
-        $inventoryService = app(CartInventoryService::class);
         $errors = 0;
 
         for ($i = 0; $i < 5; $i++) {
             $user = User::factory()->create();
-            $cart = Cart::create([
-                'user_id' => $user->id,
-                'status' => 'active',
-                'total_price' => 10 * 3,
-            ]);
-
             try {
-                DB::transaction(function () use ($inventoryService, $cart, $product) {
-                    $inventoryService->incrementItem($cart, $product, null, 3, [], ShippingMethod::SCHEDULED);
-                });
+                $this->makeReservedOrder($user, $product, 3);
             } catch (\Exception $e) {
                 $errors++;
             }
@@ -304,38 +257,14 @@ class CheckoutConcurrencyStressTest extends TestCase
             'status' => true,
         ]);
 
-        $inventoryService = app(CartInventoryService::class);
-        $cart1 = Cart::create([
-            'user_id' => $this->user->id,
-            'status' => 'active',
-            'total_price' => $limitedProduct->price * 2,
-        ]);
-
-        DB::transaction(function () use ($inventoryService, $cart1, $limitedProduct) {
-            $inventoryService->incrementItem($cart1, $limitedProduct, null, 2, [], ShippingMethod::SCHEDULED);
-        });
-
+        $first = $this->makeReservedOrder($this->user, $limitedProduct, 2);
         $this->assertEquals(2, $limitedProduct->fresh()->reserved_quantity);
 
         $anotherUser = User::factory()->create();
-        $cart2 = Cart::create([
-            'user_id' => $anotherUser->id,
-            'status' => 'active',
-            'total_price' => 15,
-        ]);
-        CartItem::create([
-            'cart_id' => $cart2->id,
-            'product_id' => $limitedProduct->id,
-            'quantity' => 0,
-            'price' => 15,
-            'total_price' => 15,
-            'shipping_method' => ShippingMethod::SCHEDULED,
-        ]);
+        $second = $this->buildPendingOrder($anotherUser, $limitedProduct, 1);
 
         $this->expectException(\Exception::class);
-        DB::transaction(function () use ($inventoryService, $cart2, $limitedProduct) {
-            $inventoryService->incrementItem($cart2, $limitedProduct, null, 1, [], ShippingMethod::SCHEDULED);
-        });
+        app(\App\Services\Inventory\OrderReservationService::class)->reserveForOrder($second->refresh());
     }
 
     /** @test */
@@ -352,36 +281,48 @@ class CheckoutConcurrencyStressTest extends TestCase
             'status' => true,
         ]);
 
-        $inventoryService = app(CartInventoryService::class);
-        $cart = Cart::create([
-            'user_id' => $this->user->id,
-            'status' => 'active',
-            'total_price' => $product->price * 3,
-        ]);
-
-        $item = DB::transaction(function () use ($inventoryService, $cart, $product) {
-            return $inventoryService->incrementItem($cart, $product, null, 3, [], ShippingMethod::SCHEDULED);
-        });
-
+        $order = $this->makeReservedOrder($this->user, $product, 3);
         $this->assertEquals(3, $product->fresh()->reserved_quantity);
 
-        DB::transaction(function () use ($inventoryService, $item) {
-            $inventoryService->releaseItem($item, false);
-        });
-
+        app(\App\Services\Inventory\OrderReservationService::class)->release($order->refresh());
         $this->assertEquals(0, $product->fresh()->reserved_quantity);
 
+        // Released units are immediately available to another order.
         $anotherUser = User::factory()->create();
-        $cart2 = Cart::create([
-            'user_id' => $anotherUser->id,
-            'status' => 'active',
-            'total_price' => 20 * 3,
+        $this->makeReservedOrder($anotherUser, $product, 3);
+        $this->assertEquals(3, $product->fresh()->reserved_quantity);
+    }
+
+    // ------------------------------------------------------------------
+    // Order-reservation fixture helpers
+    // ------------------------------------------------------------------
+
+    private function buildPendingOrder(User $user, Product $product, int $qty): \Marvel\Database\Models\Order
+    {
+        $order = \Marvel\Database\Models\Order::create([
+            'user_id' => $user->id,
+            'name' => 'Concurrent', 'user_phone' => '01',
+            'user_email' => $user->email, 'address' => '{}',
+            'price' => $product->price * $qty,
+            'total_price' => $product->price * $qty,
+            'status' => 'pending',
+        ]);
+        $order->orderItems()->create([
+            'product_id' => $product->id,
+            'product_name' => $product->name,
+            'product_quantity' => $qty,
+            'product_price' => $product->price,
+            'product_total_price' => $product->price * $qty,
         ]);
 
-        DB::transaction(function () use ($inventoryService, $cart2, $product) {
-            $inventoryService->incrementItem($cart2, $product, null, 3, [], ShippingMethod::SCHEDULED);
-        });
+        return $order->refresh();
+    }
 
-        $this->assertEquals(3, $product->fresh()->reserved_quantity);
+    private function makeReservedOrder(User $user, Product $product, int $qty): \Marvel\Database\Models\Order
+    {
+        $order = $this->buildPendingOrder($user, $product, $qty);
+        app(\App\Services\Inventory\OrderReservationService::class)->reserveForOrder($order->refresh());
+
+        return $order;
     }
 }

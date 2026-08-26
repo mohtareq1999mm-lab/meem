@@ -37,6 +37,7 @@ use Tests\TestCase;
 
 class OrdersProductionHardenTest extends TestCase
 {
+
     use DatabaseTransactions, WithInvoiceTables;
 
     private const PREFIX = '/api/v1/general';
@@ -191,6 +192,10 @@ class OrdersProductionHardenTest extends TestCase
             $table->string('pickup_location_phone')->nullable();
             $table->string('pickup_location_coordinates')->nullable();
             $table->timestamp('inventory_restored_at')->nullable();
+                                    $table->string('inventory_state', 16)->default('none');
+            $table->timestamp('inventory_reserved_at')->nullable();
+            $table->timestamp('reservation_expires_at')->nullable();
+            $table->index(['status', 'reservation_expires_at']);
             $table->timestamps();
             $table->softDeletes();
         });
@@ -430,6 +435,17 @@ class OrdersProductionHardenTest extends TestCase
         $this->createInvoiceTables();
 
         $this->seedBaseData();
+        // FCM channel resolves user device tokens during notification fanout.
+        if (!Schema::hasTable('device_tokens')) {
+            Schema::create('device_tokens', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+                $table->string('token')->unique();
+                $table->string('device_type')->nullable();
+                $table->timestamps();
+            });
+        }
+
     }
 
     private function seedBaseData(): void
@@ -1004,7 +1020,7 @@ class OrdersProductionHardenTest extends TestCase
 
         $initialStock = $this->product->fresh()->stock_quantity;
 
-        // No cart — checkout will fail
+        // No cart ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â checkout will fail
         $this->postJson(self::PREFIX . '/checkout', [
             'name' => 'Test',
             'user_phone' => '01000000001',
@@ -1047,7 +1063,7 @@ class OrdersProductionHardenTest extends TestCase
 
         // Manually restore stock_quantity to what it was before checkout finalization
         // Since checkout already finalized, we need to test cancel flow via changeOrderStatus
-        // which fires OrderCancelled → RestoreProductInventory restores inventory
+        // which fires OrderCancelled ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ RestoreProductInventory restores inventory
 
         // First, set inventory_restored_at to null to allow restoration
         $order->update(['inventory_restored_at' => null]);
@@ -1287,7 +1303,15 @@ class OrdersProductionHardenTest extends TestCase
 
     // ===================== DUPLICATE CHECKOUT PREVENTION =====================
 
-    /** @test */
+    /**
+     * Reconciled to the order-owned-reservation contract (Phase -1):
+     * the first checkout consumes the ordered cart slice; an emptied cart is
+     * tidied away, so an immediate identical checkout is rejected with
+     * CART_NOT_FOUND instead of fabricating a second order. Pending-order
+     * reuse for carts that still hold items is covered by
+     * CheckoutPendingOrderRedesignTest and FastShippingService.
+     *
+     * @test */
     public function duplicate_checkout_request_creates_new_order()
     {
         $this->actAsCustomer();
@@ -1306,13 +1330,14 @@ class OrdersProductionHardenTest extends TestCase
         $response1 = $this->postJson(self::PREFIX . '/checkout', $payload);
         $response1->assertStatus(200);
 
-        // Second checkout should create a new order, not reuse pending
+        // Cart slice was consumed by the first checkout — no active cart remains.
         $response2 = $this->postJson(self::PREFIX . '/checkout', $payload);
-        $response2->assertStatus(200);
+        $response2->assertStatus(400);
 
-        // Two orders should exist (each checkout creates a new order)
-        $orders = Order::where('user_id', $this->customer->id)->count();
-        $this->assertEquals(2, $orders);
+        // Exactly one order exists and it owns its reservation.
+        $orders = Order::where('user_id', $this->customer->id)->get();
+        $this->assertCount(1, $orders);
+        $this->assertEquals(Order::INVENTORY_STATE_ACTIVE, $orders->first()->inventory_state);
     }
 
     // ===================== ORDER ITEMS PRICE SNAPSHOT =====================

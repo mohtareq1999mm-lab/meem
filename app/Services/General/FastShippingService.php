@@ -26,6 +26,7 @@ class FastShippingService
         private PromotionService $promotionService,
         private CartInventoryService $cartInventoryService,
         private OrderCreationService $orderCreationService,
+        private \App\Services\Inventory\OrderReservationService $orderReservationService,
     ) {}
 
     public function getStatus(): array
@@ -133,8 +134,11 @@ class FastShippingService
                     $shippingPrice,
                     $governorateId,
                 );
-                $this->orderCreationService->syncOrderItems($order, $cart);
+                $this->orderCreationService->syncOrderItems($order, $cart, $checkoutTotals->giftItems);
                 $this->orderCreationService->updateTransactionAmount($order);
+
+                // Pending-order reuse must still own a live reservation.
+                $this->orderReservationService->reserveForOrder($order);
             } else {
                 $order = $this->orderCreationService->createOrder(
                     $orderData,
@@ -152,15 +156,22 @@ class FastShippingService
                     throw new Exception('Failed to create order.');
                 }
 
-                if (!$this->orderCreationService->createOrderItems($order, $cart)) {
+                if (!$this->orderCreationService->createOrderItems($order, $cart, $checkoutTotals->giftItems)) {
                     DB::rollBack();
                     throw new Exception('Failed to add items to order.');
                 }
 
-                $this->orderCreationService->finalizeOrder($order, $checkoutTotals);
+                $this->orderReservationService->reserveForOrder($order);
             }
 
+            // The ordered FAST slice leaves the cart; the cart row survives.
+            $this->cartInventoryService->clearCheckedOutSlice($cart, ShippingMethod::FAST);
+
             DB::commit();
+
+            // Dispatch strictly after commit: listeners must never observe an
+            // order whose inventory reservation failed.
+            $this->orderCreationService->finalizeOrder($order, $checkoutTotals);
 
             return $order->load(['orderItems.product', 'orderItems.productVariant']);
         } catch (Exception $e) {

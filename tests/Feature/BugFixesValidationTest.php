@@ -26,6 +26,7 @@ use Tests\TestCase;
 
 class BugFixesValidationTest extends TestCase
 {
+
     use DatabaseTransactions, WithInvoiceTables;
 
     private User $admin;
@@ -146,6 +147,10 @@ class BugFixesValidationTest extends TestCase
             $table->string('pickup_location_phone')->nullable();
             $table->string('pickup_location_coordinates')->nullable();
             $table->timestamp('inventory_restored_at')->nullable();
+                                    $table->string('inventory_state', 16)->default('none');
+            $table->timestamp('inventory_reserved_at')->nullable();
+            $table->timestamp('reservation_expires_at')->nullable();
+            $table->index(['status', 'reservation_expires_at']);
             $table->timestamps();
             $table->softDeletes();
         });
@@ -217,6 +222,17 @@ class BugFixesValidationTest extends TestCase
             $table->unsignedBigInteger('permission_id');
             $table->primary(['role_id', 'permission_id']);
         });
+        // FCM channel resolves user device tokens during notification fanout.
+        if (!Schema::hasTable('device_tokens')) {
+            Schema::create('device_tokens', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+                $table->string('token')->unique();
+                $table->string('device_type')->nullable();
+                $table->timestamps();
+            });
+        }
+
     }
 
     private function seedPermissionsAndRoles(): void
@@ -609,6 +625,6 @@ class BugFixesValidationTest extends TestCase
     /** @test Debounced: InvoiceController issueDebitNote requires ISSUE_DEBIT_NOTE permission */
     public function issue_debit_note_route_requires_permission()
     {
-        $this->markTestSkipped('Requires full route setup with Sanctum auth — covered by middleware unit test above and permission DB seed.');
+        $this->markTestSkipped('Requires full route setup with Sanctum auth ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â covered by middleware unit test above and permission DB seed.');
     }
 }
