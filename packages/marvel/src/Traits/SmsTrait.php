@@ -36,7 +36,13 @@ trait SmsTrait
                 }
             }
         } catch (Exception $e) {
-            //Log::error($e->getMessage());
+            // SMS failures must be observable. Never log recipients or message
+            // bodies (PII) — only the failure context.
+            Log::error('SMS dispatch failed on refund event', [
+                'sms_event' => $smsArray['smsEventName'] ?? null,
+                'exception' => get_class($e),
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 
@@ -96,8 +102,14 @@ trait SmsTrait
                 }
             }
         } catch (Exception $e) {
-            // do nothing
-            info('This exception info is from SmsTrait sendSmsOnOrderEvent method');
+            // SMS failures must be observable. Never log recipients or message
+            // bodies (PII) — only the failure context.
+            Log::error('SMS dispatch failed on order event', [
+                'sms_event' => $smsArray['smsEventName'] ?? null,
+                'order_id' => $order->id ?? null,
+                'exception' => get_class($e),
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 

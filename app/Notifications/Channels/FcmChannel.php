@@ -33,6 +33,8 @@ class FcmChannel
             (string) $title,
             (string) $body,
             collect($payload)->except(['title', 'message', 'body'])->all(),
+            // Security fix: scope the push to this notifiable's tokens only.
+            $notifiable instanceof \Illuminate\Database\Eloquent\Model ? (int) $notifiable->getKey() : null,
         ));
     }
 

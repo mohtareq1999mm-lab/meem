@@ -13,6 +13,10 @@ use App\Events\CouponCreated;
 use App\Events\FlashSaleActivated;
 use App\Events\OrderCancelled;
 use App\Events\OrderCreated;
+// Phase 0 (#18): without this import the mapping below resolved to the
+// nonexistent App\Providers\OrderDelivered, leaving delivered notifications
+// permanently unwired despite production dispatches from OrderService.
+use App\Events\OrderDelivered;
 use App\Events\OrderStatusChanged;
 use App\Events\PaymentFailed;
 use App\Events\PaymentSucceeded;
@@ -101,6 +105,9 @@ class EventServiceProvider extends ServiceProvider
      * @var array
      */
     protected $listen = [
+        \Illuminate\Queue\Events\JobFailed::class => [
+            \App\Listeners\HandleFailedQueueJob::class,
+        ],
         AdminLoggedIn::class => [
             SendAdminLoginNotification::class,
         ],

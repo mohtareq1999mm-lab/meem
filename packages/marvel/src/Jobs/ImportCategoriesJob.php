@@ -164,19 +164,33 @@ class ImportCategoriesJob implements ShouldQueue
                 'failed_rows' => count($service->getFailedRows()),
             ]);
         } catch (Throwable $e) {
-            $import->update([
-                'status' => 'failed',
-                'errors' => [[
-                    'sheet' => 'system',
-                    'row' => 0,
-                    'name_en' => '',
-                    'name_ar' => '',
-                    'parent_name_en' => '',
-                    'error_message' => $e->getMessage(),
-                ]],
-            ]);
+            // P10: intermediate attempts must stay retryable (see ImportProductsJob).
+            if ($this->attempts() >= $this->tries) {
+                $import->update([
+                    'status' => 'failed',
+                    'errors' => [[
+                        'sheet' => 'system',
+                        'row' => 0,
+                        'name_en' => '',
+                        'name_ar' => '',
+                        'parent_name_en' => '',
+                        'error_message' => $e->getMessage(),
+                    ]],
+                ]);
 
-            $this->broadcastCategoryImportTerminal('failed', true);
+                $this->broadcastCategoryImportTerminal('failed', true);
+            } else {
+                $import->update([
+                    'errors' => array_merge($import->errors ?? [], [[
+                        'sheet' => 'system',
+                        'row' => 0,
+                        'name_en' => '',
+                        'name_ar' => '',
+                        'parent_name_en' => '',
+                        'error_message' => 'Attempt ' . $this->attempts() . ': ' . $e->getMessage(),
+                    ]]),
+                ]);
+            }
 
             throw $e;
         }

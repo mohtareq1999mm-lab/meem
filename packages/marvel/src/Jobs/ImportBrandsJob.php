@@ -178,24 +178,37 @@ class ImportBrandsJob implements ShouldQueue
                 ]
             );
         } catch (Throwable $e) {
-            $import->update([
-                'status' => 'failed',
-                'errors' => [[
-                    'sheet' => 'system',
-                    'row' => 0,
-                    'name_en' => '',
-                    'name_ar' => '',
-                    'error_message' => $e->getMessage(),
-                ]],
-            ]);
+            // P10: intermediate attempts must stay retryable (see ImportProductsJob).
+            if ($this->attempts() >= $this->tries) {
+                $import->update([
+                    'status' => 'failed',
+                    'errors' => [[
+                        'sheet' => 'system',
+                        'row' => 0,
+                        'name_en' => '',
+                        'name_ar' => '',
+                        'error_message' => $e->getMessage(),
+                    ]],
+                ]);
 
-            $this->broadcastFileOperationTerminal(
-                FileOperationEvent::BRAND_IMPORT_PROGRESS,
-                'brand-import',
-                $this->importId,
-                'failed',
-                true
-            );
+                $this->broadcastFileOperationTerminal(
+                    FileOperationEvent::BRAND_IMPORT_PROGRESS,
+                    'brand-import',
+                    $this->importId,
+                    'failed',
+                    true
+                );
+            } else {
+                $import->update([
+                    'errors' => array_merge($import->errors ?? [], [[
+                        'sheet' => 'system',
+                        'row' => 0,
+                        'name_en' => '',
+                        'name_ar' => '',
+                        'error_message' => 'Attempt ' . $this->attempts() . ': ' . $e->getMessage(),
+                    ]]),
+                ]);
+            }
 
             throw $e;
         }

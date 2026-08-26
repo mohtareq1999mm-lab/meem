@@ -171,18 +171,30 @@ class ImportProductsJob implements ShouldQueue
                 ]
             );
         } catch (Throwable $e) {
-            $import->update([
-                'status' => 'failed',
-                'errors' => [['sheet' => 'system', 'row' => 0, 'sku' => '', 'error_message' => $e->getMessage()]],
-            ]);
+            // P10: intermediate attempts must stay retryable. Only the terminal
+            // attempt may flip status to failed — otherwise the terminal-state
+            // guard at the top of handle() turns tries 2..N into silent no-ops.
+            if ($this->attempts() >= $this->tries) {
+                $import->update([
+                    'status' => 'failed',
+                    'errors' => [['sheet' => 'system', 'row' => 0, 'sku' => '', 'error_message' => $e->getMessage()]],
+                ]);
 
-            $this->broadcastFileOperationTerminal(
-                FileOperationEvent::PRODUCT_IMPORT_PROGRESS,
-                'product-import',
-                $this->importId,
-                'failed',
-                true
-            );
+                $this->broadcastFileOperationTerminal(
+                    FileOperationEvent::PRODUCT_IMPORT_PROGRESS,
+                    'product-import',
+                    $this->importId,
+                    'failed',
+                    true
+                );
+            } else {
+                // Keep processing state so the retry proceeds; record diagnostics.
+                $import->update([
+                    'errors' => array_merge($import->errors ?? [], [
+                        ['sheet' => 'system', 'row' => 0, 'sku' => '', 'error_message' => 'Attempt ' . $this->attempts() . ': ' . $e->getMessage()],
+                    ]),
+                ]);
+            }
 
             throw $e;
         }

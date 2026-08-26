@@ -33,6 +33,11 @@ class Kernel extends ConsoleKernel
         // PaymentReconciliationJob (meem-medium, tries=1). withoutOverlapping
         // prevents concurrent reconciliation runs.
         $schedule->command('payments:reconcile')->hourly()->withoutOverlapping();
+
+        // Phase 0: prune permanently-failed jobs older than 30 days. The
+        // failed_jobs table remains the failure record during that window;
+        // HandleFailedQueueJob alerts on every final failure at occurrence time.
+        $schedule->command('queue:prune-failed --hours=720')->dailyAt('03:15')->withoutOverlapping();
     }
 
     /**

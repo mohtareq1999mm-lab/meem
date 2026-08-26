@@ -9,7 +9,15 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 
 class SendUserPaymentSucceededNotification implements ShouldQueue
 {
-    public $queue = 'meem-medium';
+    /**
+     * P2: forward-compatible declaration. Laravel 10.30 ignores this on
+     * queued listeners — commit-safety is guaranteed by PaymentSucceeded
+     * implementing ShouldDispatchAfterCommit. Kept so a future framework
+     * upgrade honors per-listener deferral too.
+     */
+    public $afterCommit = true;
+
+    public $queue = \App\Enums\QueueName::MEDIUM->value;
 
     public function handle(PaymentSucceeded $event): void
     {

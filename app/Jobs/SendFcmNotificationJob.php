@@ -22,13 +22,25 @@ class SendFcmNotificationJob implements ShouldQueue
         public string $title,
         public string $body,
         public array $data,
+        public ?int $notifiableUserId = null,
     ) {
-        $this->onQueue(config('frontend.queue', 'meem-medium'));
+        $this->onQueue(config('frontend.queue', \App\Enums\QueueName::MEDIUM->value));
     }
 
     public function handle(FcmService $fcm): void
     {
+        // Security fix: push must target ONLY the intended notifiable's tokens.
+        // A missing user id is a programming error — never fall back to a
+        // device-table-wide broadcast.
+        if ($this->notifiableUserId === null) {
+            Log::warning('FCM job skipped: no target user resolved', [
+                'title' => $this->title,
+            ]);
+            return;
+        }
+
         DeviceToken::query()
+            ->where('user_id', $this->notifiableUserId)
             ->orderBy('id')
             ->chunk(500, function ($devices) use ($fcm) {
                 foreach ($devices->groupBy('client') as $client => $group) {

@@ -44,7 +44,7 @@ use Marvel\Database\Models\CouponAssignment;
 use Marvel\Database\Models\Order;
 use Marvel\Database\Models\Refund;
 use Marvel\Database\Models\User;
-use Marvel\Events\OrderDelivered;
+use App\Events\OrderDelivered;
 use Tests\TestCase;
 
 class UserNotificationTest extends TestCase

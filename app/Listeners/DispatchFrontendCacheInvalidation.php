@@ -16,6 +16,9 @@ class DispatchFrontendCacheInvalidation
             resource: $event->resource,
         );
 
-        SendFrontendWebhookJob::dispatchSync($payload);
+        // P5: queue the webhook instead of executing it inline. The job keeps
+        // its meem-high classification and retry semantics; observers firing
+        // many invalidations per request no longer block the HTTP response.
+        SendFrontendWebhookJob::dispatch($payload);
     }
 }
