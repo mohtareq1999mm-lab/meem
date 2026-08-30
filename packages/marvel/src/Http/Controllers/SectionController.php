@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Marvel\Enums\Permission;
 use Marvel\Http\Requests\StoreSectionRequest;
 use Marvel\Http\Requests\UpdateSectionRequest;
+use Marvel\Models\ContentPage;
 use Marvel\Models\Section;
 use Marvel\Traits\ApiResponse;
 
@@ -42,6 +43,8 @@ class SectionController extends CoreController
         }
 
         $section = Section::create($data);
+        $page = ContentPage::first();
+        $section->update(['content_page_id' => $page->id]);
         $section->loadMissing('sectionType.settings');
 
         return $this->apiResponse(SECTION_CREATED_SUCCESSFULLY, 200, true, PagesSectionResource::make($section));
