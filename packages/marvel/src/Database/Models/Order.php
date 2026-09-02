@@ -23,12 +23,13 @@ class Order extends Model
 
     /**
      * Order-owned inventory reservation states.
-     * Valid transitions: none->active, active->committed, active->released.
+     * Valid transitions: none->active, active->committed, active->released, committed->restored.
      */
     public const INVENTORY_STATE_NONE = 'none';
     public const INVENTORY_STATE_ACTIVE = 'active';
     public const INVENTORY_STATE_RELEASED = 'released';
     public const INVENTORY_STATE_COMMITTED = 'committed';
+    public const INVENTORY_STATE_RESTORED = 'restored';
 
     public const PAYMENT_STATUS_PENDING = 'payment-pending';
     public const PAYMENT_STATUS_SUCCESS = 'payment-success';
@@ -88,6 +89,7 @@ class Order extends Model
         'inventory_state',
         'inventory_reserved_at',
         'reservation_expires_at',
+        'inventory_state_restored_at',
         'coupon_consumed',
         'promotion_consumed',
         'paid_at',
@@ -112,6 +114,7 @@ class Order extends Model
         'cancelled_at' => 'datetime',
         'inventory_reserved_at' => 'datetime',
         'reservation_expires_at' => 'datetime',
+        'inventory_state_restored_at' => 'datetime',
     ];
 
     protected $hidden = [

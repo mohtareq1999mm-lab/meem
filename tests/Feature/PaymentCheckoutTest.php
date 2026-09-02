@@ -940,7 +940,8 @@ class PaymentCheckoutTest extends TestCase
             ],
         ]);
 
-$response = $this->postJson(self::PREFIX . '/general/fast-shipping/checkout', [
+        \Carbon\Carbon::setTestNow(\Carbon\Carbon::parse('2026-09-01 12:00:00'));
+        $response = $this->postJson(self::PREFIX . '/general/fast-shipping/checkout', [
             'name' => 'Test User',
             'user_phone' => '01000000000',
             'user_email' => 'test@test.com',
@@ -948,7 +949,7 @@ $response = $this->postJson(self::PREFIX . '/general/fast-shipping/checkout', [
             'governorate_id' => 1,
             'payment_method' => 'cod',
         ]);
-
+        \Carbon\Carbon::setTestNow();
         $response->assertStatus(200);
         $response->assertJsonPath('success', true);
         $response->assertJsonStructure(['data' => ['order_id']]);

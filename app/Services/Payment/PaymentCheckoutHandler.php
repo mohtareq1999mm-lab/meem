@@ -4,10 +4,12 @@ namespace App\Services\Payment;
 
 use App\Services\General\CartInventoryService;
 use App\Services\Payment\PaymentGatewayFactory;
+use App\Services\Coupon\CouponReservationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Marvel\Database\Models\Order;
 use Marvel\Database\Models\Transaction;
+use Marvel\Database\Models\Coupon;
 use Marvel\Enums\ShippingMethod;
 use Marvel\Traits\ApiResponse;
 
@@ -18,9 +20,10 @@ class PaymentCheckoutHandler
     public function __construct(
         private PaymentGatewayFactory $paymentGatewayFactory,
         private CartInventoryService $cartInventoryService,
+        private CouponReservationService $couponReservationService,
     ) {}
 
-    public function     handleOnlinePayment(
+    public function handleOnlinePayment(
         Request $request,
         Order $order,
         float $amount,
@@ -34,7 +37,7 @@ class PaymentCheckoutHandler
             return $this->apiResponse($e->getMessage(), 422, false);
         }
 
-$callbackUrl ??= route('api.checkout.callback');
+        $callbackUrl ??= route('api.checkout.callback');
         $errorUrl ??= route('api.checkout.errorCallback');
 
         $orderCurrency = $order->currency_code ?? $order->base_currency_code ?? config('payment.default_currency', 'EGP');
@@ -45,6 +48,18 @@ $callbackUrl ??= route('api.checkout.callback');
                 422,
                 false
             );
+        }
+
+        // Reserve coupon BEFORE creating gateway invoice (Rule 9)
+        if ($order->coupon) {
+            try {
+                $coupon = Coupon::where('code', $order->coupon)->first();
+                if ($coupon) {
+                    $this->couponReservationService->reserve($order, $coupon);
+                }
+            } catch (\RuntimeException $e) {
+                return $this->apiResponse($e->getMessage(), 422, false);
+            }
         }
 
         $result = $gatewayInstance->createInvoice(
@@ -82,6 +97,18 @@ $callbackUrl ??= route('api.checkout.callback');
 
     public function handleCodPayment(Request $request, Order $order, string $shippingMethod = ShippingMethod::SCHEDULED): JsonResponse
     {
+        // Reserve coupon for COD payment (Rule 9)
+        if ($order->coupon) {
+            try {
+                $coupon = Coupon::where('code', $order->coupon)->first();
+                if ($coupon) {
+                    $this->couponReservationService->reserve($order, $coupon);
+                }
+            } catch (\RuntimeException $e) {
+                return $this->apiResponse($e->getMessage(), 422, false);
+            }
+        }
+
         $transaction = Transaction::create([
             'order_id' => $order->id,
             'user_id' => $request->user()->id,
@@ -102,6 +129,18 @@ $callbackUrl ??= route('api.checkout.callback');
 
     public function handleCashierQrPayment(Request $request, Order $order, string $shippingMethod = ShippingMethod::SCHEDULED): JsonResponse
     {
+        // Reserve coupon for cashier payment (Rule 9)
+        if ($order->coupon) {
+            try {
+                $coupon = Coupon::where('code', $order->coupon)->first();
+                if ($coupon) {
+                    $this->couponReservationService->reserve($order, $coupon);
+                }
+            } catch (\RuntimeException $e) {
+                return $this->apiResponse($e->getMessage(), 422, false);
+            }
+        }
+
         $transaction = Transaction::create([
             'order_id' => $order->id,
             'user_id' => $request->user()->id,

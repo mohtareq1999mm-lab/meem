@@ -5,6 +5,7 @@ namespace Marvel\Jobs;
 use App\Events\FileOperationEvent;
 use App\Traits\BroadcastsFileOperationProgress;
 use Marvel\Database\Models\Import;
+use Marvel\Enums\ImportStatus;
 use Marvel\Exceptions\ImportCancelledException;
 use Marvel\Imports\ProductsImport;
 use Marvel\Services\Import\ProductImportService;
@@ -33,7 +34,7 @@ class ImportProductsJob implements ShouldQueue
     public function __construct(int $importId)
     {
         $this->importId = $importId;
-        $this->onQueue('meem-high');
+        $this->onQueue('meem-bulk');
     }
 
     protected function removeSignalFile(string $type): void
@@ -113,8 +114,8 @@ class ImportProductsJob implements ShouldQueue
             $status = 'completed';
             if (!empty($failedRows) && $successCount > 0) {
                 $status = 'completed_with_errors';
-            } elseif (empty($failedRows) && $successCount === 0) {
-                $status = 'failed';
+            } elseif ($successCount === 0) {
+                $status = ImportStatus::FAILED;
             }
 
             $import->update([

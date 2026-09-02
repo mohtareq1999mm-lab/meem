@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 use Marvel\Database\Models\Import;
+use Marvel\Enums\ImportType;
 use Marvel\Enums\Permission;
 use Marvel\Http\Requests\CategoryExportRequest;
 use Marvel\Jobs\ExportCategoriesJob;
@@ -43,17 +44,21 @@ class CategoryExportController extends Controller
 
     public function status(int $id): JsonResponse
     {
-        $import = Import::select([
-            'id',
-            'status',
-            'total_rows',
-            'processed_rows',
-            'success_rows',
-            'failed_rows',
-            'errors',
-            'created_at',
-            'updated_at',
-        ])->findOrFail($id);
+        $import = Import::where('type', ImportType::CATEGORY_EXPORT)
+            ->select([
+                'id',
+                'status',
+                'total_rows',
+                'processed_rows',
+                'success_rows',
+                'failed_rows',
+                'errors',
+                'created_at',
+                'updated_at',
+                'created_by',
+            ])->findOrFail($id);
+
+        $this->authorize('view', $import);
 
         $isTerminal = in_array($import->status, ['completed', 'completed_with_errors', 'failed', 'cancelled'], true);
 
@@ -81,16 +86,20 @@ class CategoryExportController extends Controller
 
     public function download(int $id): BinaryFileResponse|JsonResponse
     {
-        $import = Import::findOrFail($id);
+        $import = Import::where('type', ImportType::CATEGORY_EXPORT)
+            ->select(['id', 'status', 'file_path', 'file_name', 'created_by'])
+            ->findOrFail($id);
 
-        if ($import->status !== 'completed' || !$import->file_path || !Storage::disk('public')->exists($import->file_path)) {
+        $this->authorize('view', $import);
+
+        if ($import->status !== 'completed' || !$import->file_path || !Storage::disk('imports')->exists($import->file_path)) {
             return $this->apiResponse(__('message.MESSAGE.EXPORT_NOT_READY'), 409, false);
         }
 
         $filename = $import->file_name ?: basename($import->file_path);
 
         return response()->download(
-            Storage::disk('public')->path($import->file_path),
+            Storage::disk('imports')->path($import->file_path),
             $filename,
             ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
         );

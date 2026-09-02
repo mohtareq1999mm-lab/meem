@@ -49,6 +49,17 @@ class Import extends Model
             ImportStatus::COMPLETED,
             ImportStatus::COMPLETED_WITH_ERRORS,
             ImportStatus::FAILED,
+            ImportStatus::CANCELLED,
+        ]);
+    }
+
+    public function isTerminal(): bool
+    {
+        return in_array($this->status, [
+            ImportStatus::COMPLETED,
+            ImportStatus::COMPLETED_WITH_ERRORS,
+            ImportStatus::FAILED,
+            ImportStatus::CANCELLED,
         ]);
     }
 }

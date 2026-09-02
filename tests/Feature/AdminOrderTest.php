@@ -86,7 +86,7 @@ class AdminOrderTest extends TestCase
 
     private function createOrder(array $overrides = []): Order
     {
-        return Order::create(array_merge([
+        $data = array_merge([
             'user_id' => $this->normalUser->id,
             'name' => 'John Doe',
             'user_phone' => '+201234567890',
@@ -98,7 +98,26 @@ class AdminOrderTest extends TestCase
             'shipping_price' => 20.00,
             'status' => 'pending',
             'shipping_method' => 'SCHEDULED',
-        ], $overrides));
+        ], $overrides);
+
+        // Production constraint: only one pending per user (partial unique index).
+        // For tests that need multiple orders, automatically use a new user for additional pendings.
+        if (($data['status'] ?? 'pending') === 'pending' && isset($data['user_id'])) {
+            $exists = Order::where('user_id', $data['user_id'])->where('status', 'pending')->exists();
+            if ($exists) {
+                $newUser = User::create([
+                    'name' => 'Test User '.Str::random(4),
+                    'email' => 'test-'.Str::random(6).'@example.com',
+                    'password' => bcrypt('password'),
+                    'type' => 'user',
+                    'is_active' => true,
+                    'email_verified_at' => now(),
+                ]);
+                $data['user_id'] = $newUser->id;
+            }
+        }
+
+        return Order::create($data);
     }
 
     private function createOrderWithItems(Order $order): Order

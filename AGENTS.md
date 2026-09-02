@@ -970,3 +970,10 @@ Even if:
 Documentation must remain untouched until the user explicitly requests documentation generation.
 
 This rule has higher priority than any documentation-related instruction.
+
+<!-- lean-ctx -->
+## lean-ctx
+
+lean-ctx is active — the MCP tools replace native equivalents.
+Full rules: LEAN-CTX.md (open on demand — do not auto-load).
+<!-- /lean-ctx -->

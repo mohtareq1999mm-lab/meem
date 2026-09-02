@@ -9,11 +9,13 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 use Marvel\Database\Models\Import;
+use Marvel\Enums\ImportType;
 use Marvel\Enums\Permission;
 use Marvel\Http\Requests\BrandImportRequest;
 use Marvel\Jobs\ImportBrandsJob;
 use Marvel\Traits\ApiResponse;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\File\Exception\FileNotFoundException;
 
 class BrandImportController extends Controller
 {
@@ -70,7 +72,7 @@ class BrandImportController extends Controller
     {
         $file = $request->file('file');
 
-        $filePath = $file->store('imports', 'public');
+        $filePath = $file->store('imports', 'imports');
 
         $totalRows = $this->estimateRowCount($filePath);
 
@@ -133,17 +135,21 @@ class BrandImportController extends Controller
 
     public function status(int $id): JsonResponse
     {
-        $import = Import::select([
-            'id',
-            'status',
-            'total_rows',
-            'processed_rows',
-            'success_rows',
-            'failed_rows',
-            'errors',
-            'created_at',
-            'updated_at',
-        ])->findOrFail($id);
+        $import = Import::where('type', ImportType::BRAND_IMPORT)
+            ->select([
+                'id',
+                'status',
+                'total_rows',
+                'processed_rows',
+                'success_rows',
+                'failed_rows',
+                'errors',
+                'created_at',
+                'updated_at',
+                'created_by',
+            ])->findOrFail($id);
+
+        $this->authorize('view', $import);
 
         $cancelPending = $this->signalFileExists($id, 'cancel');
         $progressData = $this->readSignalFile($id, 'progress');
@@ -192,7 +198,11 @@ class BrandImportController extends Controller
 
     public function cancel(int $id): JsonResponse
     {
-        $import = Import::findOrFail($id);
+        $import = Import::where('type', ImportType::BRAND_IMPORT)
+            ->select(['id', 'status', 'created_by'])
+            ->findOrFail($id);
+
+        $this->authorize('view', $import);
 
         if (in_array($import->status, ['completed', 'completed_with_errors', 'failed', 'cancelled'], true)) {
             return $this->apiResponse(__('message.MESSAGE.IMPORT_CANNOT_CANCEL'), 409, false);
@@ -226,7 +236,11 @@ class BrandImportController extends Controller
 
     public function downloadErrors(int $id): BinaryFileResponse|JsonResponse
     {
-        $import = Import::findOrFail($id);
+        $import = Import::where('type', ImportType::BRAND_IMPORT)
+            ->select(['id', 'errors', 'created_by'])
+            ->findOrFail($id);
+
+        $this->authorize('view', $import);
 
         if (empty($import->errors)) {
             return $this->apiResponse(__('message.MESSAGE.IMPORT_NO_ERRORS'), 404, false);
@@ -270,12 +284,16 @@ class BrandImportController extends Controller
         )->deleteFileAfterSend(true);
     }
 
-    public function downloadSample(): BinaryFileResponse
+    public function downloadSample(): BinaryFileResponse|JsonResponse
     {
-        $samplePath = base_path('packages/marvel/resources/brands/brand-import-sample.xlsx');
+        $samplePath = config('marvel.import.samples.brand');
 
-        if (!file_exists($samplePath)) {
-            throw new FileNotFoundException($samplePath);
+        if (!is_file($samplePath)) {
+            return $this->apiResponse(
+                __('message.IMPORT.SAMPLE_NOT_FOUND'),
+                404,
+                false
+            );
         }
 
         return response()->download(

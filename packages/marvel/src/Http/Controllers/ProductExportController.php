@@ -17,12 +17,12 @@ class ProductExportController extends Controller
     public function __construct()
     {
         $this->middleware('auth:sanctum');
-        $this->middleware('permission:' . Permission::VIEW_PRODUCTS . '|' . Permission::SUPER_ADMIN);
+        $this->middleware('permission:' . Permission::EXPORT_PRODUCT . '|' . Permission::SUPER_ADMIN);
     }
 
     public function export(ProductExportRequest $request): BinaryFileResponse
     {
-        $filters = $request->only(['status', 'product_type', 'category_id', 'brand_id']);
+        $filters = $request->only(['status', 'product_type', 'item_type', 'category_id', 'brand_id']);
 
         $filename = 'products-export-' . Carbon::now()->format('Y-m-d-His') . '.xlsx';
 

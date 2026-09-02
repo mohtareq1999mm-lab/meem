@@ -13,7 +13,7 @@ class AuthServiceProvider extends ServiceProvider
      * @var array
      */
     protected $policies = [
-        // 'App\Models\Model' => 'App\Policies\ModelPolicy',
+        \Marvel\Database\Models\Import::class => \App\Policies\ImportPolicy::class,
     ];
 
     /**

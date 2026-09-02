@@ -116,7 +116,7 @@ class MigrateInventoryReservations extends Command
                         try {
                             if ($write) {
                                 // Throws on insufficient availability.
-                                $hours = max(1, (int) config('payment.order_timeout_hours', 24));
+                                $hours = \App\Services\Inventory\OrderReservationService::timeoutHoursFor($locked);
                                 $this->reserveLegacyOrder($locked, $hours);
                             } else {
                                 $this->assertLegacyOrderFits($locked);

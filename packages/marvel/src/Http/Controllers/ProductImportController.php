@@ -6,6 +6,7 @@ use App\Events\FileOperationEvent;
 use App\Http\Controllers\Controller;
 use App\Traits\BroadcastsFileOperationProgress;
 use Marvel\Database\Models\Import;
+use Marvel\Enums\ImportType;
 use Marvel\Http\Requests\ProductImportRequest;
 use Marvel\Jobs\ImportProductsJob;
 use Illuminate\Database\QueryException;
@@ -23,7 +24,7 @@ class ProductImportController extends Controller
     public function __construct()
     {
         $this->middleware('auth:sanctum');
-        $this->middleware('permission:' . Permission::CREATE_PRODUCT . '|' . Permission::SUPER_ADMIN);
+        $this->middleware('permission:' . Permission::IMPORT_PRODUCT . '|' . Permission::SUPER_ADMIN);
     }
 
     protected function readSignalFile(int $importId, string $type): ?array
@@ -65,7 +66,7 @@ class ProductImportController extends Controller
     {
         $file = $request->file('file');
 
-        $filePath = $file->store('imports', 'public');
+        $filePath = $file->store('imports', 'imports');
 
         $totalRows = $this->estimateRowCount($filePath);
 
@@ -124,7 +125,11 @@ class ProductImportController extends Controller
 
     public function status(int $id): JsonResponse
     {
-        $import = Import::select(['id', 'status', 'total_rows', 'processed_rows', 'success_rows', 'failed_rows', 'errors'])->findOrFail($id);
+        $import = Import::where('type', ImportType::PRODUCT_IMPORT)
+            ->select(['id', 'status', 'total_rows', 'processed_rows', 'success_rows', 'failed_rows', 'errors', 'created_by'])
+            ->findOrFail($id);
+
+        $this->authorize('view', $import);
 
         $cancelPending = $this->signalFileExists($id, 'cancel');
         $progressData = $this->readSignalFile($id, 'progress');
@@ -168,7 +173,11 @@ class ProductImportController extends Controller
 
     public function downloadErrors(int $id): BinaryFileResponse|JsonResponse
     {
-        $import = Import::findOrFail($id);
+        $import = Import::where('type', ImportType::PRODUCT_IMPORT)
+            ->select(['id', 'errors', 'created_by'])
+            ->findOrFail($id);
+
+        $this->authorize('view', $import);
 
         if (empty($import->errors)) {
             return $this->apiResponse(__('message.MESSAGE.IMPORT_NO_ERRORS'), 404, false);
@@ -213,7 +222,11 @@ class ProductImportController extends Controller
 
     public function cancel(int $id): JsonResponse
     {
-        $import = Import::findOrFail($id);
+        $import = Import::where('type', ImportType::PRODUCT_IMPORT)
+            ->select(['id', 'status', 'created_by'])
+            ->findOrFail($id);
+
+        $this->authorize('view', $import);
 
         if (in_array($import->status, ['completed', 'completed_with_errors', 'failed', 'cancelled'], true)) {
             return $this->apiResponse(__('message.MESSAGE.IMPORT_CANNOT_CANCEL'), 409, false);
@@ -245,12 +258,16 @@ class ProductImportController extends Controller
         ]);
     }
 
-    public function downloadSample(): BinaryFileResponse
+    public function downloadSample(): BinaryFileResponse|JsonResponse
     {
-        $samplePath = base_path('packages/marvel/resources/products/product-import-sample.xlsx');
+        $samplePath = config('marvel.import.samples.product');
 
-        if (!file_exists($samplePath)) {
-            throw new FileNotFoundException($samplePath);
+        if (!is_file($samplePath)) {
+            return $this->apiResponse(
+                __('message.IMPORT.SAMPLE_NOT_FOUND'),
+                404,
+                false
+            );
         }
 
         return response()->download(

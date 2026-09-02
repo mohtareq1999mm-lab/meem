@@ -369,6 +369,7 @@ return [
     'IMPORT.BRAND.SLUG_CONFLICT' => 'المُعرّف مستخدم بالفعل لعلامة تجارية أخرى',
     'IMPORT.BRAND.INVALID_SLUG' => 'لا يمكن تحويل اسم العلامة إلى مُعرّف صالح',
     'IMPORT.BRAND.IMAGE_IMPORT_FAILED' => 'تعذر حفظ الشعار للعلامة التجارية',    'MESSAGE.PRODUCTS_DELETED_SUCCESSFULLY' => 'تم حذف المنتجات بنجاح',
+    'IMPORT.SAMPLE_NOT_FOUND' => 'ملف العينة غير موجود',
     'IMPORT.VALIDATION.FILE_REQUIRED' => 'ملف Excel مطلوب',
     'IMPORT.VALIDATION.FILE_MIMES' => 'يجب أن يكون الملف بصيغة Excel صالحة (xlsx, xls, or ods)',
     'IMPORT.VALIDATION.FILE_MAX' => 'حجم الملف يجب ألا يتجاوز 20 ميغابايت',

@@ -198,12 +198,25 @@ class OrderReservationService
 
     private function markReserved(Order $order): void
     {
-        $hours = max(1, (int) config('payment.order_timeout_hours', 24));
+        $hours = self::timeoutHoursFor($order);
 
         $order->forceFill([
             'inventory_state' => Order::INVENTORY_STATE_ACTIVE,
             'inventory_reserved_at' => now(),
             'reservation_expires_at' => $order->created_at ? $order->created_at->copy()->addHours($hours) : now()->addHours($hours),
         ])->save();
+    }
+
+    /**
+     * Timeout matrix: Online and Pay-at-Cashier orders expire after 24 hours;
+     * COD/Delivery orders expire after 7 days (never the same window).
+     */
+    public static function timeoutHoursFor(Order $order): int
+    {
+        if ($order->payment_method === 'cod') {
+            return max(1, (int) config('payment.cod_order_timeout_hours', 24 * 7));
+        }
+
+        return max(1, (int) config('payment.order_timeout_hours', 24));
     }
 }

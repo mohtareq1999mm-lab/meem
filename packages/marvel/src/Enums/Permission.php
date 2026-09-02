@@ -239,6 +239,8 @@ final class Permission extends Enum
     public const DELETE_CATEGORY = 'delete-category';
     public const IMPORT_CATEGORY = 'import-category';
     public const EXPORT_CATEGORY = 'export-category';
+    public const IMPORT_PRODUCT = 'import-product';
+    public const EXPORT_PRODUCT = 'export-product';
     public const IMPORT_BRAND = 'import-brand';
     public const EXPORT_BRAND = 'export-brand';
     public const CREATE_BRAND = 'create-brand';

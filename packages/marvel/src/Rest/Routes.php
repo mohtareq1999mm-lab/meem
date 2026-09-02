@@ -135,12 +135,12 @@ Route::middleware(['auth:sanctum', 'throttle:admin'])->group(function () {
     // single-segment GETs (e.g. /brands/export) are not captured by brands/{brand}.
     Route::post('brands/import', [\Marvel\Http\Controllers\BrandImportController::class, 'import'])->name('admin.brands.import');
     Route::get('brands/import/sample', [\Marvel\Http\Controllers\BrandImportController::class, 'downloadSample'])->name('admin.brands.import.sample');
-    Route::get('brands/import/{id}', [\Marvel\Http\Controllers\BrandImportController::class, 'status'])->name('admin.brands.import.status');
-    Route::post('brands/import/{id}/cancel', [\Marvel\Http\Controllers\BrandImportController::class, 'cancel'])->name('admin.brands.import.cancel');
-    Route::get('brands/import/{id}/download-errors', [\Marvel\Http\Controllers\BrandImportController::class, 'downloadErrors'])->name('admin.brands.import.download-errors');
+    Route::get('brands/import/{id}', [\Marvel\Http\Controllers\BrandImportController::class, 'status'])->whereNumber('id')->name('admin.brands.import.status');
+    Route::post('brands/import/{id}/cancel', [\Marvel\Http\Controllers\BrandImportController::class, 'cancel'])->whereNumber('id')->name('admin.brands.import.cancel');
+    Route::get('brands/import/{id}/download-errors', [\Marvel\Http\Controllers\BrandImportController::class, 'downloadErrors'])->whereNumber('id')->name('admin.brands.import.download-errors');
     Route::get('brands/export', [\Marvel\Http\Controllers\BrandExportController::class, 'export'])->name('admin.brands.export');
-    Route::get('brands/export/{id}', [\Marvel\Http\Controllers\BrandExportController::class, 'status'])->name('admin.brands.export.status');
-    Route::get('brands/export/{id}/download', [\Marvel\Http\Controllers\BrandExportController::class, 'download'])->name('admin.brands.export.download');
+    Route::get('brands/export/{id}', [\Marvel\Http\Controllers\BrandExportController::class, 'status'])->whereNumber('id')->name('admin.brands.export.status');
+    Route::get('brands/export/{id}/download', [\Marvel\Http\Controllers\BrandExportController::class, 'download'])->whereNumber('id')->name('admin.brands.export.download');
     Route::put('brands/reorder', [BrandController::class, 'reorder']);
     Route::apiResource('brands', BrandController::class);
 
@@ -153,12 +153,12 @@ Route::middleware(['auth:sanctum', 'throttle:admin'])->group(function () {
     Route::put('categories/feature', [CategoryController::class, 'addOrRemoveCategoryFromFeature']);
     Route::post('categories/import', [CategoryImportController::class, 'import'])->name('admin.categories.import');
     Route::get('categories/import/sample', [CategoryImportController::class, 'downloadSample'])->name('admin.categories.import.sample');
-    Route::get('categories/import/{id}', [CategoryImportController::class, 'status'])->name('admin.categories.import.status');
-    Route::post('categories/import/{id}/cancel', [CategoryImportController::class, 'cancel'])->name('admin.categories.import.cancel');
-    Route::get('categories/import/{id}/download-errors', [CategoryImportController::class, 'downloadErrors'])->name('admin.categories.import.download-errors');
+    Route::get('categories/import/{id}', [CategoryImportController::class, 'status'])->whereNumber('id')->name('admin.categories.import.status');
+    Route::post('categories/import/{id}/cancel', [CategoryImportController::class, 'cancel'])->whereNumber('id')->name('admin.categories.import.cancel');
+    Route::get('categories/import/{id}/download-errors', [CategoryImportController::class, 'downloadErrors'])->whereNumber('id')->name('admin.categories.import.download-errors');
     Route::get('categories/export', [CategoryExportController::class, 'export'])->name('admin.categories.export');
-    Route::get('categories/export/{id}', [CategoryExportController::class, 'status'])->name('admin.categories.export.status');
-    Route::get('categories/export/{id}/download', [CategoryExportController::class, 'download'])->name('admin.categories.export.download');
+    Route::get('categories/export/{id}', [CategoryExportController::class, 'status'])->whereNumber('id')->name('admin.categories.export.status');
+    Route::get('categories/export/{id}/download', [CategoryExportController::class, 'download'])->whereNumber('id')->name('admin.categories.export.download');
     Route::post('categories/bulk-delete', [CategoryController::class, 'bulkDelete'])->name('admin.categories.bulk-delete');
     Route::get('categories/bulk-delete/{id}', [CategoryController::class, 'bulkDeleteStatus'])->name('admin.categories.bulk-delete.status');
     Route::post('categories/bulk-delete/{id}/cancel', [CategoryController::class, 'cancelBulkDelete'])->name('admin.categories.bulk-delete.cancel');
@@ -225,9 +225,9 @@ Route::middleware(['auth:sanctum', 'throttle:admin'])->group(function () {
     Route::get('products/import/sample', [ProductImportController::class, 'downloadSample'])->name('admin.products.import.sample');
     Route::get('products/export', [ProductExportController::class, 'export'])->name('admin.products.export');
     Route::post('products/import', [ProductImportController::class, 'import'])->name('admin.products.import');
-    Route::get('products/import/{id}', [ProductImportController::class, 'status'])->name('admin.products.import.status');
-    Route::post('products/import/{id}/cancel', [ProductImportController::class, 'cancel'])->name('admin.products.import.cancel');
-    Route::get('products/import/{id}/download-errors', [ProductImportController::class, 'downloadErrors'])->name('admin.products.import.download-errors');
+    Route::get('products/import/{id}', [ProductImportController::class, 'status'])->whereNumber('id')->name('admin.products.import.status');
+    Route::post('products/import/{id}/cancel', [ProductImportController::class, 'cancel'])->whereNumber('id')->name('admin.products.import.cancel');
+    Route::get('products/import/{id}/download-errors', [ProductImportController::class, 'downloadErrors'])->whereNumber('id')->name('admin.products.import.download-errors');
     Route::apiResource('products', ProductController::class);
 
     //==================== digital assets (product files) ====================/

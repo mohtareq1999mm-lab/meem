@@ -49,6 +49,7 @@ use App\Listeners\SendUserCouponAvailableNotification;
 use App\Listeners\SendUserCouponUsedNotification;
 use App\Listeners\SendUserOrderCancelledNotification;
 use App\Listeners\SendUserOrderCreatedNotification;
+use App\Listeners\SendUserOrderDeliveredNotification;
 use App\Listeners\SendUserPaymentFailedNotification;
 use App\Listeners\SendUserPaymentSucceededNotification;
 use App\Listeners\SendUserProductBackInStockNotification;

@@ -18,7 +18,7 @@ use Tests\TestCase;
 
 /**
  * Behavioral regression coverage for Brand Import/Export, mirroring the
- * proven Category architecture (async jobs on meem-high, signal-file
+ * proven Category architecture (async jobs on meem-bulk, signal-file
  * progress/cancel, partial-failure error artifacts).
  */
 class BrandImportExportTest extends TestCase
@@ -60,7 +60,7 @@ class BrandImportExportTest extends TestCase
             });
         }
 
-        foreach ([Permission::IMPORT_BRAND, Permission::EXPORT_BRAND] as $perm) {
+        foreach ([Permission::IMPORT_BRAND, Permission::EXPORT_BRAND, Permission::SUPER_ADMIN] as $perm) {
             SpatiePermission::firstOrCreate(['name' => $perm, 'guard_name' => 'api']);
         }
         foreach (['import-category', 'export-category'] as $slug) {
@@ -122,7 +122,7 @@ class BrandImportExportTest extends TestCase
         $response->assertStatus(202);
         $response->assertJsonPath('success', true);
         Queue::assertPushed(ImportBrandsJob::class);
-        Queue::assertPushedOn('meem-high', ImportBrandsJob::class);
+        Queue::assertPushedOn('meem-bulk', ImportBrandsJob::class);
     }
 
     /** @test */
@@ -153,7 +153,7 @@ class BrandImportExportTest extends TestCase
         $this->admin->givePermissionTo([Permission::IMPORT_BRAND]);
 
         $import = \Marvel\Database\Models\Import::create([
-            'type' => 'brand', 'file_path' => 'imports/none.xlsx', 'file_name' => 'x.xlsx',
+            'type' => 'brand-import', 'file_path' => 'imports/none.xlsx', 'file_name' => 'x.xlsx',
             'status' => 'completed', 'total_rows' => 0, 'created_by' => $this->admin->id,
         ]);
 

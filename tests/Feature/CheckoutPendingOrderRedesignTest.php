@@ -245,7 +245,7 @@ class CheckoutPendingOrderRedesignTest extends TestCase
     // Cart independence after checkout
     // =========================================================================
 
-    public function test_second_checkout_after_refill_creates_independent_order(): void
+    public function test_second_checkout_after_refill_reuses_pending_order(): void
     {
         $this->auth();
         $this->addItemToCart(1, 100.00);
@@ -259,13 +259,14 @@ class CheckoutPendingOrderRedesignTest extends TestCase
 
         $this->checkout();
 
+        // RULE 4-5: Should reuse the pending order, NOT create a duplicate
         $orders = Order::where('user_id', $this->user->id)->where('status', 'pending')->get();
-        $this->assertCount(2, $orders, 'Refilled cart must produce an independent second order');
+        $this->assertCount(1, $orders, 'Refilled cart must REUSE the pending order (Rule 4-5)');
 
-        $firstOrder = Order::find($firstOrderId);
-        $this->assertEquals(1, $firstOrder->orderItems()->sum('product_quantity'), 'First order snapshot immutable');
-        $secondOrder = $orders->firstWhere('id', '!=', $firstOrderId);
-        $this->assertEquals(3, $secondOrder->orderItems()->sum('product_quantity'));
+        // The reused order should be updated with new quantity
+        $reusedOrder = $orders->first();
+        $this->assertEquals($firstOrderId, $reusedOrder->id, 'Must reuse the same order ID');
+        $this->assertEquals(3, $reusedOrder->orderItems()->sum('product_quantity'), 'Order items synced with new cart');
     }
 
     public function test_cart_is_reusable_with_same_row_after_checkout(): void

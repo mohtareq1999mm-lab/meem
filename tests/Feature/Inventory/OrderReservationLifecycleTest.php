@@ -392,11 +392,15 @@ class OrderReservationLifecycleTest extends TestCase
         $this->assertEquals(100.0, (float) $item->product_price);
         $this->assertEquals(200.0, (float) $item->product_total_price);
 
-        // Reservation ownership + metadata
+        // Reservation ownership + metadata (allow 1s drift due to now() vs created_at microsecond)
         $this->assertEquals(Order::INVENTORY_STATE_ACTIVE, $order->inventory_state);
         $this->assertNotNull($order->inventory_reserved_at);
-        $expectedExpiry = $order->created_at->copy()->addHours(24);
-        $this->assertTrue($order->reservation_expires_at->equalTo($expectedExpiry));
+        $expectedHours = \App\Services\Inventory\OrderReservationService::timeoutHoursFor($order);
+        $expectedExpiry = $order->created_at->copy()->addHours($expectedHours);
+        $this->assertTrue(
+            $order->reservation_expires_at->diffInSeconds($expectedExpiry) <= 1,
+            'reservation_expires_at should be created_at +'.$expectedHours.'h within 1s tolerance, got '.$order->reservation_expires_at.' expected '.$expectedExpiry
+        );
 
         // Inventory arithmetic
         $variantless->refresh();

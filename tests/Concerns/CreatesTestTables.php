@@ -332,6 +332,18 @@ Schema::create('categories', function (Blueprint $table) {
             $table->index(['coupon_assignment_id', 'created_at']);
         });
 
+        Schema::create('coupon_reservations', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('coupon_id')->constrained('coupons')->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
+            $table->timestamp('reserved_at');
+            $table->timestamp('expires_at');
+            $table->timestamps();
+            $table->index(['coupon_id', 'expires_at']);
+            $table->unique(['order_id']);
+        });
+
         Schema::create('roles', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
@@ -489,6 +501,15 @@ Schema::create('categories', function (Blueprint $table) {
             $table->timestamps();
             $table->softDeletes();
         });
+
+        // Partial unique index for pending order race protection (production: 2026_08_31_130000)
+        // SQLite supports WHERE clause partial indexes.
+        try {
+            \Illuminate\Support\Facades\DB::statement("CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_user_pending_unique ON orders(user_id) WHERE status = 'pending'");
+        } catch (\Throwable $e) {
+            // Index creation failed on this engine — log but don't block tests
+            \Illuminate\Support\Facades\Log::warning('Could not create pending order unique index in test DB: '.$e->getMessage());
+        }
 
         Schema::create('order_products', function (Blueprint $table) {
             $table->id();

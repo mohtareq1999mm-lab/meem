@@ -395,10 +395,10 @@ class ProductImportService
             $variantData = [
                 'product_id' => $product->id,
                 'sku' => $row['variant_sku'] ?? null,
-                'price' => (float) ($row['price'] ?? 0),
-                'sale_price' => isset($row['sale_price']) && $row['sale_price'] !== '' ? (float) $row['sale_price'] : null,
-                'stock_quantity' => (int) ($row['quantity'] ?? 0),
-                'quantity' => (int) ($row['quantity'] ?? 0),
+                'price' => $this->validateNumeric($row['price'] ?? null, 'price', true),
+                'sale_price' => isset($row['sale_price']) && $row['sale_price'] !== '' ? $this->validateNumeric($row['sale_price'], 'sale_price', true) : null,
+                'stock_quantity' => $this->validateNumeric($row['quantity'] ?? null, 'quantity', false, true),
+                'quantity' => $this->validateNumeric($row['quantity'] ?? null, 'quantity', false, true),
                 'in_stock' => $this->parseBoolean($row['in_stock'] ?? true),
                 'height' => $row['height'] ?? null,
                 'width' => $row['width'] ?? null,
@@ -666,13 +666,19 @@ class ProductImportService
         }
 
         if (isset($row['price'])) {
+            if (!is_numeric($row['price']) || (float) $row['price'] < 0) {
+                throw new \InvalidArgumentException(__('message.IMPORT.PRODUCT.INVALID_PRICE'));
+            }
             $data['price'] = (float) $row['price'];
         }
 
         if (isset($row['product_type'])) {
-            $data['product_type'] = in_array($row['product_type'], ProductType::getValues())
-                ? $row['product_type']
-                : ProductType::SIMPLE;
+            if (!in_array($row['product_type'], ProductType::getValues(), true)) {
+                throw new \InvalidArgumentException(
+                    "Invalid product_type '{$row['product_type']}'. Allowed: " . implode(', ', ProductType::getValues())
+                );
+            }
+            $data['product_type'] = $row['product_type'];
         }
 
         if (isset($row['item_type'])) {
@@ -689,6 +695,9 @@ class ProductImportService
         }
 
         if (isset($row['quantity'])) {
+            if (!is_numeric($row['quantity']) || (int) $row['quantity'] < 0) {
+                throw new \InvalidArgumentException(__('message.IMPORT.PRODUCT.INVALID_QUANTITY'));
+            }
             $data['stock_quantity'] = (int) $row['quantity'];
             $data['quantity'] = (int) $row['quantity'];
         }
@@ -706,12 +715,18 @@ class ProductImportService
         }
 
         if (isset($row['discount_type'])) {
-            $data['discount_type'] = in_array($row['discount_type'], DiscountType::getValues())
-                ? $row['discount_type']
-                : DiscountType::PERCENTAGE;
+            if (!in_array($row['discount_type'], DiscountType::getValues(), true)) {
+                throw new \InvalidArgumentException(
+                    "Invalid discount_type '{$row['discount_type']}'. Allowed: " . implode(', ', DiscountType::getValues())
+                );
+            }
+            $data['discount_type'] = $row['discount_type'];
         }
 
         if (isset($row['discount_amount'])) {
+            if (!is_numeric($row['discount_amount']) || (float) $row['discount_amount'] < 0) {
+                throw new \InvalidArgumentException(__('message.IMPORT.PRODUCT.INVALID_DISCOUNT_AMOUNT'));
+            }
             $data['discount_amount'] = (float) $row['discount_amount'];
         }
 
@@ -731,6 +746,9 @@ class ProductImportService
         }
 
         if (isset($row['pieces'])) {
+            if (!is_numeric($row['pieces']) || (int) $row['pieces'] < 0) {
+                throw new \InvalidArgumentException(__('message.IMPORT.PRODUCT.INVALID_PIECES'));
+            }
             $data['pieces'] = (int) $row['pieces'];
         }
 
@@ -739,6 +757,25 @@ class ProductImportService
         }
 
         return $data;
+    }
+
+    protected function validateNumeric($value, string $field, bool $allowFloat = false, bool $isInteger = false)
+    {
+        if ($value === null || $value === '') {
+            return $isInteger ? 0 : 0.0;
+        }
+
+        if (!is_numeric($value)) {
+            throw new \InvalidArgumentException(__('message.IMPORT.PRODUCT.INVALID_NUMERIC_FIELD', ['field' => $field]));
+        }
+
+        $numeric = $isInteger ? (int) $value : (float) $value;
+
+        if ($numeric < 0) {
+            throw new \InvalidArgumentException(__('message.IMPORT.PRODUCT.NEGATIVE_VALUE_NOT_ALLOWED', ['field' => $field]));
+        }
+
+        return $numeric;
     }
 
     protected function generateSlug(array $row, ?int $existingId = null): string

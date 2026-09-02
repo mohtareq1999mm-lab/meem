@@ -22,7 +22,7 @@ class ExportProductsJob implements ShouldQueue
     public function __construct(array $filters = [])
     {
         $this->filters = $filters;
-        $this->onQueue('meem-high');
+        $this->onQueue('meem-bulk');
     }
 
     public function handle(): void
@@ -31,6 +31,6 @@ class ExportProductsJob implements ShouldQueue
 
         $filename = 'products-export-' . now()->format('Y-m-d-His') . '.xlsx';
 
-        $export->store($filename, 'public');
+        $export->store($filename, 'imports');
     }
 }

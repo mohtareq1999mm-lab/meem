@@ -237,6 +237,7 @@ return [
     'ERROR.SOMETHING_WENT_WRONG' => 'Something went wrong.',
 
     // Import & Export
+    'IMPORT.SAMPLE_NOT_FOUND' => 'Sample file not found',
     'IMPORT.VALIDATION.FILE_REQUIRED' => 'An Excel file is required',
     'IMPORT.VALIDATION.FILE_MIMES' => 'The file must be a valid Excel file (xlsx, xls, or ods)',
     'IMPORT.VALIDATION.FILE_MAX' => 'The file size must not exceed 20 MB',

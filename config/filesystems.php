@@ -41,6 +41,12 @@ return [
             'visibility' => 'private',
         ],
 
+        'imports' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/imports'),
+            'visibility' => 'private',
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

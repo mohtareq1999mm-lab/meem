@@ -14,6 +14,7 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         \App\Console\Commands\CancelUnpaidOrders::class,
+        \App\Console\Commands\ExpireCouponReservations::class,
         \App\Console\Commands\MigrateInventoryReservations::class,
         \App\Console\Commands\NotifyAbandonedCarts::class,
         \App\Console\Commands\NotifyPromotionsEndingSoon::class,
@@ -23,6 +24,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->command('orders:cancel-unpaid')->everyFiveMinutes()->withoutOverlapping();
+        $schedule->command('coupons:expire-reservations')->everyFiveMinutes()->withoutOverlapping();
         $schedule->command('cart:notify-abandoned')->hourly()->withoutOverlapping();
         $schedule->command('promotions:notify-ending-soon')->daily()->withoutOverlapping();
         $schedule->command('flash-sales:notify-ending-soon')->daily()->withoutOverlapping();

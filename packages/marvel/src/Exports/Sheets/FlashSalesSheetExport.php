@@ -26,6 +26,26 @@ class FlashSalesSheetExport implements FromCollection, WithTitle, WithHeadings
     {
         $query = Product::query()->with('flash_sales');
 
+        if (isset($this->filters['status'])) {
+            $query->where('status', $this->filters['status']);
+        }
+
+        if (isset($this->filters['product_type'])) {
+            $query->where('product_type', $this->filters['product_type']);
+        }
+
+        if (isset($this->filters['item_type']) && in_array($this->filters['item_type'], \Marvel\Enums\ItemType::getValues(), true)) {
+            $query->where('item_type', $this->filters['item_type']);
+        }
+
+        if (isset($this->filters['category_id'])) {
+            $query->whereHas('categories', fn($q) => $q->where('category_id', $this->filters['category_id']));
+        }
+
+        if (isset($this->filters['brand_id'])) {
+            $query->whereHas('brands', fn($q) => $q->where('brand_id', $this->filters['brand_id']));
+        }
+
         $products = $query->get();
         $rows = [];
 

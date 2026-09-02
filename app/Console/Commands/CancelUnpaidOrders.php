@@ -11,29 +11,39 @@ use App\Events\OrderStatusChanged;
 use App\Events\PaymentFailed;
 use App\Services\Inventory\OrderReservationService;
 use App\Services\Payment\PaymentGatewayFactory;
+use App\Services\Coupon\CouponReservationService;
 
 /**
- * 24-hour unpaid-order reaper.
+ * Unpaid/unactioned-order reaper.
  *
  * Cancels pending orders whose ORDER-owned reservation has expired and
  * releases exactly that reservation. It NEVER touches carts or cart items —
  * inventory ownership lives entirely with the Order.
+ *
+ * Timeout matrix (set on reservation_expires_at at reservation time by
+ * OrderReservationService::timeoutHoursFor(), not re-derived here):
+ *   Online          -> 24 hours
+ *   Pay at Cashier   -> 24 hours
+ *   COD / Delivery   -> 7 days
  */
 class CancelUnpaidOrders extends Command
 {
     protected $signature = 'orders:cancel-unpaid';
-    protected $description = 'Cancel pending orders whose 24-hour inventory reservation expired and release it';
+    protected $description = 'Cancel pending orders whose inventory reservation expired (24h Online/Cashier, 7d COD/Delivery) and release it';
 
     private OrderReservationService $orderReservationService;
     private PaymentGatewayFactory $paymentGatewayFactory;
+    private CouponReservationService $couponReservationService;
 
     public function __construct(
         OrderReservationService $orderReservationService,
         PaymentGatewayFactory $paymentGatewayFactory,
+        CouponReservationService $couponReservationService,
     ) {
         parent::__construct();
         $this->orderReservationService = $orderReservationService;
         $this->paymentGatewayFactory = $paymentGatewayFactory;
+        $this->couponReservationService = $couponReservationService;
     }
 
     public function handle(): int
@@ -83,6 +93,9 @@ class CancelUnpaidOrders extends Command
 
                 // Release THIS order's exact reservation first (active -> released).
                 $this->orderReservationService->release($lockedOrder);
+
+                // Release coupon reservation (Rule 14)
+                $this->couponReservationService->release($lockedOrder);
 
                 $cancelUpdateData = ['status' => 'cancelled'];
                 if (\Illuminate\Support\Facades\Schema::hasColumn('orders', 'payment_status')) {

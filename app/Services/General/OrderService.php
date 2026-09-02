@@ -29,6 +29,7 @@ use App\Events\OrderCancelled;
 use App\Events\OrderStatusChanged;
 use App\Services\Coupon\CouponCalculator;
 use App\Services\Coupon\CouponOrchestrator;
+use App\Services\Coupon\CouponReservationService;
 use Marvel\Enums\DiscountType;
 use Marvel\Services\Pricing\ProductPricingService;
 
@@ -52,7 +53,9 @@ class OrderService
         private OrderCreationService $orderCreationService,
         private CartInventoryService $cartInventoryService,
         private \App\Services\Inventory\OrderReservationService $orderReservationService,
+        private \App\Services\Inventory\InventoryRestoreService $inventoryRestoreService,
         private \App\Services\Invoice\InvoiceService $invoiceService,
+        private CouponReservationService $couponReservationService,
     ) {}
 
     public function paginateForUser(Request $request): LengthAwarePaginator
@@ -239,14 +242,37 @@ class OrderService
             }
             $governorateId = $shippingInfo['governorate_id'];
 
-            $order = $this->orderCreationService->createOrder(
-                $orderData, $cart, $checkoutTotals, null, null, null, $shippingPrice, $governorateId,
-            );
-            if (!$order) {
-                throw new \RuntimeException('Order creation failed.');
-            }
-            if (!$this->orderCreationService->createOrderItems($order, $cart, $checkoutTotals->giftItems)) {
-                throw new \RuntimeException('Order item creation failed.');
+            // Check for existing pending order (Rules 4-5: Payment retry reuses pending order)
+            $pendingOrder = $this->orderCreationService->findPendingOrderForUser($request->user()->id);
+
+            if ($pendingOrder) {
+                // Reuse existing pending order: update with new cart data
+                $order = $this->orderCreationService->updateOrder(
+                    $pendingOrder, $orderData, $cart, $checkoutTotals, null, null, null, $shippingPrice, $governorateId,
+                );
+
+                // Release old reservation before creating new one
+                $this->orderReservationService->release($order);
+
+                // CRITICAL FIX: Release old coupon reservation if coupon changed
+                // This prevents orphaned reservations when user changes coupon between retries
+                $this->couponReservationService->release($order);
+
+                // Sync order items with current cart
+                if (!$this->orderCreationService->syncOrderItems($order, $cart, $checkoutTotals->giftItems)) {
+                    throw new \RuntimeException('Order item sync failed.');
+                }
+            } else {
+                // Create new order
+                $order = $this->orderCreationService->createOrder(
+                    $orderData, $cart, $checkoutTotals, null, null, null, $shippingPrice, $governorateId,
+                );
+                if (!$order) {
+                    throw new \RuntimeException('Order creation failed.');
+                }
+                if (!$this->orderCreationService->createOrderItems($order, $cart, $checkoutTotals->giftItems)) {
+                    throw new \RuntimeException('Order item creation failed.');
+                }
             }
 
             // The ORDER now owns the inventory reservation. Any failure here
@@ -601,6 +627,12 @@ private function canTransitionOrderStatus(string $from, string $to): bool
 
             if ($status === 'completed') {
                 $this->recordCouponUsage($order);
+
+                // Canonical route is self-sufficient for every payment method:
+                // committing inventory and finalizing promotion usage are both
+                // idempotent no-ops if the online-payment callback already did them.
+                $this->finalizePromotionUsageAfterPayment($order);
+                $this->orderReservationService->commit($order);
             }
 
             if ($transaction) {
@@ -619,12 +651,22 @@ private function canTransitionOrderStatus(string $from, string $to): bool
             }
 
             if ($status === 'cancelled' && $previousStatus !== 'cancelled') {
-                // Unpaid orders own an active reservation — release it exactly
-                // once here. Paid orders are committed; release is a safe no-op
-                // and the existing paid-restoration listener handles restock.
-                $this->orderReservationService->release($order);
+                // Check if order was paid (committed inventory)
+                if ($order->payment_status === Order::PAYMENT_STATUS_SUCCESS
+                    && $order->inventory_state === Order::INVENTORY_STATE_COMMITTED) {
+                    // Paid order cancellation: restore inventory to stock
+                    $this->inventoryRestoreService->restore($order);
+                } else {
+                    // Unpaid order cancellation: release the active reservation
+                    $this->orderReservationService->release($order);
+                }
 
-                $this->promotionService->decrementUsage($order->promotion_id ? (int) $order->promotion_id : null);
+                // Only decrement promotion usage for unpaid cancellations (Rule 17).
+                // Paid orders that are cancelled must NOT decrement promotion usage
+                // as the promotion benefit was already delivered and consumed.
+                if ($order->payment_status !== Order::PAYMENT_STATUS_SUCCESS) {
+                    $this->promotionService->decrementUsage($order->promotion_id ? (int) $order->promotion_id : null);
+                }
             }
 
             event(new OrderStatusChanged($order));
@@ -667,14 +709,10 @@ private function canTransitionOrderStatus(string $from, string $to): bool
                 'paid_at' => now(),
             ]);
 
-            $this->finalizePromotionUsageAfterPayment($order);
-
-            // Commit THIS order's reservation — the order snapshot is the only
-            // inventory source; the current cart is never consulted.
-            $this->orderReservationService->commit($order);
-
-            // Canonical transition: validation, column sync, coupon usage,
-            // OrderStatusChanged, and the single PaymentSucceeded emission.
+            // Payment confirmation only — the canonical status transition
+            // (inventory commit, promotion finalization, coupon usage,
+            // OrderStatusChanged, PaymentSucceeded) lives solely in
+            // changeOrderStatus() so there is one authoritative path.
             $this->changeOrderStatus(null, 'completed', $order->id);
         });
     }
@@ -698,14 +736,10 @@ private function canTransitionOrderStatus(string $from, string $to): bool
                 'paid_at' => now(),
             ]);
 
-            $this->finalizePromotionUsageAfterPayment($order);
-
-            // Commit THIS order's reservation — the order snapshot is the only
-            // inventory source; the current cart is never consulted.
-            $this->orderReservationService->commit($order);
-
-            // Canonical transition: validation, column sync, coupon usage,
-            // OrderStatusChanged, and the single PaymentSucceeded emission.
+            // Payment confirmation only — the canonical status transition
+            // (inventory commit, promotion finalization, coupon usage,
+            // OrderStatusChanged, PaymentSucceeded) lives solely in
+            // changeOrderStatus() so there is one authoritative path.
             $this->changeOrderStatus(null, 'completed', $order->id);
         });
     }
@@ -741,6 +775,9 @@ private function canTransitionOrderStatus(string $from, string $to): bool
         if (!$coupon) {
             return;
         }
+
+        // Consume the coupon reservation (Rule 9)
+        $this->couponReservationService->consume($order);
 
         $hasAssignments = Schema::hasTable('coupon_assignments') && $coupon->assignments()->exists();
 

@@ -27,7 +27,7 @@ class ExportBrandsJob implements ShouldQueue
     public function __construct(int $importId)
     {
         $this->importId = $importId;
-        $this->onQueue('meem-high');
+        $this->onQueue('meem-bulk');
     }
 
     public function handle(): void
@@ -52,7 +52,7 @@ class ExportBrandsJob implements ShouldQueue
 
             $filename = 'brands-export-' . now()->format('Y-m-d-His') . '.xlsx';
 
-            $export->store($filename, 'public');
+            $export->store($filename, 'imports');
 
             $import->update([
                 'status' => 'completed',
