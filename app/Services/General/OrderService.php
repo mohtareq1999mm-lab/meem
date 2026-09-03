@@ -486,10 +486,14 @@ class OrderService
             }
         }
 
+        // FINANCIAL INVARIANT FIX: Use actual discount amount from CouponCalculator
+        // instead of residual calculation to ensure precision
+        $couponDiscount = round((float) ($couponResult['discountAmount'] ?? 0), 2);
+
         return new CheckoutTotals(
             subtotal: $promotionTotals->subtotal,
             promotionDiscount: $promotionTotals->promotionDiscount,
-            couponDiscount: round(max(0, (float) $priceAfterPromotion - (float) $finalTotal), 2),
+            couponDiscount: $couponDiscount,
             finalTotal: $finalTotal,
             promotion: $promotionTotals->promotion,
             giftItems: $promotionTotals->giftItems,

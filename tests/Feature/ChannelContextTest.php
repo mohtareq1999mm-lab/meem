@@ -237,8 +237,8 @@ class ChannelContextTest extends TestCase
                 return collect();
             });
 
-        $this->getJson(self::PREFIX . '/general/home');
-        $this->getJson(self::PREFIX . '/general/home', [
+        $this->getJson(self::PREFIX . '/general/nav-data');
+        $this->getJson(self::PREFIX . '/general/nav-data', [
             'X-Channel' => 'fast-shipping',
         ]);
 
@@ -264,7 +264,7 @@ class ChannelContextTest extends TestCase
                 return collect();
             });
 
-        $this->getJson(self::PREFIX . '/general/home');
+        $this->getJson(self::PREFIX . '/general/nav-data');
 
         $this->assertNotEmpty($generatedKeys, 'No cache keys were generated');
         foreach ($generatedKeys as $key) {

@@ -164,5 +164,20 @@ trait WithInvoiceTables
                 $table->index('tracking_number');
             });
         }
+
+        if (!Schema::hasTable('coupon_reservations')) {
+            Schema::create('coupon_reservations', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('coupon_id')->constrained()->onDelete('cascade');
+                $table->foreignId('user_id')->constrained()->onDelete('cascade');
+                $table->foreignId('order_id')->constrained()->onDelete('cascade');
+                $table->timestamp('reserved_at');
+                $table->timestamp('expires_at');
+                $table->timestamps();
+
+                $table->index(['coupon_id', 'expires_at']);
+                $table->unique(['order_id']);
+            });
+        }
     }
 }

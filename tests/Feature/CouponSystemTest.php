@@ -418,7 +418,7 @@ class CouponSystemTest extends TestCase
             'user_phone' => '01000000000',
             'user_email' => 'test@test.com',
             'address' => json_encode(['street' => '123 Main St']),
-            'total_price' => 100.00,
+            'total_price' => 80.00,
             'price' => 90.00,
             'coupon' => $coupon->code,
             'coupon_discount' => 10,
@@ -430,7 +430,7 @@ class CouponSystemTest extends TestCase
             'user_id' => $this->user->id,
             'payment_method' => 'cod',
             'status' => 'pending',
-            'amount' => 100,
+            'amount' => 80,
             'invoice_id' => 'INV-COUPON-1',
         ]);
 
@@ -454,7 +454,7 @@ class CouponSystemTest extends TestCase
             'user_phone' => '01000000000',
             'user_email' => 'test@test.com',
             'address' => json_encode(['street' => '123 Main St']),
-            'total_price' => 100.00,
+            'total_price' => 80.00,
             'price' => 90.00,
             'coupon' => $coupon->code,
             'coupon_discount' => 10,
@@ -575,7 +575,7 @@ class CouponSystemTest extends TestCase
             'user_phone' => '01000000000',
             'user_email' => 'test@test.com',
             'address' => json_encode(['street' => '123 Main St']),
-            'total_price' => 100.00,
+            'total_price' => 80.00,
             'price' => 90.00,
             'coupon' => $coupon->code,
             'coupon_discount' => 10,
@@ -587,7 +587,7 @@ class CouponSystemTest extends TestCase
             'user_id' => $this->user->id,
             'payment_method' => 'cod',
             'status' => 'pending',
-            'amount' => 100,
+            'amount' => 80,
             'invoice_id' => 'INV-INCR-1',
         ]);
 

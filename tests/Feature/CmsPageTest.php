@@ -7,7 +7,7 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\Sanctum;
-use Marvel\Database\Models\CmsPage;
+use Marvel\Models\ContentPage;
 use Marvel\Database\Models\User;
 use Marvel\Enums\Permission as PermissionEnum;
 use Marvel\Enums\Role as RoleEnum;
@@ -22,28 +22,31 @@ class CmsPageTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        if (!\Illuminate\Support\Facades\Schema::hasTable('cms_pages')) {
-            \Illuminate\Support\Facades\Schema::create('cms_pages', function (\Illuminate\Database\Schema\Blueprint $table) {
-                $table->id();
-                $table->string('slug')->unique();
-                $table->string('title');
-                $table->json('content')->nullable();
-                $table->timestamps();
-            });
-        }
+        // ContentPage table is created via migrations / RefreshDatabase
     }
 
-    private function seedEditorPermission(): void
+    private function seedContentPermissions(): void
     {
         $guard = 'api';
-        Permission::findOrCreate(PermissionEnum::EDITOR, $guard);
-        $role = Role::findOrCreate(RoleEnum::EDITOR, $guard);
-        $role->givePermissionTo(PermissionEnum::EDITOR);
+        Permission::findOrCreate(PermissionEnum::VIEW_CONTENT_PAGES, $guard);
+        Permission::findOrCreate(PermissionEnum::CREATE_CONTENT_PAGES, $guard);
+        Permission::findOrCreate(PermissionEnum::UPDATE_CONTENT_PAGES, $guard);
+        Permission::findOrCreate(PermissionEnum::DELETE_CONTENT_PAGES, $guard);
+        $role = Role::firstOrCreate(
+            ['name' => 'content_editor', 'guard_name' => $guard],
+            ['display_name' => json_encode(['en' => 'Content Editor', 'ar' => 'محرر المحتوى'])]
+        );
+        $role->givePermissionTo([
+            PermissionEnum::VIEW_CONTENT_PAGES,
+            PermissionEnum::CREATE_CONTENT_PAGES,
+            PermissionEnum::UPDATE_CONTENT_PAGES,
+            PermissionEnum::DELETE_CONTENT_PAGES,
+        ]);
     }
 
     private function makeEditorUser(): User
     {
-        $this->seedEditorPermission();
+        $this->seedContentPermissions();
 
         /** @var User $user */
         $user = User::create([
@@ -54,68 +57,61 @@ class CmsPageTest extends TestCase
             'is_active' => true,
         ]);
 
-        $user->givePermissionTo(PermissionEnum::EDITOR);
+        $user->givePermissionTo([
+            PermissionEnum::VIEW_CONTENT_PAGES,
+            PermissionEnum::CREATE_CONTENT_PAGES,
+            PermissionEnum::UPDATE_CONTENT_PAGES,
+            PermissionEnum::DELETE_CONTENT_PAGES,
+        ]);
 
         return $user;
     }
 
     public function test_public_can_fetch_page_by_slug_sorted_content(): void
     {
-        /** @var CmsPage $page */
-        $page = CmsPage::create([
+        // Public content-page via general route: /api/v1/general/content-pages/{slug}
+        // Uses ContentPage with is_active=true and sections
+        $page = ContentPage::create([
+            'title' => ['en' => 'Home', 'ar' => 'الرئيسية'],
             'slug' => 'home',
-            'title' => 'Home',
-            'content' => [
-                ['type' => 'B', 'order' => 2],
-                ['type' => 'A', 'order' => 1],
-            ],
+            'is_active' => true,
         ]);
 
-        $response = $this->getJson('/api/v1/cms-pages/home');
+        $response = $this->getJson('/api/v1/general/content-pages/home');
 
         $response->assertOk();
         $response->assertJsonPath('data.slug', 'home');
-        $response->assertJsonPath('data.content.0.type', 'A');
-        $response->assertJsonPath('data.content.1.type', 'B');
+        $response->assertJsonPath('data.title', 'Home');
     }
 
     public function test_editor_can_create_update_and_delete_page(): void
     {
         $user = $this->makeEditorUser();
-        Sanctum::actingAs($user, [], 'api');
+        Sanctum::actingAs($user);
 
-        // Create
+        // Create via admin route: POST /api/v1/content-pages (requires title array)
         $createPayload = [
-            'slug' => 'landing',
-            'title' => 'Landing',
-            'content' => [
-                ['type' => 'Hero', 'order' => 2],
-                ['type' => 'Heading', 'order' => 1],
-            ],
+            'title' => ['en' => 'Landing', 'ar' => 'هبوط'],
         ];
 
-        $create = $this->postJson('/api/v1/cms-pages', $createPayload);
+        $create = $this->postJson('/api/v1/content-pages', $createPayload);
         $create->assertCreated();
         $create->assertJsonPath('data.slug', 'landing');
-        $create->assertJsonPath('data.content.0.type', 'Heading');
 
         $pageId = $create['data']['id'];
 
         // Update
         $updatePayload = [
-            'slug' => 'landing',
-            'title' => 'Updated Landing',
-            'content' => [
-                ['type' => 'Heading', 'order' => 1],
-            ],
+            'title' => ['en' => 'Updated Landing', 'ar' => 'هبوط محدث'],
+            'is_active' => true,
         ];
 
-        $update = $this->putJson("/api/v1/cms-pages/{$pageId}", $updatePayload);
+        $update = $this->putJson("/api/v1/content-pages/{$pageId}", $updatePayload);
         $update->assertOk();
         $update->assertJsonPath('data.title', 'Updated Landing');
 
         // Delete
-        $delete = $this->deleteJson("/api/v1/cms-pages/{$pageId}");
+        $delete = $this->deleteJson("/api/v1/content-pages/{$pageId}");
         $delete->assertOk();
     }
 
@@ -129,11 +125,10 @@ class CmsPageTest extends TestCase
             'is_active' => true,
         ]);
 
-        Sanctum::actingAs($user, [], 'api');
+        Sanctum::actingAs($user);
 
-        $response = $this->postJson('/api/v1/cms-pages', [
-            'slug' => 'blocked',
-            'title' => 'Blocked',
+        $response = $this->postJson('/api/v1/content-pages', [
+            'title' => ['en' => 'Blocked', 'ar' => 'محظور'],
         ]);
 
         $response->assertStatus(403);

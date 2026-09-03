@@ -224,20 +224,43 @@ class CheckoutPendingOrderRedesignTest extends TestCase
 
     public function test_checkout_stores_explicit_24h_reservation_expiry(): void
     {
+        // Business rule: non-COD (online/cashier) = 24h, COD = 168h (7 days)
+        // This test verifies non-COD 24h expiry, so use payment_method online
         config(['payment.order_timeout_hours' => 24]);
+        config(['payment.cod_order_timeout_hours' => 168]);
 
         $this->auth();
         $this->addItemToCart();
 
         Carbon::setTestNow(now());
-        $this->checkout();
+        $this->checkout(['payment_method' => 'online']);
 
         $order = Order::where('user_id', $this->user->id)->first();
 
         $expectedExpiry = $order->created_at->copy()->addHours(24);
         $this->assertTrue(
             $order->reservation_expires_at->equalTo($expectedExpiry),
-            "reservation_expires_at must equal created_at + 24h (got {$order->reservation_expires_at} vs {$expectedExpiry})"
+            "reservation_expires_at must equal created_at + 24h for non-COD (got {$order->reservation_expires_at} vs {$expectedExpiry})"
+        );
+    }
+
+    public function test_cod_reservation_expiry_is_168h(): void
+    {
+        config(['payment.cod_order_timeout_hours' => 168]);
+        config(['payment.order_timeout_hours' => 24]);
+
+        $this->auth();
+        $this->addItemToCart();
+
+        Carbon::setTestNow(now());
+        $this->checkout(['payment_method' => 'cod']);
+
+        $order = Order::where('user_id', $this->user->id)->first();
+
+        $expectedExpiry = $order->created_at->copy()->addHours(168);
+        $this->assertTrue(
+            $order->reservation_expires_at->equalTo($expectedExpiry),
+            "reservation_expires_at must equal created_at + 168h for COD (got {$order->reservation_expires_at} vs {$expectedExpiry})"
         );
     }
 

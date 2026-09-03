@@ -44,7 +44,9 @@ class SectionController extends CoreController
 
         $section = Section::create($data);
         $page = ContentPage::first();
-        $section->update(['content_page_id' => $page->id]);
+        if ($page) {
+            $section->update(['content_page_id' => $page->id]);
+        }
         $section->loadMissing('sectionType.settings');
 
         return $this->apiResponse(SECTION_CREATED_SUCCESSFULLY, 200, true, PagesSectionResource::make($section));

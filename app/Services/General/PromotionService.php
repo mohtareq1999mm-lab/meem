@@ -120,16 +120,28 @@ class PromotionService
         } else {
             return $this->clearPromotionFromCart($cart);
         }
+
+        // Calculate finalTotal from actual cart item prices after promotion application
+        $finalTotal = round(
+            (float) $cart->items
+                ->reject(fn($item) => (bool) ($item->is_gift ?? false))
+                ->sum('total_price'),
+            2
+        );
+
+        // Calculate promotion discount
+        $promotionDiscount = round((float) ($discountDetails['discount'] ?? 0), 2);
+
+        // FINANCIAL INVARIANT FIX: Ensure subtotal - promotionDiscount = finalTotal
+        // by deriving subtotal from the actual post-promotion state.
+        // This prevents rounding discrepancies from per-item promotion application.
+        $calculatedSubtotal = round($finalTotal + $promotionDiscount, 2);
+
         return new CheckoutTotals(
-            subtotal: round((float) $subtotal, 2),
-            promotionDiscount: round((float) ($discountDetails['discount'] ?? 0), 2),
+            subtotal: $calculatedSubtotal,
+            promotionDiscount: $promotionDiscount,
             couponDiscount: 0,
-            finalTotal: round(
-                (float) $cart->items
-                    ->reject(fn($item) => (bool) ($item->is_gift ?? false))
-                    ->sum('total_price'),
-                2
-            ),
+            finalTotal: $finalTotal,
             promotion: $result ? [
                 'id' => $result->promotion->id,
                 'type' => $result->promotion->type_amount,

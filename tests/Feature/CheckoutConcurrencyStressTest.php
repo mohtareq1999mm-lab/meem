@@ -153,8 +153,12 @@ class CheckoutConcurrencyStressTest extends TestCase
         $this->assertEquals(0, $product->fresh()->reserved_quantity);
         $this->assertEquals(5, $product->fresh()->stock_quantity);
 
-        // Re-reserve after release.
-        $order2 = $this->makeReservedOrder($this->user, $product, 3);
+        // Re-reserve after release — respect one-pending-per-user constraint (idx_orders_user_pending_unique).
+        // The first pending order still exists (even soft-deleted it violates the partial index), so we use a
+        // different user for the second reservation. This verifies the reservation lifecycle without violating
+        // the legitimate business rule of one pending per user.
+        $anotherUser = \Marvel\Database\Models\User::factory()->create();
+        $order2 = $this->makeReservedOrder($anotherUser, $product, 3);
         $this->assertEquals(3, $product->fresh()->reserved_quantity);
     }
 

@@ -366,6 +366,19 @@ class CheckoutRegressionTest extends TestCase
             $table->unique(['coupon_id', 'user_id']);
         });
 
+        Schema::create('coupon_reservations', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('coupon_id')->constrained()->onDelete('cascade');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('order_id')->constrained()->onDelete('cascade');
+            $table->timestamp('reserved_at');
+            $table->timestamp('expires_at');
+            $table->timestamps();
+
+            $table->index(['coupon_id', 'expires_at']);
+            $table->unique(['order_id']);
+        });
+
         Schema::create('promotions', function (Blueprint $table) {
             $table->id();
             $table->string('name');

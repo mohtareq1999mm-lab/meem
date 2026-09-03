@@ -101,15 +101,18 @@ class ConcurrencyRaceConditionTest extends TestCase
     /** @test */
     public function test_concurrent_single_use_coupon_reservation_prevents_double_booking()
     {
-        // Create a single-use coupon
+        // Create a single-use coupon — FIXED_RATE is correct enum, FIXED does not exist
         $coupon = Coupon::create([
             'code' => 'SINGLE_USE',
-            'discount_type' => DiscountType::FIXED,
-            'discount_amount' => 50,
+            'slug' => 'single-use-' . \Illuminate\Support\Str::random(6),
+            'name' => 'Single Use',
+            'discount_type' => DiscountType::FIXED_RATE,
+            'discount' => 50,
             'limiter' => 1, // Only 1 use allowed
             'used' => 0,
-            'is_valid' => true,
-            'status' => 1,
+            'status' => true,
+            'start_date' => now()->subDay(),
+            'end_date' => now()->addMonth(),
         ]);
 
         $service = app(CouponReservationService::class);
@@ -177,12 +180,15 @@ class ConcurrencyRaceConditionTest extends TestCase
     {
         $coupon = Coupon::create([
             'code' => 'REFRESH_TEST',
-            'discount_type' => DiscountType::FIXED,
-            'discount_amount' => 10,
+            'slug' => 'refresh-test-' . \Illuminate\Support\Str::random(6),
+            'name' => 'Refresh Test',
+            'discount_type' => DiscountType::FIXED_RATE,
+            'discount' => 10,
             'limiter' => 10,
             'used' => 0,
-            'is_valid' => true,
-            'status' => 1,
+            'status' => true,
+            'start_date' => now()->subDay(),
+            'end_date' => now()->addMonth(),
         ]);
 
         $order = Order::create([

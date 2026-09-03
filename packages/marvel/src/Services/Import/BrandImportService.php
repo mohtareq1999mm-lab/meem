@@ -158,14 +158,18 @@ class BrandImportService
 
         try {
             $data['temp_desktop'] = $data['image_desktop_url'] !== '' ? $this->downloadImage($data['image_desktop_url']) : null;
+        } catch (Throwable $e) {
+            // Image download failed - log it but don't fail the brand
+            report(new RuntimeException("Brand '{$data['name_en']}' desktop image download failed: {$e->getMessage()}"));
+            $data['temp_desktop'] = null;
+        }
+
+        try {
             $data['temp_mobile'] = $data['image_mobile_url'] !== '' ? $this->downloadImage($data['image_mobile_url']) : null;
         } catch (Throwable $e) {
-            $message = $this->translateImageError($e->getMessage());
-            $data['errors'][] = $message;
-            $this->cleanupTempImages($data);
-            $this->addFailedRow($data, $message);
-
-            return $data;
+            // Image download failed - log it but don't fail the brand
+            report(new RuntimeException("Brand '{$data['name_en']}' mobile image download failed: {$e->getMessage()}"));
+            $data['temp_mobile'] = null;
         }
 
         return $data;
@@ -281,10 +285,13 @@ class BrandImportService
                 $attached = $this->attachImage($row['target'], $row['temp_mobile'], 'brands-mobile') && $attached;
             }
 
+            // Brand was already created successfully in upsertBrands()
+            // Image attachment is optional - don't fail the entire brand if images fail
+            $this->successCount++;
+            
             if (!$attached) {
-                $this->failPendingRow($pending, $index, $row, __('message.IMPORT.BRAND.IMAGE_IMPORT_FAILED'));
-            } else {
-                $this->successCount++;
+                // Log image failure but keep brand as successful
+                report(new RuntimeException("Brand '{$row['name_en']}' created successfully but image attachment failed"));
             }
 
             $this->flushProgressTick();
