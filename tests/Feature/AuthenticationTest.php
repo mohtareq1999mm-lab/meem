@@ -200,7 +200,7 @@ class AuthenticationTest extends TestCase
         ]);
     }
 
-    public function test_register_requires_email()
+    public function test_register_allows_optional_email()
     {
         $response = $this->postJson(self::PREFIX . '/register', [
             'first_name' => 'New',
@@ -211,7 +211,12 @@ class AuthenticationTest extends TestCase
             'policy' => '1',
         ]);
 
-        $response->assertStatus(422);
+        $this->assertContains($response->status(), [200, 201]);
+        $response->assertJsonPath('success', true);
+        $this->assertDatabaseHas('users', [
+            'phone_number' => '01000000003',
+            'email' => null,
+        ]);
     }
 
     public function test_register_requires_password_confirmation()

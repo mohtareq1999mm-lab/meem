@@ -11,6 +11,7 @@ class MyFatoorahGateway implements PaymentGatewayContract
 {
     public function __construct(
         private MyfatoraService $myfatoraService,
+        private \App\Services\Payment\CustomerContactResolver $customerContactResolver,
     ) {}
 
 public function createInvoice(
@@ -41,7 +42,7 @@ public function createInvoice(
             'DisplayCurrencyIso' => $orderCurrency,
             'MobileCountryCode' => '+20',
             'CustomerMobile' => $mobile,
-            'CustomerEmail' => $order->user_email,
+            'CustomerEmail' => $this->customerContactResolver->emailForGateway($order),
             'language' => app()->getLocale() == 'ar' ? 'ar' : 'en',
             'CallBackUrl' => $callbackUrl,
             'ErrorUrl' => $errorUrl,

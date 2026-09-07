@@ -1,45 +1,56 @@
 # Auth — Frontend Integration
 
 ## API Client
-All auth endpoints are unauthenticated (except `/me` and `/logout`) and called from:
-- Login page (email/password, Google, Facebook)
-- Registration page
+All auth endpoints are unauthenticated (except `/api/v1/me` and `/api/v1/logout`) and called from:
+- Login page (email/password **or** phone_number/password via `POST /api/v1/token`, plus Google, Facebook)
+- Registration page (phone required, email optional — `email = null` is valid phone-only customer)
 - Password reset flow (email → OTP → new password)
 
 ## Endpoints
 
-### Registration
+### Registration — REST: `phone_number` required, `email` optional (`nullable|sometimes|email|unique:users,email|email:rfc,dns`)
 ```
 POST /api/v1/register
-Body: { first_name, last_name, email, phone_number, password, password_confirmation, policy }
+Body: { first_name*, last_name*, phone_number*, password*, password_confirmation*, policy* } + { email?: nullable|sometimes|email|unique:users,email|email:rfc,dns }
+Examples:
+  phone-only (valid): { first_name, last_name, phone_number, password, password_confirmation, policy }
+  with email:         { first_name, last_name, phone_number, email, password, password_confirmation, policy }
+Validation (UserCreateRequest): email nullable|sometimes|email|unique:users,email|email:rfc,dns; phone_number required|string|max:20|min:10|unique:users,phone_number; Admin/GraphQL remain email-required (REST only)
 ```
 
 **Frontend handling:**
+- Validate: `phone_number` is required (string 10-20, unique); `email` is optional — only validate format/RFC/DNS/unique when present (`nullable|sometimes`)
+- Treat `email = null` as a valid customer state (phone-only account) — not unverified and not an error; do not show "missing email" warning for phone-only users
 - Show loading state during submission (throttle:auth — 10/min)
-- On 200 → redirect to email verification prompt or dashboard
-- On 201 (OTP failed) → show "Check your email — OTP may not have been sent, you can resend"
-- On 422 → display field-level validation errors
+- On 200 → if `email` was provided → redirect to email verification prompt or dashboard; if phone-only (`email` omitted/null) → redirect to dashboard (no email verification to await; backend register guard `if (user.email)` skips `sendOneTimePassword()` and returns `{"status":200,"message":"User registered successfully","success":true,"data":{"otp_status":true}}` with no email side effect)
+- On 201 (OTP failed) → only when `email` was provided and mail failed → show "Check your email — OTP may not have been sent, you can resend"
+- On 422 → display field-level validation errors (note: `email` only validated when present; `phone_number` always required)
 - On 429 → show "Too many attempts. Please try again later."
 - The `policy` field must be checked via UI checkbox
-- OTP email is **queued** (has slight delay) — don't show failure immediately
+- OTP email is **queued** (has slight delay) — don't show failure immediately; phone-only registrations have no OTP email by design
 
-### Login
+### Login — supports `phone_number + password` (UserAuthEmailAndPasswordRequest)
 ```
 POST /api/v1/token
-Body: { email, password }
+Body: { email, password } OR { phone_number, password }  // POST /api/v1/token supports phone_number + password (REST)
+Validation: email required_without:phone_number|email; phone_number required_without:email|string|max:15|min:8
+Examples:
+  { "email": "user@example.com", "password": "secret123" }
+  { "phone_number": "+2010xxxxxxx", "password": "secret123" }  // phone-only login
 ```
 
 **Frontend handling:**
 - Save `token` from response to localStorage/session
-- Check `email_verified` flag — if false, prompt verification
+- Check `email_verified` flag — if false and `email` is present, prompt verification; if `email` is `null` (phone-only account) this is a valid state, not an error — do not show "unverified email" warning
+- Support both login forms: email+password and phone_number+password; backend lookup is `WHERE email=$email OR phone_number=$phone AND is_active=true`
 - Redirect based on user role (admin → dashboard, customer → home)
-- On 404 (INVALID_CREDENTIALS) → show "Invalid email or password"
+- On 404 (INVALID_CREDENTIALS) → show "Invalid email/phone or password"
 - On 429 → rate limit notice
 
-### Admin Login
+### Admin Login — email required (Admin/GraphQL unchanged)
 ```
 POST /api/v1/admin-login
-Body: { email, password }
+Body: { email, password }  // email required — admin login remains email-required (not affected by REST optional email)
 ```
 
 **Frontend handling:**
@@ -89,12 +100,14 @@ Body: { provider, access_token }
 ### Get Current User
 ```
 GET /api/v1/me
-Headers: Authorization: Bearer <token>
+Headers: Authorization: Bearer [REDACTED:Authorization header] header] header]
+Response (200): {"status":200,"message":"User profile retrieved successfully","success":true,"data":{"id":1,"name":"...","email":null,"email_verified_at":null,"is_active":true,"image":null,"type":"user","phone_number":"+2010...","created_at":"...","updated_at":"...","roles":[...],"permissions":[...],"address":[]}}  // email:null is valid phone-only state via UserResource
+Response (phone-only): { id, name, email: null, phone_number: "+2010...", roles, permissions, image, ... }  // email:null is valid phone-only state
 ```
 
 **Frontend handling:**
 - Call on app mount to check authentication status
-- Store `role`, `name`, `email`, `profile.avatar` in global state
+- Store `role`, `name`, `email`, `phone_number`, `profile.avatar` in global state; `email` may be `null` for phone-only customers — treat as valid, not unverified/error (do not force email prompt)
 - On 401 → clear token, redirect to login
 - Used for profile dropdown, user menu, permission checks
 
@@ -132,10 +145,10 @@ Body: { email, otp }
 
 **Frontend handling:**
 - 6-character OTP input field
-- Response is JSON: `{ success: true/false, message: "..." }`
+- Response is JSON envelope: `{"status":200,"message":"Token is valid","success":true}` or `{"status":400,"message":"Invalid token","success":false}`
 - On 200 (`success: true`) → advance to password reset form
 - On 400 (`success: false`) → "Invalid or expired OTP"
-- OTP expires after 60 minutes (configurable via backend)
+- OTP expires after `config('auth.passwords.users.expire', 60)` minutes (configurable via backend)
 
 ### Reset Password
 ```
@@ -156,22 +169,24 @@ Body: { email, otp, password, password_confirmation }
   "message": "Too Many Attempts."
 }
 ```
+> Note: throttle responses are from Laravel's `ThrottleRequests` middleware, not via `ApiResponse`; HTTP status is 429 with `Retry-After` header.
 Show rate limit notice with retry timer.
 
 ### 422 Validation
 ```json
 {
-  "email": ["The email field is required."],
+  "phone_number": ["The phone number field is required."],
   "password": ["The password must be at least 8 characters."]
 }
 ```
-Map to form field errors.
+Map to form field errors. Note: for REST `POST /api/v1/register`, `email` is `nullable|sometimes|email|unique:users,email|email:rfc,dns` — it is only validated when present; `phone_number` is always `required`. Login (`POST /api/v1/token`) uses `email required_without:phone_number|email` / `phone_number required_without:email`.
 
 ### 401 Unauthenticated
 ```json
 {
-  "success": false,
-  "message": "Not authorized"
+  "status": 401,
+  "message": "Not authorized",
+  "success": false
 }
 ```
 Clear session, redirect to login.

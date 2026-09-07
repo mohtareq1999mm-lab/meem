@@ -37,4 +37,12 @@ class UserFactory extends Factory
             'type' => 'user',
         ]);
     }
+
+    public function withoutEmail()
+    {
+        return $this->state(fn (array $attributes) => [
+            'email' => null,
+            'email_verified_at' => null,
+        ]);
+    }
 }

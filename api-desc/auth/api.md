@@ -2,9 +2,9 @@
 
 ## POST /api/v1/register
 
-Register a new customer account.
+Register a new customer account. `phone_number` is required; `email` is optional for REST — omit the field or send `email: null` (valid customer state, not an error). When supplied, email must pass `nullable|sometimes|email|unique:users,email|email:rfc,dns` (`packages/marvel/src/Http/Requests/UserCreateRequest.php:30-38`).
 
-### Request
+### Request — with email
 ```json
 {
   "first_name": "John",
@@ -17,33 +17,66 @@ Register a new customer account.
 }
 ```
 
+### Request — phone-only (email omitted or `null`)
+```json
+{
+  "first_name": "John",
+  "last_name": "Doe",
+  "phone_number": "+201234567890",
+  "password": "securePass123!",
+  "password_confirmation": "securePass123!",
+  "policy": true
+}
+```
+Alternatively with explicit `null`:
+```json
+{
+  "first_name": "John",
+  "last_name": "Doe",
+  "email": null,
+  "phone_number": "+201234567890",
+  "password": "securePass123!",
+  "password_confirmation": "securePass123!",
+  "policy": true
+}
+```
+Both forms are accepted; `email = null` is persisted as `users.email = NULL` and is a valid state.
+
 ### Validation Rules
 | Field | Rules |
 |-------|-------|
 | first_name | required, string, max:50, min:2 |
 | last_name | required, string, max:50, min:2 |
-| email | required, email, unique:users, rfc,dns |
+| email | nullable, sometimes, email, unique:users,email, email:rfc,dns — optional for REST; omit or send `null`; validated only when present |
 | phone_number | required, string, max:20, min:10, unique:users |
 | password | required, string, min:8, max:50, confirmed |
 | password_confirmation | required, string, min:8, max:50 |
 | policy | required, in:1,true |
 
+> Source: `packages/marvel/src/Http/Requests/UserCreateRequest.php:30-38` — `email: ['nullable','sometimes','email','unique:users,email','email:rfc,dns']`, `phone_number: ['required',...,'unique:users,phone_number']`. Admin creation and GraphQL `RegisterInput.email: String!` remain email-required (unchanged).
+
 ### Success Response (200)
 ```json
 {
-  "success": true,
+  "status": 200,
   "message": "User registered successfully",
+  "success": true,
   "data": {
     "otp_status": true
   }
 }
 ```
 
-### Partial Failure Response (201 — OTP send failed)
+### Success — phone-only example (200)
+Registration with `email` omitted or `email: null` returns the same 200 envelope `{"status":200,"message":"User registered successfully","success":true,"data":{"otp_status":true}}`; `users.email` is persisted as `NULL`. No email OTP is attempted for phone-only users — `UserController::register()` guards `sendOneTimePassword()` with `if ($user->email)` and returns `{"status":200,"message":"User registered successfully","success":true,"data":{"otp_status":true}}` directly when `email` is `null` (see `packages/marvel/src/Http/Controllers/UserController.php:668-686`).
+
+### Partial Failure Response (201 — OTP send failed; email path only)
+Only possible when an email was supplied and the OTP email dispatch fails:
 ```json
 {
-  "success": true,
+  "status": 201,
   "message": "Account created but OTP failed",
+  "success": true,
   "data": {
     "requires_resend": true,
     "email": "john@example.com",
@@ -52,12 +85,13 @@ Register a new customer account.
   }
 }
 ```
+Phone-only registrations do not trigger this branch (no email to send to); they succeed with `{"status":200,"message":"User registered successfully","success":true,"data":{"otp_status":true}}`.
 
 ---
 
 ## POST /api/v1/token
 
-Login with email/password.
+Login with `email + password` or `phone_number + password` (`required_without` — either identifier is accepted).
 
 ### Request
 ```json
@@ -76,16 +110,20 @@ Or with phone number:
 ```
 
 ### Validation
-Uses `UserAuthEmailAndPasswordRequest` — email or phone_number required.
+Uses `UserAuthEmailAndPasswordRequest` — `email: required_without:phone_number|email` and `phone_number: required_without:email|string|max:15|min:8` (`packages/marvel/src/Http/Requests/UserAuthEmailAndPasswordRequest.php`). Either `email + password` or `phone_number + password` is accepted (`POST /api/v1/token` supports `phone_number + password` via the `required_without` pattern). `password: required|string|min:6`.
 
 ### Success Response (200)
 ```json
 {
-  "success": true,
+  "status": 200,
   "message": "User logged in successfully",
+  "success": true,
   "data": {
     "token": "1|abc123...",
-    "email_verified": false
+    "email_verified": false,
+    "permissions": ["view-products", "create-products"],
+    "role": ["customer"],
+    "expires_at": "2026-09-21T12:00:00.000000Z"
   }
 }
 ```
@@ -93,8 +131,9 @@ Uses `UserAuthEmailAndPasswordRequest` — email or phone_number required.
 ### Error Response (404)
 ```json
 {
-  "success": false,
-  "message": "Invalid credentials"
+  "status": 404,
+  "message": "Invalid credentials",
+  "success": false
 }
 ```
 
@@ -115,19 +154,21 @@ Admin login (requires verified email).
 ### Success Response (200)
 ```json
 {
-  "success": true,
+  "status": 200,
   "message": "User logged in successfully",
+  "success": true,
   "data": {
     "token": "1|abc123...",
     "permissions": ["super_admin", "view_users"],
     "email_verified": true,
-    "role": ["super_admin"]
+    "role": ["super_admin"],
+    "expires_at": "2026-09-21T12:00:00.000000Z"
   }
 }
 ```
 
 ### Error Responses
-- **404**: Invalid credentials / User not found (type !== 'admin') / User not verified
+- **404**: `{"status":404,"message":"Invalid credentials","success":false}` / `{"status":404,"message":"User not found","success":false}` / `{"status":404,"message":"User not verified","success":false}`
 
 ---
 
@@ -157,8 +198,9 @@ Login or register via Google/Facebook.
 ### Success Response (200)
 ```json
 {
-  "success": true,
+  "status": 200,
   "message": "User logged in successfully",
+  "success": true,
   "data": {
     "token": "1|abc123..."
   }
@@ -175,23 +217,52 @@ Get the authenticated user's profile.
 `auth:sanctum`
 
 ### Success Response (200)
+`email` may be `string` or `null`; `email = null` is a valid customer state, not an error (see `database.md`). `email_verified_at` is `null` for phone-only customers. Via `Marvel\Http\Resources\UserResource` → `{"status":200,"message":"...","success":true,"data":{"id":1,"name":"...","email":null,"email_verified_at":null,"is_active":true,"image":null,"type":"user","phone_number":"010...","created_at":"...","updated_at":"...","roles":[...],"permissions":[...],"address":[...]}}` (envelope: `status`/`message`/`success`/`data` per `packages/marvel/src/Traits/ApiResponse.php`).
+
+With email:
 ```json
 {
-  "success": true,
+  "status": 200,
   "message": "User profile retrieved successfully",
+  "success": true,
   "data": {
     "id": 1,
     "name": "John Doe",
     "email": "john@example.com",
     "email_verified_at": "2026-07-20T12:00:00Z",
-    "role": "customer",
     "is_active": true,
+    "image": null,
+    "type": "user",
+    "phone_number": "+201234567890",
     "created_at": "2026-07-20T12:00:00Z",
     "updated_at": "2026-07-20T12:00:00Z",
-    "profile": { "avatar": {}, "bio": null, "contact": null },
-    "address": [],
-    "wallet": { ... },
-    "shop": null
+    "roles": [{ "id": 1, "name": "customer" }],
+    "permissions": [{ "id": 1, "name": "view-products" }],
+    "address": []
+  }
+}
+```
+
+Phone-only (no email):
+```json
+{
+  "status": 200,
+  "message": "User profile retrieved successfully",
+  "success": true,
+  "data": {
+    "id": 1,
+    "name": "John Doe",
+    "email": null,
+    "email_verified_at": null,
+    "is_active": true,
+    "image": null,
+    "type": "user",
+    "phone_number": "+201234567890",
+    "created_at": "2026-07-20T12:00:00Z",
+    "updated_at": "2026-07-20T12:00:00Z",
+    "roles": [{ "id": 1, "name": "customer" }],
+    "permissions": [{ "id": 1, "name": "view-products" }],
+    "address": []
   }
 }
 ```
@@ -199,8 +270,9 @@ Get the authenticated user's profile.
 ### Error (401)
 ```json
 {
-  "success": false,
-  "message": "Not authorized"
+  "status": 401,
+  "message": "Not authorized",
+  "success": false
 }
 ```
 
@@ -216,16 +288,18 @@ Revoke the current access token.
 ### Success Response (200)
 ```json
 {
-  "success": true,
-  "message": "User logged out successfully"
+  "status": 200,
+  "message": "Logged out successfully",
+  "success": true
 }
 ```
 
 ### Error (404 — no user)
 ```json
 {
-  "success": false,
-  "message": "User not found"
+  "status": 404,
+  "message": "User not found",
+  "success": false
 }
 ```
 
@@ -252,16 +326,18 @@ Request a password reset OTP.
 ### Success Response (200)
 ```json
 {
-  "success": true,
-  "message": "Check your inbox for password reset email"
+  "status": 200,
+  "message": "Check your inbox for password reset email",
+  "success": true
 }
 ```
 
 ### Error (404)
 ```json
 {
-  "success": false,
-  "message": "Not found"
+  "status": 404,
+  "message": "Not found",
+  "success": false
 }
 ```
 
@@ -282,14 +358,26 @@ Verify a password reset OTP.
 ### Business Logic
 - Look up `password_resets` by email
 - Hash::check the OTP
-- Verify token is not older than 5 minutes
-- Returns boolean (not a standard API response)
+- Verify token is not older than `config('auth.passwords.users.expire', 60)` minutes (via `checkResetToken()`)
+- Returns structured `ApiResponse` envelope (not raw boolean)
 
-### Response
-- `true` — token is valid
-- `false` — token invalid, expired, or no token found
+### Response (200 — valid)
+```json
+{
+  "status": 200,
+  "message": "Token is valid",
+  "success": true
+}
+```
 
-Note: This endpoint returns a raw boolean, not a structured API response.
+### Response (400 — invalid/expired)
+```json
+{
+  "status": 400,
+  "message": "Invalid token",
+  "success": false
+}
+```
 
 ---
 
@@ -326,8 +414,9 @@ Reset password with OTP verification.
 ### Success Response (200)
 ```json
 {
-  "success": true,
-  "message": "Password reset successful"
+  "status": 200,
+  "message": "Password reset successfully",
+  "success": true
 }
 ```
 
@@ -352,8 +441,9 @@ Send a phone OTP via SMS gateway.
 ### Response (200)
 ```json
 {
+  "status": 200,
+  "message": "Verification code sent successfully",
   "success": true,
-  "message": "User logged in successfully",
   "data": {
     "otp": "123456",
     "otp_id": "verification-id-from-gateway",
@@ -388,8 +478,9 @@ Login via OTP (phone or email).
 ### Response (200)
 ```json
 {
-  "success": true,
+  "status": 200,
   "message": "User logged in successfully",
+  "success": true,
   "data": {
     "token": "1|abc123..."
   }

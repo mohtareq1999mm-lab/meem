@@ -51,7 +51,7 @@ class SocialLoginFlowTest extends TestCase
         Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
     }
 
-    private function socialiteUser(string $email = 'user@gmail.com', string $name = 'Social User', string $id = '113592939182870971795'): SocialiteUser
+    private function socialiteUser(?string $email = 'user@gmail.com', string $name = 'Social User', string $id = '113592939182870971795'): SocialiteUser
     {
         $socialUser = Mockery::mock(SocialiteUser::class);
         $socialUser->shouldReceive('getEmail')->andReturn($email);
@@ -175,6 +175,34 @@ class SocialLoginFlowTest extends TestCase
             'user_id' => $existing->id,
             'provider' => 'google',
         ]);
+    }
+
+    public function test_callback_repeat_login_returns_same_user(): void
+    {
+        $this->mockGoogleProvider($this->socialiteUser());
+
+        $this->get(self::PREFIX . '/social/google/callback')->assertRedirect();
+        $this->get(self::PREFIX . '/social/google/callback')->assertRedirect();
+
+        $this->assertSame(1, User::where('email', 'user@gmail.com')->count());
+        $this->assertSame(1, \Marvel\Database\Models\Provider::count());
+    }
+
+    public function test_callback_creates_user_without_provider_email(): void
+    {
+        $this->mockGoogleProvider($this->socialiteUser(email: null, name: 'PhoneOnly', id: '987654321'));
+
+        $this->get(self::PREFIX . '/social/google/callback')->assertRedirect();
+
+        $this->assertDatabaseHas('users', [
+            'name' => 'PhoneOnly',
+            'email' => null,
+        ]);
+        $this->assertDatabaseHas('providers', [
+            'provider' => 'google',
+            'provider_user_id' => '987654321',
+        ]);
+        $this->assertSame(1, User::whereNull('email')->count());
     }
 
     public function test_callback_redirects_to_frontend_error_when_provider_fails(): void

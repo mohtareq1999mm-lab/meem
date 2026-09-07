@@ -35,7 +35,7 @@ class OrderCreateRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'user_phone' => ['required', 'string', 'max:255'],
-            'user_email' => ['required', 'email', 'max:255'],
+            'user_email' => ['nullable', 'sometimes', 'email', 'max:255'],
             'address' => [
                 Rule::requiredIf(fn () => $requiresShipping && $this->input('fulfillment_type') !== FulfillmentType::PICKUP),
                 'nullable',

@@ -30,11 +30,11 @@ class UserCreateRequest extends FormRequest
         return [
             'first_name'     => ['required', 'string', 'max:50', 'min:2'],
             'last_name'     => ['required', 'string', 'max:50', "min:2"],
-            'email'    => ['required', 'email', 'unique:users,email', 'email:rfc,dns'],
+            'email'    => ['nullable', 'sometimes', 'email', 'unique:users,email', 'email:rfc,dns'],
             'phone_number'    => ['required', 'string', 'max:20', "min:10", 'unique:users,phone_number'],
             'password' => ['required', 'string', 'min:8', 'max:50', 'confirmed'],
             'password_confirmation' => ['required', 'string', 'min:8', 'max:50'],
-            // 'avatar' => ['required', 'image', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
+             'avatar' => ['sometimes', 'image', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
             'policy' => ['required', 'in:1,true'],
         ];
     }

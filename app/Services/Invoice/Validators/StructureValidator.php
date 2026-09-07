@@ -22,7 +22,7 @@ class StructureValidator implements SnapshotValidatorInterface
         'audit',
     ];
 
-    private const REQUIRED_CUSTOMER_KEYS = ['id', 'name', 'email', 'phone'];
+    private const REQUIRED_CUSTOMER_KEYS = ['id', 'name', 'phone'];
 
     private const REQUIRED_FULFILLMENT_KEYS = ['type', 'shipping_method', 'shipping_price'];
 

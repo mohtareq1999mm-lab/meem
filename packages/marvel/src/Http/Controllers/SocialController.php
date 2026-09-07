@@ -68,24 +68,47 @@ class SocialController extends CoreController
                 ->redirectUrl($this->callbackUrl($provider))
                 ->user();
 
-            $user = User::firstOrCreate(
-                [
-                    'email' => $socialUser->getEmail(),
-                ],
-                [
-                    'email_verified_at' => now(),
-                    'name' => $socialUser->getName(),
-                    'password' => Hash::make(Str::random(32)),
-                    'type' => 'user',
-                ]
-            );
+            $email = $socialUser->getEmail();
+            $providerId = $socialUser->getId();
+            $providerName = $provider;
 
-            $user->providers()->updateOrCreate(
-                [
-                    'provider' => $provider,
-                    'provider_user_id' => $socialUser->getId(),
-                ]
-            );
+            // Find existing user by provider identity first
+            $provider = \Marvel\Database\Models\Provider::where('provider', $providerName)
+                ->where('provider_user_id', $providerId)
+                ->first();
+
+            if ($provider) {
+                $user = $provider->user;
+            } else {
+                // Link by email only when email is non-null, else create fresh
+                if ($email) {
+                    $user = User::firstOrCreate(
+                        ['email' => $email],
+                        [
+                            'email_verified_at' => now(),
+                            'name' => $socialUser->getName(),
+                            'password' => Hash::make(Str::random(32)),
+                            'type' => 'user',
+                        ]
+                    );
+                } else {
+                    $user = User::create([
+                        'email' => null,
+                        'email_verified_at' => null,
+                        'name' => $socialUser->getName(),
+                        'password' => Hash::make(Str::random(32)),
+                        'type' => 'user',
+                        'phone_number' => null,
+                    ]);
+                }
+
+                $user->providers()->updateOrCreate(
+                    [
+                        'provider' => $providerName,
+                        'provider_user_id' => $providerId,
+                    ]
+                );
+            }
 
             $authorizationCode = SocialLoginCode::create([
                 'user_id' => $user->id,

@@ -141,6 +141,11 @@ class Order extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function governorate(): BelongsTo
+    {
+        return $this->belongsTo(Governorate::class);
+    }
+
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderProduct::class);

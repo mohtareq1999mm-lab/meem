@@ -10,9 +10,9 @@
 ### Form Requests
 | Endpoint | Request Class | File |
 |----------|--------------|------|
-| POST /register | `UserCreateRequest` | `packages/marvel/src/Http/Requests/UserCreateRequest.php` |
-| POST /token | `UserAuthEmailAndPasswordRequest` | `packages/marvel/src/Http/Requests/UserAuthEmailAndPasswordRequest.php` |
-| POST /admin-login | `UserAuthEmailAndPasswordRequest` | (same) |
+| POST /api/v1/register | `UserCreateRequest` | `packages/marvel/src/Http/Requests/UserCreateRequest.php` |
+| POST /api/v1/token | `UserAuthEmailAndPasswordRequest` | `packages/marvel/src/Http/Requests/UserAuthEmailAndPasswordRequest.php` |
+| POST /api/v1/admin-login | `UserAuthEmailAndPasswordRequest` | (same) |
 
 ### Repository
 | Repository | File |
@@ -53,16 +53,16 @@
 ## Key Implementation Details
 
 ### Registration Flow
-1. `UserCreateRequest` validates input
-2. `UserRepository::create()` creates the user with type='user', is_active=true
+1. `UserCreateRequest` validates input — `email: ['nullable','sometimes','email','unique:users,email','email:rfc,dns']` (optional for REST; omit or `null`; validated only when present), `phone_number: ['required',...,'unique:users,phone_number']` (`packages/marvel/src/Http/Requests/UserCreateRequest.php:30-38`). `POST /api/v1/register` accepts `email` omitted or `email: null`; `email = null` is a valid customer state, not an error. Admin/GraphQL registration remains email-required.
+2. `UserRepository::create()` creates the user with type='user', is_active=true (persists `email = NULL` for phone-only customers)
 3. `assignRole('customer')` — wrapped in try/catch for seed race condition
 4. Avatar upload via Spatie MediaLibrary (optional)
-5. `sendOneTimePassword()` — sends OTP email
-6. If OTP fails, returns 201 with `requires_resend` flag
+5. `if ($user->email) { $user->sendOneTimePassword() }` — sends OTP email only when email present (`packages/marvel/src/Http/Controllers/UserController.php:668-686` guards the call); phone-only registration skips the email OTP and returns `{"status":200,"message":"User registered successfully","success":true,"data":{"otp_status":true}}` (no email-side effect)
+6. If OTP fails (email path only), returns `{"status":201,"message":"Account created but OTP failed","success":true,"data":{"requires_resend":true,"email":"...","phone_number":"...","otp_status":false}}`
 
 ### Login Flow
-- `token()` supports login by email OR phone_number (via `orWhere`)
-- `adminToken()` requires `type === 'admin'` AND `hasVerifiedEmail()`
+- `token()` supports login by `email + password` OR `phone_number + password` (`required_without` via `UserAuthEmailAndPasswordRequest` — `email: required_without:phone_number|email`, `phone_number: required_without:email|string|max:15|min:8`; `packages/marvel/src/Http/Requests/UserAuthEmailAndPasswordRequest.php`) — `User::where('email',...)->orWhere('phone_number',...)` (phone-only customers log in by `phone_number + password`)
+- `adminToken()` requires `type === 'admin'` AND `hasVerifiedEmail()` — admin login remains email-required with verified email
 - Both dispatch `AdminLoggedIn` event
 
 ### Password Reset Flow

@@ -13,29 +13,76 @@ Register a new user account.
 |-------|------|----------|-------------|
 | first_name | string | yes | User's first name |
 | last_name | string | yes | User's last name |
-| email | string | yes | Valid email address |
+| email | string | no | Optional for REST — `nullable\|sometimes\|email\|unique:users,email\|email:rfc,dns` (omit or send `null`; validated only when present; source `packages/marvel/src/Http/Requests/UserCreateRequest.php:30-38`) |
 | password | string | yes | Min 8 chars |
-| phone_number | string | yes | Min 11 chars |
+| phone_number | string | yes | Required; `unique:users,phone_number` |
 | avatar | file | no | Profile picture |
+
+> `POST /api/v1/register` accepts `email` omitted or `email: null`; `email = null` is a valid customer state, not an error. `phone_number` is required for REST customers. Admin/GraphQL registration remains email-required.
+
+#### Request examples
+
+With email:
+```json
+{
+  "first_name": "John",
+  "last_name": "Doe",
+  "email": "john@example.com",
+  "phone_number": "12345678901",
+  "password": "securePass123!",
+  "password_confirmation": "securePass123!",
+  "policy": true
+}
+```
+
+Phone-only (email omitted or `null`):
+```json
+{
+  "first_name": "John",
+  "last_name": "Doe",
+  "phone_number": "12345678901",
+  "password": "securePass123!",
+  "password_confirmation": "securePass123!",
+  "policy": true
+}
+```
+```json
+{
+  "first_name": "John",
+  "last_name": "Doe",
+  "email": null,
+  "phone_number": "12345678901",
+  "password": "securePass123!",
+  "password_confirmation": "securePass123!",
+  "policy": true
+}
+```
 
 ### Response (200)
 
 ```json
 {
+  "status": 200,
+  "message": "User registered successfully",
   "success": true,
-  "message": "Account created successfully",
   "data": {
     "otp_status": true
   }
 }
 ```
 
-### Response (201 — OTP email failed)
+### Response (200) — phone-only (email omitted / `null`)
 
+Same envelope as above; `users.email` is persisted as `NULL`. No email OTP is attempted — `UserController::register()` guards `sendOneTimePassword()` with `if ($user->email)` and returns `{"status":200,"message":"User registered successfully","success":true,"data":{"otp_status":true}}` directly when `email` is `null` (`packages/marvel/src/Http/Controllers/UserController.php:668-686`).
+
+### Response (201 — OTP email failed; email path only)
+
+Only returned when an email was supplied and the OTP email dispatch fails:
 ```json
 {
+  "status": 201,
+  "message": "Account created but OTP failed",
   "success": true,
-  "message": "Account created but OTP email could not be sent",
   "data": {
     "otp_status": false,
     "requires_resend": true,
@@ -44,6 +91,7 @@ Register a new user account.
   }
 }
 ```
+Phone-only registrations do not trigger this branch.
 
 ### Execution Flow
 
@@ -51,20 +99,20 @@ Register a new user account.
 POST /api/v1/register
   → throttle:auth (10/min)
   → UserController::register()
-    → UserCreateRequest (validation)
+    → UserCreateRequest (validation: email nullable|sometimes|email|unique:users,email|email:rfc,dns; phone_number required — packages/marvel/src/Http/Requests/UserCreateRequest.php:30-38)
     → DB::beginTransaction()
-    → UserRepository::create()
+    → UserRepository::create()  (email may be null — valid state, not an error)
     → assignRole('customer')
     → DB::commit()
-    → User::sendOneTimePassword() (Spatie OTP notification — queued via ShouldQueue, dispatched to 'high' queue)
-    → JSON Response
+    → if ($user->email) User::sendOneTimePassword() (Spatie OTP notification — queued via ShouldQueue, dispatched to 'high' queue) else skip (no email-side effect)
+    → JSON Response (200 otp_status:true, or 201 requires_resend when email OTP fails)
 ```
 
 ---
 
 ## POST /api/v1/token
 
-Login with email and password.
+Login with `email + password` or `phone_number + password` (`required_without` — either identifier is accepted).
 
 **Authentication:** None (public)
 **Rate Limit:** 10/min per IP (throttle:auth)
@@ -73,19 +121,43 @@ Login with email and password.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| email | string | yes | Registered email |
-| password | string | yes | Account password |
+| email | string | `required_without:phone_number` | Registered email (`email` rule) — required if `phone_number` omitted; source `packages/marvel/src/Http/Requests/UserAuthEmailAndPasswordRequest.php` |
+| phone_number | string | `required_without:email` | Registered phone (`string|max:15|min:8`) — required if `email` omitted |
+| password | string | yes | Account password (`required|string|min:6`) |
+
+`POST /api/v1/token` supports `phone_number + password` via the `required_without` pattern.
+
+#### Request examples
+
+With email:
+```json
+{
+  "email": "john@example.com",
+  "password": "securePass123!"
+}
+```
+
+With phone (phone-only customer):
+```json
+{
+  "phone_number": "12345678901",
+  "password": "securePass123!"
+}
+```
 
 ### Response (200)
 
 ```json
 {
-  "success": true,
+  "status": 200,
   "message": "User logged in successfully",
+  "success": true,
   "data": {
     "token": "1|sanctum_token_string",
+    "email_verified": false,
     "permissions": ["view-products", "create-products"],
-    "role": "customer"
+    "role": ["customer"],
+    "expires_at": "2026-09-21T12:00:00.000000Z"
   }
 }
 ```
@@ -96,11 +168,13 @@ Login with email and password.
 POST /api/v1/token
   → throttle:auth (10/min)
   → UserController::token()
-    → findByField('email', ...)
+    → UserAuthEmailAndPasswordRequest (email required_without:phone_number|email; phone_number required_without:email)
+    → User::where('email', ...) orWhere('phone_number', ...) → first (supports phone-only login)
     → Hash::check(password)
     → User::createToken('auth_token')
     → JSON Response (token + permissions + role)
 ```
+> `phone_number + password` is the primary login for phone-only customers (`email = null` is valid, not an error).
 
 ---
 
@@ -118,8 +192,9 @@ None
 
 ```json
 {
-  "success": true,
-  "message": "User logged out successfully"
+  "status": 200,
+  "message": "Logged out successfully",
+  "success": true
 }
 ```
 
@@ -143,20 +218,52 @@ Get current authenticated user profile.
 
 ### Response (200)
 
+`email` is `string | null`; `email = null` is a valid customer state, not an error. `email_verified_at` is `null` for phone-only customers. Via `Marvel\Http\Resources\UserResource` → `{"status":200,"message":"User profile retrieved successfully","success":true,"data":{"id":1,"name":"...","email":null,"email_verified_at":null,"is_active":true,"image":null,"type":"user","phone_number":"010...","created_at":"...","updated_at":"...","roles":[...],"permissions":[...],"address":[...]}}` (envelope: `status`/`message`/`success`/`data` per `packages/marvel/src/Traits/ApiResponse.php`).
+
+With email:
 ```json
 {
+  "status": 200,
+  "message": "User profile retrieved successfully",
   "success": true,
-  "message": "Profile fetched successfully",
   "data": {
     "id": 1,
     "name": "John Doe",
     "email": "john@example.com",
     "email_verified_at": "2026-07-22T10:00:00Z",
     "is_active": true,
+    "image": null,
     "type": "user",
     "phone_number": "12345678901",
-    "permissions": [],
-    "role": "customer"
+    "created_at": "2026-07-22T10:00:00Z",
+    "updated_at": "2026-07-22T10:00:00Z",
+    "roles": [{ "id": 1, "name": "customer" }],
+    "permissions": [{ "id": 1, "name": "view-products" }],
+    "address": []
+  }
+}
+```
+
+Phone-only:
+```json
+{
+  "status": 200,
+  "message": "User profile retrieved successfully",
+  "success": true,
+  "data": {
+    "id": 1,
+    "name": "John Doe",
+    "email": null,
+    "email_verified_at": null,
+    "is_active": true,
+    "image": null,
+    "type": "user",
+    "phone_number": "12345678901",
+    "created_at": "2026-07-22T10:00:00Z",
+    "updated_at": "2026-07-22T10:00:00Z",
+    "roles": [{ "id": 1, "name": "customer" }],
+    "permissions": [{ "id": 1, "name": "view-products" }],
+    "address": []
   }
 }
 ```
@@ -167,7 +274,7 @@ Get current authenticated user profile.
 GET /api/v1/me
   → auth:sanctum
   → UserController::me()
-    → UserResource
+    → UserResource (serializes email as string|null)
     → JSON Response
 ```
 
@@ -193,8 +300,9 @@ Note: Fields use camelCase (`oldPassword`, `newPassword`), not snake_case.
 
 ```json
 {
-  "success": true,
-  "message": "Password reset successfully"
+  "status": 200,
+  "message": "Password reset successfully",
+  "success": true
 }
 ```
 
@@ -232,8 +340,9 @@ Send an OTP code via email for phone-based authentication.
 
 ```json
 {
+  "status": 200,
+  "message": "Verification code sent successfully",
   "success": true,
-  "message": "User logged in successfully",
   "data": {
     "otp_id": 42
   }
@@ -244,8 +353,9 @@ Send an OTP code via email for phone-based authentication.
 
 ```json
 {
+  "status": 201,
+  "message": "Account created but OTP failed",
   "success": true,
-  "message": "Account created but OTP email could not be sent",
   "data": {
     "otp_status": false,
     "requires_resend": true
@@ -300,8 +410,9 @@ Verify OTP code and receive authentication token.
 
 ```json
 {
-  "success": true,
+  "status": 200,
   "message": "User logged in successfully",
+  "success": true,
   "data": {
     "token": "1|sanctum_token_string"
   }
@@ -312,8 +423,9 @@ Verify OTP code and receive authentication token.
 
 ```json
 {
-  "success": false,
-  "message": "OTP verification failed"
+  "status": 400,
+  "message": "OTP verification failed",
+  "success": false
 }
 ```
 

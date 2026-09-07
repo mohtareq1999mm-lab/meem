@@ -2,41 +2,44 @@
 
 ## Overview
 
-The password reset flow uses a 4-step process:
+The password reset flow uses a 4-step process — **email-only by design** (`password_resets.email` is `varchar NOT NULL`; phone-only users `users.email = null` cannot use this flow):
 
 1. **Forget Password** → generates 6-char OTP token, stores hashed in `password_resets` table, sends via queued email
 2. **Verify Token** → validates OTP against stored hash + configurable expiry
 3. **Reset Password** → updates password, revokes all tokens, deletes reset record
 4. **Change Password** → authenticated user changes own password
 
+> **REST `POST /api/v1/register` note:** `email` is optional for REST (`nullable|sometimes|email|unique:users,email|email:rfc,dns` — `packages/marvel/src/Http/Requests/UserCreateRequest.php:30-38`), `phone_number` required; `email = null` is a valid phone-only customer state, not unverified or an error (`UserController::register()` guards `sendOneTimePassword()` with `if ($user->email)` — `UserController.php:668-686`). Phone-only customers (`email = null`) **cannot** use `POST /api/v1/forget-password` / `POST /api/v1/verify-forget-password-token` / `POST /api/v1/reset-password` — `password_resets.email` NOT NULL, email-only by design. `POST /api/v1/token` supports `phone_number + password` for phone-only login; admin/GraphQL remain email-required.
+
 **Mail Driver:** Uses Laravel mail configuration (default: `log` driver for development)
 **Queue:** All password reset emails dispatch to the `high` queue — requires `php artisan queue:work --queue=high,default`
 
 ---
 
-## POST /api/v1/forget-password
+## POST /api/v1/forget-password — email-only
 
-Request a password reset OTP token.
+Request a password reset OTP token. **Email-only** — phone-only users (`users.email = null`) cannot use this endpoint (`password_resets.email` NOT NULL, email-only by design); `POST /api/v1/token` supports `phone_number + password` for phone-only login.
 
 **Authentication:** None (public)
 **Rate Limit:** 5/min per IP (throttle:sensitive)
 
-### Request Body
+### Request Body — email-only
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| email | string | yes | Registered email address |
+| email | string | yes | Registered email address — required; phone-only `email = null` customers have no email to reset (email-only by design; `REST POST /api/v1/register` email is `nullable\|sometimes\|email\|unique:users,email\|email:rfc,dns`, phone required) |
 
 ### Response (200)
 
 ```json
 {
-  "success": true,
-  "message": "Check your email for password reset token"
+  "status": 200,
+  "message": "Check your inbox for password reset email",
+  "success": true
 }
 ```
 
-**Always returns 200** — does not disclose whether the email exists (prevents email enumeration).
+**Always returns 200** — does not disclose whether the email exists (prevents email enumeration). Envelope per `ApiResponse`: `status`/`message`/`success` (no `data` when empty).
 
 ### Execution Flow
 
@@ -59,26 +62,27 @@ Sends a Markdown email with the 6-character OTP displayed in a code block.
 
 ---
 
-## POST /api/v1/verify-forget-password-token
+## POST /api/v1/verify-forget-password-token — email-only
 
-Verify the OTP token is valid and not expired.
+Verify the OTP token is valid and not expired. **Email-only** — requires `email` (`password_resets.email` NOT NULL); phone-only users (`email = null`) cannot use this flow.
 
 **Authentication:** None (public)
 **Rate Limit:** 5/min per IP (throttle:sensitive)
 
-### Request Body
+### Request Body — email-only
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| email | string | yes | Registered email |
+| email | string | yes | Registered email — required; phone-only `email = null` cannot use (email-only by design) |
 | otp | string | yes | 6-character token from email |
 
 ### Response (200)
 
 ```json
 {
-  "success": true,
-  "message": "Token is valid"
+  "status": 200,
+  "message": "Token is valid",
+  "success": true
 }
 ```
 
@@ -86,8 +90,9 @@ Verify the OTP token is valid and not expired.
 
 ```json
 {
-  "success": false,
-  "message": "Invalid token"
+  "status": 400,
+  "message": "Invalid token",
+  "success": false
 }
 ```
 
@@ -113,18 +118,18 @@ POST /api/v1/verify-forget-password-token
 
 ---
 
-## POST /api/v1/reset-password
+## POST /api/v1/reset-password — email-only
 
-Reset the password using a verified OTP token.
+Reset the password using a verified OTP token. **Email-only** — requires `email` (`password_resets.email` NOT NULL); phone-only users (`email = null`) cannot use this flow.
 
 **Authentication:** None (public)
 **Rate Limit:** 5/min per IP (throttle:sensitive)
 
-### Request Body
+### Request Body — email-only
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| email | string | yes | Registered email |
+| email | string | yes | Registered email — required; phone-only `email = null` cannot use (email-only by design) |
 | otp | string | yes | 6-character token from email |
 | password | string | yes | New password (min 8, max 50) |
 | password_confirmation | string | yes | Must match password |
@@ -133,8 +138,9 @@ Reset the password using a verified OTP token.
 
 ```json
 {
-  "success": true,
-  "message": "Password reset successfully"
+  "status": 200,
+  "message": "Password reset successfully",
+  "success": true
 }
 ```
 
@@ -142,8 +148,9 @@ Reset the password using a verified OTP token.
 
 ```json
 {
-  "success": false,
-  "message": "Invalid token"
+  "status": 400,
+  "message": "Invalid token",
+  "success": false
 }
 ```
 
@@ -191,8 +198,9 @@ Note: Fields use camelCase (`oldPassword`, `newPassword`).
 
 ```json
 {
-  "success": true,
-  "message": "Password reset successfully"
+  "status": 200,
+  "message": "Password reset successfully",
+  "success": true
 }
 ```
 
@@ -214,13 +222,15 @@ POST /api/v1/change-password
 
 ## Database Tables
 
-### `password_resets`
+### `password_resets` — email-only (`email` NOT NULL)
 
 | Column | Type | Description |
 |--------|------|-------------|
-| email | varchar | User email (unique per reset) |
+| email | varchar NOT NULL | User email (unique per reset) — phone-only users (`users.email = null`) have no row; cannot use email reset by design |
 | token | varchar | Hashed OTP token |
 | created_at | timestamp | Token generation time |
+
+> Phone-only REST customers (`users.email = null`, valid state — `email: nullable|sometimes|email|unique:users,email|email:rfc,dns` for `POST /api/v1/register`, `UserController::register()` guard `if ($user->email)`) cannot use email password reset; `POST /api/v1/token` supports `phone_number + password` for their login. Admin/GraphQL remain email-required.
 
 ### Indexes
 

@@ -17,7 +17,7 @@ class VirifiyEmailMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->user()->email_verified_at == null) {
+        if ($request->user()->email !== null && $request->user()->email_verified_at === null) {
             return $this->apiResponse(PLEASE_VERIFY_YOUR_EMAIL, 401,false);
         }
 

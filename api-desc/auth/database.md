@@ -7,16 +7,18 @@
 |--------|------|-------|
 | id | bigint PK | |
 | name | varchar(255) | |
-| email | varchar(255) | UNIQUE, nullable |
-| phone_number | varchar(255) | UNIQUE, nullable |
+| email | varchar(255) | UNIQUE, nullable — optional for REST customers (may be `NULL`; `nullable\|sometimes\|email\|unique:users,email\|email:rfc,dns` per `packages/marvel/src/Http/Requests/UserCreateRequest.php:30-38`) |
+| phone_number | varchar(255) | UNIQUE, nullable (DB) but **required** for REST registration (`required` per `UserCreateRequest`; `POST /api/v1/register` accepts `email` omitted or `email: null`) |
 | password | varchar(255) | bcrypt hash |
 | type | varchar(255) | 'user' or 'admin' |
 | is_active | tinyint(1) | default true |
-| email_verified_at | timestamp | nullable |
+| email_verified_at | timestamp | nullable (`null` for phone-only customers; `email = null` is valid state, not an error) |
 | shop_id | bigint | nullable, FK to shops |
 | created_at | timestamp | |
 | updated_at | timestamp | |
 | deleted_at | timestamp | nullable (SoftDeletes) |
+
+> **REST optional email:** Backend makes `users.email` optional for REST — `POST /api/v1/register` accepts `email` omitted or `email: null` and persists `users.email = NULL` (`phone_number` is required). `email = null` with `email_verified_at = null` is a valid customer state, not an error (see `api.md` / `authentication.md` for phone-only vs with-email request/response examples and `backend.md` for the `if ($user->email)` guard around `sendOneTimePassword()` at `packages/marvel/src/Http/Controllers/UserController.php:668-686`). `UNIQUE` on `email` allows multiple `NULL`s; non-null duplicates are rejected. `POST /api/v1/token` supports `phone_number + password` via `required_without` (`packages/marvel/src/Http/Requests/UserAuthEmailAndPasswordRequest.php`). Admin creation and GraphQL `RegisterInput.email: String!` remain email-required (unchanged).
 
 ### `password_resets`
 | Column | Type | Notes |

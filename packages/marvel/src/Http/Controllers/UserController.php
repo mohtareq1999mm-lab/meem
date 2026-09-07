@@ -664,20 +664,26 @@ if ($user->verifyOneTimePassword($request->code)) {
             }
 
             DB::commit();
-            try {
-                $user->sendOneTimePassword();
-                $data = ['otp_status' => true];
-                return $this->apiResponse(USER_REGISTERED_SUCCESSFULLY, 200, true, $data);
-            } catch (\Exception $mailException) {
-                $data = [
-                    'requires_resend' => true,
-                    'email' => $user->email,
-                    'phone_number' => $user->phone_number,
-                    'otp_status' => false
-                ];
+            
+            if ($user->email) {
+                try {
+                    $user->sendOneTimePassword();
+                    $data = ['otp_status' => true];
+                    return $this->apiResponse(USER_REGISTERED_SUCCESSFULLY, 200, true, $data);
+                } catch (\Exception $mailException) {
+                    $data = [
+                        'requires_resend' => true,
+                        'email' => $user->email,
+                        'phone_number' => $user->phone_number,
+                        'otp_status' => false
+                    ];
 
-                return $this->apiResponse(ACCOUNT_CREATED_BUT_OTP_FAILED, 201, true, $data);
+                    return $this->apiResponse(ACCOUNT_CREATED_BUT_OTP_FAILED, 201, true, $data);
+                }
             }
+            
+            // No email: registration succeeds with no email-side effect
+            return $this->apiResponse(USER_REGISTERED_SUCCESSFULLY, 200, true, ['otp_status' => true]);
         } catch (\Exception $e) {
             DB::rollBack();
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false, $e->getMessage());
