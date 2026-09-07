@@ -111,14 +111,13 @@ $user ??= auth()->user() ?? auth('sanctum')->user();
                 return $this->effectiveCode = $preferenceCode;
             }
 
-            $guestCode = $this->preferenceService->getGuestCurrencyCode();
-            if ($guestCode !== null && !$this->preferenceService->isValidActiveCurrency($guestCode)) {
-                $this->preferenceService->clearGuestCurrencyCode();
-                $guestCode = null;
+            $headerCode = $this->preferenceService->getHeaderCurrencyCode();
+            if ($headerCode !== null && !$this->preferenceService->isValidActiveCurrency($headerCode)) {
+                $headerCode = null;
             }
 
-            if ($guestCode !== null) {
-                return $this->effectiveCode = $guestCode;
+            if ($headerCode !== null) {
+                return $this->effectiveCode = $headerCode;
             }
         }
 

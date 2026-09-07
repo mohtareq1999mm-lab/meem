@@ -12,9 +12,6 @@ class EncryptCookies extends Middleware
      * @var array
      */
     protected $except = [
-        // Frontend-owned, plaintext currency preference. JavaScript must be
-        // able to read/write this cookie directly; the value is a 3-letter
-        // ISO currency code that is validated server-side, never trusted.
-        'guest_currency',
+        //
     ];
 }

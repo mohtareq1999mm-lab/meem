@@ -9,7 +9,6 @@ use App\Services\Currency\CurrencyService;
 use App\Services\Currency\UserCurrencyPreferenceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Str;
 use Marvel\Database\Models\Brand;
 use Marvel\Database\Models\Product;
@@ -48,33 +47,28 @@ class UserCurrencyPreferenceTest extends CurrencyTestCase
     }
 
     /** @test */
-    public function guest_currency_cookie_can_be_queued_and_read(): void
+    public function header_currency_can_be_read_and_normalized(): void
     {
         $service = app(UserCurrencyPreferenceService::class);
 
-        $request = Request::create('/test');
-        $request->cookies->set('guest_currency', 'kwd');
+        $request = Request::create('/test', 'GET', [], [], [], ['HTTP_X_CURRENCY' => 'kwd']);
 
-        $this->assertSame('KWD', $service->getGuestCurrencyCode($request));
+        $this->assertSame('KWD', $service->getHeaderCurrencyCode($request));
 
-        $service->setGuestCurrencyCode('SAR', $request);
-
-        $queued = Cookie::queued('guest_currency');
-        $this->assertNotNull($queued);
-        $this->assertSame('SAR', $queued->getValue());
+        $request2 = Request::create('/test', 'GET', [], [], [], ['HTTP_X_CURRENCY' => '  Sar ']);
+        $this->assertSame('SAR', $service->getHeaderCurrencyCode($request2));
     }
 
     /** @test */
-    public function guest_currency_cookie_can_be_cleared(): void
+    public function invalid_header_is_ignored(): void
     {
         $service = app(UserCurrencyPreferenceService::class);
 
-        $request = Request::create('/test');
-        $request->cookies->set('guest_currency', 'KWD');
+        $request = Request::create('/test', 'GET', [], [], [], ['HTTP_X_CURRENCY' => '12']);
+        $this->assertNull($service->getHeaderCurrencyCode($request));
 
-        $service->clearGuestCurrencyCode($request);
-
-        $this->assertNotNull(Cookie::queued('guest_currency'));
+        $request2 = Request::create('/test', 'GET', [], [], [], ['HTTP_X_CURRENCY' => 'TOOLONG']);
+        $this->assertNull($service->getHeaderCurrencyCode($request2));
     }
 
     /** @test */
@@ -88,13 +82,13 @@ class UserCurrencyPreferenceTest extends CurrencyTestCase
     }
 
     /** @test */
-    public function effective_currency_resolves_from_the_guest_cookie_when_unauthenticated(): void
+    public function effective_currency_resolves_from_the_header_when_unauthenticated(): void
     {
         $this->seedCurrencyData();
 
-        $request = Request::create('/test');
-        $request->cookies->set('guest_currency', 'KWD');
+        $request = Request::create('/test', 'GET', [], [], [], ['HTTP_X_CURRENCY' => 'KWD']);
         $this->app->instance('request', $request);
+        $this->app->forgetInstance(CurrencyService::class);
 
         $this->assertSame('KWD', app(CurrencyService::class)->getEffectiveCode());
     }
@@ -108,28 +102,27 @@ class UserCurrencyPreferenceTest extends CurrencyTestCase
     }
 
     /** @test */
-    public function effective_currency_prefers_the_user_preference_over_the_guest_cookie(): void
+    public function effective_currency_prefers_the_user_preference_over_the_header(): void
     {
         $this->seedCurrencyData();
 
         $user = $this->createCustomerWithCurrencyPreference('SAR');
 
-        $request = Request::create('/test');
-        $request->cookies->set('guest_currency', 'KWD');
+        $request = Request::create('/test', 'GET', [], [], [], ['HTTP_X_CURRENCY' => 'KWD']);
         $this->app->instance('request', $request);
+        $this->app->forgetInstance(CurrencyService::class);
 
         $this->assertSame('SAR', app(CurrencyService::class)->getEffectiveCode($user));
     }
 
     /** @test */
-    public function a_valid_guest_currency_is_adopted_on_login(): void
+    public function a_valid_header_currency_is_adopted_on_login(): void
     {
         $this->seedCurrencyData();
 
         $user = $this->createCustomer();
 
-        $request = Request::create('/login');
-        $request->cookies->set('guest_currency', 'KWD');
+        $request = Request::create('/login', 'GET', [], [], [], ['HTTP_X_CURRENCY' => 'KWD']);
 
         app(UserCurrencyPreferenceService::class)->adoptGuestCurrencyOnLogin($user, $request);
 
@@ -144,8 +137,7 @@ class UserCurrencyPreferenceTest extends CurrencyTestCase
         $user = $this->createCustomer();
         app(UserCurrencyPreferenceService::class)->setUserPreference($user, 'SAR');
 
-        $request = Request::create('/login');
-        $request->cookies->set('guest_currency', 'KWD');
+        $request = Request::create('/login', 'GET', [], [], [], ['HTTP_X_CURRENCY' => 'KWD']);
 
         app(UserCurrencyPreferenceService::class)->adoptGuestCurrencyOnLogin($user, $request);
 
@@ -153,14 +145,13 @@ class UserCurrencyPreferenceTest extends CurrencyTestCase
     }
 
     /** @test */
-    public function an_invalid_guest_currency_is_not_adopted_on_login(): void
+    public function an_invalid_header_currency_is_not_adopted_on_login(): void
     {
         $this->seedCurrencyData();
 
         $user = $this->createCustomer();
 
-        $request = Request::create('/login');
-        $request->cookies->set('guest_currency', 'XXX');
+        $request = Request::create('/login', 'GET', [], [], [], ['HTTP_X_CURRENCY' => 'XXX']);
 
         app(UserCurrencyPreferenceService::class)->adoptGuestCurrencyOnLogin($user, $request);
 
@@ -183,16 +174,15 @@ class UserCurrencyPreferenceTest extends CurrencyTestCase
     }
 
     /** @test */
-    public function select_endpoint_sets_the_guest_currency_cookie_for_guests(): void
+    public function select_endpoint_does_not_set_guest_cookie_for_guests(): void
     {
         $this->seedCurrencyData();
 
-        // guest_currency is Frontend-owned and plaintext (EncryptCookies::$except);
-        // the cookie is asserted without encryption via assertPlainCookie.
         $response = $this->postJson(self::GENERAL_PREFIX . '/currencies/select', ['currency_code' => 'KWD']);
 
         $response->assertOk();
-        $response->assertPlainCookie('guest_currency', 'KWD');
+        $cookies = collect($response->headers->getCookies())->pluck('name')->all();
+        $this->assertNotContains('guest_currency', $cookies);
     }
 
     /** @test */

@@ -41,8 +41,6 @@ class CurrencyController extends Controller
             $preferenceService->setUserPreference($user, $currencyCode);
         }
 
-        $preferenceService->setGuestCurrencyCode($currencyCode, $request);
-
         app(CurrencyService::class)->forgetEffectiveCode();
 
         $currency = Currency::query()->where('code', $currencyCode)->first();

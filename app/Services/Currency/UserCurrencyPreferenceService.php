@@ -4,18 +4,12 @@ namespace App\Services\Currency;
 
 use App\Models\Currency;
 use App\Models\UserPreference;
-use Illuminate\Cookie\CookieValuePrefix;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Schema;
 use Marvel\Database\Models\User;
 
 class UserCurrencyPreferenceService
 {
-    protected const DEFAULT_COOKIE_NAME = 'guest_currency';
-    protected const DEFAULT_COOKIE_LIFETIME = 525960;
-    protected const DEFAULT_COOKIE_PATH = '/';
-
     public function getUserPreference(?User $user): ?string
     {
         if (!$user) {
@@ -42,94 +36,40 @@ class UserCurrencyPreferenceService
         UserPreference::query()->where('user_id', $user->getKey())->delete();
     }
 
-    public function getGuestCurrencyCode(?Request $request = null): ?string
-    {
-        $request ??= request();
-
-        if (!$request || !$request->cookie()) {
-            return null;
-        }
-
-        $raw = $request->cookie($this->cookieName());
-
-        return $this->normalizeGuestValue($raw);
-    }
-
-    public function setGuestCurrencyCode(string $currencyCode, ?Request $request = null): void
-    {
-        $request ??= request();
-
-        if (!$request) {
-            return;
-        }
-
-        $secureConfig = config('currency.guest_cookie_secure');
-        $secure = $secureConfig === null ? $request->isSecure() : (bool) $secureConfig;
-
-        $sameSite = strtolower((string) config('currency.guest_cookie_same_site', 'lax'));
-        if (!in_array($sameSite, ['lax', 'strict', 'none'], true)) {
-            $sameSite = 'lax';
-        }
-
-        // SameSite=None requires Secure=true; browsers reject None without Secure.
-        // Guard against an invalid combination over plain HTTP: if the request
-        // is not secure we downgrade to lax so the cookie remains valid for
-        // same-site localhost, otherwise force Secure when the intent is None.
-        if ($sameSite === 'none' && !$secure) {
-            if ($request->isSecure()) {
-                $secure = true;
-            } else {
-                $sameSite = 'lax';
-            }
-        }
-
-        Cookie::queue(
-            Cookie::make(
-                name: $this->cookieName(),
-                value: strtoupper($currencyCode),
-                minutes: config('currency.guest_cookie_lifetime', self::DEFAULT_COOKIE_LIFETIME),
-                path: config('currency.guest_cookie_path', self::DEFAULT_COOKIE_PATH),
-                secure: $secure,
-                httpOnly: (bool) config('currency.guest_cookie_http_only', false),
-                sameSite: $sameSite,
-            )
-        );
-    }
-
-    public function clearGuestCurrencyCode(?Request $request = null): void
-    {
-        $request ??= request();
-
-        if (!$request) {
-            return;
-        }
-
-        Cookie::queue(Cookie::forget($this->cookieName()));
-    }
-
+    /**
+     * @deprecated Use header-based flow; kept for BC. Adopts X-Currency header value on login if user has no preference.
+     */
     public function adoptGuestCurrencyOnLogin(User $user, ?Request $request = null): void
     {
         if (!Schema::hasTable('user_preferences')) {
             return;
         }
-
         $request ??= request();
-
         if ($this->getUserPreference($user) !== null) {
             return;
         }
-
-        $guestCode = $this->getGuestCurrencyCode($request);
-
-        if ($guestCode === null || !$this->isValidActiveCurrency($guestCode)) {
+        $headerCode = $this->getHeaderCurrencyCode($request);
+        if ($headerCode === null || !$this->isValidActiveCurrency($headerCode)) {
             return;
         }
+        $this->setUserPreference($user, $headerCode);
+    }
 
-        $this->setUserPreference($user, $guestCode);
+    /**
+     * Guest currency is now transported via X-Currency request header.
+     * Frontend owns the value; backend validates and normalizes.
+     */
+    public function getHeaderCurrencyCode(?Request $request = null): ?string
+    {
+        $request ??= request();
 
-        // The guest cookie is intentionally left intact. The Frontend owns it
-        // and may reuse it after logout; the saved user preference is now the
-        // authoritative source for the authenticated session.
+        if (!$request) {
+            return null;
+        }
+
+        $raw = $request->header('X-Currency');
+
+        return $this->normalizeHeaderValue($raw);
     }
 
     public function isValidActiveCurrency(?string $currencyCode): bool
@@ -144,61 +84,14 @@ class UserCurrencyPreferenceService
             ->exists();
     }
 
-    /**
-     * Normalize a raw guest_currency cookie value into a valid uppercase ISO
-     * code, or null. Supports the current plaintext format ("KWD") and legacy
-     * Laravel-encrypted cookies written before guest_currency was added to
-     * EncryptCookies::$except. Malformed/unrecognized values resolve to null so
-     * callers fall back to the catalog/default currency without erroring.
-     */
-    private function normalizeGuestValue(mixed $raw): ?string
+    private function normalizeHeaderValue(mixed $raw): ?string
     {
         if ($raw === null || $raw === '' || is_array($raw)) {
             return null;
         }
 
-        $value = trim((string) $raw);
-        $uppercased = strtoupper($value);
+        $value = strtoupper(trim((string) $raw));
 
-        if (preg_match('/^[A-Z]{3}$/', $uppercased)) {
-            return $uppercased;
-        }
-
-        $decrypted = $this->decryptLegacyGuestValue($value);
-
-        return $decrypted;
-    }
-
-    /**
-     * Attempt to read a legacy encrypted cookie value (pre-Frontend-ownership).
-     * Mirrors EncryptCookies::decryptCookie + validateValue: decrypt without
-     * unserialization, then strip/validate the CookieValuePrefix. Returns a
-     * normalized code or null when the value is not a valid encrypted payload.
-     */
-    private function decryptLegacyGuestValue(string $raw): ?string
-    {
-        try {
-            $decrypted = app('encrypter')->decrypt($raw, false);
-            $value = CookieValuePrefix::validate(
-                $this->cookieName(),
-                $decrypted,
-                app('encrypter')->getKey(),
-            );
-        } catch (\Throwable $e) {
-            return null;
-        }
-
-        if (!is_string($value) || $value === '') {
-            return null;
-        }
-
-        $uppercased = strtoupper(trim($value));
-
-        return preg_match('/^[A-Z]{3}$/', $uppercased) ? $uppercased : null;
-    }
-
-    private function cookieName(): string
-    {
-        return config('currency.guest_cookie_name', self::DEFAULT_COOKIE_NAME);
+        return preg_match('/^[A-Z]{3}$/', $value) ? $value : null;
     }
 }

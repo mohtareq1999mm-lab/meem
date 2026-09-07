@@ -101,9 +101,9 @@ class CurrencySelectionEnabledTest extends CurrencyTestCase
         $this->seedCurrencyData();
         $this->setCurrencySelectionEnabled(false);
 
-        $request = Request::create('/test');
-        $request->cookies->set('guest_currency', 'KWD');
+        $request = Request::create('/test', 'GET', [], [], [], ['HTTP_X_CURRENCY' => 'KWD']);
         $this->app->instance('request', $request);
+        $this->app->forgetInstance(CurrencyService::class);
 
         $this->assertSame('USD', app(CurrencyService::class)->getEffectiveCode());
     }
@@ -125,9 +125,9 @@ class CurrencySelectionEnabledTest extends CurrencyTestCase
         $this->seedCurrencyData();
         $this->setCurrencySelectionEnabled(true);
 
-        $request = Request::create('/test');
-        $request->cookies->set('guest_currency', 'KWD');
+        $request = Request::create('/test', 'GET', [], [], [], ['HTTP_X_CURRENCY' => 'KWD']);
         $this->app->instance('request', $request);
+        $this->app->forgetInstance(CurrencyService::class);
 
         $this->assertSame('KWD', app(CurrencyService::class)->getEffectiveCode());
     }
