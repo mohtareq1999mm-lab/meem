@@ -34,9 +34,18 @@ php artisan route:cache
 php artisan view:cache
 
 # =============================================================================
-# 4. Start server IMMEDIATELY
+# 4. Start Supervisor (manages web + queue workers + scheduler via cron)
 # =============================================================================
 echo ""
-echo "✅ Laravel ready! Starting server on port ${PORT:-8080}..."
+echo "✅ Laravel ready! Starting Supervisor (web + meem-high + meem-medium) on port ${PORT:-8080}..."
+echo "   Workers: meem-high (1 proc, timeout 1200) + meem-medium (1 proc, timeout 900)"
+echo "   Scheduler: via dcron (schedule:run every minute)"
 
-exec php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
+# Ensure log directory exists and is writable
+mkdir -p /var/www/html/storage/logs
+chown -R www:www /var/www/html/storage/logs 2>/dev/null || true
+
+# Start cron in background (for scheduler)
+crond -b -l 8 2>/dev/null || true
+
+exec /usr/bin/supervisord -c /etc/supervisor/supervisord.conf -n

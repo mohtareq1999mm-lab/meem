@@ -36,9 +36,9 @@ if [ "${RUN_MIGRATIONS}" = "true" ]; then
     echo "   DB_DATABASE: ${DB_DATABASE}"
     echo ""
     
-    # Run migrations with fresh (drops all tables first)
-    echo "🚀 Executing: php artisan migrate:fresh --force"
-    if php artisan migrate:fresh --force; then
+    # Run migrations safely (never use migrate:fresh in production)
+    echo "🚀 Executing: php artisan migrate --force"
+    if php artisan migrate --force; then
         echo "✅ Migrations completed successfully!"
         
         # Run seeding if enabled

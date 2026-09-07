@@ -10,5 +10,4 @@ enum QueueName: string
 {
     case HIGH = 'meem-high';
     case MEDIUM = 'meem-medium';
-    case DEFAULT = 'default';
 }

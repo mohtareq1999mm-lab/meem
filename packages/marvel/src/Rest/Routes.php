@@ -31,7 +31,7 @@ use Marvel\Http\Controllers\SliderController;
 use Marvel\Http\Controllers\SectionController;
 use Marvel\Http\Controllers\SectionTypeController;
 use Marvel\Http\Controllers\TagController;
-use Marvel\Http\Controllers\UserController;
+use Marvel\Exports\src\Http\Controllers\UserController;
 use Marvel\Http\Controllers\WishlistController;
 use Marvel\Http\Controllers\ContentPageController;
 use Marvel\Http\Controllers\StaticPageController;

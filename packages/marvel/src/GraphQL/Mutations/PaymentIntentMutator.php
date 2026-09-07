@@ -6,7 +6,7 @@ namespace Marvel\GraphQL\Mutation;
 
 use Marvel\Exceptions\MarvelException;
 use Nuwave\Lighthouse\Support\Contracts\GraphQLContext;
-use Marvel\Facades\Shop;
+use Marvel\Exports\src\Facades\Shop;
 
 class PaymentIntentMutator
 {

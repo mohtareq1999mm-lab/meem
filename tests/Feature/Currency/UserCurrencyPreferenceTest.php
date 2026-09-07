@@ -7,7 +7,6 @@ namespace Tests\Feature\Currency;
 use App\Enums\FrontendResource;
 use App\Services\Currency\CurrencyService;
 use App\Services\Currency\UserCurrencyPreferenceService;
-use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Cookie;
@@ -186,13 +185,14 @@ class UserCurrencyPreferenceTest extends CurrencyTestCase
     /** @test */
     public function select_endpoint_sets_the_guest_currency_cookie_for_guests(): void
     {
-        $this->withoutMiddleware(EncryptCookies::class);
         $this->seedCurrencyData();
 
+        // guest_currency is Frontend-owned and plaintext (EncryptCookies::$except);
+        // the cookie is asserted without encryption via assertPlainCookie.
         $response = $this->postJson(self::GENERAL_PREFIX . '/currencies/select', ['currency_code' => 'KWD']);
 
         $response->assertOk();
-        $response->assertCookie('guest_currency', 'KWD');
+        $response->assertPlainCookie('guest_currency', 'KWD');
     }
 
     /** @test */

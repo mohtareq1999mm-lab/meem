@@ -4,7 +4,7 @@
 namespace Marvel\GraphQL\Queries;
 
 use Nuwave\Lighthouse\Support\Contracts\GraphQLContext;
-use Marvel\Facades\Shop;
+use Marvel\Exports\src\Facades\Shop;
 
 class CouponQuery
 {

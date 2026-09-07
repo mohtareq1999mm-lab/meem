@@ -5,7 +5,7 @@ namespace Marvel\GraphQL\Mutation;
 
 
 use Nuwave\Lighthouse\Support\Contracts\GraphQLContext;
-use Marvel\Facades\Shop;
+use Marvel\Exports\src\Facades\Shop;
 
 // TODO use this as a graphql resolver and fix the issues
 class FaqMutator

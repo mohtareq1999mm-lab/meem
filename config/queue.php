@@ -37,9 +37,10 @@ return [
         'database' => [
             'driver' => 'database',
             'table' => 'jobs',
-            'queue' => 'default',
+            'queue' => 'meem-medium',
             // Must exceed the highest effective timeout on this connection
-            // premature re-release / duplicate execution.
+            // to avoid premature re-release / duplicate execution.
+            // retry_after (1560) > meem-high timeout (1200) and meem-medium timeout (900).
             'retry_after' => 1560,
         ],
 

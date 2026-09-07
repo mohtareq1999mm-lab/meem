@@ -225,7 +225,7 @@ class RouteAndStorageTest extends TestCase
         $this->assertTrue($found, 'imports(created_by,created_at) index must exist (DB-2)');
     }
 
-    // Queue names
+    // Queue names - meem-medium is the canonical queue for imports/exports (meem-bulk removed)
     public function test_import_jobs_dispatched_to_meem_bulk(): void
     {
         // Check onQueue value in job constructors
@@ -233,15 +233,14 @@ class RouteAndStorageTest extends TestCase
         $ref = new \ReflectionObject($job);
         // queue is stored in $job->queue property from Queueable trait
         $queue = $job->queue ?? null;
-        // Current buggy value is meem-high, expected is meem-bulk per D-8
-        $this->assertEquals('meem-bulk', $queue, 'ImportProductsJob should be on meem-bulk, not meem-high. Currently: '.$queue);
+        $this->assertEquals('meem-medium', $queue, 'ImportProductsJob should be on meem-medium. Currently: '.$queue);
     }
 
     public function test_export_jobs_dispatched_to_meem_bulk(): void
     {
         $job = new \Marvel\Jobs\ExportCategoriesJob(1);
         $queue = $job->queue ?? null;
-        $this->assertEquals('meem-bulk', $queue, 'Export job should be on meem-bulk. Currently: '.$queue);
+        $this->assertEquals('meem-medium', $queue, 'Export job should be on meem-medium. Currently: '.$queue);
     }
 
     // Terminal status

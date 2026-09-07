@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Marvel\Enums\Permission;
 use Marvel\Http\Requests\ReorderStaticSectionsRequest;
-use Marvel\Http\Requests\StoreStaticSectionRequest;
+use Marvel\Exports\src\Http\Requests\StoreStaticSectionRequest;
 use Marvel\Http\Requests\UpdateStaticPageRequest;
 use Marvel\Http\Requests\UpdateStaticSectionRequest;
 use Marvel\Traits\ApiResponse;

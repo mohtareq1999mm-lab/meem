@@ -3,7 +3,7 @@
 
 namespace Marvel\GraphQL\Mutation;
 
-use Marvel\Facades\Shop;
+use Marvel\Exports\src\Facades\Shop;
 use Illuminate\Support\Facades\Log;
 use Marvel\Exceptions\MarvelException;
 use Nuwave\Lighthouse\Support\Contracts\GraphQLContext;

@@ -15,10 +15,10 @@ class InfrastructureHardeningTest extends TestCase
     /** @test */
     public function queue_name_enum_matches_worker_topology_exactly()
     {
-        // These strings are consumed by deploy/supervisor/*.conf workers.
+        // These strings are consumed by deploy/supervisor/*.conf workers — only meem-high and meem-medium are canonical.
         $this->assertSame('meem-high', QueueName::HIGH->value);
         $this->assertSame('meem-medium', QueueName::MEDIUM->value);
-        $this->assertSame('default', QueueName::DEFAULT->value);
+        $this->assertCount(2, QueueName::cases(), 'Only meem-high and meem-medium should exist');
     }
 
     /** @test */

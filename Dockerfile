@@ -52,7 +52,7 @@ RUN composer install \
 # ==============================================================================
 FROM php:8.2-cli-alpine AS production
 
-# Install system dependencies
+# Install system dependencies (including Supervisor and cron for queue workers and scheduler)
 RUN apk add --no-cache \
     libpng \
     libjpeg-turbo \
@@ -61,7 +61,9 @@ RUN apk add --no-cache \
     icu-libs \
     oniguruma \
     ca-certificates \
-    curl
+    curl \
+    supervisor \
+    dcron
 
 # Install build dependencies temporarily for PHP extensions
 RUN apk add --no-cache --virtual .build-deps \
@@ -110,6 +112,16 @@ COPY --chown=www:www . .
 # Copy vendor from build stage
 COPY --from=composer-build --chown=www:www /app/vendor ./vendor
 
+# Copy Supervisor configuration (queue workers and web)
+COPY deploy/supervisor/supervisord.conf /etc/supervisor/supervisord.conf
+COPY deploy/supervisor/*.conf /etc/supervisor/conf.d/
+RUN mkdir -p /etc/supervisor/conf.d /var/log/supervisor /var/run \
+    && chown -R www:www /etc/supervisor /var/log/supervisor /var/run \
+    && chmod -R 755 /etc/supervisor
+
+# Install cron for Laravel scheduler (runs via Supervisor-managed cron)
+RUN echo "* * * * * cd /var/www/html && php artisan schedule:run >> /dev/null 2>&1" | crontab -u www -
+
 # Create required directories and set permissions
 RUN mkdir -p storage/framework/cache/data \
     storage/framework/sessions \
@@ -127,13 +139,13 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh /usr/local/bin/release.sh
 # Switch to non-root user for security
 USER www
 
-# Health check endpoint
+# Health check endpoint (web is now managed by Supervisor)
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:${PORT:-8080}/api || exit 1
 
 # Expose port (Render will set PORT env var)
 EXPOSE 8080
 
-# Start via entrypoint
+# Start via entrypoint (Supervisor manages web + workers)
 ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf", "-n"]
