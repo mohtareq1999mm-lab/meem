@@ -41,9 +41,11 @@ class DashboardDataSeeder extends Seeder
             return;
         }
 
-        if ($customers->isEmpty()) {
-            $this->command?->warn('No customer users found. Creating sample customers.');
-            $customers = $this->createCustomers();
+        if ($customers->count() < 50) {
+            $needed = 150 - $customers->count();
+            $this->command?->warn("Only {$customers->count()} customer users found. Creating {$needed} sample customers.");
+            $newCustomers = $this->createCustomers($needed);
+            $customers = $customers->merge($newCustomers);
         }
 
         $orders = $this->createOrders($customers, $coupons, $products);
@@ -56,13 +58,13 @@ class DashboardDataSeeder extends Seeder
         $this->command?->info('Dashboard data seeded successfully.');
     }
 
-    private function createCustomers(): \Illuminate\Support\Collection
+    private function createCustomers(int $count = 150): \Illuminate\Support\Collection
     {
         $customers = collect();
         $now = Carbon::now();
 
         $registrationDates = [];
-        for ($i = 0; $i < 150; $i++) {
+        for ($i = 0; $i < $count; $i++) {
             $daysAgo = $this->weightedRandom(
                 [0, 10, 30, 90, 180, 365, 540],
                 [25, 20, 20, 15, 10, 5, 5],
@@ -98,6 +100,15 @@ class DashboardDataSeeder extends Seeder
         $startDate = (clone $now)->subMonths(18);
         $totalOrders = 500;
 
+        // Track users that already have a pending order to respect
+        // partial unique index idx_orders_user_pending_unique (one pending per user).
+        $pendingUserIds = Order::where('status', 'pending')
+            ->whereNotNull('user_id')
+            ->pluck('user_id')
+            ->unique()
+            ->flip()
+            ->toArray();
+
         $this->command?->info("Creating {$totalOrders} orders over 18 months...");
 
         $orderDates = [];
@@ -125,6 +136,21 @@ class DashboardDataSeeder extends Seeder
         foreach ($orderDates as $index => $date) {
             $customer = $customers->random();
             $status = $this->weightedPick($this->orderStatuses, $this->statusWeights, $index);
+
+            // Respect partial unique index idx_orders_user_pending_unique (one pending per user)
+            if ($status === 'pending') {
+                if (isset($pendingUserIds[$customer->id])) {
+                    // User already has a pending order – pick a non-pending status instead
+                    $status = $this->weightedPick(
+                        ['completed', 'cancelled', 'delivered'],
+                        [60, 10, 15],
+                        $index + 999
+                    );
+                } else {
+                    $pendingUserIds[$customer->id] = true;
+                }
+            }
+
             $itemCount = $this->weightedRandom([1, 2, 3, 4, 5, 6], [20, 30, 25, 15, 7, 3], $index);
 
             $shippingPrice = round(rand(20, 150) + rand(0, 99) / 100, 2);
@@ -187,30 +213,64 @@ class DashboardDataSeeder extends Seeder
 
             $totalPrice = round($totalPrice + $shippingPrice + $fastShipping, 2);
 
-            $order = Order::create([
-                'user_id' => $customer->id,
-                'governorate_id' => $governorateId,
-                'name' => $customer->name,
-                'user_phone' => $customer->phone_number ?? '01000000000',
-                'user_email' => $customer->email,
-                'address' => json_encode([
-                    'street' => fake()->streetAddress(),
-                    'city' => fake()->city(),
-                    'country' => 'Egypt',
-                ]),
-                'notes' => rand(0, 3) === 0 ? fake()->sentence() : null,
-                'shipping_method' => $fastShipping > 0 ? 'FAST' : 'SCHEDULED',
-                'expected_delivery_at' => (clone $date)->addDays(rand(1, 7)),
-                'fast_shipping_fee' => $fastShipping,
-                'shipping_price' => $shippingPrice,
-                'price' => round($totalPrice - $shippingPrice - $fastShipping, 2),
-                'total_price' => $totalPrice,
-                'coupon' => $couponCode,
-                'coupon_discount' => $couponDiscount > 0 ? $couponDiscount : null,
-                'status' => $status,
-                'created_at' => $date,
-                'updated_at' => $status === 'completed' ? (clone $date)->addHours(rand(1, 48)) : $date,
-            ]);
+            try {
+                $order = Order::create([
+                    'user_id' => $customer->id,
+                    'governorate_id' => $governorateId,
+                    'name' => $customer->name,
+                    'user_phone' => $customer->phone_number ?? '01000000000',
+                    'user_email' => $customer->email,
+                    'address' => json_encode([
+                        'street' => fake()->streetAddress(),
+                        'city' => fake()->city(),
+                        'country' => 'Egypt',
+                    ]),
+                    'notes' => rand(0, 3) === 0 ? fake()->sentence() : null,
+                    'shipping_method' => $fastShipping > 0 ? 'FAST' : 'SCHEDULED',
+                    'expected_delivery_at' => (clone $date)->addDays(rand(1, 7)),
+                    'fast_shipping_fee' => $fastShipping,
+                    'shipping_price' => $shippingPrice,
+                    'price' => round($totalPrice - $shippingPrice - $fastShipping, 2),
+                    'total_price' => $totalPrice,
+                    'coupon' => $couponCode,
+                    'coupon_discount' => $couponDiscount > 0 ? $couponDiscount : null,
+                    'status' => $status,
+                    'created_at' => $date,
+                    'updated_at' => $status === 'completed' ? (clone $date)->addHours(rand(1, 48)) : $date,
+                ]);
+            } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+                if (str_contains($e->getMessage(), 'idx_orders_user_pending_unique') || str_contains($e->getMessage(), 'pending_user_id')) {
+                    // Race or stale pendingUserIds: mark user as pending and retry as completed
+                    $pendingUserIds[$customer->id] = true;
+                    $status = 'completed';
+                    $order = Order::create([
+                        'user_id' => $customer->id,
+                        'governorate_id' => $governorateId,
+                        'name' => $customer->name,
+                        'user_phone' => $customer->phone_number ?? '01000000000',
+                        'user_email' => $customer->email,
+                        'address' => json_encode([
+                            'street' => fake()->streetAddress(),
+                            'city' => fake()->city(),
+                            'country' => 'Egypt',
+                        ]),
+                        'notes' => rand(0, 3) === 0 ? fake()->sentence() : null,
+                        'shipping_method' => $fastShipping > 0 ? 'FAST' : 'SCHEDULED',
+                        'expected_delivery_at' => (clone $date)->addDays(rand(1, 7)),
+                        'fast_shipping_fee' => $fastShipping,
+                        'shipping_price' => $shippingPrice,
+                        'price' => round($totalPrice - $shippingPrice - $fastShipping, 2),
+                        'total_price' => $totalPrice,
+                        'coupon' => $couponCode,
+                        'coupon_discount' => $couponDiscount > 0 ? $couponDiscount : null,
+                        'status' => $status,
+                        'created_at' => $date,
+                        'updated_at' => (clone $date)->addHours(rand(1, 48)),
+                    ]);
+                } else {
+                    throw $e;
+                }
+            }
 
             foreach ($orderProductsData as $opData) {
                 DB::table('order_products')->insert([
@@ -269,9 +329,9 @@ class DashboardDataSeeder extends Seeder
             $refundAmount = round($order->total_price * (rand(30, 100) / 100), 2);
             $statusRoll = rand(1, 100);
             $status = match (true) {
-                $statusRoll <= 60 => 'APPROVED',
-                $statusRoll <= 85 => 'PENDING',
-                default => 'REJECTED',
+                $statusRoll <= 60 => 'approved',
+                $statusRoll <= 85 => 'pending',
+                default => 'rejected',
             };
 
             DB::table('refunds')->insert([
