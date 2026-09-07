@@ -6,6 +6,7 @@ use App\Enums\FrontendResource;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Brand\BrandProductResource;
 use App\Http\Resources\Brand\BrandResource;
+use App\Services\Currency\CurrencyService;
 use App\Services\General\BrandService;
 use App\Traits\HasCache;
 use Illuminate\Http\Request;
@@ -33,6 +34,10 @@ class BrandController extends Controller
 
     public function getBrandBySlug($slug)
     {
+        // Products are enriched with pricing via BrandService::getBrandBySlug →
+        // ProductService::enrichCollectionWithPricing, and converted via
+        // BrandProductResource::convertCatalogPrice using CurrencyService.
+        // No direct guest_currency read here; CurrencyService is the single source.
         $brand =  $this->brandService->getBrandBySlug($slug);
         if (!$brand) {
             return $this->apiResponse(NOT_FOUND, 404, false);
@@ -42,9 +47,20 @@ class BrandController extends Controller
 
     public function getBrandsProductsByQtySet(Request $request)
     {
-        $brandWithProducts =  $this->brandService->getBrandsProductsByQtySet($request);
-        $brandWithProductsCache = $this->remember(FrontendResource::BRANDS_PRODUCTS->value, md5($request->fullUrl()), $brandWithProducts);
+        // Currency-aware cache — product prices are converted via
+        // ConvertsProductPrice using CurrencyService::getEffectiveCode().
+        $key = $this->currencyAwareCacheKey($request);
+        $brandWithProducts = $this->remember(
+            FrontendResource::BRANDS_PRODUCTS->value,
+            $key,
+            fn () => $this->brandService->getBrandsProductsByQtySet($request)
+        );
 
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, BrandProductResource::collection($brandWithProductsCache));
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, BrandProductResource::collection($brandWithProducts));
+    }
+
+    private function currencyAwareCacheKey(Request $request): string
+    {
+        return md5($request->fullUrl() . '|currency:' . app(CurrencyService::class)->getEffectiveCode());
     }
 }

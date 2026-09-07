@@ -63,15 +63,35 @@ class UserCurrencyPreferenceService
             return;
         }
 
+        $secureConfig = config('currency.guest_cookie_secure');
+        $secure = $secureConfig === null ? $request->isSecure() : (bool) $secureConfig;
+
+        $sameSite = strtolower((string) config('currency.guest_cookie_same_site', 'lax'));
+        if (!in_array($sameSite, ['lax', 'strict', 'none'], true)) {
+            $sameSite = 'lax';
+        }
+
+        // SameSite=None requires Secure=true; browsers reject None without Secure.
+        // Guard against an invalid combination over plain HTTP: if the request
+        // is not secure we downgrade to lax so the cookie remains valid for
+        // same-site localhost, otherwise force Secure when the intent is None.
+        if ($sameSite === 'none' && !$secure) {
+            if ($request->isSecure()) {
+                $secure = true;
+            } else {
+                $sameSite = 'lax';
+            }
+        }
+
         Cookie::queue(
             Cookie::make(
                 name: $this->cookieName(),
                 value: strtoupper($currencyCode),
                 minutes: config('currency.guest_cookie_lifetime', self::DEFAULT_COOKIE_LIFETIME),
                 path: config('currency.guest_cookie_path', self::DEFAULT_COOKIE_PATH),
-                secure: config('currency.guest_cookie_secure'),
-                httpOnly: config('currency.guest_cookie_http_only', false),
-                sameSite: config('currency.guest_cookie_same_site', 'lax'),
+                secure: $secure,
+                httpOnly: (bool) config('currency.guest_cookie_http_only', false),
+                sameSite: $sameSite,
             )
         );
     }
