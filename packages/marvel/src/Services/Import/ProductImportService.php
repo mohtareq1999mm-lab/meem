@@ -19,6 +19,7 @@ use Marvel\Database\Models\Import;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\ProductVariant;
 use Marvel\Database\Models\Slider;
+use Marvel\Database\Models\Tax;
 use Marvel\Database\Models\Tag;
 use Marvel\Enums\DiscountType;
 use Marvel\Enums\ProductType;
@@ -700,6 +701,32 @@ class ProductImportService
             }
             $data['stock_quantity'] = (int) $row['quantity'];
             $data['quantity'] = (int) $row['quantity'];
+        }
+
+        // Optional tax_class column: resolved by code (or name). The importer
+        // only ASSIGNS the class — it never calculates tax.
+        if (array_key_exists('tax_class', $row)) {
+            $identifier = trim((string) ($row['tax_class'] ?? ''));
+
+            if ($identifier === '') {
+                $data['tax_class_id'] = null;
+            } else {
+                $taxClass = Tax::query()
+                    ->where(function ($query) use ($identifier) {
+                        $query->where('code', $identifier)->orWhere('name', $identifier);
+                    })
+                    ->first();
+
+                if (!$taxClass) {
+                    throw new \InvalidArgumentException("Unknown tax_class '{$identifier}'. Use the tax class code or name.");
+                }
+
+                if (!$taxClass->is_active) {
+                    throw new \InvalidArgumentException("Tax class '{$identifier}' is inactive and cannot be assigned.");
+                }
+
+                $data['tax_class_id'] = $taxClass->id;
+            }
         }
 
         if (isset($row['status'])) {

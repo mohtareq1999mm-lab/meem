@@ -105,6 +105,13 @@ class CurrencySeeder extends Seeder
                     'exchange_rate' => $rate,
                 ],
             );
+
+            if ($currency->manual_rate === null) {
+                $currency->update([
+                    'rate_mode' => 'manual',
+                    'manual_rate' => $rate,
+                ]);
+            }
         }
     }
 }

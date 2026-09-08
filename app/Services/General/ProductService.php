@@ -152,8 +152,10 @@ class ProductService
 
         $products = $query->orderBy('id', $order)->paginate($limit);
 
+        // ONE tax_classes query per page — never per product.
+        $taxMap = \App\Services\Tax\TaxClassMap::loadFromModels($products->getCollection());
         $products->setCollection(
-            $products->getCollection()->map(fn(Product $product) => $this->enrichProductWithPricing($product))
+            $products->getCollection()->map(fn(Product $product) => $this->enrichProductWithPricing($product, $taxMap))
         );
 
         return $products;
@@ -183,8 +185,10 @@ class ProductService
 
         $products = $query->orderBy('id', $order)->paginate($limit);
 
+        // ONE tax_classes query per page — never per product.
+        $taxMap = \App\Services\Tax\TaxClassMap::loadFromModels($products->getCollection());
         $products->setCollection(
-            $products->getCollection()->map(fn(Product $product) => $this->enrichProductWithPricing($product))
+            $products->getCollection()->map(fn(Product $product) => $this->enrichProductWithPricing($product, $taxMap))
         );
 
         return $products;

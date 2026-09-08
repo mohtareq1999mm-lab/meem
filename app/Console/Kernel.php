@@ -19,6 +19,7 @@ class Kernel extends ConsoleKernel
         \App\Console\Commands\NotifyAbandonedCarts::class,
         \App\Console\Commands\NotifyPromotionsEndingSoon::class,
         \App\Console\Commands\NotifyFlashSalesEndingSoon::class,
+        \App\Console\Commands\SyncCurrencyRates::class,
     ];
 
     protected function schedule(Schedule $schedule)
@@ -40,6 +41,12 @@ class Kernel extends ConsoleKernel
         // failed_jobs table remains the failure record during that window;
         // HandleFailedQueueJob alerts on every final failure at occurrence time.
         $schedule->command('queue:prune-failed --hours=720')->dailyAt('03:15')->withoutOverlapping();
+        $schedule->command('currency:sync-rates')
+            ->everySixHours()
+            ->timezone('UTC')
+            ->withoutOverlapping(60)
+            ->onOneServer()
+            ->when(fn () => (bool) config('currency.enabled', false));
     }
 
     /**

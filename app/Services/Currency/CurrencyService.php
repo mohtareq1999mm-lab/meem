@@ -367,10 +367,10 @@ $user ??= auth()->user() ?? auth('sanctum')->user();
         LogActivityJob::dispatch(
             get_class($updated),
             $updated->getKey(),
-            auth()->id(),
+            auth('sanctum')->id() ?? auth()->id(),
             'rateModeChanged',
             'currencies',
-            'Currency rate mode changed',
+            __('activity.currency_rate_mode_changed'),
             ['old' => $before, 'new' => [
                 'rate_mode' => $updated->rate_mode?->value,
                 'manual_rate' => $updated->manual_rate,

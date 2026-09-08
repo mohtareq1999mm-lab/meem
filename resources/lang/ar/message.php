@@ -425,6 +425,8 @@ return [
     'MESSAGE.CREATE_DATA_SUCCESSFULLY' => 'تم إنشاء البيانات بنجاح',
     'MESSAGE.UPDATE_DATA_SUCCESSFULLY' => 'تم تحديث البيانات بنجاح',
     'MESSAGE.DELETE_DATA_SUCCESSFULLY' => 'تم حذف البيانات بنجاح',
+    'ERROR.ERROR_CREATING_TAX' => 'فشل في إنشاء فئة الضريبة',
+    'ERROR.ERROR_UPDATING_TAX' => 'فشل في تحديث فئة الضريبة',
 
     // Notifications
     'MESSAGE.NOTIFICATIONS_FETCHED' => 'تم جلب الإشعارات بنجاح.',

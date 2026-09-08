@@ -99,9 +99,17 @@ class OrderService
 
     private function enrichOrderItemsPricing(Order $order): void
     {
-        $order->orderItems->each(function ($item) {
+        $products = $order->orderItems
+            ->map(fn ($item) => $item->relationLoaded('product') ? $item->product : null)
+            ->filter()
+            ->values();
+
+        // ONE tax_classes query for the whole order page — never per item.
+        $taxMap = TaxClassMap::loadFromModels($products);
+
+        $order->orderItems->each(function ($item) use ($taxMap) {
             if ($item->relationLoaded('product') && $item->product) {
-                app(ProductService::class)->enrichProductWithPricing($item->product);
+                app(ProductService::class)->enrichProductWithPricing($item->product, $taxMap);
             }
         });
     }
@@ -285,7 +293,7 @@ class OrderService
                 $this->couponReservationService->release($order);
 
                 // Sync order items with current cart
-                if (!$this->orderCreationService->syncOrderItems($order, $cart, $checkoutTotals->giftItems)) {
+                if (!$this->orderCreationService->syncOrderItems($order, $cart, $checkoutTotals->giftItems, $checkoutTotals)) {
                     throw new \RuntimeException('Order item sync failed.');
                 }
             } else {
@@ -296,7 +304,7 @@ class OrderService
                 if (!$order) {
                     throw new \RuntimeException('Order creation failed.');
                 }
-                if (!$this->orderCreationService->createOrderItems($order, $cart, $checkoutTotals->giftItems)) {
+                if (!$this->orderCreationService->createOrderItems($order, $cart, $checkoutTotals->giftItems, $checkoutTotals)) {
                     throw new \RuntimeException('Order item creation failed.');
                 }
             }
@@ -578,8 +586,9 @@ class OrderService
             ->get()
             ->keyBy('id');
 
+        $defaultId = $this->taxResolver->currentDefaultTaxClassId();
         $map = TaxClassMap::load(
-            $products->pluck('tax_class_id')->merge([$taxOverrideClassId])
+            $products->pluck('tax_class_id')->merge([$taxOverrideClassId, $defaultId])
         );
 
         // Per-line product tax, grouped by rate with exact-sum reconciliation.

@@ -59,7 +59,7 @@ class CurrencyRateTest extends CurrencyTestCase
     {
         $this->createAuthenticatedAdmin();
         $kwd = $this->seedCurrencyData()['KWD'];
-        $rate = CurrencyRate::query()->where('currency_id', $kwd->id)->first();
+        $rate = $this->createRate($kwd, '0.2000000000', now()->subDay()->toDateString());
 
         $response = $this->putJson(self::PREFIX . "/currency-rates/{$rate->id}", [
             'exchange_rate' => '0.4000000000',
@@ -79,7 +79,7 @@ class CurrencyRateTest extends CurrencyTestCase
     {
         $this->createAuthenticatedAdmin();
         $kwd = $this->seedCurrencyData()['KWD'];
-        $rate = CurrencyRate::query()->where('currency_id', $kwd->id)->first();
+        $rate = $this->createRate($kwd, '0.2000000000', now()->subDay()->toDateString());
 
         $response = $this->deleteJson(self::PREFIX . "/currency-rates/{$rate->id}");
 
@@ -88,6 +88,19 @@ class CurrencyRateTest extends CurrencyTestCase
         $response->assertJsonPath('message', __('message.MESSAGE.CURRENCY_RATE_DELETED_SUCCESSFULLY'));
 
         $this->assertDatabaseMissing('currency_rates', ['id' => $rate->id]);
+    }
+
+    /** @test */
+    public function admin_cannot_delete_the_current_effective_rate(): void
+    {
+        $this->createAuthenticatedAdmin();
+        $kwd = $this->seedCurrencyData()['KWD'];
+        $rate = CurrencyRate::query()->where('currency_id', $kwd->id)->firstOrFail();
+
+        $response = $this->deleteJson(self::PREFIX . "/currency-rates/{$rate->id}");
+
+        $response->assertStatus(409);
+        $this->assertDatabaseHas('currency_rates', ['id' => $rate->id]);
     }
 
     /** @test */

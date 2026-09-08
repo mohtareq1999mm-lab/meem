@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'currency_rate_mode_changed' => 'تم تغيير وضع سعر صرف العملة',
     'product_created' => 'تم إنشاء المنتج',
     'digital_entitlement_limit_changed' => 'تم تغيير حد تنزيلات المنتج الرقمي',
     'digital_entitlement_revoked' => 'تم إلغاء وصول المنتج الرقمي',

@@ -118,6 +118,8 @@ Route::prefix('v1/general')->group(function () {
         Route::post('checkout', [OrderController::class, 'checkout']);
         Route::post('checkout/cod/{orderId}/mark-paid', [OrderController::class, 'markCodAsPaid'])->middleware(['permission:update-order-status']);
         Route::post('checkout/cashier/{orderId}/mark-paid', [OrderController::class, 'markCashierPaid'])->middleware(['permission:update-order-status']);
+        // Admin per-order tax override (pending orders only)
+        Route::put('orders/{orderId}/tax-override', [OrderController::class, 'applyTaxOverride'])->whereNumber('orderId')->middleware(['permission:override-order-tax']);
         //======================== fast shipping checkout ========================/
         Route::post('fast-shipping/checkout', [FastShippingController::class, 'checkout']);
         //======================== orders ========================//

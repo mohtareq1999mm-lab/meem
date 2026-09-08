@@ -2,6 +2,7 @@
 
 namespace Marvel\Http\Controllers;
 
+use App\Exceptions\CurrencyInUseException;
 use App\Http\Requests\Currency\StoreCurrencyRateRequest;
 use App\Http\Requests\Currency\UpdateCurrencyRateRequest;
 use App\Models\CurrencyRate;
@@ -96,7 +97,11 @@ class CurrencyRateController extends CoreController
             return $this->apiResponse(CURRENCY_RATE_NOT_FOUND, 404, false);
         }
 
-        $this->currencyRateService->delete($rate);
+        try {
+            $this->currencyRateService->delete($rate);
+        } catch (CurrencyInUseException $e) {
+            return $this->apiResponse(CANNOT_DELETE_CURRENCY_IN_USE, 409, false);
+        }
 
         return $this->apiResponse(CURRENCY_RATE_DELETED_SUCCESSFULLY, 200, true);
     }

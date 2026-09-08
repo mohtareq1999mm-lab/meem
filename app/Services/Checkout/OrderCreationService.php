@@ -327,6 +327,11 @@ $quantity = max(1, (int) ($item->quantity ?? 0));
                         'promotion_id' => $gift['promotion_id'] ?? null,
                     ];
 
+                    if ($hasProductTaxColumns) {
+                        $orderItemData['product_tax_rate'] = null;
+                        $orderItemData['product_tax_amount'] = 0;
+                    }
+
                     if ($hasItemTypeColumn) {
                         $orderItemData['item_type'] = $giftProduct->item_type ?? \Marvel\Enums\ItemType::PHYSICAL;
                     }
@@ -354,11 +359,11 @@ $quantity = max(1, (int) ($item->quantity ?? 0));
         return true;
     }
 
-    public function syncOrderItems(Order $order, Cart $cart, array $giftItems = []): bool
+    public function syncOrderItems(Order $order, Cart $cart, array $giftItems = [], ?CheckoutTotals $checkoutTotals = null): bool
     {
         $order->orderItems()->delete();
 
-        return $this->createOrderItems($order, $cart, $giftItems);
+        return $this->createOrderItems($order, $cart, $giftItems, $checkoutTotals);
     }
 
     public function updateTransactionAmount(Order $order): void

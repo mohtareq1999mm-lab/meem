@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Contracts\ExchangeRateProviderInterface;
 use App\Contracts\FrontendWebhookDispatcher;
 use App\Mail\Transport\ResendTransport;
 use App\Services\FrontendWebhookService;
@@ -26,6 +27,12 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(\App\Contexts\ChannelContext::class);
         $this->app->singleton(\App\Services\Currency\CurrencyService::class);
+        $this->app->bind(ExchangeRateProviderInterface::class, function ($app) {
+            return match (config('currency.provider.name', 'exchange_rate_api')) {
+                'exchange_rate_api' => $app->make(\App\Services\Currency\Providers\ExchangeRateApiProvider::class),
+                default => throw new \InvalidArgumentException('Unsupported currency rate provider configured.'),
+            };
+        });
 
         // Register the custom FCM notification channel so via('fcm') resolves.
         $this->app->make(ChannelManager::class)->extend('fcm', function () {

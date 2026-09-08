@@ -4,6 +4,7 @@ namespace App\Services\Currency;
 
 use App\Enums\RateMode;
 use App\Enums\RateSource;
+use App\Exceptions\CurrencyInUseException;
 use App\Models\CurrencyRate;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -90,7 +91,26 @@ class CurrencyRateService
 
     public function delete(CurrencyRate $rate): void
     {
-        $rate->delete();
+        DB::transaction(function () use ($rate): void {
+            $currency = \App\Models\Currency::query()
+                ->whereKey($rate->currency_id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $rate = CurrencyRate::query()->lockForUpdate()->findOrFail($rate->getKey());
+            $effectiveRate = CurrencyRate::query()
+                ->where('currency_id', $currency->getKey())
+                ->whereDate('effective_date', '<=', now()->toDateString())
+                ->orderByDesc('effective_date')
+                ->orderByDesc('id')
+                ->first();
+
+            if ($effectiveRate?->getKey() === $rate->getKey()) {
+                throw CurrencyInUseException::isOnlyEffectiveRate();
+            }
+
+            $rate->delete();
+        });
 
         $this->currencyService->invalidatePriceCaches();
     }

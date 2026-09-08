@@ -62,6 +62,10 @@ class ProductVariant extends Model
      */
     public function getCurrentPriceAttribute()
     {
+        if (array_key_exists('current_price', $this->attributes) && $this->attributes['current_price'] !== null) {
+            return $this->attributes['current_price'];
+        }
+
         return $this->getSalePriceAttribute();
     }
 
@@ -72,6 +76,10 @@ class ProductVariant extends Model
      */
     public function getFinalPriceAttribute()
     {
+        if (array_key_exists('current_price', $this->attributes) && $this->attributes['current_price'] !== null) {
+            return $this->attributes['current_price'];
+        }
+
         return $this->getSalePriceAttribute();
     }
 
@@ -82,6 +90,13 @@ class ProductVariant extends Model
      */
     public function getSalePriceAttribute()
     {
+        if (array_key_exists('sale_price', $this->attributes) && $this->attributes['sale_price'] !== null) {
+            return $this->attributes['sale_price'];
+        }
+
+        if (array_key_exists('current_price', $this->attributes) && $this->attributes['current_price'] !== null) {
+            return $this->attributes['current_price'];
+        }
         $product = $this->relationLoaded('product') ? $this->product : $this->product()->with('flash_sales')->first();
 
         if (!$product) {

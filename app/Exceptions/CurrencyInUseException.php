@@ -25,4 +25,9 @@ class CurrencyInUseException extends Exception
     {
         return new self('Cannot delete the base currency.', self::REASON_BASE_CURRENCY);
     }
+
+    public static function isOnlyEffectiveRate(): self
+    {
+        return new self('Cannot delete the only effective exchange rate.', self::REASON_REFERENCED_BY_RATES);
+    }
 }

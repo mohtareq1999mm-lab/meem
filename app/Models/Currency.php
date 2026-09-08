@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Enums\RateMode;
 use App\Services\Currency\CurrencyService;
-use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;

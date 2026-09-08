@@ -5,7 +5,9 @@ namespace Marvel\Http\Controllers;
 use App\Exceptions\CurrencyInactiveException;
 use App\Exceptions\CurrencyInUseException;
 use App\Exceptions\CurrencyRateNotFoundException;
+use App\Enums\RateMode;
 use App\Http\Requests\Currency\StoreCurrencyRequest;
+use App\Http\Requests\Currency\UpdateCurrencyRateModeRequest;
 use App\Http\Requests\Currency\UpdateCurrencyRequest;
 use App\Models\Currency;
 use App\Services\Currency\CurrencyService;
@@ -30,6 +32,7 @@ class CurrencyController extends CoreController
         $this->middleware('permission:' . Permission::DELETE_CURRENCY, ['only' => ['destroy']]);
         $this->middleware('permission:' . Permission::SET_BASE_CURRENCY, ['only' => ['setBase']]);
         $this->middleware('permission:' . Permission::SET_CATALOG_CURRENCY, ['only' => ['setCatalog']]);
+        $this->middleware('permission:' . Permission::UPDATE_CURRENCY, ['only' => ['setRateMode']]);
     }
 
     public function index(Request $request): JsonResponse
@@ -166,5 +169,27 @@ class CurrencyController extends CoreController
         }
 
         return $this->apiResponse(SET_CATALOG_CURRENCY_SUCCESSFULLY, 200, true, CurrencyResource::make($currency));
+    }
+
+    public function setRateMode(UpdateCurrencyRateModeRequest $request, int $id): JsonResponse
+    {
+        $currency = Currency::query()->withTrashed()->find($id);
+
+        if (!$currency) {
+            return $this->apiResponse(CURRENCY_NOT_FOUND, 404, false);
+        }
+
+        try {
+            $validated = $request->validated();
+            $currency = $this->currencyService->setRateMode(
+                $currency,
+                RateMode::from($validated['mode']),
+                $validated['manual_rate'] ?? null,
+            );
+        } catch (CurrencyRateNotFoundException|\InvalidArgumentException $e) {
+            return $this->apiResponse(EXCHANGE_RATE_NOT_FOUND, 422, false);
+        }
+
+        return $this->apiResponse(CURRENCY_UPDATED_SUCCESSFULLY, 200, true, CurrencyResource::make($currency));
     }
 }

@@ -11,6 +11,7 @@ return [
     'product_force_deleted' => 'Product permanently deleted',
     'product_activated' => 'Product activated',
     'product_deactivated' => 'Product deactivated',
+    'currency_rate_mode_changed' => 'Currency rate mode changed',
 
     'category_created' => 'Category created',
     'category_updated' => 'Category updated',

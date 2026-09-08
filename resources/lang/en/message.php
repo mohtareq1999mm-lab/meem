@@ -470,6 +470,8 @@ return [
     'MESSAGE.CREATE_DATA_SUCCESSFULLY' => 'Data created successfully',
     'MESSAGE.UPDATE_DATA_SUCCESSFULLY' => 'Data updated successfully',
     'MESSAGE.DELETE_DATA_SUCCESSFULLY' => 'Data deleted successfully',
+    'ERROR.ERROR_CREATING_TAX' => 'Failed to create tax class',
+    'ERROR.ERROR_UPDATING_TAX' => 'Failed to update tax class',
 
     // Checkout & Payments
     'ERROR.ERROR_CREATING_INVOICE' => 'Error creating invoice',

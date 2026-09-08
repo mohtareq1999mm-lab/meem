@@ -182,6 +182,7 @@ class CurrencyPermissionTest extends CurrencyTestCase
     public function admin_with_only_view_permission_cannot_mutate_exchange_rates(): void
     {
         $kwd = $this->seedCurrencyData()['KWD'];
+        $this->createRate($kwd, '0.2000000000', now()->subDay()->toDateString());
         $rate = \App\Models\CurrencyRate::query()->where('currency_id', $kwd->id)->first();
 
         $user = $this->createUserWithPermissions(['view-exchange-rates'], 'admin');
@@ -212,6 +213,7 @@ class CurrencyPermissionTest extends CurrencyTestCase
     public function admin_with_delete_exchange_rate_permission_can_delete_rates(): void
     {
         $kwd = $this->seedCurrencyData()['KWD'];
+        $this->createRate($kwd, '0.2000000000', now()->subDay()->toDateString());
         $rate = \App\Models\CurrencyRate::query()->where('currency_id', $kwd->id)->first();
 
         $user = $this->createUserWithPermissions(['delete-exchange-rate'], 'admin');
@@ -231,6 +233,7 @@ class CurrencyPermissionTest extends CurrencyTestCase
         $currencies = $this->seedCurrencyData();
         $currency = $currencies['USD'];
         $kwd = $currencies['KWD'];
+        $this->createRate($kwd, '0.2000000000', now()->subDay()->toDateString());
         $rate = \App\Models\CurrencyRate::query()->where('currency_id', $kwd->id)->first();
 
         $user = $this->createUserWithPermissions(self::PERMISSION_VALUES, 'admin');
@@ -269,6 +272,7 @@ class CurrencyPermissionTest extends CurrencyTestCase
         $currencies = $this->seedCurrencyData();
         $currency = $currencies['USD'];
         $kwd = $currencies['KWD'];
+        $this->createRate($kwd, '0.2000000000', now()->subDay()->toDateString());
         $rate = \App\Models\CurrencyRate::query()->where('currency_id', $kwd->id)->first();
 
         $this->getJson(self::PREFIX . '/currencies')->assertStatus(200);

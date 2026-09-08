@@ -214,6 +214,12 @@ class Product extends Model implements HasMedia
 
     public function getCurrentPriceAttribute()
     {
+        // Storefront enrichment sets a tax-inclusive current_price via
+        // setAttribute(). That authoritative value must be respected.
+        if (array_key_exists('current_price', $this->attributes) && $this->attributes['current_price'] !== null) {
+            return $this->attributes['current_price'];
+        }
+
         return $this->getCurrentPrice();
     }
 

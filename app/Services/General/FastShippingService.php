@@ -144,7 +144,7 @@ class FastShippingService
                     $shippingPrice,
                     $governorateId,
                 );
-                $this->orderCreationService->syncOrderItems($order, $cart, $checkoutTotals->giftItems);
+                $this->orderCreationService->syncOrderItems($order, $cart, $checkoutTotals->giftItems, $checkoutTotals);
                 $this->orderCreationService->updateTransactionAmount($order);
 
                 // Pending-order reuse must still own a live reservation.
@@ -166,7 +166,7 @@ class FastShippingService
                     throw new Exception('Failed to create order.');
                 }
 
-                if (!$this->orderCreationService->createOrderItems($order, $cart, $checkoutTotals->giftItems)) {
+                if (!$this->orderCreationService->createOrderItems($order, $cart, $checkoutTotals->giftItems, $checkoutTotals)) {
                     DB::rollBack();
                     throw new Exception('Failed to add items to order.');
                 }

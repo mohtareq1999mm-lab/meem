@@ -9,13 +9,14 @@ class ProductResource extends Resource
 {
     public function toArray($request): array
     {
-        $taxMap = TaxClassMap::load([$this->tax_class_id]);
+        $product = $this->resource instanceof \Marvel\Database\Models\Product ? $this->resource : $this;
+        $taxMap = TaxClassMap::load([$product->tax_class_id]);
         // Admin semantics: current_price stays the pre-tax effective price;
         // the tax-inclusive value is exposed through price_including_tax.
-        $tax = $this->tax_class_id !== null
-            ? app(ProductTaxPresenter::class)->describe($this, (float) $this->current_price, $taxMap)
+        $tax = $product->tax_class_id !== null
+            ? app(ProductTaxPresenter::class)->describe($product, (float) $product->current_price, $taxMap)
             : null;
-        $priceIncludingTax = app(ProductTaxPresenter::class)->applyTo($this, (float) $this->current_price, $taxMap);
+        $priceIncludingTax = app(ProductTaxPresenter::class)->applyTo($product, (float) $product->current_price, $taxMap);
 
         return [
             'id'                     => $this->id,
