@@ -3,10 +3,14 @@
 namespace App\Services\General;
 
 use App\DTOs\CheckoutTotals;
+use App\DTOs\Tax\TaxBreakdown;
 use App\Events\AssignedCouponConsumed;
 use App\Events\OrderCreated;
 use App\Services\Checkout\OrderCreationService;
 use App\Services\General\CartInventoryService;
+use App\Services\Tax\TaxCalculator;
+use App\Services\Tax\TaxClassMap;
+use App\Services\Tax\TaxResolver;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +24,7 @@ use Marvel\Database\Models\Cart;
 use Marvel\Database\Models\CartItem;
 use Marvel\Database\Models\Governorate;
 use Marvel\Database\Models\Order;
+use Marvel\Database\Models\Product;
 use Marvel\Database\Models\Promotion;
 use Marvel\Database\Models\Settings;
 use Marvel\Database\Models\ShippingPrice;
@@ -56,6 +61,7 @@ class OrderService
         private \App\Services\Inventory\InventoryRestoreService $inventoryRestoreService,
         private \App\Services\Invoice\InvoiceService $invoiceService,
         private CouponReservationService $couponReservationService,
+        private TaxResolver $taxResolver,
     ) {}
 
     public function paginateForUser(Request $request): LengthAwarePaginator
@@ -157,7 +163,13 @@ class OrderService
                 $shippingPrice = $this->resolveShippingChargeForCart($cart, $checkoutTotals, $shippingInfo);
                 $shippingPrice = $this->resolveFreeShippingByCoupon($checkoutTotals->couponDiscountType, $shippingPrice);
 
-                $finalTotal = round((float) $checkoutTotals->finalTotal + $shippingPrice, 2);
+                // Preview totals include the authoritative tax breakdown.
+                $checkoutTotals = $this->withTaxes($checkoutTotals, $cart, $shippingPrice);
+
+                $finalTotal = round(
+                    (float) $checkoutTotals->finalTotal + $checkoutTotals->totalTaxAmount() + $shippingPrice,
+                    2
+                );
                 $cart->update(['total_price' => $finalTotal]);
 
                 return $cart->total_price;
@@ -216,6 +228,10 @@ class OrderService
                 ->firstWhere('is_gift', true)
                 ?->product_id);
 
+            // Pending order is resolved BEFORE totals so an admin tax override
+            // persists across retries and participates in the tax resolution.
+            $pendingOrder = $this->orderCreationService->findPendingOrderForUser($request->user()->id);
+
             $checkoutTotals = $this->calculateCheckoutTotals(
                 $cart,
                 $selectedPromotionId ? (int) $selectedPromotionId : null,
@@ -242,8 +258,18 @@ class OrderService
             }
             $governorateId = $shippingInfo['governorate_id'];
 
+            // Authoritative tax calculation — once, after discounts + shipping.
+            $checkoutTotals = $this->withTaxes(
+                $checkoutTotals,
+                $cart,
+                $shippingPrice,
+                null,
+                $pendingOrder?->tax_override_type,
+                $pendingOrder?->tax_override_tax_class_id,
+            );
+
             // Check for existing pending order (Rules 4-5: Payment retry reuses pending order)
-            $pendingOrder = $this->orderCreationService->findPendingOrderForUser($request->user()->id);
+            // — already resolved (locked) before totals for tax-override precedence.
 
             if ($pendingOrder) {
                 // Reuse existing pending order: update with new cart data
@@ -501,6 +527,112 @@ class OrderService
             couponDiscountType: $couponResult['discountType'],
             couponDiscountMaxAmount: $couponDiscountMaxAmount,
         );
+    }
+
+    /**
+     * THE single authoritative checkout tax calculation point.
+     *
+     * Runs AFTER promotion/coupon (taxable base known) and AFTER shipping
+     * resolution (applies_to_shipping may extend the base). Produces an
+     * immutable CheckoutTotals carrying the full TaxBreakdown.
+     *
+     * Product tax: per-line, on the effective line amount (post promotion,
+     * with the order-level coupon allocated proportionally).
+     * Order tax: resolved override → default → none, on finalTotal
+     * (+ shipping + fast fee only when the class applies tax to shipping).
+     */
+    public function withTaxes(
+        CheckoutTotals $totals,
+        Cart $cart,
+        ?float $shippingPrice = null,
+        ?float $fastShippingFee = null,
+        ?string $taxOverrideType = null,
+        ?int $taxOverrideClassId = null,
+    ): CheckoutTotals {
+        $lines = $cart->items->reject(fn ($item) => (bool) ($item->is_gift ?? false));
+
+        if ($lines->isEmpty()) {
+            return $totals;
+        }
+
+        $lineNetCents = $lines->mapWithKeys(
+            fn ($item) => [(int) $item->id => TaxCalculator::toCents((float) ($item->total_price ?? 0))]
+        )->all();
+
+        // Allocate the order-level coupon across lines so the taxable line
+        // amounts sum exactly to finalTotal (largest remainder, like the
+        // promotion engine).
+        $couponCents = TaxCalculator::toCents($totals->couponDiscount);
+        $couponShares = TaxCalculator::allocate($lineNetCents, $couponCents);
+
+        $taxableLineCents = [];
+        foreach ($lineNetCents as $itemId => $net) {
+            $taxableLineCents[$itemId] = max(0, $net - ($couponShares[$itemId] ?? 0));
+        }
+
+        $finalTotalCents = max(0, TaxCalculator::toCents($totals->finalTotal));
+
+        // Product tax classes for the ordered products (+ the override class).
+        $products = Product::query()
+            ->whereIn('id', $lines->pluck('product_id')->filter()->unique()->values())
+            ->get()
+            ->keyBy('id');
+
+        $map = TaxClassMap::load(
+            $products->pluck('tax_class_id')->merge([$taxOverrideClassId])
+        );
+
+        // Per-line product tax, grouped by rate with exact-sum reconciliation.
+        $rateGroups = [];
+        foreach ($lines as $item) {
+            $product = $products->get($item->product_id);
+            $class = $product ? $map->active($product->tax_class_id) : null;
+
+            if ($class !== null) {
+                $rateGroups[$class['rate']][(int) $item->id] = $taxableLineCents[$item->id];
+            }
+        }
+
+        $lineTaxes = [];
+        $productTaxCents = 0;
+        foreach ($rateGroups as $rate => $groupLines) {
+            foreach (TaxCalculator::groupLineTaxes($groupLines, $rate) as $itemId => $cents) {
+                $lineTaxes[$itemId] = [
+                    'amount' => TaxCalculator::fromCents($cents),
+                    'rate' => (float) $rate,
+                ];
+                $productTaxCents += $cents;
+            }
+        }
+
+        // Order-level tax resolution.
+        if ($taxOverrideType !== null) {
+            $resolution = $this->taxResolver->resolveForOrderState($taxOverrideType, $taxOverrideClassId, $map);
+        } else {
+            $resolution = $this->taxResolver->resolveForOrderState(null, null, $map);
+        }
+
+        $shippingCents = TaxCalculator::toCents($shippingPrice ?? 0);
+        $fastFeeCents = TaxCalculator::toCents($fastShippingFee ?? 0);
+
+        $orderTaxBaseCents = $finalTotalCents;
+        if ($resolution->applies() && $resolution->appliesToShipping) {
+            $orderTaxBaseCents = $finalTotalCents + $shippingCents + $fastFeeCents;
+        }
+
+        $orderTaxCents = $resolution->applies()
+            ? TaxCalculator::amountOn($orderTaxBaseCents, (float) $resolution->taxRate)
+            : 0;
+
+        $breakdown = new TaxBreakdown(
+            resolution: $resolution,
+            productTaxAmount: TaxCalculator::fromCents($productTaxCents),
+            orderTaxAmount: TaxCalculator::fromCents($orderTaxCents),
+            taxableBase: TaxCalculator::fromCents($orderTaxBaseCents),
+            lineTaxes: $lineTaxes,
+        );
+
+        return $totals->withTax($breakdown);
     }
 
 
@@ -775,13 +907,12 @@ private function canTransitionOrderStatus(string $from, string $to): bool
             return;
         }
 
-        $coupon = Coupon::where('code', $order->coupon)->first();
+        $coupon = Coupon::where('code', $order->coupon)->lockForUpdate()->first();
         if (!$coupon) {
             return;
         }
 
-        // Consume the coupon reservation (Rule 9)
-        $this->couponReservationService->consume($order);
+        // Reservation will be consumed AFTER validation succeeds
 
         $hasAssignments = Schema::hasTable('coupon_assignments') && $coupon->assignments()->exists();
 
@@ -816,6 +947,9 @@ private function canTransitionOrderStatus(string $from, string $to): bool
                 'used_at' => now(),
             ]);
 
+            // FIXED: Consume reservation AFTER successful redemption
+            $this->couponReservationService->consume($order);
+
             DB::afterCommit(function () use ($coupon, $assignment, $order) {
                 $remainingUses = max(0, $assignment->max_uses - $assignment->fresh()->used);
                 event(new AssignedCouponConsumed(
@@ -842,6 +976,9 @@ private function canTransitionOrderStatus(string $from, string $to): bool
             if ($couponUsage->wasRecentlyCreated) {
                 $coupon->increment('used');
             }
+
+            // FIXED: Consume reservation AFTER successful redemption
+            $this->couponReservationService->consume($order);
         }
 
         if (Schema::hasColumn('orders', 'coupon_consumed')) {

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 use Marvel\Database\Models\Import;
+use Marvel\Enums\FileOperationType;
 use Marvel\Enums\ImportType;
 use Marvel\Enums\Permission;
 use Marvel\Http\Requests\CategoryExportRequest;
@@ -26,7 +27,7 @@ class CategoryExportController extends Controller
     public function export(CategoryExportRequest $request): JsonResponse
     {
         $import = Import::create([
-            'type' => 'category-export',
+            'type' => FileOperationType::CATEGORY_EXPORT,
             'file_path' => '',
             'file_name' => '',
             'status' => 'pending',
@@ -44,7 +45,12 @@ class CategoryExportController extends Controller
 
     public function status(int $id): JsonResponse
     {
-        $import = Import::where('type', ImportType::CATEGORY_EXPORT)
+        $user = auth()->user();
+        $baseQuery = Import::whereOperationType(FileOperationType::CATEGORY_EXPORT);
+        if ($user && ! $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+            $baseQuery->where('created_by', $user->id);
+        }
+        $import = $baseQuery
             ->select([
                 'id',
                 'status',
@@ -86,7 +92,12 @@ class CategoryExportController extends Controller
 
     public function download(int $id): BinaryFileResponse|JsonResponse
     {
-        $import = Import::where('type', ImportType::CATEGORY_EXPORT)
+        $user = auth()->user();
+        $baseQuery = Import::whereOperationType(FileOperationType::CATEGORY_EXPORT);
+        if ($user && ! $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+            $baseQuery->where('created_by', $user->id);
+        }
+        $import = $baseQuery
             ->select(['id', 'status', 'file_path', 'file_name', 'created_by'])
             ->findOrFail($id);
 

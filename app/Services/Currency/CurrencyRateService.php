@@ -2,7 +2,10 @@
 
 namespace App\Services\Currency;
 
+use App\Enums\RateMode;
+use App\Enums\RateSource;
 use App\Models\CurrencyRate;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class CurrencyRateService
@@ -13,29 +16,76 @@ class CurrencyRateService
 
     public function store(array $data): CurrencyRate
     {
-        $rate = CurrencyRate::query()
-            ->where('currency_id', $data['currency_id'])
-            ->whereDate('effective_date', $data['effective_date'])
-            ->first();
+        $rate = DB::transaction(function () use ($data): CurrencyRate {
+            $currency = \App\Models\Currency::query()
+                ->whereKey($data['currency_id'])
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        if ($rate) {
-            $rate->update(['exchange_rate' => $data['exchange_rate']]);
-        } else {
-            $rate = CurrencyRate::create($data);
-        }
+            $rate = CurrencyRate::query()
+                ->where('currency_id', $currency->getKey())
+                ->whereDate('effective_date', $data['effective_date'])
+                ->lockForUpdate()
+                ->first();
+
+            $values = [
+                'exchange_rate' => $data['exchange_rate'],
+                'source' => RateSource::MANUAL->value,
+                'provider' => null,
+            ];
+
+            if ($rate) {
+                $rate->update($values);
+            } else {
+                $rate = CurrencyRate::create(array_merge([
+                    'currency_id' => $currency->getKey(),
+                    'effective_date' => $data['effective_date'],
+                ], $values));
+            }
+
+            if (now()->isSameDay($rate->effective_date)) {
+                $currency->rate_mode = RateMode::MANUAL;
+                $currency->manual_rate = (string) $data['exchange_rate'];
+                $currency->effective_rate_updated_at = now();
+                $currency->save();
+            }
+
+            return $rate->fresh();
+        });
 
         $this->currencyService->invalidatePriceCaches();
 
-        return $rate->fresh();
+        return $rate;
     }
 
     public function update(CurrencyRate $rate, array $data): CurrencyRate
     {
-        $rate->update(['exchange_rate' => $data['exchange_rate']]);
+        $rate = DB::transaction(function () use ($rate, $data): CurrencyRate {
+            $currency = \App\Models\Currency::query()
+                ->whereKey($rate->currency_id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $rate = CurrencyRate::query()->lockForUpdate()->findOrFail($rate->getKey());
+            $rate->update([
+                'exchange_rate' => $data['exchange_rate'],
+                'source' => RateSource::MANUAL->value,
+                'provider' => null,
+            ]);
+
+            if (now()->isSameDay($rate->effective_date)) {
+                $currency->rate_mode = RateMode::MANUAL;
+                $currency->manual_rate = (string) $data['exchange_rate'];
+                $currency->effective_rate_updated_at = now();
+                $currency->save();
+            }
+
+            return $rate->fresh();
+        });
 
         $this->currencyService->invalidatePriceCaches();
 
-        return $rate->fresh();
+        return $rate;
     }
 
     public function delete(CurrencyRate $rate): void

@@ -125,7 +125,7 @@ class ProductController extends CoreController
         $orderBy = trim((string)$request->get('orderBy', 'created_at'));
         $orderDir = trim((string)$request->get('orderDir', 'desc'));
 
-        $products = $this->fetchProducts($request)->with(['variations', 'categories', 'flash_sales']);
+        $products = $this->fetchProducts($request)->with(['variations', 'categories', 'flash_sales', 'taxClass']);
 
         if ($term !== '') {
             $this->applyProductSearch($products, $term, app()->getLocale());

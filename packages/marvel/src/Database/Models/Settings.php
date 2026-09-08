@@ -42,11 +42,13 @@ class Settings extends Model implements HasMedia
         'fast_shipping_page_publish',
         'options',
         'minimum_order_amount',
+        'default_tax_class_id',
     ];
 
     protected $casts = [
         'options'              => 'array',
         'minimum_order_amount' => 'decimal:2',
+        'default_tax_class_id' => 'integer',
     ];
 
     public static function getData(string $language = null): ?self

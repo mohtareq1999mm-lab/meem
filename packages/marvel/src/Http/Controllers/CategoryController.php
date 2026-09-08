@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Category;
 use Marvel\Database\Models\Import;
 use Marvel\Database\Repositories\CategoryRepository;
+use Marvel\Enums\FileOperationType;
 use Marvel\Enums\Permission;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\BulkDeleteCategoriesRequest;
@@ -186,7 +187,7 @@ class CategoryController extends CoreController
         $ids = array_values(array_unique($request->input('ids')));
 
         $import = Import::create([
-            'type' => 'category-bulk-delete',
+            'type' => FileOperationType::CATEGORY_BULK_DELETE,
             'file_path' => '',
             'file_name' => '',
             'status' => 'pending',

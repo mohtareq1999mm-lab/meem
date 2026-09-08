@@ -31,7 +31,15 @@ class OrderCreationService
     public function createOrder(array $orderData, Cart $cart, CheckoutTotals $checkoutTotals, ?string $shippingMethod = null, ?\DateTime $eta = null, ?float $fastShippingFee = null, ?float $shippingPrice = null, ?int $governorateId = null): ?Order
     {
         $shippingPrice = $shippingPrice ?? 0;
-        $totalPrice = round((float) $checkoutTotals->finalTotal + $shippingPrice + ($fastShippingFee ?? 0), 2);
+        // Authoritative formula: net total + taxes + shipping + fast shipping.
+        $totalPrice = round(
+            (float) $checkoutTotals->finalTotal
+            + $checkoutTotals->productTaxAmount()
+            + $checkoutTotals->orderTaxAmount()
+            + $shippingPrice
+            + ($fastShippingFee ?? 0),
+            2
+        );
 
         $currencySnapshot = $this->resolveCurrencySnapshot($totalPrice);
 
@@ -71,6 +79,19 @@ class OrderCreationService
             'status' => Order::ORDER_STATUS_PENDING,
         ];
 
+        if (Schema::hasColumn('orders', 'tax_mode')) {
+            $taxResolution = $checkoutTotals->tax?->resolution;
+            $orderDataForCreate = array_merge($orderDataForCreate, [
+                'tax_mode' => $taxResolution?->mode->value ?? \App\Enums\TaxMode::NONE->value,
+                'tax_class_id' => $taxResolution?->taxClassId,
+                'tax_name' => $taxResolution?->taxName,
+                'tax_rate' => $taxResolution?->taxRate,
+                'taxable_amount' => $checkoutTotals->tax?->taxableBase,
+                'tax_amount' => $checkoutTotals->orderTaxAmount(),
+                'product_tax_amount' => $checkoutTotals->productTaxAmount(),
+            ]);
+        }
+
         if (Schema::hasColumn('orders', 'currency_code')) {
             $orderDataForCreate = array_merge($orderDataForCreate, [
                 'total_price' => $currencySnapshot['total_price'],
@@ -102,7 +123,15 @@ class OrderCreationService
     public function updateOrder(Order $order, array $orderData, Cart $cart, CheckoutTotals $checkoutTotals, ?string $shippingMethod = null, ?\DateTime $eta = null, ?float $fastShippingFee = null, ?float $shippingPrice = null, ?int $governorateId = null): Order
     {
         $shippingPrice = $shippingPrice ?? 0;
-        $totalPrice = round((float) $checkoutTotals->finalTotal + $shippingPrice + ($fastShippingFee ?? 0), 2);
+        // Authoritative formula: net total + taxes + shipping + fast shipping.
+        $totalPrice = round(
+            (float) $checkoutTotals->finalTotal
+            + $checkoutTotals->productTaxAmount()
+            + $checkoutTotals->orderTaxAmount()
+            + $shippingPrice
+            + ($fastShippingFee ?? 0),
+            2
+        );
 
         $currencySnapshot = $this->resolveCurrencySnapshot($totalPrice);
 
@@ -146,6 +175,19 @@ class OrderCreationService
                 : $order->promotion_discount,
         ];
 
+        if (Schema::hasColumn('orders', 'tax_mode')) {
+            $taxResolution = $checkoutTotals->tax?->resolution;
+            $updateData = array_merge($updateData, [
+                'tax_mode' => $taxResolution?->mode->value ?? \App\Enums\TaxMode::NONE->value,
+                'tax_class_id' => $taxResolution?->taxClassId,
+                'tax_name' => $taxResolution?->taxName,
+                'tax_rate' => $taxResolution?->taxRate,
+                'taxable_amount' => $checkoutTotals->tax?->taxableBase,
+                'tax_amount' => $checkoutTotals->orderTaxAmount(),
+                'product_tax_amount' => $checkoutTotals->productTaxAmount(),
+            ]);
+        }
+
         if (Schema::hasColumn('orders', 'currency_code')) {
             $updateData = array_merge($updateData, [
                 'total_price' => $currencySnapshot['total_price'],
@@ -163,10 +205,12 @@ class OrderCreationService
         return $order->fresh();
     }
 
-    public function createOrderItems(Order $order, Cart $cart, array $giftItems = []): bool
+    public function createOrderItems(Order $order, Cart $cart, array $giftItems = [], ?CheckoutTotals $checkoutTotals = null): bool
     {
         // Resolved once — schema lookups must not run per order item.
         $hasItemTypeColumn = \Illuminate\Support\Facades\Schema::hasColumn('order_products', 'item_type');
+        $hasProductTaxColumns = \Illuminate\Support\Facades\Schema::hasColumn('order_products', 'product_tax_amount');
+        $lineTaxes = $checkoutTotals?->tax?->lineTaxes ?? [];
 
         foreach ($cart->items as $item) {
             // Gift lines come exclusively from promotion descriptors now;
@@ -218,6 +262,13 @@ $quantity = max(1, (int) ($item->quantity ?? 0));
                     'is_gift' => (bool) ($item->is_gift ?? false),
                     'promotion_id' => $item->promotion_id,
                 ];
+
+                // Per-line product tax snapshot (rolling-deploy safe).
+                if ($hasProductTaxColumns) {
+                    $lineTax = $lineTaxes[(int) $item->id] ?? null;
+                    $orderItemData['product_tax_rate'] = $lineTax['rate'] ?? null;
+                    $orderItemData['product_tax_amount'] = $lineTax['amount'] ?? 0;
+                }
 
                 // Rolling-deploy safety: only snapshot when the column exists.
                 if ($hasItemTypeColumn) {

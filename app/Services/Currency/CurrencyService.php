@@ -4,6 +4,8 @@ namespace App\Services\Currency;
 
 use App\DTOs\CurrencyConversionResult;
 use App\Enums\FrontendResource;
+use App\Enums\RateMode;
+use App\Enums\RateSource;
 use App\Exceptions\CurrencyInactiveException;
 use App\Exceptions\CurrencyInUseException;
 use App\Exceptions\CurrencyRateNotFoundException;
@@ -13,6 +15,7 @@ use App\Traits\HasCache;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use App\Jobs\LogActivityJob;
 use Marvel\Database\Models\Settings;
 use Marvel\Database\Models\User;
 
@@ -147,6 +150,11 @@ $user ??= auth()->user() ?? auth('sanctum')->user();
         $this->currencySelectionEnabled = null;
     }
 
+    public function forgetRateCache(): void
+    {
+        $this->rateCache = [];
+    }
+
     public function convert(float|string $amount, string $fromCode, string $toCode, ?string $date = null): CurrencyConversionResult
     {
         return $this->conversionService->convert($amount, $fromCode, $toCode, $date);
@@ -278,6 +286,102 @@ $user ??= auth()->user() ?? auth('sanctum')->user();
         $this->invalidatePriceCaches(flushSettings: true);
     }
 
+    public function setRateMode(Currency $currency, RateMode $mode, ?string $manualRate = null): Currency
+    {
+        $before = [];
+
+        $updated = DB::transaction(function () use ($currency, $mode, $manualRate, &$before): Currency {
+            $lockedCurrency = Currency::query()->lockForUpdate()->findOrFail($currency->getKey());
+            $before = [
+                'rate_mode' => $lockedCurrency->rate_mode?->value ?? (string) $lockedCurrency->rate_mode,
+                'manual_rate' => $lockedCurrency->manual_rate,
+                'provider_rate' => $lockedCurrency->provider_rate,
+                'effective_rate' => $lockedCurrency->effectiveRate(),
+            ];
+
+            $today = now()->toDateString();
+            $rate = CurrencyRate::query()
+                ->where('currency_id', $lockedCurrency->getKey())
+                ->whereDate('effective_date', $today)
+                ->lockForUpdate()
+                ->first();
+
+            if ($mode === RateMode::MANUAL) {
+                $manualRate = $this->normalizePositiveRate($manualRate);
+
+                $values = [
+                    'exchange_rate' => $manualRate,
+                    'source' => RateSource::MANUAL->value,
+                    'provider' => null,
+                ];
+
+                if ($rate) {
+                    $rate->update($values);
+                } else {
+                    $rate = CurrencyRate::create(array_merge([
+                        'currency_id' => $lockedCurrency->getKey(),
+                        'effective_date' => $today,
+                    ], $values));
+                }
+
+                $lockedCurrency->rate_mode = RateMode::MANUAL;
+                $lockedCurrency->manual_rate = $manualRate;
+            } else {
+                $providerRate = $this->normalizePositiveRate($lockedCurrency->provider_rate);
+
+                if (!$lockedCurrency->provider_rate_at || $lockedCurrency->provider_rate_at->lt(now()->subHours((int) config('currency.sync.provider_data_max_age_hours', 72)))) {
+                    throw CurrencyRateNotFoundException::forCurrency($lockedCurrency->code, $today);
+                }
+
+                $effectiveChanged = !$rate || bccomp((string) $rate->exchange_rate, $providerRate, 10) !== 0;
+                $values = [
+                    'exchange_rate' => $providerRate,
+                    'source' => RateSource::PROVIDER->value,
+                    'provider' => $lockedCurrency->provider,
+                ];
+
+                if ($rate) {
+                    $rate->update($values);
+                } else {
+                    $rate = CurrencyRate::create(array_merge([
+                        'currency_id' => $lockedCurrency->getKey(),
+                        'effective_date' => $today,
+                    ], $values));
+                }
+
+                $lockedCurrency->rate_mode = RateMode::AUTO;
+                $lockedCurrency->manual_rate = null;
+
+                if ($effectiveChanged) {
+                    $lockedCurrency->effective_rate_updated_at = now();
+                }
+            }
+
+            $lockedCurrency->save();
+
+            return $lockedCurrency->fresh();
+        });
+
+        $this->invalidatePriceCaches();
+
+        LogActivityJob::dispatch(
+            get_class($updated),
+            $updated->getKey(),
+            auth()->id(),
+            'rateModeChanged',
+            'currencies',
+            'Currency rate mode changed',
+            ['old' => $before, 'new' => [
+                'rate_mode' => $updated->rate_mode?->value,
+                'manual_rate' => $updated->manual_rate,
+                'provider_rate' => $updated->provider_rate,
+                'effective_rate' => $updated->effectiveRate(),
+            ]],
+        );
+
+        return $updated;
+    }
+
     public function invalidatePriceCaches(bool $flushSettings = false): void
     {
         $tags = array_merge(
@@ -290,6 +394,9 @@ $user ??= auth()->user() ?? auth('sanctum')->user();
         }
 
         Cache::tags(array_values(array_unique($tags)))->flush();
+
+        \App\Services\General\HomeService::clearCache();
+        $this->forgetRateCache();
     }
 
     private function productStrategyTags(): array
@@ -326,5 +433,20 @@ $user ??= auth()->user() ?? auth('sanctum')->user();
         }
 
         return $this->rateCache[$cacheKey] = (string) $rate;
+    }
+
+    private function normalizePositiveRate(mixed $value): string
+    {
+        $value = (string) $value;
+
+        if (!preg_match('/^\d+(?:\.\d{1,10})?$/', $value) || bccomp($value, '0', 10) <= 0) {
+            throw new \InvalidArgumentException('Exchange rate must be a positive decimal value.');
+        }
+
+        if (bccomp($value, (string) config('currency.validation.hard_max_rate', '1000000'), 10) > 0) {
+            throw new \InvalidArgumentException('Exchange rate exceeds the configured maximum.');
+        }
+
+        return bcadd($value, '0', (int) config('currency.validation.precision', 10));
     }
 }

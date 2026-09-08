@@ -2,6 +2,8 @@
 
 namespace App\DTOs;
 
+use App\DTOs\Tax\TaxBreakdown;
+
 class CheckoutTotals
 {
     public function __construct(
@@ -15,7 +17,45 @@ class CheckoutTotals
         public readonly ?string $couponDiscountType = null,
         public readonly ?float $couponDiscountMaxAmount = null,
         public readonly string $currency = 'EGP',
+        public readonly ?TaxBreakdown $tax = null,
     ) {}
+
+    public function withTax(?TaxBreakdown $tax): self
+    {
+        return new self(
+            subtotal: $this->subtotal,
+            promotionDiscount: $this->promotionDiscount,
+            couponDiscount: $this->couponDiscount,
+            finalTotal: $this->finalTotal,
+            promotion: $this->promotion,
+            giftItems: $this->giftItems,
+            coupon: $this->coupon,
+            couponDiscountType: $this->couponDiscountType,
+            couponDiscountMaxAmount: $this->couponDiscountMaxAmount,
+            currency: $this->currency,
+            tax: $tax,
+        );
+    }
+
+    public function productTaxAmount(): float
+    {
+        return round($this->tax->productTaxAmount ?? 0.0, 2);
+    }
+
+    public function orderTaxAmount(): float
+    {
+        return round($this->tax->orderTaxAmount ?? 0.0, 2);
+    }
+
+    public function totalTaxAmount(): float
+    {
+        return round($this->productTaxAmount() + $this->orderTaxAmount(), 2);
+    }
+
+    public function hasTax(): bool
+    {
+        return $this->tax !== null;
+    }
 
     public function getTotalDiscount(): float
     {
@@ -59,6 +99,14 @@ class CheckoutTotals
             'coupon' => $this->coupon,
             'coupon_discount_type' => $this->couponDiscountType,
             'coupon_discount_max_amount' => $this->couponDiscountMaxAmount,
+            'tax' => $this->tax === null ? null : [
+                'mode' => $this->tax->resolution->mode->value,
+                'name' => $this->tax->resolution->taxName,
+                'rate' => $this->tax->resolution->taxRate,
+                'taxable_base' => $this->tax->taxableBase,
+                'product_tax_amount' => $this->tax->productTaxAmount,
+                'order_tax_amount' => $this->tax->orderTaxAmount,
+            ],
         ];
     }
 

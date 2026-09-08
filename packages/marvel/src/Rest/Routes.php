@@ -139,6 +139,7 @@ Route::middleware(['auth:sanctum', 'throttle:admin'])->group(function () {
     Route::post('brands/import/{id}/cancel', [\Marvel\Http\Controllers\BrandImportController::class, 'cancel'])->whereNumber('id')->name('admin.brands.import.cancel');
     Route::get('brands/import/{id}/download-errors', [\Marvel\Http\Controllers\BrandImportController::class, 'downloadErrors'])->whereNumber('id')->name('admin.brands.import.download-errors');
     Route::get('brands/export', [\Marvel\Http\Controllers\BrandExportController::class, 'export'])->name('admin.brands.export');
+    Route::post('brands/export', [\Marvel\Http\Controllers\BrandExportController::class, 'export'])->name('admin.brands.export.post');
     Route::get('brands/export/{id}', [\Marvel\Http\Controllers\BrandExportController::class, 'status'])->whereNumber('id')->name('admin.brands.export.status');
     Route::get('brands/export/{id}/download', [\Marvel\Http\Controllers\BrandExportController::class, 'download'])->whereNumber('id')->name('admin.brands.export.download');
     Route::put('brands/reorder', [BrandController::class, 'reorder']);

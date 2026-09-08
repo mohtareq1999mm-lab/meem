@@ -22,6 +22,7 @@ class CurrencyResource extends JsonResource
             'sort_order' => (int) $this->sort_order,
             'is_base' => $this->isBaseCurrency(),
             'is_catalog' => $this->isCatalogCurrency(),
+            'effective_rate' => $this->effectiveRate(),
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }

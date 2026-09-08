@@ -18,14 +18,21 @@ class BrandsExport implements FromCollection, WithHeadings, WithTitle
      * All brands with EN/AR translations and current media URLs, mirroring
      * the CategoriesExport contract (minus hierarchy fields).
      */
+    protected ?\Illuminate\Support\Collection $cachedCollection = null;
+
     public function collection()
     {
+        if ($this->cachedCollection !== null) {
+            return $this->cachedCollection;
+        }
+
         $brands = Brand::query()
+            ->with('media')
             ->select(['id', 'name', 'details', 'slug', 'status'])
             ->orderBy('id')
             ->get();
 
-        return $brands->map(function (Brand $brand) {
+        return $this->cachedCollection = $brands->map(function (Brand $brand) {
             return [
                 'name_en' => $this->translation($brand, 'name', 'en'),
                 'name_ar' => $this->translation($brand, 'name', 'ar'),

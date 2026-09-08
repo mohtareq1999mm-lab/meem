@@ -2,6 +2,8 @@
 
 namespace App\Services\General;
 
+use App\Services\Tax\ProductTaxPresenter;
+use App\Services\Tax\TaxClassMap;
 use App\Traits\HasChannelFilter;
 use Carbon\Carbon;
 use Exception;
@@ -27,26 +29,38 @@ class ProductService
     use HasChannelFilter;
     use MediaManager;
 
+    public function __construct(private ProductTaxPresenter $productTaxPresenter) {}
+
     private function pricingService(): ProductPricingService
     {
         return app(ProductPricingService::class);
     }
 
-    public function enrichProductWithPricing(Product $product): Product
+    public function enrichProductWithPricing(Product $product, ?TaxClassMap $taxMap = null): Product
     {
         $pricingService = $this->pricingService();
         $flashSale = $pricingService->resolveActiveFlashSale($product);
         $pricing = $pricingService->calculateProductPricing($product, $flashSale);
 
-        $product->setAttribute('current_price', $pricing['final_price']);
+        $taxMap ??= TaxClassMap::load([$product->tax_class_id]);
+
+        $product->setAttribute(
+            'current_price',
+            $this->productTaxPresenter->applyTo($product, (float) $pricing['final_price'], $taxMap)
+        );
         $product->setAttribute('discount_active', $pricingService->isDiscountActive($product));
         $product->setAttribute('flash_sale_active', $flashSale !== null);
 
         if ($product->relationLoaded('variations')) {
             foreach ($product->variations as $variant) {
                 $variantPrice = $pricingService->calculateVariantCurrentPrice($product, $variant, $flashSale);
-                $variant->setAttribute('current_price', $variantPrice);
-                $variant->setAttribute('sale_price', $variantPrice);
+                // Variants inherit the product's tax class. sale_price keeps
+                // its historical parity with current_price.
+                $variantCurrentPrice = $variantPrice !== null
+                    ? $this->productTaxPresenter->applyTo($product, (float) $variantPrice, $taxMap)
+                    : null;
+                $variant->setAttribute('current_price', $variantCurrentPrice);
+                $variant->setAttribute('sale_price', $variantCurrentPrice);
             }
         }
 
@@ -55,7 +69,10 @@ class ProductService
 
     public function enrichCollectionWithPricing(Collection $products): Collection
     {
-        return $products->map(fn(Product $product) => $this->enrichProductWithPricing($product));
+        // ONE tax_classes query per collection — never per product.
+        $taxMap = TaxClassMap::loadFromModels($products);
+
+        return $products->map(fn(Product $product) => $this->enrichProductWithPricing($product, $taxMap));
     }
 
     private function productRelations(): array

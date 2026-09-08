@@ -7,13 +7,13 @@ use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithTitle;
-use Marvel\Services\Import\ProductImportService;
+use Marvel\Services\Import\CategoryImportService;
 
 class CategoriesSheetImport implements ToCollection, WithTitle, WithHeadingRow, SkipsEmptyRows
 {
-    protected ProductImportService $service;
+    protected CategoryImportService $service;
 
-    public function __construct(ProductImportService $service)
+    public function __construct(CategoryImportService $service)
     {
         $this->service = $service;
     }
@@ -25,14 +25,6 @@ class CategoriesSheetImport implements ToCollection, WithTitle, WithHeadingRow, 
 
     public function collection(Collection $rows): void
     {
-        $grouped = $rows->groupBy(fn($row) => $row['product_sku'] ?? '');
-
-        foreach ($grouped as $sku => $categoryRows) {
-            if (empty($sku)) {
-                continue;
-            }
-            $slugs = $categoryRows->pluck('category_slug')->filter()->toArray();
-            $this->service->syncCategories($sku, $slugs);
-        }
+        $this->service->processRows($rows);
     }
 }

@@ -9,7 +9,9 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Storage;
 use Marvel\Database\Models\Import;
+use Marvel\Enums\FileOperationType;
 use Marvel\Exports\BrandsExport;
 use Throwable;
 
@@ -32,29 +34,67 @@ class ExportBrandsJob implements ShouldQueue
 
     public function handle(): void
     {
-        $import = Import::findOrFail($this->importId);
+        $exportOperation = Import::findOrFail($this->importId);
 
-        if (in_array($import->status, ['completed', 'completed_with_errors', 'failed', 'cancelled'], true)) {
+        // Phase 7: validate operation type
+        $normalizedType = FileOperationType::normalize($exportOperation->type);
+        if ($normalizedType !== FileOperationType::BRAND_EXPORT) {
+            $sanitized = 'Invalid operation type for Brand export: ' . ($exportOperation->type ?? 'null');
+            report(new \RuntimeException($sanitized));
+
+            if (! $exportOperation->isTerminal()) {
+                $exportOperation->update(['status' => 'failed']);
+                $this->broadcastFileOperationTerminal(
+                    FileOperationEvent::BRAND_EXPORT_FAILED,
+                    'brand-export',
+                    $this->importId,
+                    'failed',
+                    true
+                );
+            }
+
             return;
         }
 
-        $import->update([
-            'status' => 'processing',
-            'processed_rows' => 0,
-            'success_rows' => 0,
-            'failed_rows' => 0,
-        ]);
+        if (in_array($exportOperation->status, ['completed', 'completed_with_errors', 'failed', 'cancelled'], true)) {
+            return;
+        }
+
+        // Atomic transition to processing
+        Import::where('id', $exportOperation->id)
+            ->whereIn('status', ['pending', 'processing'])
+            ->update([
+                'status' => 'processing',
+                'processed_rows' => 0,
+                'success_rows' => 0,
+                'failed_rows' => 0,
+            ]);
+
+        $exportOperation->refresh();
+
+        if ($exportOperation->isTerminal() && $exportOperation->status !== 'processing') {
+            return;
+        }
+
+        $filename = null;
 
         try {
             $export = new BrandsExport();
 
+            // Use cached collection to avoid double query
             $rowCount = $export->collection()->count();
 
-            $filename = 'brands-export-' . now()->format('Y-m-d-His') . '.xlsx';
+            // Phase 13: operation-specific filename to prevent collisions
+            $filename = 'brands-export-' . $exportOperation->id . '-' . now()->format('Y-m-d-His') . '.xlsx';
 
             $export->store($filename, 'imports');
 
-            $import->update([
+            // Verify file was actually created
+            if (! Storage::disk('imports')->exists($filename)) {
+                throw new \RuntimeException('Export file was not created');
+            }
+
+            $exportOperation->update([
                 'status' => 'completed',
                 'file_path' => $filename,
                 'file_name' => $filename,
@@ -80,7 +120,20 @@ class ExportBrandsJob implements ShouldQueue
                 ]
             );
         } catch (Throwable $e) {
-            $import->update(['status' => 'failed']);
+            report($e);
+
+            // Phase 10: cleanup partial artifact
+            if ($filename !== null) {
+                try {
+                    if (Storage::disk('imports')->exists($filename)) {
+                        Storage::disk('imports')->delete($filename);
+                    }
+                } catch (Throwable $cleanupException) {
+                    report($cleanupException);
+                }
+            }
+
+            $exportOperation->update(['status' => 'failed']);
 
             $this->broadcastFileOperationTerminal(
                 FileOperationEvent::BRAND_EXPORT_FAILED,
@@ -96,10 +149,10 @@ class ExportBrandsJob implements ShouldQueue
 
     public function failed(Throwable $exception): void
     {
-        $import = Import::find($this->importId);
+        $exportOperation = Import::find($this->importId);
 
-        if ($import && $import->status === 'processing') {
-            $import->update(['status' => 'failed']);
+        if ($exportOperation && $exportOperation->status === 'processing') {
+            $exportOperation->update(['status' => 'failed']);
 
             $this->broadcastFileOperationTerminal(
                 FileOperationEvent::BRAND_EXPORT_FAILED,

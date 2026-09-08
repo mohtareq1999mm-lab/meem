@@ -4,12 +4,16 @@ namespace Marvel\Enums;
 
 use BenSampo\Enum\Enum;
 
+/**
+ * @deprecated Use FileOperationType — kept for backward compatibility.
+ */
 final class ImportType extends Enum
 {
-    const PRODUCT_IMPORT = 'product-import';
-    const PRODUCT_EXPORT = 'product-export';
-    const CATEGORY_IMPORT = 'category-import';
-    const CATEGORY_EXPORT = 'category-export';
-    const BRAND_IMPORT = 'brand-import';
-    const BRAND_EXPORT = 'brand-export';
+    const PRODUCT_IMPORT = FileOperationType::PRODUCT_IMPORT;
+    const PRODUCT_EXPORT = FileOperationType::PRODUCT_EXPORT;
+    const CATEGORY_IMPORT = FileOperationType::CATEGORY_IMPORT;
+    const CATEGORY_EXPORT = FileOperationType::CATEGORY_EXPORT;
+    const BRAND_IMPORT = FileOperationType::BRAND_IMPORT;
+    const BRAND_EXPORT = FileOperationType::BRAND_EXPORT;
+    const CATEGORY_BULK_DELETE = FileOperationType::CATEGORY_BULK_DELETE;
 }

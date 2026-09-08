@@ -12,9 +12,9 @@ return [
     */
     'import' => [
         'samples' => [
-            'product' => storage_path('packages/marvel/resources/product/products_export_2026-09-01_scraped.xlsx'),
-            'category' => storage_path('packages/marvel/resources/category/niceone_categories.xlsx'),
-            'brand' => storage_path('packages/marvel/resources/brands/brand-import-sample.xlsx'),
+            'product' => base_path('packages/marvel/resources/products/product-import-sample.xlsx'),
+            'category' => base_path('packages/marvel/resources/categories/category-import-sample.xlsx'),
+            'brand' => base_path('packages/marvel/resources/brands/brand-import-sample.xlsx'),
         ],
     ],
 ];

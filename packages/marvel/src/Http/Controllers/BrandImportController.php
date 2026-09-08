@@ -7,8 +7,10 @@ use App\Http\Controllers\Controller;
 use App\Traits\BroadcastsFileOperationProgress;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Marvel\Database\Models\Import;
+use Marvel\Enums\FileOperationType;
 use Marvel\Enums\ImportType;
 use Marvel\Enums\Permission;
 use Marvel\Http\Requests\BrandImportRequest;
@@ -27,9 +29,9 @@ class BrandImportController extends Controller
         $this->middleware('permission:' . Permission::IMPORT_BRAND . '|' . Permission::SUPER_ADMIN);
     }
 
-    protected function readSignalFile(int $importId, string $type): ?array
+    protected function readSignalFile(int $importId, string $signalType): ?array
     {
-        $path = storage_path("app/imports/{$type}_{$importId}.json");
+        $path = storage_path("app/imports/{$signalType}_{$importId}.json");
         clearstatcache(true, $path);
 
         if (!file_exists($path)) {
@@ -45,15 +47,15 @@ class BrandImportController extends Controller
         }
     }
 
-    protected function signalFileExists(int $importId, string $type): bool
+    protected function signalFileExists(int $importId, string $signalType): bool
     {
-        $path = storage_path("app/imports/{$type}_{$importId}.json");
+        $path = storage_path("app/imports/{$signalType}_{$importId}.json");
         clearstatcache(true, $path);
 
         return file_exists($path);
     }
 
-    protected function writeSignalFile(int $importId, string $type, array $data = []): void
+    protected function writeSignalFile(int $importId, string $signalType, array $data = []): void
     {
         $dir = storage_path('app/imports');
 
@@ -62,7 +64,7 @@ class BrandImportController extends Controller
         }
 
         try {
-            file_put_contents($dir . "/{$type}_{$importId}.json", json_encode($data), LOCK_EX);
+            file_put_contents($dir . "/{$signalType}_{$importId}.json", json_encode($data), LOCK_EX);
         } catch (\Throwable $e) {
             report($e);
         }
@@ -70,18 +72,88 @@ class BrandImportController extends Controller
 
     public function import(BrandImportRequest $request): JsonResponse
     {
+        // Phase 16: Idempotency via header or recent duplicate file check
+        $idempotencyKey = $request->header('Idempotency-Key') ?: $request->header('X-Idempotency-Key');
+
+        $idempotencyCacheKey = null;
+        $idempotencyLock = null;
+
+        if ($idempotencyKey) {
+            $idempotencyCacheKey = 'idempotency:brand-import:' . $request->user()->id . ':' . $idempotencyKey;
+            $lockKey = 'lock:' . $idempotencyCacheKey;
+
+            try {
+                $idempotencyLock = Cache::lock($lockKey, 10);
+                $idempotencyLock->block(5);
+            } catch (\Throwable $e) {
+                $idempotencyLock = null;
+            }
+
+            if (Cache::has($idempotencyCacheKey)) {
+                $cachedId = Cache::get($idempotencyCacheKey);
+                $existing = Import::whereOperationType(FileOperationType::BRAND_IMPORT)->where('id', $cachedId)->first();
+
+                if ($existing) {
+                    if ($idempotencyLock) {
+                        try {
+                            $idempotencyLock->release();
+                        } catch (\Throwable $e) {
+                        }
+                    }
+
+                    return $this->apiResponse(__('message.MESSAGE.BRAND_IMPORT_STARTED'), 202, true, [
+                        'import_id' => $existing->id,
+                        'status' => $existing->status,
+                    ]);
+                }
+            }
+            // Hold lock until after creation (released after Cache::put)
+        }
+
         $file = $request->file('file');
+
+        // Check for recent duplicate upload (same user, same file hash, pending/processing within 10 min)
+        try {
+            $fileHash = hash_file('sha256', $file->getRealPath());
+
+            $recentDuplicate = Import::whereOperationType(FileOperationType::BRAND_IMPORT)
+                ->where('created_by', $request->user()->id)
+                ->whereIn('status', ['pending', 'processing'])
+                ->where('created_at', '>', now()->subMinutes(10))
+                ->latest('id')
+                ->first();
+
+            // If recent import exists with same file hash (stored via cache mapping), reuse
+            if ($recentDuplicate) {
+                $hashCacheKey = 'brand-import:hash:' . $request->user()->id . ':' . $fileHash;
+
+                if (Cache::has($hashCacheKey)) {
+                    $cachedId = Cache::get($hashCacheKey);
+
+                    if ((int) $cachedId === (int) $recentDuplicate->id) {
+                        if ($idempotencyKey) {
+                            Cache::put('idempotency:brand-import:' . $request->user()->id . ':' . $idempotencyKey, $recentDuplicate->id, now()->addHours(24));
+                        }
+
+                        return $this->apiResponse(__('message.MESSAGE.BRAND_IMPORT_STARTED'), 202, true, [
+                            'import_id' => $recentDuplicate->id,
+                            'status' => $recentDuplicate->status,
+                        ]);
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // Hashing failed — proceed without deduplication
+        }
 
         $filePath = $file->store('imports', 'imports');
 
-        $totalRows = $this->estimateRowCount($filePath);
-
         $import = Import::create([
-            'type' => 'brand',
+            'type' => FileOperationType::BRAND_IMPORT,
             'file_path' => $filePath,
             'file_name' => $file->getClientOriginalName(),
             'status' => 'pending',
-            'total_rows' => $totalRows,
+            'total_rows' => 0,
             'created_by' => $request->user()->id,
         ]);
 
@@ -90,6 +162,27 @@ class BrandImportController extends Controller
             'success_rows' => 0,
             'failed_rows' => 0,
         ]);
+
+        // Store idempotency mappings
+        if ($idempotencyKey && $idempotencyCacheKey) {
+            Cache::put($idempotencyCacheKey, $import->id, now()->addHours(24));
+
+            if ($idempotencyLock) {
+                try {
+                    $idempotencyLock->release();
+                } catch (\Throwable $e) {
+                }
+            }
+        } elseif ($idempotencyLock) {
+            try {
+                $idempotencyLock->release();
+            } catch (\Throwable $e) {
+            }
+        }
+
+        if (isset($fileHash)) {
+            Cache::put('brand-import:hash:' . $request->user()->id . ':' . $fileHash, $import->id, now()->addMinutes(10));
+        }
 
         ImportBrandsJob::dispatch($import->id);
 
@@ -102,7 +195,9 @@ class BrandImportController extends Controller
     protected function estimateRowCount(string $filePath): int
     {
         try {
-            $fullPath = Storage::disk('public')->path($filePath);
+            $fullPath = Storage::disk('imports')->exists($filePath)
+                ? Storage::disk('imports')->path($filePath)
+                : Storage::disk('public')->path($filePath);
 
             if (!file_exists($fullPath)) {
                 return 0;
@@ -135,7 +230,12 @@ class BrandImportController extends Controller
 
     public function status(int $id): JsonResponse
     {
-        $import = Import::where('type', ImportType::BRAND_IMPORT)
+        $user = auth()->user();
+        $baseQuery = Import::whereOperationType(FileOperationType::BRAND_IMPORT);
+        if ($user && ! $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+            $baseQuery->where('created_by', $user->id);
+        }
+        $import = $baseQuery
             ->select([
                 'id',
                 'status',
@@ -198,11 +298,16 @@ class BrandImportController extends Controller
 
     public function cancel(int $id): JsonResponse
     {
-        $import = Import::where('type', ImportType::BRAND_IMPORT)
+        $user = auth()->user();
+        $baseQuery = Import::whereOperationType(FileOperationType::BRAND_IMPORT);
+        if ($user && ! $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+            $baseQuery->where('created_by', $user->id);
+        }
+        $import = $baseQuery
             ->select(['id', 'status', 'created_by'])
             ->findOrFail($id);
 
-        $this->authorize('view', $import);
+        $this->authorize('cancel', $import);
 
         if (in_array($import->status, ['completed', 'completed_with_errors', 'failed', 'cancelled'], true)) {
             return $this->apiResponse(__('message.MESSAGE.IMPORT_CANNOT_CANCEL'), 409, false);
@@ -211,11 +316,20 @@ class BrandImportController extends Controller
         $this->writeSignalFile($import->id, 'cancel', ['cancelled_at' => now()->toIso8601String()]);
 
         try {
-            Import::where('id', $import->id)->update([
-                'status' => 'cancelled',
-            ]);
+            $affected = Import::where('id', $import->id)
+                ->whereIn('status', ['pending', 'processing'])
+                ->update([
+                    'status' => 'cancelled',
+                ]);
 
-            $import->refresh();
+            if ($affected === 0) {
+                $import->refresh();
+                if ($import->isTerminal()) {
+                    return $this->apiResponse(__('message.MESSAGE.IMPORT_CANNOT_CANCEL'), 409, false);
+                }
+            } else {
+                $import->refresh();
+            }
         } catch (QueryException $e) {
             report($e);
         }
@@ -236,17 +350,22 @@ class BrandImportController extends Controller
 
     public function downloadErrors(int $id): BinaryFileResponse|JsonResponse
     {
-        $import = Import::where('type', ImportType::BRAND_IMPORT)
+        $user = auth()->user();
+        $baseQuery = Import::whereOperationType(FileOperationType::BRAND_IMPORT);
+        if ($user && ! $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+            $baseQuery->where('created_by', $user->id);
+        }
+        $import = $baseQuery
             ->select(['id', 'errors', 'created_by'])
             ->findOrFail($id);
 
-        $this->authorize('view', $import);
+        $this->authorize('download', $import);
 
         if (empty($import->errors)) {
             return $this->apiResponse(__('message.MESSAGE.IMPORT_NO_ERRORS'), 404, false);
         }
 
-        $filename = "failed_brand_import_rows_{$id}.xlsx";
+        $filename = "failed_brand_import_rows_{$id}_" . uniqid() . ".xlsx";
 
         $errors = collect($import->errors);
 

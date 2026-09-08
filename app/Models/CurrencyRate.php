@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\RateSource;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -11,11 +12,14 @@ class CurrencyRate extends Model
         'currency_id',
         'exchange_rate',
         'effective_date',
+        'source',
+        'provider',
     ];
 
     protected $casts = [
         'exchange_rate' => 'string',
         'effective_date' => 'date',
+        'source' => RateSource::class,
     ];
 
     public function currency(): BelongsTo

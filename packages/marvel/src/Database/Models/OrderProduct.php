@@ -29,6 +29,8 @@ public $fillable = [
         'catalog_currency_code',
         'catalog_price',
         'catalog_total_price',
+        'product_tax_rate',
+        'product_tax_amount',
     ];
 
     protected $casts = [
@@ -41,6 +43,8 @@ public $fillable = [
         'product_flash_sale_price' => 'float',
         'catalog_price' => 'float',
         'catalog_total_price' => 'float',
+        'product_tax_rate' => 'float',
+        'product_tax_amount' => 'float',
     ];
 
 

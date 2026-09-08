@@ -301,8 +301,8 @@ class ProductImportLifecycleTest extends TestCase
         $this->assertArrayHasKey('products', $sheets);
         $this->assertInstanceOf(\Marvel\Imports\Sheets\ProductsSheetImport::class, $sheets['products']);
         $this->assertInstanceOf(\Marvel\Imports\Sheets\ImagesSheetImport::class, $sheets['images']);
-        $this->assertInstanceOf(\Marvel\Imports\Sheets\CategoriesSheetImport::class, $sheets['categories']);
-        $this->assertInstanceOf(\Marvel\Imports\Sheets\BrandsSheetImport::class, $sheets['brands']);
+        $this->assertInstanceOf(\Marvel\Imports\Sheets\ProductCategoriesSheetImport::class, $sheets['categories']);
+        $this->assertInstanceOf(\Marvel\Imports\Sheets\ProductBrandsSheetImport::class, $sheets['brands']);
         $this->assertInstanceOf(\Marvel\Imports\Sheets\FlashSalesSheetImport::class, $sheets['flash_sales']);
         $this->assertInstanceOf(\Marvel\Imports\Sheets\SlidersSheetImport::class, $sheets['sliders']);
         $this->assertInstanceOf(\Marvel\Imports\Sheets\TagsSheetImport::class, $sheets['tags']);

@@ -12,6 +12,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use Marvel\Database\Models\Import;
+use Marvel\Enums\FileOperationType;
 use Marvel\Exceptions\ImportCancelledException;
 use Marvel\Imports\BrandsImport;
 use Marvel\Services\Import\BrandImportService;
@@ -36,9 +37,9 @@ class ImportBrandsJob implements ShouldQueue
         $this->onQueue('meem-medium');
     }
 
-    protected function removeSignalFile(string $type): void
+    protected function removeSignalFile(string $signalType): void
     {
-        $path = storage_path("app/imports/{$type}_{$this->importId}.json");
+        $path = storage_path("app/imports/{$signalType}_{$this->importId}.json");
 
         if (file_exists($path)) {
             @unlink($path);
@@ -59,13 +60,119 @@ class ImportBrandsJob implements ShouldQueue
         $this->removeSignalFile('progress');
     }
 
+    protected function resolveImportFilePath(Import $import): ?string
+    {
+        if (empty($import->file_path)) {
+            return null;
+        }
+
+        // Primary: private imports disk
+        if (Storage::disk('imports')->exists($import->file_path)) {
+            return Storage::disk('imports')->path($import->file_path);
+        }
+
+        // Legacy fallback: public disk
+        if (Storage::disk('public')->exists($import->file_path)) {
+            return Storage::disk('public')->path($import->file_path);
+        }
+
+        // Fallback: local disk
+        if (Storage::disk('local')->exists($import->file_path)) {
+            return Storage::disk('local')->path($import->file_path);
+        }
+
+        // Last resort: try direct path resolution via imports disk (may be stale)
+        try {
+            return Storage::disk('imports')->path($import->file_path);
+        } catch (Throwable $e) {
+            return null;
+        }
+    }
+
+    protected function deleteImportFile(Import $import): void
+    {
+        if (empty($import->file_path)) {
+            return;
+        }
+
+        // Delete from primary disk; also attempt legacy disks to avoid orphans
+        try {
+            Storage::disk('imports')->delete($import->file_path);
+        } catch (Throwable $e) {
+            report($e);
+        }
+
+        try {
+            Storage::disk('public')->delete($import->file_path);
+        } catch (Throwable $e) {
+        }
+
+        try {
+            Storage::disk('local')->delete($import->file_path);
+        } catch (Throwable $e) {
+        }
+    }
+
+    protected function sanitizeExceptionMessage(Throwable $e): string
+    {
+        $message = $e->getMessage();
+
+        // Prevent leaking absolute paths, SQL, or credentials
+        $message = preg_replace('#/[^ ]*storage[^ ]*#i', '[storage path]', $message) ?? $message;
+        $message = preg_replace('#SQLSTATE\[[^\]]+\].*#i', 'Internal processing error', $message) ?? $message;
+
+        // Truncate overly long messages
+        if (strlen($message) > 500) {
+            $message = substr($message, 0, 500) . '...';
+        }
+
+        $message = trim($message);
+
+        return $message !== '' ? $message : 'Import failed due to an unexpected error';
+    }
+
     public function handle(): void
     {
-        $import = Import::select(['id', 'status', 'file_path', 'file_name'])->findOrFail($this->importId);
+        $import = Import::select(['id', 'type', 'status', 'file_path', 'file_name'])->findOrFail($this->importId);
+
+        // Phase 7: Job-level operation type validation
+        $normalizedType = FileOperationType::normalize($import->type);
+        if ($normalizedType !== FileOperationType::BRAND_IMPORT) {
+            $sanitized = 'Invalid operation type for Brand import: ' . ($import->type ?? 'null');
+            report(new \RuntimeException($sanitized . ' (expected ' . FileOperationType::BRAND_IMPORT . ')'));
+
+            if (! $import->isTerminal()) {
+                $import->update([
+                    'status' => 'failed',
+                    'errors' => [[
+                        'sheet' => 'system',
+                        'row' => 0,
+                        'name_en' => '',
+                        'name_ar' => '',
+                        'error_message' => $sanitized,
+                    ]],
+                ]);
+
+                $this->broadcastFileOperationTerminal(
+                    FileOperationEvent::BRAND_IMPORT_PROGRESS,
+                    'brand-import',
+                    $this->importId,
+                    'failed',
+                    true
+                );
+            }
+
+            return;
+        }
 
         if ($import->status === 'cancelled' || $this->cancelSignalFileExists()) {
-            Storage::disk('public')->delete($import->file_path);
+            $this->deleteImportFile($import);
             $this->removeSignalFile('cancel');
+
+            // Ensure DB is cancelled if signal exists but DB not yet updated
+            if ($import->status !== 'cancelled') {
+                Import::where('id', $import->id)->whereIn('status', ['pending', 'processing'])->update(['status' => 'cancelled']);
+            }
 
             return;
         }
@@ -74,14 +181,48 @@ class ImportBrandsJob implements ShouldQueue
             return;
         }
 
-        $import->update([
+        // Atomic transition to processing
+        $updated = Import::where('id', $import->id)->whereIn('status', ['pending', 'processing'])->update([
             'status' => 'processing',
             'processed_rows' => 0,
             'success_rows' => 0,
             'failed_rows' => 0,
         ]);
 
-        $filePath = Storage::disk('public')->path($import->file_path);
+        // If another worker already transitioned, respect terminal state
+        if ($updated === 0 && $import->status !== 'processing') {
+            $import->refresh();
+            if ($import->isTerminal()) {
+                return;
+            }
+        } else {
+            $import->refresh();
+        }
+
+        $filePath = $this->resolveImportFilePath($import);
+
+        if ($filePath === null || ! file_exists($filePath)) {
+            $import->update([
+                'status' => 'failed',
+                'errors' => [[
+                    'sheet' => 'system',
+                    'row' => 0,
+                    'name_en' => '',
+                    'name_ar' => '',
+                    'error_message' => 'Import file not found',
+                ]],
+            ]);
+
+            $this->broadcastFileOperationTerminal(
+                FileOperationEvent::BRAND_IMPORT_PROGRESS,
+                'brand-import',
+                $this->importId,
+                'failed',
+                true
+            );
+
+            return;
+        }
 
         $service = new BrandImportService($this->importId);
         $service->writeExplicitProgress(1.0);
@@ -147,11 +288,11 @@ class ImportBrandsJob implements ShouldQueue
                 ]
             );
 
-            Storage::disk('public')->delete($import->file_path);
+            $this->deleteImportFile($import);
             $this->removeSignalFile('progress');
         } catch (ImportCancelledException $e) {
             $service->rollbackCreatedData();
-            Storage::disk('public')->delete($import->file_path);
+            $this->deleteImportFile($import);
             $this->cleanSignals();
 
             $import->update([
@@ -178,7 +319,9 @@ class ImportBrandsJob implements ShouldQueue
                 ]
             );
         } catch (Throwable $e) {
-            // P10: intermediate attempts must stay retryable (see ImportProductsJob).
+            $sanitized = $this->sanitizeExceptionMessage($e);
+            report($e);
+
             if ($this->attempts() >= $this->tries) {
                 $import->update([
                     'status' => 'failed',
@@ -187,7 +330,7 @@ class ImportBrandsJob implements ShouldQueue
                         'row' => 0,
                         'name_en' => '',
                         'name_ar' => '',
-                        'error_message' => $e->getMessage(),
+                        'error_message' => $sanitized,
                     ]],
                 ]);
 
@@ -198,6 +341,10 @@ class ImportBrandsJob implements ShouldQueue
                     'failed',
                     true
                 );
+
+                // Clean up on terminal failure
+                $this->deleteImportFile($import);
+                $this->removeSignalFile('progress');
             } else {
                 $import->update([
                     'errors' => array_merge($import->errors ?? [], [[
@@ -205,7 +352,7 @@ class ImportBrandsJob implements ShouldQueue
                         'row' => 0,
                         'name_en' => '',
                         'name_ar' => '',
-                        'error_message' => 'Attempt ' . $this->attempts() . ': ' . $e->getMessage(),
+                        'error_message' => 'Attempt ' . $this->attempts() . ': ' . $sanitized,
                     ]]),
                 ]);
             }
@@ -219,13 +366,13 @@ class ImportBrandsJob implements ShouldQueue
         try {
             $import = Import::find($this->importId);
 
-            if (!$import) {
+            if (! $import || empty($import->file_path)) {
                 return 0;
             }
 
-            $filePath = Storage::disk('public')->path($import->file_path);
+            $filePath = $this->resolveImportFilePath($import);
 
-            if (!file_exists($filePath)) {
+            if ($filePath === null || ! file_exists($filePath)) {
                 return 0;
             }
 
@@ -266,6 +413,9 @@ class ImportBrandsJob implements ShouldQueue
                 'failed',
                 true
             );
+
+            $this->deleteImportFile($import);
+            $this->removeSignalFile('progress');
         }
     }
 }

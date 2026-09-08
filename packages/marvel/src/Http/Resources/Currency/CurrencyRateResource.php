@@ -18,6 +18,8 @@ class CurrencyRateResource extends JsonResource
                 'symbol' => $this->currency->getTranslations('symbol'),
             ]),
             'exchange_rate' => $this->exchange_rate,
+            'source' => $this->source?->value,
+            'provider' => $this->provider,
             'effective_date' => $this->effective_date?->toDateString(),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),

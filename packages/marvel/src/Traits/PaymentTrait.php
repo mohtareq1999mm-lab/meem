@@ -4,6 +4,8 @@ namespace Marvel\Traits;
 
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Marvel\Database\Models\Order;
 use Marvel\Database\Models\PaymentGateway;
 use Marvel\Database\Models\Settings;
@@ -345,8 +347,70 @@ trait PaymentTrait
      * @param  string $payment_status
      * @return void
      */
+    /**
+     * webhookSuccessResponse
+     *
+     * @param  mixed  $order
+     * @param  string $order_status
+     * @param  string $payment_status
+     * @return void
+     */
     public function webhookSuccessResponse($order, $order_status, $payment_status)
     {
+        // Payment success requires full order completion with coupon/inventory/promotion
+        if ($payment_status === PaymentStatus::SUCCESS) {
+            try {
+                DB::transaction(function () use ($order) {
+                    $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->first();
+                    
+                    if (!$lockedOrder) {
+                        return;
+                    }
+                    
+                    // Idempotency: already completed/cancelled/refunded
+                    if (in_array($lockedOrder->status, ['completed', 'cancelled', 'refunded'])) {
+                        return;
+                    }
+                    
+                    // Update payment status if column exists
+                    $updateData = [];
+                    if (Schema::hasColumn('orders', 'payment_status')) {
+                        $updateData['payment_status'] = PaymentStatus::SUCCESS;
+                    }
+                    if (Schema::hasColumn('orders', 'paid_at') && !$lockedOrder->getRawOriginal('paid_at')) {
+                        $updateData['paid_at'] = now();
+                    }
+                    if (!empty($updateData)) {
+                        $lockedOrder->update($updateData);
+                    }
+                    
+                    // Commit inventory (idempotent via inventory_state check)
+                    app(\App\Services\Inventory\OrderReservationService::class)->commit($lockedOrder);
+                    
+                    // Finalize promotion (idempotent via promotion_consumed check)
+                    app(\App\Services\General\OrderService::class)->finalizePromotionUsageAfterPayment($lockedOrder);
+                    
+                    // Complete order (triggers coupon redemption, events)
+                    // emitPaymentSuccess=false: webhook owns the PaymentSucceeded event
+                    app(\App\Services\General\OrderService::class)->changeOrderStatus(
+                        null,
+                        'completed',
+                        $lockedOrder->id,
+                        false  // emitPaymentSuccess
+                    );
+                });
+                
+                // Fire event after transaction commits
+                event(new \App\Events\PaymentSucceeded($order->fresh()));
+            } catch (\Throwable $e) {
+                report($e);
+                throw $e;
+            }
+            
+            return;
+        }
+        
+        // Non-success statuses use existing simple update
         $isFinal = $this->checkOrderStatusIsFinal($order);
         if ($isFinal) return;
 
@@ -365,6 +429,6 @@ trait PaymentTrait
                 $child_order->save();
             }
         }
-        $this->orderStatusManagementOnPayment($order, OrderStatus::PROCESSING, $payment_status);
+        $this->orderStatusManagementOnPayment($order, $order_status, $payment_status);
     }
 }

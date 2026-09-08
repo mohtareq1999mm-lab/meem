@@ -99,6 +99,7 @@ class ProductUpdateRequest extends FormRequest
             'banners.*'                    => ['integer', 'exists:banners,id'],
             'sliders'                      => ['sometimes', 'array'],
             'sliders.*'                    => ['integer', 'exists:sliders,id'],
+            'tax_class_id'                 => ['nullable', 'integer', Rule::exists('tax_classes', 'id')->where('is_active', true)],
 
             // variants
             'variants'                     => ['sometimes', 'array'],

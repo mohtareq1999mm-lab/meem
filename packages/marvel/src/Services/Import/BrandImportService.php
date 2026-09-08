@@ -263,9 +263,23 @@ class BrandImportService
 
                 $pending[$index] = $row;
             } catch (Throwable $e) {
-                $this->failPendingRow($pending, $index, $row, $e->getMessage());
+                report($e);
+                $this->failPendingRow($pending, $index, $row, $this->sanitizeErrorMessage($e->getMessage()));
             }
         }
+    }
+
+    protected function sanitizeErrorMessage(string $message): string
+    {
+        $message = preg_replace('#/[^ ]*storage[^ ]*#i', '[storage path]', $message) ?? $message;
+        $message = preg_replace('#SQLSTATE\[[^\]]+\].*#i', 'Database error', $message) ?? $message;
+        $message = trim($message);
+
+        if (strlen($message) > 500) {
+            $message = substr($message, 0, 500) . '...';
+        }
+
+        return $message !== '' ? $message : 'Import failed';
     }
 
     protected function attachImages(array &$pending): void
@@ -702,18 +716,18 @@ class BrandImportService
         return $this->successCount;
     }
 
-    protected function signalPath(string $type): ?string
+    protected function signalPath(string $signalType): ?string
     {
         if ($this->importId === null) {
             return null;
         }
 
-        return storage_path("app/imports/{$type}_{$this->importId}.json");
+        return storage_path("app/imports/{$signalType}_{$this->importId}.json");
     }
 
-    protected function writeSignal(string $type, array $data): void
+    protected function writeSignal(string $signalType, array $data): void
     {
-        $path = $this->signalPath($type);
+        $path = $this->signalPath($signalType);
 
         if ($path === null) {
             return;

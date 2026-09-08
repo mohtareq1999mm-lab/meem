@@ -3,8 +3,8 @@
 namespace Marvel\Imports;
 
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
-use Marvel\Imports\Sheets\BrandsSheetImport;
-use Marvel\Imports\Sheets\CategoriesSheetImport;
+use Marvel\Imports\Sheets\ProductBrandsSheetImport;
+use Marvel\Imports\Sheets\ProductCategoriesSheetImport;
 use Marvel\Imports\Sheets\FlashSalesSheetImport;
 use Marvel\Imports\Sheets\ImagesSheetImport;
 use Marvel\Imports\Sheets\ProductsSheetImport;
@@ -28,8 +28,8 @@ class ProductsImport implements WithMultipleSheets
             'products' => new ProductsSheetImport($this->service),
             'product_variants' => new ProductVariantsSheetImport($this->service),
             'images' => new ImagesSheetImport($this->service),
-            'categories' => new CategoriesSheetImport($this->service),
-            'brands' => new BrandsSheetImport($this->service),
+            'categories' => new ProductCategoriesSheetImport($this->service),
+            'brands' => new ProductBrandsSheetImport($this->service),
             'flash_sales' => new FlashSalesSheetImport($this->service),
             'sliders' => new SlidersSheetImport($this->service),
             'tags' => new TagsSheetImport($this->service),
