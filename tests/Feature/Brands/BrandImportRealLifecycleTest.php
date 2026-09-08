@@ -25,6 +25,18 @@ class BrandImportRealLifecycleTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $dir = storage_path('app/imports');
+        if (is_dir($dir)) {
+            foreach (glob($dir . '/*.json') ?: [] as $file) {
+                @unlink($file);
+            }
+        }
+    }
+
     private const PREFIX = '/api/v1';
     private const GUARD = 'api';
 
