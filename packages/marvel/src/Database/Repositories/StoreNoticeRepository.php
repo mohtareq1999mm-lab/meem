@@ -10,6 +10,7 @@ use Marvel\Database\Models\Shop;
 use Marvel\Database\Models\StoreNotice;
 use Marvel\Database\Models\User;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Enums\StoreNoticeType;
 use Marvel\Events\StoreNoticeEvent;
 use Marvel\Exceptions\MarvelException;
@@ -93,7 +94,7 @@ class StoreNoticeRepository extends BaseRepository
                 }
             }
 
-            if (!$request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
+            if (!$request->user()->hasRole(Role::SUPER_ADMIN)) {
                 /* Block for authenticated user [vendor or staff] */
                 if (isset($request['shop_id'])) {
                     /* code for customers */
@@ -131,7 +132,7 @@ class StoreNoticeRepository extends BaseRepository
      */
     public function fetchStoreNoticeType(Request $request)
     {
-        if ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if ($request->user()->hasRole(Role::SUPER_ADMIN)) {
             $typeArr = [
                 ['name' => "ALL VENDOR", 'value' => StoreNoticeType::ALL_VENDOR],
                 ['name' => "SPECIFIC VENDOR", 'value' => StoreNoticeType::SPECIFIC_VENDOR]
@@ -154,7 +155,7 @@ class StoreNoticeRepository extends BaseRepository
     public function fetchUserToSendNotification(Request $request)
     {
         try {
-            if ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
+            if ($request->user()->hasRole(Role::SUPER_ADMIN)) {
                 return User::permission(Permission::STORE_OWNER)->orderBy('name')->get();
             } else {
                 return $request->user()->shops->where('is_active', 1);

@@ -19,6 +19,7 @@ use Marvel\Database\Models\Settings;
 use Marvel\Database\Repositories\OrderRepository;
 use Marvel\Enums\PaymentGatewayType;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\OrderCreateRequest;
 use Marvel\Http\Requests\OrderUpdateRequest;
@@ -155,7 +156,7 @@ class OrderController extends CoreController
         }
 
         switch ($user) {
-            case $user->hasPermissionTo(Permission::SUPER_ADMIN):
+            case $user->hasRole(Role::SUPER_ADMIN):
                 return $this->repository->with('children')->where('id', '!=', null)->where('parent_id', '=', null);
                 break;
 
@@ -184,7 +185,7 @@ class OrderController extends CoreController
 
         // ********************* Old code *********************
 
-        // if ($user && $user->hasPermissionTo(Permission::SUPER_ADMIN) && (!isset($request->shop_id) || $request->shop_id === 'undefined')) {
+        // if ($user && $user->hasRole(Role::SUPER_ADMIN) && (!isset($request->shop_id) || $request->shop_id === 'undefined')) {
         //     return $this->repository->with('children')->where('id', '!=', null)->where('parent_id', '=', null); //->paginate($limit);
         // } else if ($this->repository->hasPermission($user, $request->shop_id)) {
         //     // if ($user && $user->hasPermissionTo(Permission::STORE_OWNER)) {
@@ -327,7 +328,7 @@ class OrderController extends CoreController
         if (!$order->customer_id) {
             return $order;
         }
-        if ($user && $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if ($user && $user->hasRole(Role::SUPER_ADMIN)) {
             return $order;
         } elseif (isset($order->shop_id)) {
             if ($user && ($this->repository->hasPermission($user, $order->shop_id) || $user->id == $order->customer_id)) {

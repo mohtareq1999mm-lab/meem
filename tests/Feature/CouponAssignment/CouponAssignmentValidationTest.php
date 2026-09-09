@@ -41,12 +41,10 @@ class CouponAssignmentValidationTest extends TestCase
     private function createAdminUser(): User
     {
         $permissions = [
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_COUPON_ASSIGNMENTS,
             PermissionEnum::CREATE_COUPON_ASSIGNMENT,
             PermissionEnum::UPDATE_COUPON_ASSIGNMENT,
-            PermissionEnum::DELETE_COUPON_ASSIGNMENT,
-        ];
+            PermissionEnum::DELETE_COUPON_ASSIGNMENT];
 
         foreach ($permissions as $perm) {
             Permission::findOrCreate($perm, self::GUARD);
@@ -55,8 +53,7 @@ class CouponAssignmentValidationTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'display_name' => json_encode(['en' => 'Super Admin', 'ar' => 'مدير النظام']),
-            'guard_name' => self::GUARD,
-        ]);
+            'guard_name' => self::GUARD]);
 
         foreach ($permissions as $perm) {
             $role->givePermissionTo($perm);
@@ -82,8 +79,7 @@ class CouponAssignmentValidationTest extends TestCase
             'discount' => 10,
             'status' => true,
             'start_date' => now()->subDay(),
-            'end_date' => now()->addMonth(),
-        ], $overrides));
+            'end_date' => now()->addMonth()], $overrides));
 
         $coupon->update(['code' => $code]);
 
@@ -115,8 +111,7 @@ class CouponAssignmentValidationTest extends TestCase
         $this->authAdmin();
 
         $response = $this->postJson($this->storeUrl(), [
-            'max_uses' => 1,
-        ]);
+            'max_uses' => 1]);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrorFor('user_id');
@@ -129,8 +124,7 @@ class CouponAssignmentValidationTest extends TestCase
 
         $response = $this->postJson($this->storeUrl(), [
             'user_id' => 99999,
-            'max_uses' => 1,
-        ]);
+            'max_uses' => 1]);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrorFor('user_id');
@@ -146,8 +140,7 @@ class CouponAssignmentValidationTest extends TestCase
         $this->authAdmin();
 
         $response = $this->postJson($this->storeUrl(), [
-            'user_id' => $this->customer->id,
-        ]);
+            'user_id' => $this->customer->id]);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrorFor('max_uses');
@@ -160,8 +153,7 @@ class CouponAssignmentValidationTest extends TestCase
 
         $response = $this->postJson($this->storeUrl(), [
             'user_id' => $this->customer->id,
-            'max_uses' => 'abc',
-        ]);
+            'max_uses' => 'abc']);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrorFor('max_uses');
@@ -174,8 +166,7 @@ class CouponAssignmentValidationTest extends TestCase
 
         $response = $this->postJson($this->storeUrl(), [
             'user_id' => $this->customer->id,
-            'max_uses' => 0,
-        ]);
+            'max_uses' => 0]);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrorFor('max_uses');
@@ -193,8 +184,7 @@ class CouponAssignmentValidationTest extends TestCase
         $response = $this->postJson($this->storeUrl(), [
             'user_id' => $this->customer->id,
             'max_uses' => 1,
-            'expires_at' => 'not-a-date',
-        ]);
+            'expires_at' => 'not-a-date']);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrorFor('expires_at');
@@ -208,8 +198,7 @@ class CouponAssignmentValidationTest extends TestCase
         $response = $this->postJson($this->storeUrl(), [
             'user_id' => $this->customer->id,
             'max_uses' => 1,
-            'expires_at' => now()->subDay()->toISOString(),
-        ]);
+            'expires_at' => now()->subDay()->toISOString()]);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrorFor('expires_at');
@@ -228,12 +217,10 @@ class CouponAssignmentValidationTest extends TestCase
             'user_id' => $this->customer->id,
             'max_uses' => 5,
             'used' => 0,
-            'assigned_at' => now(),
-        ]);
+            'assigned_at' => now()]);
 
         $response = $this->putJson($this->updateUrl($assignment->id), [
-            'max_uses' => 'abc',
-        ]);
+            'max_uses' => 'abc']);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrorFor('max_uses');
@@ -248,12 +235,10 @@ class CouponAssignmentValidationTest extends TestCase
             'user_id' => $this->customer->id,
             'max_uses' => 5,
             'used' => 0,
-            'assigned_at' => now(),
-        ]);
+            'assigned_at' => now()]);
 
         $response = $this->putJson($this->updateUrl($assignment->id), [
-            'max_uses' => 0,
-        ]);
+            'max_uses' => 0]);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrorFor('max_uses');
@@ -268,8 +253,7 @@ class CouponAssignmentValidationTest extends TestCase
             'user_id' => $this->customer->id,
             'max_uses' => 5,
             'used' => 0,
-            'assigned_at' => now(),
-        ]);
+            'assigned_at' => now()]);
 
         $response = $this->putJson($this->updateUrl($assignment->id), []);
 
@@ -290,12 +274,10 @@ class CouponAssignmentValidationTest extends TestCase
             'user_id' => $this->customer->id,
             'max_uses' => 5,
             'used' => 0,
-            'assigned_at' => now(),
-        ]);
+            'assigned_at' => now()]);
 
         $response = $this->putJson($this->updateUrl($assignment->id), [
-            'expires_at' => 'not-a-date',
-        ]);
+            'expires_at' => 'not-a-date']);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrorFor('expires_at');
@@ -310,12 +292,10 @@ class CouponAssignmentValidationTest extends TestCase
             'user_id' => $this->customer->id,
             'max_uses' => 5,
             'used' => 0,
-            'assigned_at' => now(),
-        ]);
+            'assigned_at' => now()]);
 
         $response = $this->putJson($this->updateUrl($assignment->id), [
-            'expires_at' => now()->subDay()->toISOString(),
-        ]);
+            'expires_at' => now()->subDay()->toISOString()]);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrorFor('expires_at');
@@ -331,12 +311,10 @@ class CouponAssignmentValidationTest extends TestCase
             'max_uses' => 5,
             'used' => 0,
             'assigned_at' => now(),
-            'expires_at' => now()->addWeek(),
-        ]);
+            'expires_at' => now()->addWeek()]);
 
         $response = $this->putJson($this->updateUrl($assignment->id), [
-            'expires_at' => null,
-        ]);
+            'expires_at' => null]);
 
         $response->assertOk();
         $this->assertNull($response->json('data.expires_at'));
@@ -354,8 +332,7 @@ class CouponAssignmentValidationTest extends TestCase
         $response = $this->postJson($this->storeUrl(), [
             'user_id' => $this->customer->id,
             'max_uses' => 10,
-            'expires_at' => now()->addMonth()->toISOString(),
-        ]);
+            'expires_at' => now()->addMonth()->toISOString()]);
 
         $response->assertStatus(201);
         $response->assertJsonPath('success', true);

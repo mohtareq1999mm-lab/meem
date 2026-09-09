@@ -27,7 +27,7 @@ class RouteAndStorageTest extends TestCase
     private function makeUser(array $perms): User
     {
         foreach ($perms as $p) Permission::findOrCreate($p, self::GUARD);
-        Permission::findOrCreate(Perm::SUPER_ADMIN, self::GUARD);
+        Permission::findOrCreate(self::GUARD);
         Permission::findOrCreate(Perm::IMPORT_PRODUCT, self::GUARD);
         Permission::findOrCreate(Perm::EXPORT_PRODUCT, self::GUARD);
         Permission::findOrCreate(Perm::IMPORT_CATEGORY, self::GUARD);

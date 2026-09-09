@@ -38,15 +38,13 @@ class CategoryCrudTest extends TestCase
         $category = Category::create([
             'name' => ['en' => 'Electronics', 'ar' => 'إلكترونيات'],
             'slug' => 'electronics',
-            'details' => 'All about electronics',
-        ]);
+            'details' => 'All about electronics']);
 
         $this->assertDatabaseHas('categories', [
             'id' => $category->id,
             'slug' => 'electronics',
             'is_featured' => false,
-            'status' => true,
-        ]);
+            'status' => true]);
 
         $this->assertTrue($category->getTranslation('name', 'en') === 'Electronics');
         $this->assertTrue($category->getTranslation('name', 'ar') === 'إلكترونيات');
@@ -73,8 +71,7 @@ class CategoryCrudTest extends TestCase
         $category = Category::create([
             'name' => ['en' => 'Single Cat'],
             'slug' => 'single-cat',
-            'details' => 'Detailed description',
-        ]);
+            'details' => 'Detailed description']);
 
         $response = $this->getJson(self::PREFIX . '/categories/' . $category->id);
 
@@ -90,12 +87,10 @@ class CategoryCrudTest extends TestCase
 
         $category = Category::create([
             'name' => ['en' => 'Original Name'],
-            'slug' => 'original-name',
-        ]);
+            'slug' => 'original-name']);
 
         $response = $this->putJson(self::PREFIX . '/categories/' . $category->id, [
-            'name' => ['en' => 'Updated Name'],
-        ]);
+            'name' => ['en' => 'Updated Name']]);
 
         $response->assertOk();
         $response->assertJsonPath('message', 'Category updated successfully');
@@ -110,8 +105,7 @@ class CategoryCrudTest extends TestCase
 
         $category = Category::create([
             'name' => ['en' => 'Delete Me'],
-            'slug' => 'delete-me',
-        ]);
+            'slug' => 'delete-me']);
 
         $response = $this->deleteJson(self::PREFIX . '/categories/' . $category->id);
 
@@ -139,12 +133,10 @@ class CategoryCrudTest extends TestCase
     private function createSuperAdminUser(): User
     {
         $permissions = [
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_CATEGORIES,
             PermissionEnum::CREATE_CATEGORY,
             PermissionEnum::UPDATE_CATEGORY,
-            PermissionEnum::DELETE_CATEGORY,
-        ];
+            PermissionEnum::DELETE_CATEGORY];
 
         foreach ($permissions as $perm) {
             Permission::findOrCreate($perm, self::GUARD);
@@ -153,8 +145,7 @@ class CategoryCrudTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => 'Super Admin',
-        ]);
+            'display_name' => 'Super Admin']);
 
         foreach ($permissions as $perm) {
             $role->givePermissionTo($perm);
@@ -166,8 +157,7 @@ class CategoryCrudTest extends TestCase
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
 
         $user->assignRole($role);
 

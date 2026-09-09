@@ -38,8 +38,7 @@ class ProductAdminTest extends TestCase
             'password' => bcrypt('password'),
             'type' => 'admin',
             'is_active' => true,
-            'email_verified_at' => now(),
-        ]);
+            'email_verified_at' => now()]);
 
         $this->normalUser = User::create([
             'name' => 'Normal User',
@@ -47,8 +46,7 @@ class ProductAdminTest extends TestCase
             'password' => bcrypt('password'),
             'type' => 'user',
             'is_active' => true,
-            'email_verified_at' => now(),
-        ]);
+            'email_verified_at' => now()]);
 
         Role::create(['name' => 'super_admin', 'guard_name' => 'api']);
         Role::create(['name' => 'customer', 'guard_name' => 'api']);
@@ -65,8 +63,7 @@ class ProductAdminTest extends TestCase
             Permission::VIEW_PRODUCTS,
             Permission::CREATE_PRODUCT,
             Permission::UPDATE_PRODUCT,
-            Permission::DELETE_PRODUCT,
-        ]);
+            Permission::DELETE_PRODUCT]);
     }
 
     private function authAdmin(): void
@@ -88,8 +85,7 @@ class ProductAdminTest extends TestCase
         $this->authUser();
         $response = $this->postJson(self::PREFIX . '/products', [
             'name' => 'New Product',
-            'price' => 50,
-        ]);
+            'price' => 50]);
         $response->assertStatus(403);
     }
 
@@ -97,8 +93,7 @@ class ProductAdminTest extends TestCase
     {
         $this->postJson(self::PREFIX . '/products', [
             'name' => 'New Product',
-            'price' => 50,
-        ])->assertStatus(401);
+            'price' => 50])->assertStatus(401);
     }
 
     public function test_create_product_validates_required_fields()
@@ -108,8 +103,7 @@ class ProductAdminTest extends TestCase
             'name' => ['en' => 'Simple Product'],
             'price' => 99.99,
             'product_type' => 'simple',
-            'sku' => 'SP-' . Str::random(6),
-        ]);
+            'sku' => 'SP-' . Str::random(6)]);
 
         $response->assertStatus(422);
     }
@@ -118,8 +112,7 @@ class ProductAdminTest extends TestCase
     {
         $this->authAdmin();
         $response = $this->postJson(self::PREFIX . '/products', [
-            'price' => 50,
-        ]);
+            'price' => 50]);
         $response->assertStatus(422);
     }
 
@@ -127,8 +120,7 @@ class ProductAdminTest extends TestCase
     {
         $this->authAdmin();
         $response = $this->postJson(self::PREFIX . '/products', [
-            'name' => 'No Price Product',
-        ]);
+            'name' => 'No Price Product']);
         $response->assertStatus(422);
     }
 
@@ -143,14 +135,12 @@ class ProductAdminTest extends TestCase
             'slug' => 'original-' . Str::random(8),
             'price' => 10,
             'product_type' => ProductType::SIMPLE,
-            'status' => 'publish',
-        ]);
+            'status' => 'publish']);
 
         $this->authUser();
         $response = $this->putJson(self::PREFIX . "/products/{$product->id}", [
             'name' => 'Updated',
-            'price' => 20,
-        ]);
+            'price' => 20]);
         $response->assertStatus(403);
     }
 
@@ -162,12 +152,10 @@ class ProductAdminTest extends TestCase
             'slug' => 'update-me-' . Str::random(8),
             'price' => 10,
             'product_type' => ProductType::SIMPLE,
-            'status' => 'publish',
-        ]);
+            'status' => 'publish']);
 
         $response = $this->putJson(self::PREFIX . "/products/{$product->id}", [
-            'price' => 25.50,
-        ]);
+            'price' => 25.50]);
 
         $this->assertContains($response->status(), [200, 422, 500]);
     }
@@ -176,8 +164,7 @@ class ProductAdminTest extends TestCase
     {
         $this->authAdmin();
         $response = $this->putJson(self::PREFIX . '/products/99999', [
-            'price' => 10,
-        ]);
+            'price' => 10]);
         $this->assertContains($response->status(), [404, 500]);
     }
 
@@ -192,8 +179,7 @@ class ProductAdminTest extends TestCase
             'slug' => 'delete-me-' . Str::random(8),
             'price' => 10,
             'product_type' => ProductType::SIMPLE,
-            'status' => 'publish',
-        ]);
+            'status' => 'publish']);
 
         $this->authUser();
         $response = $this->deleteJson(self::PREFIX . "/products/{$product->id}");
@@ -208,8 +194,7 @@ class ProductAdminTest extends TestCase
             'slug' => 'to-delete-' . Str::random(8),
             'price' => 10,
             'product_type' => ProductType::SIMPLE,
-            'status' => 'publish',
-        ]);
+            'status' => 'publish']);
 
         $response = $this->deleteJson(self::PREFIX . "/products/{$product->id}");
         $this->assertContains($response->status(), [200, 500]);
@@ -233,8 +218,7 @@ class ProductAdminTest extends TestCase
             'slug' => 'public-' . Str::random(8),
             'price' => 15,
             'product_type' => ProductType::SIMPLE,
-            'status' => 'publish',
-        ]);
+            'status' => 'publish']);
 
         $response = $this->getJson(self::GENERAL_PREFIX . '/products');
         $response->assertStatus(200);
@@ -248,8 +232,7 @@ class ProductAdminTest extends TestCase
             'price' => 30,
             'product_type' => ProductType::SIMPLE,
             'status' => 'publish',
-            'has_discount' => true,
-        ]);
+            'has_discount' => true]);
 
         $response = $this->getJson(self::GENERAL_PREFIX . '/products?type=all_product_discounts');
         $this->assertContains($response->status(), [200, 409, 500]);
@@ -269,8 +252,7 @@ class ProductAdminTest extends TestCase
             'product_type' => ProductType::SIMPLE,
             'status' => true,
             'in_stock' => true,
-            'stock_quantity' => 10,
-        ]);
+            'stock_quantity' => 10]);
 
         $response = $this->getJson(self::GENERAL_PREFIX . "/products/{$slug}");
         $this->assertContains($response->status(), [200, 409, 500]);
@@ -294,8 +276,7 @@ class ProductAdminTest extends TestCase
             'slug' => 'toggle-status-' . Str::random(8),
             'price' => 10,
             'product_type' => ProductType::SIMPLE,
-            'status' => 'publish',
-        ]);
+            'status' => 'publish']);
 
         $response = $this->putJson(self::PREFIX . "/products/{$product->id}", ['status' => 'draft']);
         $this->assertContains($response->status(), [200, 422, 500]);
@@ -312,8 +293,7 @@ class ProductAdminTest extends TestCase
             'slug' => 'inactive-' . Str::random(8),
             'price' => 10,
             'product_type' => ProductType::SIMPLE,
-            'status' => 'publish',
-        ]);
+            'status' => 'publish']);
 
         $response = $this->getJson(self::GENERAL_PREFIX . '/products');
         $names = collect($response->json('data'))->pluck('name');

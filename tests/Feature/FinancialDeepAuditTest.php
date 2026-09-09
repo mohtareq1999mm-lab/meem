@@ -56,8 +56,7 @@ class FinancialDeepAuditTest extends TestCase
             Settings::create([
                 'site_name' => 'Audit Test',
                 'options' => [],
-                'minimum_order_amount' => 0,
-            ]);
+                'minimum_order_amount' => 0]);
         }
     }
 
@@ -76,8 +75,7 @@ class FinancialDeepAuditTest extends TestCase
             'stock_quantity' => $stock,
             'reserved_quantity' => 0,
             'in_stock' => $stock > 0,
-            'status' => true,
-        ]);
+            'status' => true]);
     }
 
     private function makeDiscountedProduct(string $name, float $price, string $discountType, float $discountAmount, int $stock = 10): Product
@@ -95,8 +93,7 @@ class FinancialDeepAuditTest extends TestCase
             'discount_type' => $discountType,
             'discount_amount' => $discountAmount,
             'start_date' => now()->subDay(),
-            'end_date' => now()->addMonth(),
-        ]);
+            'end_date' => now()->addMonth()]);
     }
 
     private function makeVariableProduct(string $name, array $variantsData): array
@@ -109,8 +106,7 @@ class FinancialDeepAuditTest extends TestCase
             'stock_quantity' => 0,
             'reserved_quantity' => 0,
             'in_stock' => true,
-            'status' => true,
-        ]);
+            'status' => true]);
 
         $variants = [];
         foreach ($variantsData as $v) {
@@ -121,8 +117,7 @@ class FinancialDeepAuditTest extends TestCase
                 'stock_quantity' => $v['stock'] ?? 10,
                 'reserved_quantity' => 0,
                 'in_stock' => ($v['stock'] ?? 10) > 0,
-                'sku' => 'SKU-' . Str::random(8),
-            ]);
+                'sku' => 'SKU-' . Str::random(8)]);
         }
         return ['product' => $product, 'variants' => $variants];
     }
@@ -138,8 +133,7 @@ class FinancialDeepAuditTest extends TestCase
             'price' => $price,
             'total_price' => round($price * $quantity, 2),
             'attributes' => null,
-            'shipping_method' => ShippingMethod::SCHEDULED,
-        ]);
+            'shipping_method' => ShippingMethod::SCHEDULED]);
         return $cart;
     }
 
@@ -155,8 +149,7 @@ class FinancialDeepAuditTest extends TestCase
                 'price' => $item['price'],
                 'total_price' => round($item['price'] * $item['quantity'], 2),
                 'attributes' => null,
-                'shipping_method' => $item['shipping_method'] ?? ShippingMethod::SCHEDULED,
-            ]);
+                'shipping_method' => $item['shipping_method'] ?? ShippingMethod::SCHEDULED]);
         }
         return $cart;
     }
@@ -169,31 +162,28 @@ class FinancialDeepAuditTest extends TestCase
             'user_phone' => '01000000001',
             'user_email' => $user->email,
             'address' => json_encode(['address' => '123 Street']),
-            'governorate_id' => $governorateId,
-        ]);
+            'governorate_id' => $governorateId]);
         $request->setUserResolver(fn() => $user);
         return $request;
     }
 
     private function makeSuperAdmin(): User
     {
-        Permission::findOrCreate(PermissionEnum::SUPER_ADMIN, 'api');
+        Permission::findOrCreate('api');
         Permission::findOrCreate(PermissionEnum::UPDATE_SETTINGS, 'api');
 
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => 'api',
-            'display_name' => json_encode(['en' => 'Super Admin']),
-        ]);
-        $role->givePermissionTo([PermissionEnum::SUPER_ADMIN, PermissionEnum::UPDATE_SETTINGS]);
+            'display_name' => json_encode(['en' => 'Super Admin'])]);
+        $role->givePermissionTo([PermissionEnum::UPDATE_SETTINGS]);
 
         $user = User::create([
             'name' => 'Admin',
             'email' => 'admin@audit.local',
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
-            'is_active' => true,
-        ]);
+            'is_active' => true]);
         $user->assignRole($role);
 
         return $user;
@@ -207,8 +197,7 @@ class FinancialDeepAuditTest extends TestCase
             'governorate_id' => $gov->id,
             'price' => $price,
             'free_shipping_over' => $freeShippingOver,
-            'status' => true,
-        ]);
+            'status' => true]);
         return $gov;
     }
 
@@ -229,8 +218,7 @@ class FinancialDeepAuditTest extends TestCase
             'limiter' => 1,
             'usage' => 1,
             'apply_to' => 'all_products',
-            'status' => true,
-        ]);
+            'status' => true]);
 
         $this->assertFalse($promotion->isValid());
 
@@ -256,15 +244,13 @@ class FinancialDeepAuditTest extends TestCase
             'discount' => 20,
             'status' => true,
             'start_date' => now()->subDay(),
-            'end_date' => now()->addMonth(),
-        ]);
+            'end_date' => now()->addMonth()]);
 
         $created = CouponUsage::create([
             'coupon_id' => $coupon->id,
             'user_id' => $user->id,
             'order_id' => null,
-            'used_at' => now(),
-        ]);
+            'used_at' => now()]);
         $this->assertNotNull($created);
 
         $this->expectException(\Illuminate\Database\QueryException::class);
@@ -273,8 +259,7 @@ class FinancialDeepAuditTest extends TestCase
             'coupon_id' => $coupon->id,
             'user_id' => $user->id,
             'order_id' => null,
-            'used_at' => now(),
-        ]);
+            'used_at' => now()]);
     }
 
     /** @test */
@@ -294,8 +279,7 @@ class FinancialDeepAuditTest extends TestCase
             'value' => 20,
             'discount' => 20,
             'apply_to' => 'all_products',
-            'status' => true,
-        ]);
+            'status' => true]);
 
         $ps = app(PromotionService::class);
         $result1 = $ps->applySelectedPromotion($cart->fresh(), $promotion->id);
@@ -327,15 +311,13 @@ class FinancialDeepAuditTest extends TestCase
             'status' => true,
             'start_date' => now()->subDay(),
             'end_date' => now()->addMonth(),
-            'used' => 0,
-        ]);
+            'used' => 0]);
 
         $assignment = CouponAssignment::create([
             'coupon_id' => $coupon->id,
             'user_id' => $user->id,
             'max_uses' => 3,
-            'used' => 0,
-        ]);
+            'used' => 0]);
 
         $cart->update(['coupon' => $coupon->code]);
         $os = app(OrderService::class);
@@ -369,14 +351,12 @@ class FinancialDeepAuditTest extends TestCase
             'discount' => 50,
             'status' => true,
             'start_date' => now()->subDay(),
-            'end_date' => now()->addMonth(),
-        ]);
+            'end_date' => now()->addMonth()]);
         CouponAssignment::create([
             'coupon_id' => $coupon->id,
             'user_id' => $user->id,
             'max_uses' => 1,
-            'used' => 1,
-        ]);
+            'used' => 1]);
 
         $validation = CouponOrchestrator::validate($coupon, $user, collect());
         $this->assertFalse($validation['valid']);
@@ -403,8 +383,7 @@ class FinancialDeepAuditTest extends TestCase
             'value' => 0,
             'discount' => 0,
             'apply_to' => 'all_products',
-            'status' => true,
-        ]);
+            'status' => true]);
         $promotion->giftProducts()->attach($giftProduct->id, ['quantity' => 1, 'product_variant_id' => null]);
 
         $ps = app(PromotionService::class);
@@ -433,8 +412,7 @@ class FinancialDeepAuditTest extends TestCase
         $ineligible = $this->makeSimpleProduct('Ineligible', 100.00);
         $cart = $this->makeCartWithMultipleItems($user, [
             ['product' => $eligible, 'price' => 200.00, 'quantity' => 1],
-            ['product' => $ineligible, 'price' => 100.00, 'quantity' => 1],
-        ]);
+            ['product' => $ineligible, 'price' => 100.00, 'quantity' => 1]]);
 
         $promotion = Promotion::create([
             'name' => 'Specific',
@@ -444,8 +422,7 @@ class FinancialDeepAuditTest extends TestCase
             'value' => 20,
             'discount' => 20,
             'apply_to' => 'specific_products',
-            'status' => true,
-        ]);
+            'status' => true]);
         $promotion->products()->attach($eligible->id);
 
         $ps = app(PromotionService::class);
@@ -478,8 +455,7 @@ class FinancialDeepAuditTest extends TestCase
             'stock_quantity' => 10, 'in_stock' => true, 'status' => true,
             'has_discount' => true, 'discount_type' => DiscountType::PERCENTAGE,
             'discount_amount' => 50,
-            'start_date' => now()->subDays(10), 'end_date' => now()->subDay(),
-        ]);
+            'start_date' => now()->subDays(10), 'end_date' => now()->subDay()]);
         $result = $service->calculateProductPricing($product);
         $this->assertNull($result['price_after_discount']);
         $this->assertEquals(100.00, $result['final_price']);
@@ -496,8 +472,7 @@ class FinancialDeepAuditTest extends TestCase
             'stock_quantity' => 10, 'in_stock' => true, 'status' => true,
             'has_discount' => true, 'discount_type' => DiscountType::PERCENTAGE,
             'discount_amount' => 30,
-            'start_date' => now()->addDay(), 'end_date' => now()->addMonth(),
-        ]);
+            'start_date' => now()->addDay(), 'end_date' => now()->addMonth()]);
         $result = $service->calculateProductPricing($product);
         $this->assertNull($result['price_after_discount']);
         $this->assertEquals(100.00, $result['final_price']);
@@ -515,8 +490,7 @@ class FinancialDeepAuditTest extends TestCase
             'name' => 'Expired', 'code' => 'EXPP-' . Str::upper(Str::random(6)),
             'type' => PromotionType::PRICE, 'type_amount' => PromotionMountType::PERCENTAGE,
             'value' => 20, 'discount' => 20, 'apply_to' => 'all_products', 'status' => true,
-            'start_at' => now()->subDays(10), 'end_at' => now()->subDay(),
-        ]);
+            'start_at' => now()->subDays(10), 'end_at' => now()->subDay()]);
 
         $ps = app(PromotionService::class);
         $this->expectException(\InvalidArgumentException::class);
@@ -534,8 +508,7 @@ class FinancialDeepAuditTest extends TestCase
         $promotion = Promotion::create([
             'name' => 'Inactive', 'code' => 'INA-' . Str::upper(Str::random(6)),
             'type' => PromotionType::PRICE, 'type_amount' => PromotionMountType::PERCENTAGE,
-            'value' => 20, 'discount' => 20, 'apply_to' => 'all_products', 'status' => false,
-        ]);
+            'value' => 20, 'discount' => 20, 'apply_to' => 'all_products', 'status' => false]);
 
         $ps = app(PromotionService::class);
         $this->expectException(\InvalidArgumentException::class);
@@ -552,8 +525,7 @@ class FinancialDeepAuditTest extends TestCase
             'code' => 'EXPC-' . Str::random(6),
             'discount_type' => DiscountType::FIXED_RATE,
             'discount' => 10, 'status' => true,
-            'start_date' => now()->subDays(10), 'end_date' => now()->subDay(),
-        ]);
+            'start_date' => now()->subDays(10), 'end_date' => now()->subDay()]);
         $validation = CouponOrchestrator::validate($coupon, $user, collect());
         $this->assertFalse($validation['valid']);
     }
@@ -614,14 +586,12 @@ class FinancialDeepAuditTest extends TestCase
         $service = app(ProductPricingService::class);
         $data = $this->makeVariableProduct('Var Flash', [
             ['price' => 100.00, 'stock' => 5],
-            ['price' => 200.00, 'stock' => 3],
-        ]);
+            ['price' => 200.00, 'stock' => 3]]);
 
         $flashSale = FlashSale::create([
             'title' => 'Var 20%', 'slug' => 'vflash-' . Str::random(6),
             'type' => FlashSaleType::PERCENTAGE, 'discount' => 20,
-            'start_date' => now()->subDay(), 'end_date' => now()->addMonth(), 'status' => true,
-        ]);
+            'start_date' => now()->subDay(), 'end_date' => now()->addMonth(), 'status' => true]);
 
         foreach ($data['variants'] as $variant) {
             $price = $service->calculateVariantCurrentPrice($data['product'], $variant, $flashSale);
@@ -638,13 +608,11 @@ class FinancialDeepAuditTest extends TestCase
             'price' => 200.00, 'product_type' => ProductType::VARIABLE,
             'stock_quantity' => 0, 'in_stock' => true, 'status' => true,
             'has_discount' => true, 'discount_type' => DiscountType::PERCENTAGE,
-            'discount_amount' => 15, 'start_date' => now()->subDay(), 'end_date' => now()->addMonth(),
-        ]);
+            'discount_amount' => 15, 'start_date' => now()->subDay(), 'end_date' => now()->addMonth()]);
         $variant = ProductVariant::create([
             'product_id' => $product->id, 'price' => 150.00,
             'stock_quantity' => 5, 'reserved_quantity' => 0, 'in_stock' => true,
-            'sku' => 'VAR-' . Str::random(8),
-        ]);
+            'sku' => 'VAR-' . Str::random(8)]);
 
         $price = app(ProductPricingService::class)->calculateVariantCurrentPrice($product, $variant);
         $this->assertEquals(round(150.00 * 0.85, 2), $price);
@@ -666,8 +634,7 @@ class FinancialDeepAuditTest extends TestCase
             'name' => 'MinOrd', 'code' => 'MINO-' . Str::upper(Str::random(6)),
             'type' => PromotionType::PRICE, 'type_amount' => PromotionMountType::PERCENTAGE,
             'value' => 10, 'discount' => 10, 'minimum_order_amount' => 100,
-            'apply_to' => 'all_products', 'status' => true,
-        ]);
+            'apply_to' => 'all_products', 'status' => true]);
 
         $ps = app(PromotionService::class);
         $this->expectException(\InvalidArgumentException::class);
@@ -685,16 +652,14 @@ class FinancialDeepAuditTest extends TestCase
             'name' => 'Scope Lmt', 'code' => 'SCPL-' . Str::upper(Str::random(6)),
             'type' => PromotionType::PRICE, 'type_amount' => PromotionMountType::FIXED_RATE,
             'value' => 10, 'discount' => 10, 'limiter' => 5, 'usage' => 3,
-            'apply_to' => 'all_products', 'status' => true,
-        ]);
+            'apply_to' => 'all_products', 'status' => true]);
         $this->assertTrue($promotion->isValid());
 
         $promotion2 = Promotion::create([
             'name' => 'Exhausted', 'code' => 'EXH-' . Str::upper(Str::random(6)),
             'type' => PromotionType::PRICE, 'type_amount' => PromotionMountType::FIXED_RATE,
             'value' => 10, 'discount' => 10, 'limiter' => 5, 'usage' => 5,
-            'apply_to' => 'all_products', 'status' => true,
-        ]);
+            'apply_to' => 'all_products', 'status' => true]);
         $this->assertFalse($promotion2->isValid());
     }
 
@@ -709,8 +674,7 @@ class FinancialDeepAuditTest extends TestCase
             'discount' => 10,
             'status' => true,
             'start_date' => now()->subDay(), 'end_date' => now()->addMonth(),
-            'used' => 100, 'limiter' => 100,
-        ]);
+            'used' => 100, 'limiter' => 100]);
 
         $user = $this->makeUser();
         $validation = CouponValidator::validate($coupon, $user, collect());
@@ -729,9 +693,7 @@ class FinancialDeepAuditTest extends TestCase
         $settings->update([
             'minimum_order_amount' => 150.00,
             'options' => array_merge((array) ($settings->options ?? []), [
-                'minimumOrderAmount' => 999.99,
-            ]),
-        ]);
+                'minimumOrderAmount' => 999.99])]);
         $settings->refresh();
 
         $user = $this->makeUser();
@@ -766,8 +728,7 @@ class FinancialDeepAuditTest extends TestCase
         Sanctum::actingAs($user);
 
         $response = $this->putJson(self::PREFIX . '/settings', [
-            'minimum_order_amount' => 200.00,
-        ]);
+            'minimum_order_amount' => 200.00]);
         $response->assertOk();
         $settings = Settings::first();
         $this->assertEquals(200.00, (float) $settings->minimum_order_amount);
@@ -788,16 +749,14 @@ class FinancialDeepAuditTest extends TestCase
         $promotion = Promotion::create([
             'name' => 'Big Promo', 'code' => 'BIGP-' . Str::upper(Str::random(6)),
             'type' => PromotionType::PRICE, 'type_amount' => PromotionMountType::PERCENTAGE,
-            'value' => 30, 'discount' => 30, 'apply_to' => 'all_products', 'status' => true,
-        ]);
+            'value' => 30, 'discount' => 30, 'apply_to' => 'all_products', 'status' => true]);
         $coupon = Coupon::create([
             'name' => ['en' => 'Capped'],
             'slug' => 'c-' . Str::random(6),
             'code' => 'CAPCPN-' . Str::random(6),
             'discount_type' => DiscountType::PERCENTAGE,
             'discount' => 20, 'max_discount_amount' => 50,
-            'status' => true, 'start_date' => now()->subDay(), 'end_date' => now()->addMonth(),
-        ]);
+            'status' => true, 'start_date' => now()->subDay(), 'end_date' => now()->addMonth()]);
         $cart->update(['coupon' => $coupon->code]);
 
         $ps = app(PromotionService::class);
@@ -855,8 +814,7 @@ class FinancialDeepAuditTest extends TestCase
         $productB = $this->makeSimpleProduct('B', 150.00, 20);
         $cart = $this->makeCartWithMultipleItems($user, [
             ['product' => $productA, 'price' => 250.00, 'quantity' => 2],
-            ['product' => $productB, 'price' => 150.00, 'quantity' => 1],
-        ]);
+            ['product' => $productB, 'price' => 150.00, 'quantity' => 1]]);
         $this->makeGovernorateWithShipping(40.00, 1000.00);
 
         // MANUAL:
@@ -879,15 +837,13 @@ class FinancialDeepAuditTest extends TestCase
         $promotion = Promotion::create([
             'name' => 'Full15', 'code' => 'FULL15-' . Str::upper(Str::random(6)),
             'type' => PromotionType::PRICE, 'type_amount' => PromotionMountType::PERCENTAGE,
-            'value' => 15, 'discount' => 15, 'apply_to' => 'all_products', 'status' => true,
-        ]);
+            'value' => 15, 'discount' => 15, 'apply_to' => 'all_products', 'status' => true]);
         $coupon = Coupon::create([
             'name' => ['en' => 'Full CPN'],
             'slug' => 'c-' . Str::random(6),
             'code' => 'FULLCPN-' . Str::random(6),
             'discount_type' => DiscountType::PERCENTAGE, 'discount' => 10, 'max_discount_amount' => 30,
-            'status' => true, 'start_date' => now()->subDay(), 'end_date' => now()->addMonth(),
-        ]);
+            'status' => true, 'start_date' => now()->subDay(), 'end_date' => now()->addMonth()]);
         $cart->update(['coupon' => $coupon->code]);
 
         $ps = app(PromotionService::class);
@@ -964,8 +920,7 @@ class FinancialDeepAuditTest extends TestCase
         $settings = Settings::first();
         $settings->update([
             'minimum_order_amount' => 300.00,
-            'options' => array_merge((array) ($settings->options ?? []), ['minimumOrderAmount' => 999.99]),
-        ]);
+            'options' => array_merge((array) ($settings->options ?? []), ['minimumOrderAmount' => 999.99])]);
 
         $read = Settings::first();
         $this->assertEquals(300.00, (float) $read->minimum_order_amount);

@@ -40,15 +40,13 @@ class CategoryFeaturedTest extends TestCase
     {
         $category = Category::create([
             'name' => ['en' => 'Test'],
-            'slug' => 'test',
-        ]);
+            'slug' => 'test']);
 
         $user = $this->createUserWithPermissions([PermissionEnum::VIEW_CATEGORIES]);
         Sanctum::actingAs($user);
 
         $response = $this->putJson(self::PREFIX . '/categories/feature', [
-            'id' => $category->id,
-        ]);
+            'id' => $category->id]);
         $response->assertForbidden();
     }
 
@@ -59,12 +57,10 @@ class CategoryFeaturedTest extends TestCase
         $category = Category::create([
             'name' => ['en' => 'Toggle Me'],
             'slug' => 'toggle-me',
-            'is_featured' => false,
-        ]);
+            'is_featured' => false]);
 
         $response = $this->putJson(self::PREFIX . '/categories/feature', [
-            'id' => $category->id,
-        ]);
+            'id' => $category->id]);
 
         $response->assertOk();
         $response->assertJsonPath('message', 'Category feature toggled successfully');
@@ -80,8 +76,7 @@ class CategoryFeaturedTest extends TestCase
         $category = Category::create([
             'name' => ['en' => 'Double Toggle'],
             'slug' => 'double-toggle',
-            'is_featured' => false,
-        ]);
+            'is_featured' => false]);
 
         $this->putJson(self::PREFIX . '/categories/feature', ['id' => $category->id]);
         $category->refresh();
@@ -122,8 +117,7 @@ class CategoryFeaturedTest extends TestCase
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
 
         foreach ($permissions as $perm) {
             $user->givePermissionTo($perm);
@@ -135,12 +129,10 @@ class CategoryFeaturedTest extends TestCase
     private function createSuperAdminUser(): User
     {
         $permissions = [
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_CATEGORIES,
             PermissionEnum::CREATE_CATEGORY,
             PermissionEnum::UPDATE_CATEGORY,
-            PermissionEnum::DELETE_CATEGORY,
-        ];
+            PermissionEnum::DELETE_CATEGORY];
 
         foreach ($permissions as $perm) {
             Permission::findOrCreate($perm, self::GUARD);
@@ -149,8 +141,7 @@ class CategoryFeaturedTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => 'Super Admin',
-        ]);
+            'display_name' => 'Super Admin']);
 
         foreach ($permissions as $perm) {
             $role->givePermissionTo($perm);
@@ -162,8 +153,7 @@ class CategoryFeaturedTest extends TestCase
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
 
         $user->assignRole($role);
 

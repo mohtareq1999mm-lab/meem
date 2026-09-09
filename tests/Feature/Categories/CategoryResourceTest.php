@@ -55,9 +55,7 @@ class CategoryResourceTest extends TestCase
                 'to',
                 'last_page',
                 'per_page',
-                'total',
-            ],
-        ]);
+                'total']]);
         $response->assertJsonPath('data.per_page', 1);
         $response->assertJsonPath('data.total', 2);
     }
@@ -101,8 +99,7 @@ class CategoryResourceTest extends TestCase
         $category = Category::create([
             'name' => ['en' => 'Detailed'],
             'slug' => 'detailed',
-            'details' => 'Full description here',
-        ]);
+            'details' => 'Full description here']);
 
         $response = $this->getJson(self::PREFIX . '/categories/' . $category->id);
 
@@ -130,8 +127,7 @@ class CategoryResourceTest extends TestCase
             'name' => ['en' => 'Test'],
             'slug' => 'test',
             'is_featured' => true,
-            'status' => true,
-        ]);
+            'status' => true]);
 
         $response = $this->getJson(self::PREFIX . '/categories');
         $category = $response->json('data.data.0');
@@ -150,12 +146,10 @@ class CategoryResourceTest extends TestCase
     private function createSuperAdminUser(): User
     {
         $permissions = [
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_CATEGORIES,
             PermissionEnum::CREATE_CATEGORY,
             PermissionEnum::UPDATE_CATEGORY,
-            PermissionEnum::DELETE_CATEGORY,
-        ];
+            PermissionEnum::DELETE_CATEGORY];
 
         foreach ($permissions as $perm) {
             Permission::findOrCreate($perm, self::GUARD);
@@ -164,8 +158,7 @@ class CategoryResourceTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => 'Super Admin',
-        ]);
+            'display_name' => 'Super Admin']);
 
         foreach ($permissions as $perm) {
             $role->givePermissionTo($perm);
@@ -177,8 +170,7 @@ class CategoryResourceTest extends TestCase
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
 
         $user->assignRole($role);
 

@@ -34,7 +34,7 @@ class ContactSoftDeleteTest extends TestCase
 
     private function createSuperAdmin(): User
     {
-        Permission::findOrCreate(PermissionEnum::SUPER_ADMIN, self::GUARD);
+        Permission::findOrCreate(self::GUARD);
         Permission::findOrCreate(PermissionEnum::VIEW_CONTACTS, self::GUARD);
         Permission::findOrCreate(PermissionEnum::UPDATE_CONTACT, self::GUARD);
         Permission::findOrCreate(PermissionEnum::DELETE_CONTACT, self::GUARD);
@@ -43,16 +43,13 @@ class ContactSoftDeleteTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => json_encode(['en' => 'Super Admin']),
-        ]);
+            'display_name' => json_encode(['en' => 'Super Admin'])]);
 
         $role->givePermissionTo([
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_CONTACTS,
             PermissionEnum::UPDATE_CONTACT,
             PermissionEnum::DELETE_CONTACT,
-            PermissionEnum::DELETE_READ_CONTACTS,
-        ]);
+            PermissionEnum::DELETE_READ_CONTACTS]);
 
         $user = User::create([
             'name' => 'Super Admin',
@@ -60,8 +57,7 @@ class ContactSoftDeleteTest extends TestCase
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
 
         $user->assignRole($role);
 
@@ -82,8 +78,7 @@ class ContactSoftDeleteTest extends TestCase
             'name' => 'SoftDelete',
             'email' => 'soft@example.com',
             'subject' => 'Test',
-            'message' => 'Test message.',
-        ]);
+            'message' => 'Test message.']);
 
         $this->deleteJson(self::PREFIX . "/contacts/{$contact->id}");
 
@@ -97,8 +92,7 @@ class ContactSoftDeleteTest extends TestCase
             'name' => 'Gone',
             'email' => 'gone@example.com',
             'subject' => 'Test',
-            'message' => 'Test message.',
-        ]);
+            'message' => 'Test message.']);
         $contact->delete();
 
         $response = $this->getJson(self::PREFIX . '/contacts');
@@ -114,8 +108,7 @@ class ContactSoftDeleteTest extends TestCase
             'name' => 'Hidden',
             'email' => 'hidden@example.com',
             'subject' => 'Test',
-            'message' => 'Test message.',
-        ]);
+            'message' => 'Test message.']);
         $contact->delete();
 
         $this->getJson(self::PREFIX . "/contacts/{$contact->id}")->assertStatus(404);

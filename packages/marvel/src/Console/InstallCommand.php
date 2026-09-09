@@ -74,13 +74,11 @@ class InstallCommand extends Command
         }
 
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
-
-        Permission::firstOrCreate(['name' => UserPermission::SUPER_ADMIN, 'guard_name' => 'api']);
         Permission::firstOrCreate(['name' => UserPermission::CUSTOMER,    'guard_name' => 'api']);
         Permission::firstOrCreate(['name' => UserPermission::STORE_OWNER, 'guard_name' => 'api']);
         Permission::firstOrCreate(['name' => UserPermission::STAFF,       'guard_name' => 'api']);
 
-        $superAdminPermissions = [UserPermission::SUPER_ADMIN, UserPermission::STORE_OWNER, UserPermission::CUSTOMER];
+        $superAdminPermissions = [UserPermission::STORE_OWNER, UserPermission::CUSTOMER];
         $storeOwnerPermissions = [UserPermission::STORE_OWNER, UserPermission::CUSTOMER];
         $staffPermissions = [UserPermission::STAFF, UserPermission::CUSTOMER];
         $customerPermissions = [UserPermission::CUSTOMER];

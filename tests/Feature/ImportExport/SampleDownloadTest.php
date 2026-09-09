@@ -26,7 +26,7 @@ class SampleDownloadTest extends TestCase
             Permission::findOrCreate($p, self::GUARD);
         }
         if ($isSuperAdmin) {
-            Permission::findOrCreate(Perm::SUPER_ADMIN, self::GUARD);
+            Permission::findOrCreate(self::GUARD);
         }
         $roleName = 'role_' . uniqid();
         $role = Role::create(['name' => $roleName, 'guard_name' => self::GUARD, 'display_name' => $roleName]);
@@ -34,7 +34,7 @@ class SampleDownloadTest extends TestCase
             $role->givePermissionTo($p);
         }
         if ($isSuperAdmin) {
-            $role->givePermissionTo(Perm::SUPER_ADMIN);
+
         }
         $user = User::create([
             'name' => 'User ' . uniqid(),
@@ -46,7 +46,7 @@ class SampleDownloadTest extends TestCase
         ]);
         $user->assignRole($role);
         foreach ($perms as $p) $user->givePermissionTo($p);
-        if ($isSuperAdmin) $user->givePermissionTo(Perm::SUPER_ADMIN);
+        if ($isSuperAdmin)
         return $user;
     }
 
@@ -101,7 +101,7 @@ class SampleDownloadTest extends TestCase
 
     public function test_super_admin_can_download_all_samples(): void
     {
-        $user = $this->createUserWithPermissions([Perm::SUPER_ADMIN], true);
+        $user = $this->createUserWithPermissions([], true);
         Sanctum::actingAs($user);
         $this->getJson(self::PREFIX . '/products/import/sample')->assertOk();
         $this->getJson(self::PREFIX . '/categories/import/sample')->assertOk();

@@ -10,6 +10,7 @@ use Marvel\Database\Models\Refund;
 use Marvel\Enums\OrderStatus;
 use Marvel\Enums\PaymentStatus;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Enums\RefundStatus;
 use Marvel\Exceptions\MarvelException;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -65,7 +66,7 @@ class RefundRepository extends BaseRepository
         } catch (Exception $th) {
             throw new MarvelException(NOT_FOUND);
         }
-        if ($user->id !== $order->customer_id && !$user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if ($user->id !== $order->customer_id && !$user->hasRole(Role::SUPER_ADMIN)) {
             throw new MarvelException(NOT_AUTHORIZED);
         }
         $data = $request->only($this->dataArray);

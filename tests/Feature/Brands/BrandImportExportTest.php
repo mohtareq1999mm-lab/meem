@@ -10,6 +10,7 @@ use Laravel\Sanctum\Sanctum;
 use Marvel\Database\Models\Brand;
 use Marvel\Database\Models\User;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Jobs\ExportBrandsJob;
 use Marvel\Jobs\ImportBrandsJob;
 use Spatie\Permission\Models\Permission as SpatiePermission;
@@ -60,7 +61,7 @@ class BrandImportExportTest extends TestCase
             });
         }
 
-        foreach ([Permission::IMPORT_BRAND, Permission::EXPORT_BRAND, Permission::SUPER_ADMIN] as $perm) {
+        foreach ([Permission::IMPORT_BRAND, Permission::EXPORT_BRAND] as $perm) {
             SpatiePermission::firstOrCreate(['name' => $perm, 'guard_name' => 'api']);
         }
         foreach (['import-category', 'export-category'] as $slug) {

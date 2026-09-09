@@ -38,8 +38,7 @@ class CategoryTranslationTest extends TestCase
         $category = Category::create([
             'name' => ['en' => 'Electronics', 'ar' => 'إلكترونيات'],
             'slug' => 'electronics',
-            'details' => ['en' => 'Electronic items', 'ar' => 'الأجهزة الإلكترونية'],
-        ]);
+            'details' => ['en' => 'Electronic items', 'ar' => 'الأجهزة الإلكترونية']]);
 
         $this->assertEquals('Electronics', $category->getTranslation('name', 'en'));
         $this->assertEquals('إلكترونيات', $category->getTranslation('name', 'ar'));
@@ -53,8 +52,7 @@ class CategoryTranslationTest extends TestCase
 
         $category = Category::create([
             'name' => ['en' => 'English Name', 'ar' => 'اسم عربي'],
-            'slug' => 'translated-cat',
-        ]);
+            'slug' => 'translated-cat']);
 
         $response = $this->getJson(self::PREFIX . '/categories/' . $category->id);
 
@@ -72,8 +70,7 @@ class CategoryTranslationTest extends TestCase
         $category = Category::create([
             'name' => ['en' => 'Test', 'ar' => 'اختبار'],
             'slug' => 'test-details',
-            'details' => ['en' => 'English details', 'ar' => 'تفاصيل بالعربية'],
-        ]);
+            'details' => ['en' => 'English details', 'ar' => 'تفاصيل بالعربية']]);
 
         $response = $this->withHeaders(['lang' => 'ar'])->getJson(self::PREFIX . '/categories/' . $category->id);
 
@@ -84,12 +81,10 @@ class CategoryTranslationTest extends TestCase
     private function createSuperAdminUser(): User
     {
         $permissions = [
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_CATEGORIES,
             PermissionEnum::CREATE_CATEGORY,
             PermissionEnum::UPDATE_CATEGORY,
-            PermissionEnum::DELETE_CATEGORY,
-        ];
+            PermissionEnum::DELETE_CATEGORY];
 
         foreach ($permissions as $perm) {
             Permission::findOrCreate($perm, self::GUARD);
@@ -98,8 +93,7 @@ class CategoryTranslationTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => 'Super Admin',
-        ]);
+            'display_name' => 'Super Admin']);
 
         foreach ($permissions as $perm) {
             $role->givePermissionTo($perm);
@@ -111,8 +105,7 @@ class CategoryTranslationTest extends TestCase
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
 
         $user->assignRole($role);
 

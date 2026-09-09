@@ -3,7 +3,7 @@
 namespace Marvel\Traits;
 
 use Illuminate\Support\Facades\Cache;
-use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Database\Models\User;
 
 trait UsersTrait
@@ -13,7 +13,7 @@ trait UsersTrait
         return  Cache::remember(
             'cached_admin',
             900,
-            fn () => User::with('profile')->where('is_active', true)->permission(Permission::SUPER_ADMIN)->get()
+            fn () => User::with('profile')->where('is_active', true)->role(Role::SUPER_ADMIN)->get()
         );
     }
 }

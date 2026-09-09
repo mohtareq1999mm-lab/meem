@@ -34,12 +34,10 @@ class FaqAuthenticationTest extends TestCase
     private function createAuthenticatedUser(): User
     {
         $permissions = [
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_FAQS,
             PermissionEnum::CREATE_FAQ,
             PermissionEnum::UPDATE_FAQ,
-            PermissionEnum::DELETE_FAQ,
-        ];
+            PermissionEnum::DELETE_FAQ];
 
         foreach ($permissions as $perm) {
             Permission::findOrCreate($perm, self::GUARD);
@@ -48,8 +46,7 @@ class FaqAuthenticationTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => json_encode(['en' => 'Super Admin']),
-        ]);
+            'display_name' => json_encode(['en' => 'Super Admin'])]);
 
         foreach ($permissions as $perm) {
             $role->givePermissionTo($perm);
@@ -61,8 +58,7 @@ class FaqAuthenticationTest extends TestCase
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
 
         $user->assignRole($role);
 
@@ -82,8 +78,7 @@ class FaqAuthenticationTest extends TestCase
     {
         $faq = Faqs::create([
             'faq_title' => ['en' => 'Test FAQ'],
-            'faq_description' => ['en' => 'Test description'],
-        ]);
+            'faq_description' => ['en' => 'Test description']]);
 
         $response = $this->getJson(self::PREFIX . "/faqs/{$faq->id}");
 
@@ -95,8 +90,7 @@ class FaqAuthenticationTest extends TestCase
     {
         $response = $this->postJson(self::PREFIX . '/faqs', [
             'faq_title' => ['en' => 'How to return?'],
-            'faq_description' => ['en' => 'Return policy details.'],
-        ]);
+            'faq_description' => ['en' => 'Return policy details.']]);
 
         $response->assertStatus(401);
     }
@@ -106,12 +100,10 @@ class FaqAuthenticationTest extends TestCase
     {
         $faq = Faqs::create([
             'faq_title' => ['en' => 'Test FAQ'],
-            'faq_description' => ['en' => 'Test description'],
-        ]);
+            'faq_description' => ['en' => 'Test description']]);
 
         $response = $this->putJson(self::PREFIX . "/faqs/{$faq->id}", [
-            'faq_title' => ['en' => 'Updated FAQ'],
-        ]);
+            'faq_title' => ['en' => 'Updated FAQ']]);
 
         $response->assertStatus(401);
     }
@@ -121,8 +113,7 @@ class FaqAuthenticationTest extends TestCase
     {
         $faq = Faqs::create([
             'faq_title' => ['en' => 'Test FAQ'],
-            'faq_description' => ['en' => 'Test description'],
-        ]);
+            'faq_description' => ['en' => 'Test description']]);
 
         $response = $this->deleteJson(self::PREFIX . "/faqs/{$faq->id}");
 
@@ -133,8 +124,7 @@ class FaqAuthenticationTest extends TestCase
     public function unauthenticated_user_cannot_reorder_faqs(): void
     {
         $response = $this->putJson(self::PREFIX . '/faqs/reorder', [
-            'faqs' => [1, 2, 3],
-        ]);
+            'faqs' => [1, 2, 3]]);
 
         $response->assertStatus(401);
     }

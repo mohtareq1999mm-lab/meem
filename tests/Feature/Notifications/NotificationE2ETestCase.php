@@ -168,8 +168,7 @@ abstract class NotificationE2ETestCase extends TestCase
             'email_verified_at' => now(),
             'is_active' => true,
             'type' => $type,
-            'phone_number' => ($type === 'admin' ? '02' : '01') . rand(100000000, 999999999),
-        ], $attributes));
+            'phone_number' => ($type === 'admin' ? '02' : '01') . rand(100000000, 999999999)], $attributes));
     }
 
     protected function createProduct(array $attributes = []): Product
@@ -188,8 +187,7 @@ abstract class NotificationE2ETestCase extends TestCase
             'discount_amount' => null,
             'discount_status' => null,
             'price_after_discount' => null,
-            'price_after_flash_sale' => null,
-        ], $attributes));
+            'price_after_flash_sale' => null], $attributes));
 
         return Product::find($id);
     }
@@ -201,8 +199,7 @@ abstract class NotificationE2ETestCase extends TestCase
             'status' => 'pending',
             'payment_status' => 'pending',
             'total_price' => 100.00,
-            'price' => 100.00,
-        ], $attributes)));
+            'price' => 100.00], $attributes)));
     }
 
     protected function createCoupon(array $attributes = []): Coupon
@@ -216,8 +213,7 @@ abstract class NotificationE2ETestCase extends TestCase
             'start_date' => now()->toDateString(),
             'end_date' => now()->addDays(30)->toDateString(),
             'status' => true,
-            'used' => 0,
-        ], $attributes)));
+            'used' => 0], $attributes)));
     }
 
     protected function createCouponAssignment(Coupon $coupon, User $user, array $attributes = []): CouponAssignment
@@ -226,8 +222,7 @@ abstract class NotificationE2ETestCase extends TestCase
             'coupon_id' => $coupon->id,
             'user_id' => $user->id,
             'max_uses' => 1,
-            'used' => 0,
-        ], $attributes));
+            'used' => 0], $attributes));
     }
 
     protected function createWishlist(User $user, Product $product): void
@@ -236,8 +231,7 @@ abstract class NotificationE2ETestCase extends TestCase
             'user_id' => $user->id,
             'product_id' => $product->id,
             'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+            'updated_at' => now()]);
     }
 
     protected function createCart(User $user, array $attributes = []): Cart
@@ -249,8 +243,7 @@ abstract class NotificationE2ETestCase extends TestCase
             'reserved_at' => now()->subHours(25),
             'expires_at' => now()->addHour(),
             'created_at' => now(),
-            'updated_at' => now(),
-        ], $attributes));
+            'updated_at' => now()], $attributes));
 
         return Cart::find($id);
     }
@@ -268,8 +261,7 @@ abstract class NotificationE2ETestCase extends TestCase
             'status' => true,
             'apply_to' => 'specific_products',
             'minimum_order_amount' => 0,
-            'usage' => 0,
-        ], $attributes));
+            'usage' => 0], $attributes));
 
         return Promotion::find($id);
     }
@@ -285,8 +277,7 @@ abstract class NotificationE2ETestCase extends TestCase
             'start_date' => now()->subDay()->toDateString(),
             'end_date' => now()->addDays(3)->toDateString(),
             'created_at' => now(),
-            'updated_at' => now(),
-        ], $attributes));
+            'updated_at' => now()], $attributes));
 
         return FlashSale::find($id);
     }
@@ -295,16 +286,14 @@ abstract class NotificationE2ETestCase extends TestCase
     {
         DB::table('promotion_product')->insert([
             'promotion_id' => $promotion->id,
-            'product_id' => $product->id,
-        ]);
+            'product_id' => $product->id]);
     }
 
     protected function attachFlashSaleProduct(FlashSale $flashSale, Product $product): void
     {
         DB::table('flash_sale_products')->insert([
             'flash_sale_id' => $flashSale->id,
-            'product_id' => $product->id,
-        ]);
+            'product_id' => $product->id]);
     }
 
     protected function createReview(User $user, Product $product, bool $approved = true, array $attributes = []): Review
@@ -316,8 +305,7 @@ abstract class NotificationE2ETestCase extends TestCase
             'comment' => 'Great product',
             'approved' => $approved,
             'created_at' => now(),
-            'updated_at' => now(),
-        ], $attributes));
+            'updated_at' => now()], $attributes));
 
         return Review::find($id);
     }
@@ -328,8 +316,7 @@ abstract class NotificationE2ETestCase extends TestCase
             'customer_id' => $user->id,
             'order_id' => $order->id,
             'amount' => 50.00,
-            'status' => 'approved',
-        ], $attributes)));
+            'status' => 'approved'], $attributes)));
     }
 
     protected function createContact(array $attributes = []): Contact
@@ -340,25 +327,29 @@ abstract class NotificationE2ETestCase extends TestCase
             'subject' => 'Support Request',
             'message' => 'I need help.',
             'is_read' => false,
-            'is_replay' => false,
-        ], $attributes));
+            'is_replay' => false], $attributes));
     }
 
     /**
-     * The legacy Marvel adminList() helper queries User::permission('super_admin')
-     * which requires the spatie permission row to exist for the api guard.
+     * Legacy Marvel adminList() previously used Spatie permission scope for
+     * the super_admin identifier (requiring a permission row). Now it uses
+     * the role scope — ensure the role exists for the api guard.
      */
     protected function ensureSuperAdminPermission(): void
     {
-        if (!\Spatie\Permission\Models\Permission::query()
+        if (!\Spatie\Permission\Models\Role::query()
             ->where('name', 'super_admin')
             ->where('guard_name', 'api')
             ->exists()) {
-            \Spatie\Permission\Models\Permission::create([
+            \Spatie\Permission\Models\Role::create([
                 'name' => 'super_admin',
-                'guard_name' => 'api',
-            ]);
+                'guard_name' => 'api']);
         }
+        // Clean up legacy permission if it exists — super_admin is a role, not a permission.
+        \Spatie\Permission\Models\Permission::query()
+            ->where('name', 'super_admin')
+            ->where('guard_name', 'api')
+            ->delete();
     }
 
     // ==================== ASSERTIONS ====================

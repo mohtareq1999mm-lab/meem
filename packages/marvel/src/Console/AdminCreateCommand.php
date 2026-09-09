@@ -77,7 +77,6 @@ class AdminCreateCommand extends Command
                 $user->save();
                 $user->givePermissionTo(
                     [
-                        UserPermission::SUPER_ADMIN,
                         UserPermission::STORE_OWNER,
                         UserPermission::CUSTOMER,
                     ]

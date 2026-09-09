@@ -22,8 +22,7 @@ class FlashSaleApproveRequestTest extends TestCase
     public function unauthenticated_user_cannot_approve(): void
     {
         $response = $this->postJson(self::PREFIX . '/approve-flash-sale-requested-products', [
-            'id' => 1,
-        ]);
+            'id' => 1]);
 
         $response->assertStatus(401);
     }
@@ -32,15 +31,14 @@ class FlashSaleApproveRequestTest extends TestCase
     public function unauthenticated_user_cannot_disapprove(): void
     {
         $response = $this->postJson(self::PREFIX . '/disapprove-flash-sale-requested-products', [
-            'id' => 1,
-        ]);
+            'id' => 1]);
 
         $response->assertStatus(401);
     }
 
     private function createSuperAdminPermission(): void
     {
-        Permission::findOrCreate(PermissionEnum::SUPER_ADMIN, self::GUARD);
+        Permission::findOrCreate(self::GUARD);
     }
 
     /** @test */
@@ -53,14 +51,12 @@ class FlashSaleApproveRequestTest extends TestCase
             'email' => 'customer@example.com',
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
-            'is_active' => true,
-        ]);
+            'is_active' => true]);
 
         Sanctum::actingAs($user);
 
         $response = $this->postJson(self::PREFIX . '/approve-flash-sale-requested-products', [
-            'id' => 1,
-        ]);
+            'id' => 1]);
 
         $response->assertStatus(403);
     }
@@ -75,14 +71,12 @@ class FlashSaleApproveRequestTest extends TestCase
             'email' => 'customer2@example.com',
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
-            'is_active' => true,
-        ]);
+            'is_active' => true]);
 
         Sanctum::actingAs($user);
 
         $response = $this->postJson(self::PREFIX . '/disapprove-flash-sale-requested-products', [
-            'id' => 1,
-        ]);
+            'id' => 1]);
 
         $response->assertStatus(403);
     }

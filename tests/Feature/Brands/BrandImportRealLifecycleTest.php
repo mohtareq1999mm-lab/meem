@@ -45,7 +45,7 @@ class BrandImportRealLifecycleTest extends TestCase
         foreach ($perms as $p) {
             Permission::findOrCreate($p, self::GUARD);
         }
-        Permission::findOrCreate(Perm::SUPER_ADMIN, self::GUARD);
+        Permission::findOrCreate(self::GUARD);
         foreach ([Perm::IMPORT_BRAND, Perm::EXPORT_BRAND] as $p) {
             Permission::findOrCreate($p, self::GUARD);
         }

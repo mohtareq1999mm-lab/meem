@@ -15,6 +15,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Traits\ApiResponse;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\File\Exception\FileNotFoundException;
@@ -26,7 +27,7 @@ class ProductImportController extends Controller
     public function __construct()
     {
         $this->middleware('auth:sanctum');
-        $this->middleware('permission:' . Permission::IMPORT_PRODUCT . '|' . Permission::SUPER_ADMIN);
+        $this->middleware('permission:' . Permission::IMPORT_PRODUCT);
     }
 
     protected function readSignalFile(int $importId, string $signalType): ?array
@@ -200,7 +201,7 @@ class ProductImportController extends Controller
     {
         $user = auth()->user();
         $baseQuery = Import::whereOperationType(FileOperationType::PRODUCT_IMPORT);
-        if ($user && ! $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if ($user && ! $user->hasRole(Role::SUPER_ADMIN)) {
             $baseQuery->where('created_by', $user->id);
         }
         $import = $baseQuery
@@ -255,7 +256,7 @@ class ProductImportController extends Controller
     {
         $user = auth()->user();
         $baseQuery = Import::whereOperationType(FileOperationType::PRODUCT_IMPORT);
-        if ($user && ! $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if ($user && ! $user->hasRole(Role::SUPER_ADMIN)) {
             $baseQuery->where('created_by', $user->id);
         }
         $import = $baseQuery
@@ -309,7 +310,7 @@ class ProductImportController extends Controller
     {
         $user = auth()->user();
         $baseQuery = Import::whereOperationType(FileOperationType::PRODUCT_IMPORT);
-        if ($user && ! $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if ($user && ! $user->hasRole(Role::SUPER_ADMIN)) {
             $baseQuery->where('created_by', $user->id);
         }
         $import = $baseQuery

@@ -25,6 +25,7 @@ use Marvel\Database\Models\Variation;
 use Marvel\Enums\CouponType;
 use Marvel\Enums\OrderStatus;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Enums\ProductType;
 use Marvel\Enums\PaymentGatewayType;
 use Marvel\Enums\PaymentStatus;
@@ -142,7 +143,7 @@ class OrderRepository extends BaseRepository
         }
 
         $useWalletPoints = isset($request->use_wallet_points) ? $request->use_wallet_points : false;
-        if ($request->user() && $request->user()->hasPermissionTo(Permission::SUPER_ADMIN) && isset($request['customer_id'])) {
+        if ($request->user() && $request->user()->hasRole(Role::SUPER_ADMIN) && isset($request['customer_id'])) {
             $request['customer_id'] = $request['customer_id'];
         } else {
             $request['customer_id'] = $request->user()->id ?? null;
@@ -431,7 +432,7 @@ class OrderRepository extends BaseRepository
                 $this->syncOrderStatusColumn($order, $request->order_status);
                 return $result;
             }
-        } else if ($user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        } else if ($user->hasRole(Role::SUPER_ADMIN)) {
             $result = $this->changeOrderStatus($order, $request->order_status);
             $this->syncOrderStatusColumn($order, $request->order_status);
             return $result;

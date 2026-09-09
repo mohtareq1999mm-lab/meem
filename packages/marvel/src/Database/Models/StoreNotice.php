@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
-use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 
 class StoreNotice extends Model
 {
@@ -81,11 +81,11 @@ class StoreNotice extends Model
     public function getCreatorRoleAttribute(): string
     {
         try {
-            $permissionArr = $this->creator->permissions->pluck('name')->toArray();
-            if (in_array(Permission::SUPER_ADMIN, $permissionArr)) {
-                return ucfirst(str_replace('_', ' ', Permission::SUPER_ADMIN));
+            $roleArr = $this->creator->roles->pluck('name')->toArray();
+            if (in_array(Role::SUPER_ADMIN, $roleArr)) {
+                return ucfirst(str_replace('_', ' ', Role::SUPER_ADMIN));
             }
-            return ucfirst(str_replace('_', ' ', Permission::STORE_OWNER));
+            return ucfirst(str_replace('_', ' ', Role::STORE_OWNER));
         } catch (\Throwable $th) {
             return '';
         }

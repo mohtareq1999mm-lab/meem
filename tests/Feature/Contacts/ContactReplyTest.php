@@ -34,7 +34,7 @@ class ContactReplyTest extends TestCase
 
     private function createSuperAdmin(): User
     {
-        Permission::findOrCreate(PermissionEnum::SUPER_ADMIN, self::GUARD);
+        Permission::findOrCreate(self::GUARD);
         Permission::findOrCreate(PermissionEnum::VIEW_CONTACTS, self::GUARD);
         Permission::findOrCreate(PermissionEnum::UPDATE_CONTACT, self::GUARD);
         Permission::findOrCreate(PermissionEnum::DELETE_CONTACT, self::GUARD);
@@ -43,16 +43,13 @@ class ContactReplyTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => json_encode(['en' => 'Super Admin']),
-        ]);
+            'display_name' => json_encode(['en' => 'Super Admin'])]);
 
         $role->givePermissionTo([
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_CONTACTS,
             PermissionEnum::UPDATE_CONTACT,
             PermissionEnum::DELETE_CONTACT,
-            PermissionEnum::DELETE_READ_CONTACTS,
-        ]);
+            PermissionEnum::DELETE_READ_CONTACTS]);
 
         $user = User::create([
             'name' => 'Super Admin',
@@ -60,8 +57,7 @@ class ContactReplyTest extends TestCase
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
 
         $user->assignRole($role);
 
@@ -75,13 +71,11 @@ class ContactReplyTest extends TestCase
             'name' => 'Original',
             'email' => 'original@example.com',
             'subject' => 'Original Subject',
-            'message' => 'Original message body.',
-        ]);
+            'message' => 'Original message body.']);
 
         $response = $this->postJson(self::PREFIX . "/contacts/{$contact->id}/reply", [
             'subject' => 'RE: Original Subject',
-            'message' => 'Thank you for your inquiry.',
-        ]);
+            'message' => 'Thank you for your inquiry.']);
 
         $response->assertOk();
         $response->assertJsonPath('success', true);
@@ -94,13 +88,11 @@ class ContactReplyTest extends TestCase
             'name' => 'Sam',
             'email' => 'sam@example.com',
             'subject' => 'Question',
-            'message' => 'I have a question.',
-        ]);
+            'message' => 'I have a question.']);
 
         $this->postJson(self::PREFIX . "/contacts/{$contact->id}/reply", [
             'subject' => 'RE: Question',
-            'message' => 'Here is your answer.',
-        ]);
+            'message' => 'Here is your answer.']);
 
         $replies = Contact::where('email', 'sam@example.com')->get();
         $this->assertCount(2, $replies);
@@ -113,13 +105,11 @@ class ContactReplyTest extends TestCase
             'name' => 'ReplyUser',
             'email' => 'reply@example.com',
             'subject' => 'Topic',
-            'message' => 'Message content.',
-        ]);
+            'message' => 'Message content.']);
 
         $response = $this->postJson(self::PREFIX . "/contacts/{$contact->id}/reply", [
             'subject' => 'RE: Topic',
-            'message' => 'Reply content.',
-        ]);
+            'message' => 'Reply content.']);
 
         $response->assertOk();
         $this->assertTrue((bool) $response->json('data.is_read'));
@@ -131,8 +121,7 @@ class ContactReplyTest extends TestCase
     {
         $response = $this->postJson(self::PREFIX . '/contacts/99999/reply', [
             'subject' => 'RE: Missing',
-            'message' => 'Reply to missing contact.',
-        ]);
+            'message' => 'Reply to missing contact.']);
 
         $response->assertStatus(404);
     }
@@ -144,13 +133,11 @@ class ContactReplyTest extends TestCase
             'name' => 'Original',
             'email' => 'original@example.com',
             'subject' => 'Original',
-            'message' => 'Original message.',
-        ]);
+            'message' => 'Original message.']);
 
         $this->postJson(self::PREFIX . "/contacts/{$contact->id}/reply", [
             'subject' => 'RE: Original',
-            'message' => 'Reply.',
-        ]);
+            'message' => 'Reply.']);
 
         $contact->refresh();
         $this->assertFalse((bool) $contact->is_read);

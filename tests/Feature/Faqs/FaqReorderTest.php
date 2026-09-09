@@ -36,7 +36,7 @@ class FaqReorderTest extends TestCase
 
     private function createSuperAdmin(): User
     {
-        Permission::findOrCreate(PermissionEnum::SUPER_ADMIN, self::GUARD);
+        Permission::findOrCreate(self::GUARD);
         Permission::findOrCreate(PermissionEnum::VIEW_FAQS, self::GUARD);
         Permission::findOrCreate(PermissionEnum::CREATE_FAQ, self::GUARD);
         Permission::findOrCreate(PermissionEnum::UPDATE_FAQ, self::GUARD);
@@ -45,16 +45,13 @@ class FaqReorderTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => json_encode(['en' => 'Super Admin']),
-        ]);
+            'display_name' => json_encode(['en' => 'Super Admin'])]);
 
         $role->givePermissionTo([
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_FAQS,
             PermissionEnum::CREATE_FAQ,
             PermissionEnum::UPDATE_FAQ,
-            PermissionEnum::DELETE_FAQ,
-        ]);
+            PermissionEnum::DELETE_FAQ]);
 
         $user = User::create([
             'name' => 'Super Admin',
@@ -62,8 +59,7 @@ class FaqReorderTest extends TestCase
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
 
         $user->assignRole($role);
 
@@ -78,8 +74,7 @@ class FaqReorderTest extends TestCase
         $faq3 = Faqs::create(['faq_title' => ['en' => 'Third'], 'faq_description' => ['en' => 'Third desc']]);
 
         $response = $this->putJson(self::PREFIX . '/faqs/reorder', [
-            'faqs' => [$faq3->id, $faq1->id, $faq2->id],
-        ]);
+            'faqs' => [$faq3->id, $faq1->id, $faq2->id]]);
 
         $response->assertOk();
         $response->assertJsonPath('success', true);
@@ -92,8 +87,7 @@ class FaqReorderTest extends TestCase
         $faq2 = Faqs::create(['faq_title' => ['en' => 'B'], 'faq_description' => ['en' => 'B desc']]);
 
         $this->putJson(self::PREFIX . '/faqs/reorder', [
-            'faqs' => [$faq2->id, $faq1->id],
-        ]);
+            'faqs' => [$faq2->id, $faq1->id]]);
 
         $faq1->refresh();
         $faq2->refresh();
@@ -105,8 +99,7 @@ class FaqReorderTest extends TestCase
     public function reorder_validates_faqs_required(): void
     {
         $response = $this->putJson(self::PREFIX . '/faqs/reorder', [
-            'faqs' => [],
-        ]);
+            'faqs' => []]);
 
         $response->assertStatus(422);
     }

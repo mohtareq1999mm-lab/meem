@@ -5,6 +5,7 @@ namespace App\Policies;
 use Marvel\Database\Models\Import;
 use Marvel\Database\Models\User;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 
 class ImportPolicy
 {
@@ -14,7 +15,7 @@ class ImportPolicy
     public function view(User $user, Import $import): bool
     {
         // Super admin can view any import
-        if ($user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if ($user->hasRole(Role::SUPER_ADMIN)) {
             return true;
         }
 

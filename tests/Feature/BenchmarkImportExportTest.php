@@ -26,16 +26,16 @@ class BenchmarkImportExportTest extends TestCase
 
     private function makeAdmin(): User
     {
-        foreach ([Perm::IMPORT_PRODUCT, Perm::EXPORT_PRODUCT, Perm::SUPER_ADMIN] as $p) Permission::findOrCreate($p, 'api');
+        foreach ([Perm::IMPORT_PRODUCT, Perm::EXPORT_PRODUCT] as $p) Permission::findOrCreate($p, 'api');
         $role = Role::create(['name'=>'bench'.uniqid(),'guard_name'=>'api','display_name'=>'bench']);
         $role->givePermissionTo(Perm::IMPORT_PRODUCT);
         $role->givePermissionTo(Perm::EXPORT_PRODUCT);
-        $role->givePermissionTo(Perm::SUPER_ADMIN);
+
         $u = User::create(['name'=>'bench','email'=>uniqid().'@bench.local','password'=>Hash::make('password'),'email_verified_at'=>now(),'is_active'=>true,'type'=>'admin']);
         $u->assignRole($role);
         $u->givePermissionTo(Perm::IMPORT_PRODUCT);
         $u->givePermissionTo(Perm::EXPORT_PRODUCT);
-        $u->givePermissionTo(Perm::SUPER_ADMIN);
+
         return $u;
     }
 

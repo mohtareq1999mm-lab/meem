@@ -52,14 +52,12 @@ class CategoryImportTest extends TestCase
     private function createSuperAdminUser(): User
     {
         $permissions = [
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_CATEGORIES,
             PermissionEnum::CREATE_CATEGORY,
             PermissionEnum::UPDATE_CATEGORY,
             PermissionEnum::DELETE_CATEGORY,
             PermissionEnum::IMPORT_CATEGORY,
-            PermissionEnum::EXPORT_CATEGORY,
-        ];
+            PermissionEnum::EXPORT_CATEGORY];
 
         foreach ($permissions as $perm) {
             Permission::findOrCreate($perm, self::GUARD);
@@ -68,8 +66,7 @@ class CategoryImportTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => 'Super Admin',
-        ]);
+            'display_name' => 'Super Admin']);
 
         foreach ($permissions as $perm) {
             $role->givePermissionTo($perm);
@@ -81,8 +78,7 @@ class CategoryImportTest extends TestCase
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
 
         $user->assignRole($role);
 
@@ -104,8 +100,7 @@ class CategoryImportTest extends TestCase
             'status' => 1,
             'is_featured' => 0,
             'image_desktop_url' => '',
-            'image_mobile_url' => '',
-        ], $overrides);
+            'image_mobile_url' => ''], $overrides);
     }
 
     private function service(): CategoryImportService
@@ -132,8 +127,7 @@ class CategoryImportTest extends TestCase
                 'status' => 1,
                 'is_featured' => 0,
                 'image_desktop_url' => '',
-                'image_mobile_url' => '',
-            ], $overrides);
+                'image_mobile_url' => ''], $overrides);
 
             $sheet->fromArray($row, null, 'A' . ($index + 2));
         }
@@ -158,8 +152,7 @@ class CategoryImportTest extends TestCase
             'file_name' => basename($path),
             'status' => 'pending',
             'total_rows' => $totalRows,
-            'created_by' => $this->adminUser->id,
-        ]);
+            'created_by' => $this->adminUser->id]);
     }
 
     public function test_job_marks_full_success_import_as_completed(): void
@@ -168,8 +161,7 @@ class CategoryImportTest extends TestCase
 
         $path = $this->writeImportFile([
             ['name_en' => 'E2E Job Good One', 'name_ar' => 'جيد'],
-            ['name_en' => 'E2E Job Good Two', 'name_ar' => 'جيد ٢'],
-        ]);
+            ['name_en' => 'E2E Job Good Two', 'name_ar' => 'جيد ٢']]);
 
         $import = $this->makeJobImport($path, 2);
 
@@ -188,8 +180,7 @@ class CategoryImportTest extends TestCase
 
         $path = $this->writeImportFile([
             ['name_en' => 'E2E Job Good One', 'name_ar' => 'جيد'],
-            ['name_en' => 'E2E Job Bad Status', 'name_ar' => 'سيئ', 'status' => 'maybe'],
-        ]);
+            ['name_en' => 'E2E Job Bad Status', 'name_ar' => 'سيئ', 'status' => 'maybe']]);
 
         $import = $this->makeJobImport($path, 2);
 
@@ -208,8 +199,7 @@ class CategoryImportTest extends TestCase
 
         $path = $this->writeImportFile([
             ['name_en' => 'E2E Job Bad Status', 'name_ar' => 'سيئ', 'status' => 'maybe'],
-            ['name_en' => 'E2E Job Empty Name', 'name_ar' => ''],
-        ]);
+            ['name_en' => 'E2E Job Empty Name', 'name_ar' => '']]);
 
         $import = $this->makeJobImport($path, 2);
 
@@ -267,8 +257,7 @@ class CategoryImportTest extends TestCase
         $this->assertDatabaseHas('imports', [
             'id' => $response->json('data.import_id'),
             'type' => 'category',
-            'status' => 'pending',
-        ]);
+            'status' => 'pending']);
 
         Queue::assertPushed(ImportCategoriesJob::class);
     }
@@ -286,8 +275,7 @@ class CategoryImportTest extends TestCase
             'processed_rows' => 10,
             'success_rows' => 8,
             'failed_rows' => 2,
-            'created_by' => $this->adminUser->id,
-        ]);
+            'created_by' => $this->adminUser->id]);
 
         $response = $this->getJson(self::PREFIX . "/categories/import/{$import->id}");
 
@@ -314,8 +302,7 @@ class CategoryImportTest extends TestCase
         $service = $this->service();
 
         $service->processRows(new Collection([
-            $this->row(['name_en' => 'Electronics', 'name_ar' => 'إلكترونيات']),
-        ]));
+            $this->row(['name_en' => 'Electronics', 'name_ar' => 'إلكترونيات'])]));
 
         $this->assertDatabaseHas('categories', ['slug' => 'electronics']);
         $this->assertEquals(1, $service->getSuccessCount());
@@ -336,8 +323,7 @@ class CategoryImportTest extends TestCase
             $this->row(['name_en' => 'iPhone', 'name_ar' => 'آيفون', 'parent_name_en' => 'Smartphones']),
             $this->row(['name_en' => 'Phones', 'name_ar' => 'هواتف', 'parent_name_en' => 'Electronics']),
             $this->row(['name_en' => 'Smartphones', 'name_ar' => 'هواتف ذكية', 'parent_name_en' => 'Phones']),
-            $this->row(['name_en' => 'Electronics', 'name_ar' => 'إلكترونيات']),
-        ]));
+            $this->row(['name_en' => 'Electronics', 'name_ar' => 'إلكترونيات'])]));
 
         $this->assertEquals(4, $service->getSuccessCount());
         $this->assertEmpty($service->getFailedRows());
@@ -369,8 +355,7 @@ class CategoryImportTest extends TestCase
             'slug' => 'electronics',
             'details' => 'Old details',
             'status' => 1,
-            'is_featured' => 0,
-        ]);
+            'is_featured' => 0]);
 
         $service = $this->service();
 
@@ -381,9 +366,7 @@ class CategoryImportTest extends TestCase
                 'details_en' => 'New details',
                 'details_ar' => 'تفاصيل جديدة',
                 'status' => 0,
-                'is_featured' => 1,
-            ]),
-        ]));
+                'is_featured' => 1])]));
 
         $this->assertEquals(1, $service->getSuccessCount());
         $this->assertEmpty($service->getFailedRows());
@@ -400,14 +383,12 @@ class CategoryImportTest extends TestCase
     {
         $existing = Category::create([
             'name' => ['en' => 'Electronics'],
-            'slug' => 'electronics',
-        ]);
+            'slug' => 'electronics']);
 
         $service = $this->service();
 
         $service->processRows(new Collection([
-            $this->row(['name_en' => 'electronics', 'name_ar' => 'إلكترونيات']),
-        ]));
+            $this->row(['name_en' => 'electronics', 'name_ar' => 'إلكترونيات'])]));
 
         $this->assertEquals(0, $service->getSuccessCount());
         $this->assertCount(1, $service->getFailedRows());
@@ -422,8 +403,7 @@ class CategoryImportTest extends TestCase
         $service = $this->service();
 
         $service->processRows(new Collection([
-            $this->row(['name_en' => 'Orphan', 'parent_name_en' => 'Does Not Exist']),
-        ]));
+            $this->row(['name_en' => 'Orphan', 'parent_name_en' => 'Does Not Exist'])]));
 
         $this->assertEquals(0, $service->getSuccessCount());
         $this->assertCount(1, $service->getFailedRows());
@@ -435,8 +415,7 @@ class CategoryImportTest extends TestCase
         $service = $this->service();
 
         $service->processRows(new Collection([
-            $this->row(['name_en' => 'Gadgets', 'parent_name_en' => 'Gadgets']),
-        ]));
+            $this->row(['name_en' => 'Gadgets', 'parent_name_en' => 'Gadgets'])]));
 
         $this->assertEquals(0, $service->getSuccessCount());
         $this->assertCount(1, $service->getFailedRows());
@@ -455,8 +434,7 @@ class CategoryImportTest extends TestCase
         $service = $this->service();
 
         $service->processRows(new Collection([
-            $this->row(['name_en' => 'Electronics', 'parent_name_en' => 'Phones']),
-        ]));
+            $this->row(['name_en' => 'Electronics', 'parent_name_en' => 'Phones'])]));
 
         $this->assertEquals(0, $service->getSuccessCount());
         $this->assertCount(1, $service->getFailedRows());
@@ -473,8 +451,7 @@ class CategoryImportTest extends TestCase
 
         $service->processRows(new Collection([
             $this->row(['name_en' => 'Duplicated']),
-            $this->row(['name_en' => 'Duplicated']),
-        ]));
+            $this->row(['name_en' => 'Duplicated'])]));
 
         $this->assertEquals(1, $service->getSuccessCount());
         $this->assertCount(1, $service->getFailedRows());
@@ -486,8 +463,7 @@ class CategoryImportTest extends TestCase
         $service = $this->service();
 
         $service->processRows(new Collection([
-            $this->row(['name_en' => 'Bad Status', 'status' => 'invalid']),
-        ]));
+            $this->row(['name_en' => 'Bad Status', 'status' => 'invalid'])]));
 
         $this->assertEquals(0, $service->getSuccessCount());
         $this->assertCount(1, $service->getFailedRows());
@@ -499,8 +475,7 @@ class CategoryImportTest extends TestCase
         $service = $this->service();
 
         $service->processRows(new Collection([
-            $this->row(['name_en' => 'Truthy', 'status' => 'yes', 'is_featured' => 'true']),
-        ]));
+            $this->row(['name_en' => 'Truthy', 'status' => 'yes', 'is_featured' => 'true'])]));
 
         $this->assertEquals(1, $service->getSuccessCount());
 
@@ -514,8 +489,7 @@ class CategoryImportTest extends TestCase
         $service = $this->service();
 
         $service->processRows(new Collection([
-            $this->row(['name_en' => 'Defaults', 'status' => '', 'is_featured' => '']),
-        ]));
+            $this->row(['name_en' => 'Defaults', 'status' => '', 'is_featured' => ''])]));
 
         $this->assertEquals(1, $service->getSuccessCount());
 
@@ -532,8 +506,7 @@ class CategoryImportTest extends TestCase
 
         $service->processRows(new Collection([
             $this->row(['name_en' => 'Created One']),
-            $this->row(['name_en' => 'Existing']),
-        ]));
+            $this->row(['name_en' => 'Existing'])]));
 
         $this->assertEquals(2, $service->getSuccessCount());
 
@@ -565,8 +538,7 @@ class CategoryImportTest extends TestCase
             'processed_rows' => 10,
             'success_rows' => 10,
             'failed_rows' => 0,
-            'created_by' => $this->adminUser->id,
-        ]);
+            'created_by' => $this->adminUser->id]);
 
         $response = $this->postJson(self::PREFIX . "/categories/import/{$import->id}/cancel");
 
@@ -575,8 +547,7 @@ class CategoryImportTest extends TestCase
 
         $this->assertDatabaseHas('imports', [
             'id' => $import->id,
-            'status' => 'cancelled',
-        ]);
+            'status' => 'cancelled']);
     }
 
     public function test_cannot_cancel_completed_import(): void
@@ -592,8 +563,7 @@ class CategoryImportTest extends TestCase
             'processed_rows' => 10,
             'success_rows' => 10,
             'failed_rows' => 0,
-            'created_by' => $this->adminUser->id,
-        ]);
+            'created_by' => $this->adminUser->id]);
 
         $response = $this->postJson(self::PREFIX . "/categories/import/{$import->id}/cancel");
 

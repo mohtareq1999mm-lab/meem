@@ -46,9 +46,7 @@ class CategoryBulkDeleteTest extends TestCase
     private function createSuperAdminUser(): User
     {
         $permissions = [
-            PermissionEnum::SUPER_ADMIN,
-            PermissionEnum::DELETE_CATEGORY,
-        ];
+            PermissionEnum::DELETE_CATEGORY];
 
         foreach ($permissions as $perm) {
             Permission::findOrCreate($perm, self::GUARD);
@@ -57,8 +55,7 @@ class CategoryBulkDeleteTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => 'Super Admin',
-        ]);
+            'display_name' => 'Super Admin']);
 
         foreach ($permissions as $perm) {
             $role->givePermissionTo($perm);
@@ -70,8 +67,7 @@ class CategoryBulkDeleteTest extends TestCase
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
 
         $user->assignRole($role);
 
@@ -93,8 +89,7 @@ class CategoryBulkDeleteTest extends TestCase
             'processed_rows' => 0,
             'success_rows' => 0,
             'failed_rows' => 0,
-            'created_by' => $this->adminUser->id,
-        ]);
+            'created_by' => $this->adminUser->id]);
 
         $dir = storage_path('app/imports');
         if (!is_dir($dir)) {
@@ -150,8 +145,7 @@ class CategoryBulkDeleteTest extends TestCase
         $this->assertDatabaseHas('imports', [
             'id' => $response->json('data.bulk_delete_id'),
             'type' => 'category-bulk-delete',
-            'status' => 'pending',
-        ]);
+            'status' => 'pending']);
 
         Queue::assertPushed(BulkDeleteCategoriesJob::class);
     }
@@ -261,8 +255,7 @@ class CategoryBulkDeleteTest extends TestCase
             'processed_rows' => 1,
             'success_rows' => 1,
             'failed_rows' => 0,
-            'created_by' => $this->adminUser->id,
-        ]);
+            'created_by' => $this->adminUser->id]);
 
         $response = $this->getJson(self::PREFIX . "/categories/bulk-delete/{$import->id}");
 
@@ -273,7 +266,7 @@ class CategoryBulkDeleteTest extends TestCase
 
     public function test_cannot_bulk_delete_without_permission(): void
     {
-        $permissions = [PermissionEnum::SUPER_ADMIN];
+        $permissions = [PermissionEnum::VIEW_USERS];
         foreach ($permissions as $perm) {
             Permission::findOrCreate($perm, self::GUARD);
         }
@@ -281,8 +274,7 @@ class CategoryBulkDeleteTest extends TestCase
         $role = Role::create([
             'name' => 'admin-no-delete',
             'guard_name' => self::GUARD,
-            'display_name' => 'Admin No Delete',
-        ]);
+            'display_name' => 'Admin No Delete']);
 
         $user = User::create([
             'name' => 'Limited Admin',
@@ -290,8 +282,7 @@ class CategoryBulkDeleteTest extends TestCase
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
 
         $user->assignRole($role);
 

@@ -10,6 +10,7 @@ use Marvel\Database\Models\FlashSale;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Repositories\FlashSaleRepository;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Events\FlashSaleProcessed;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\CreateFlashSaleRequest;
@@ -146,7 +147,7 @@ class FlashSaleVendorRequestController extends CoreController
     {
         try {
             $user = $request->user();
-            if ($user && ($user->hasPermissionTo(Permission::SUPER_ADMIN) || $user->hasPermissionTo(Permission::STORE_OWNER) || $user->hasPermissionTo(Permission::STAFF))) {
+            if ($user && ($user->hasRole(Role::SUPER_ADMIN) || $user->hasPermissionTo(Permission::STORE_OWNER) || $user->hasPermissionTo(Permission::STAFF))) {
 
                 $flash_sale_request = $this->repository->findOrFail($request->id);
                 $requested_products = $flash_sale_request->products;
@@ -204,7 +205,7 @@ class FlashSaleVendorRequestController extends CoreController
      */
     public function approveFlashSaleProductsRequest(Request $request)
     {
-        if (!$request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if (!$request->user()->hasRole(Role::SUPER_ADMIN)) {
             throw new AuthorizationException(NOT_AUTHORIZED);
         }
 
@@ -239,7 +240,7 @@ class FlashSaleVendorRequestController extends CoreController
      */
     public function disapproveFlashSaleProductsRequest(Request $request)
     {
-        if (!$request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if (!$request->user()->hasRole(Role::SUPER_ADMIN)) {
             throw new AuthorizationException(NOT_AUTHORIZED);
         }
 

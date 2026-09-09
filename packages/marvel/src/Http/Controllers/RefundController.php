@@ -18,6 +18,7 @@ use Marvel\Database\Models\Order;
 use Marvel\Database\Models\Wallet;
 use Marvel\Database\Repositories\RefundRepository;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Enums\RefundStatus;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\RefundRequest;
@@ -119,7 +120,7 @@ class RefundController extends CoreController
             });
 
             switch ($user) {
-                case $user->hasPermissionTo(Permission::SUPER_ADMIN):
+                case $user->hasRole(Role::SUPER_ADMIN):
                     if ((!isset($request->shop_id) || $request->shop_id === 'undefined')) {
                         return $orderQuery->where('id', '!=', null)->where('shop_id', '=', null);
                     }
@@ -202,7 +203,7 @@ class RefundController extends CoreController
 
             $refundQuery = $this->repository->with(['shop', 'order', 'customer', 'refund_policy', 'refund_reason']);
 
-            if ($user->hasPermissionTo(Permission::SUPER_ADMIN) || $this->repository->hasPermission($user)) {
+            if ($user->hasRole(Role::SUPER_ADMIN) || $this->repository->hasPermission($user)) {
                 $refund = $refundQuery->findOrFail($id);
             } else {
                 $refund = $refundQuery->where('customer_id', $user->id)->findOrFail($id);

@@ -12,6 +12,7 @@ use Marvel\Database\Models\Import;
 use Marvel\Enums\FileOperationType;
 use Marvel\Enums\ImportType;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Http\Requests\CategoryImportRequest;
 use Marvel\Jobs\ImportCategoriesJob;
 use Marvel\Traits\ApiResponse;
@@ -25,7 +26,7 @@ class CategoryImportController extends Controller
     public function __construct()
     {
         $this->middleware('auth:sanctum');
-        $this->middleware('permission:' . Permission::IMPORT_CATEGORY . '|' . Permission::SUPER_ADMIN);
+        $this->middleware('permission:' . Permission::IMPORT_CATEGORY);
     }
 
     protected function readSignalFile(int $importId, string $signalType): ?array
@@ -138,7 +139,7 @@ class CategoryImportController extends Controller
     {
         $user = auth()->user();
         $baseQuery = Import::whereOperationType(FileOperationType::CATEGORY_IMPORT);
-        if ($user && ! $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if ($user && ! $user->hasRole(Role::SUPER_ADMIN)) {
             $baseQuery->where('created_by', $user->id);
         }
         $import = $baseQuery
@@ -206,7 +207,7 @@ class CategoryImportController extends Controller
     {
         $user = auth()->user();
         $baseQuery = Import::whereOperationType(FileOperationType::CATEGORY_IMPORT);
-        if ($user && ! $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if ($user && ! $user->hasRole(Role::SUPER_ADMIN)) {
             $baseQuery->where('created_by', $user->id);
         }
         $import = $baseQuery
@@ -262,7 +263,7 @@ class CategoryImportController extends Controller
     {
         $user = auth()->user();
         $baseQuery = Import::whereOperationType(FileOperationType::CATEGORY_IMPORT);
-        if ($user && ! $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if ($user && ! $user->hasRole(Role::SUPER_ADMIN)) {
             $baseQuery->where('created_by', $user->id);
         }
         $import = $baseQuery

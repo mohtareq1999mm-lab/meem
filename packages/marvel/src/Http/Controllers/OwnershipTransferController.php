@@ -15,6 +15,7 @@ use Marvel\Exceptions\MarvelNotFoundException;
 use Marvel\Http\Resources\OwnershipTransferResource;
 use Marvel\Traits\ApiResponse;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Events\OwnershipTransferStatusControl;
 
 class OwnershipTransferController extends CoreController
@@ -62,7 +63,7 @@ class OwnershipTransferController extends CoreController
         $user = $request->user();
 
         switch ($user) {
-            case $user->hasPermissionTo(Permission::SUPER_ADMIN):
+            case $user->hasRole(Role::SUPER_ADMIN):
                 $query = $this->repository->whereNotNull('id');
                 break;
 
@@ -135,7 +136,7 @@ class OwnershipTransferController extends CoreController
     {
         try {
             $user = $request->user();
-            if (!$user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+            if (!$user->hasRole(Role::SUPER_ADMIN)) {
                 throw new AuthorizationException(NOT_AUTHORIZED);
             }
             $data =  $this->repository->updateOwnershipTransfer($request);

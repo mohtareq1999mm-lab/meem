@@ -13,6 +13,7 @@ use Marvel\Database\Models\Shop;
 use Marvel\Database\Models\User;
 use Marvel\Enums\DefaultStatusType;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Enums\ProductVisibilityStatus;
 use Marvel\Events\ProcessOwnershipTransition;
 use Marvel\Events\ShopMaintenance;
@@ -117,7 +118,7 @@ class ShopRepository extends BaseRepository
             // }
             // if (isset($request['balance'])) {
             //     if (isset($request['balance']['admin_commission_rate']) && $shop->balance->admin_commission_rate !== $request['balance']['admin_commission_rate']) {
-            //         if ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
+            //         if ($request->user()->hasRole(Role::SUPER_ADMIN)) {
             //             $this->updateBalance($request['balance'], $id);
             //         }
             //     } else {

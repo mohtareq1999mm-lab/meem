@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Str;
 use Marvel\Database\Models\User;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 
@@ -131,9 +132,9 @@ if (!function_exists('formatLicenseAPIResourcePaginate')) {
 if (!function_exists("Role")) {
     function Role(User $user): string
     {
-        if ($user->hasPermissionTo(Permission::SUPER_ADMIN)) {
-            return Permission::SUPER_ADMIN;
-        } else if ($user->hasPermissionTo(Permission::STORE_OWNER) && !$user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if ($user->hasRole(Role::SUPER_ADMIN)) {
+            return Role::SUPER_ADMIN;
+        } else if ($user->hasPermissionTo(Permission::STORE_OWNER) && !$user->hasRole(Role::SUPER_ADMIN)) {
             return Permission::STORE_OWNER;
         } else if ($user->hasPermissionTo(Permission::STAFF)) {
             return Permission::STAFF;

@@ -98,8 +98,7 @@ class CartOrderLifecycleTest extends TestCase
             Settings::create([
                 'language' => 'en',
                 'options' => ['catalog_currency_code' => 'EGP', 'base_currency_code' => 'EGP', 'currency' => 'EGP'],
-                'minimum_order_amount' => 0,
-            ]);
+                'minimum_order_amount' => 0]);
         } else {
             $s = Settings::first();
             $opts = $s->options ?? [];
@@ -113,20 +112,17 @@ class CartOrderLifecycleTest extends TestCase
         $this->governorate = Governorate::create([
             'country_id' => $country->id,
             'name' => 'Test Gov',
-            'status' => true,
-        ]);
+            'status' => true]);
         ShippingPrice::create([
             'governorate_id' => $this->governorate->id,
             'price' => 0,
-            'status' => true,
-        ]);
+            'status' => true]);
 
         $this->pickupLocation = PickupLocation::create([
             'store_name' => 'Main Store',
             'address' => '123 Main St',
             'phone' => '01000000000',
-            'status' => true,
-        ]);
+            'status' => true]);
 
         $this->user = User::create([
             'name' => 'Buyer',
@@ -134,8 +130,7 @@ class CartOrderLifecycleTest extends TestCase
             'password' => bcrypt('password'),
             'type' => 'user',
             'is_active' => true,
-            'email_verified_at' => now(),
-        ]);
+            'email_verified_at' => now()]);
 
         $this->admin = User::create([
             'name' => 'Admin',
@@ -143,8 +138,7 @@ class CartOrderLifecycleTest extends TestCase
             'password' => bcrypt('password'),
             'type' => 'admin',
             'is_active' => true,
-            'email_verified_at' => now(),
-        ]);
+            'email_verified_at' => now()]);
         // permissions for admin status route — must include display_name for RefreshDatabase (migration NOT NULL)
         if (Schema::hasTable('roles')) {
             $role = \Marvel\Database\Models\Role::firstOrCreate(
@@ -172,8 +166,7 @@ class CartOrderLifecycleTest extends TestCase
             'in_stock' => true,
             'stock_quantity' => 20,
             'reserved_quantity' => 0,
-            'sold_quantity' => 0,
-        ]);
+            'sold_quantity' => 0]);
 
         $this->product2 = Product::create([
             'name' => 'Product B',
@@ -184,8 +177,7 @@ class CartOrderLifecycleTest extends TestCase
             'in_stock' => true,
             'stock_quantity' => 20,
             'reserved_quantity' => 0,
-            'sold_quantity' => 0,
-        ]);
+            'sold_quantity' => 0]);
     }
 
     protected function tearDown(): void
@@ -224,8 +216,7 @@ class CartOrderLifecycleTest extends TestCase
                 'total_price' => $totalPrice,
                 'shipping_method' => $it['shipping_method'] ?? ShippingMethod::SCHEDULED,
                 'is_gift' => $it['is_gift'] ?? false,
-                'promotion_id' => $it['promotion_id'] ?? null,
-            ]);
+                'promotion_id' => $it['promotion_id'] ?? null]);
         }
         $cart->update(['total_price' => $total]);
         return $cart->fresh()->load(['items', 'items.product']);
@@ -313,8 +304,7 @@ class CartOrderLifecycleTest extends TestCase
             'address' => ['street' => '123 Main St'],
             'governorate_id' => $this->governorate->id,
             'payment_method' => 'cod',
-            'fulfillment_type' => 'delivery',
-        ], $overrides);
+            'fulfillment_type' => 'delivery'], $overrides);
     }
 
     private function createActiveReservation(Product $product, int $qty = 2, ?User $user = null, string $paymentMethod = 'online'): Order
@@ -332,16 +322,14 @@ class CartOrderLifecycleTest extends TestCase
             'shipping_price' => 0,
             'total_price' => $product->price * $qty,
             'status' => 'pending',
-            'payment_status' => Order::PAYMENT_STATUS_PENDING,
-        ]);
+            'payment_status' => Order::PAYMENT_STATUS_PENDING]);
         $order->orderItems()->create([
             'product_id' => $product->id,
             'product_name' => $product->name,
             'product_sku' => $product->sku,
             'product_quantity' => $qty,
             'product_price' => $product->price,
-            'product_total_price' => $product->price * $qty,
-        ]);
+            'product_total_price' => $product->price * $qty]);
         app(\App\Services\Inventory\OrderReservationService::class)->reserveForOrder($order->refresh());
         return $order->refresh();
     }
@@ -359,8 +347,7 @@ class CartOrderLifecycleTest extends TestCase
         $this->clearCart($this->user);
         $cart = $this->createCartWithItems($this->user, [
             ['product' => $this->product, 'quantity' => 1],
-            ['product' => $this->product2, 'quantity' => 1],
-        ]);
+            ['product' => $this->product2, 'quantity' => 1]]);
         $cartId = $cart->id;
 
         $resp = $this->checkout($this->user, $this->baseCheckoutPayload(['payment_method' => 'cod']));
@@ -379,8 +366,7 @@ class CartOrderLifecycleTest extends TestCase
         $this->clearCart($this->user);
         $cart = $this->createCartWithItems($this->user, [
             ['product' => $this->product, 'quantity' => 1],
-            ['product' => $this->product2, 'quantity' => 1],
-        ]);
+            ['product' => $this->product2, 'quantity' => 1]]);
         $this->assertEquals(2, CartItem::where('cart_id', $cart->id)->count());
 
         $resp = $this->checkout($this->user, $this->baseCheckoutPayload(['payment_method' => 'cod']));
@@ -397,8 +383,7 @@ class CartOrderLifecycleTest extends TestCase
     {
         $this->clearCart($this->user);
         $cart = $this->createCartWithItems($this->user, [
-            ['product' => $this->product, 'quantity' => 2, 'price' => 100],
-        ]);
+            ['product' => $this->product, 'quantity' => 2, 'price' => 100]]);
 
         $resp = $this->checkout($this->user, $this->baseCheckoutPayload(['payment_method' => 'cod']));
         $resp->assertStatus(200);
@@ -425,8 +410,7 @@ class CartOrderLifecycleTest extends TestCase
     {
         $this->clearCart($this->user);
         $cart = $this->createCartWithItems($this->user, [
-            ['product' => $this->product, 'quantity' => 1],
-        ]);
+            ['product' => $this->product, 'quantity' => 1]]);
 
         $resp = $this->checkout($this->user, $this->baseCheckoutPayload(['payment_method' => 'cod']));
         $resp->assertStatus(200);
@@ -447,8 +431,7 @@ class CartOrderLifecycleTest extends TestCase
     {
         $this->clearCart($this->user);
         $cart = $this->createCartWithItems($this->user, [
-            ['product' => $this->product, 'quantity' => 1],
-        ]);
+            ['product' => $this->product, 'quantity' => 1]]);
         $cartId = $cart->id;
 
         $resp = $this->checkoutAs($this->user, array_merge($this->baseCheckoutPayload(['payment_method' => 'online']), ['type' => 'mobile']), 'INV-ONLINE-5');
@@ -471,8 +454,7 @@ class CartOrderLifecycleTest extends TestCase
     {
         $this->clearCart($this->user);
         $this->createCartWithItems($this->user, [
-            ['product' => $this->product, 'quantity' => 2],
-        ]);
+            ['product' => $this->product, 'quantity' => 2]]);
         $productStockBefore = $this->product->stock_quantity;
         $productReservedBefore = $this->product->reserved_quantity;
 
@@ -624,8 +606,7 @@ class CartOrderLifecycleTest extends TestCase
             'start_date' => now()->subDay(),
             'end_date' => now()->addDay(),
             'limiter' => 10,
-            'used' => 0,
-        ]);
+            'used' => 0]);
         $cart = Cart::where('user_id', $this->user->id)->first();
         $cart->update(['coupon' => $coupon->code]);
 
@@ -673,8 +654,7 @@ class CartOrderLifecycleTest extends TestCase
         $resp = $this->checkout($this->user, $this->baseCheckoutPayload([
             'payment_method' => 'pay_at_cashier',
             'fulfillment_type' => 'pickup',
-            'pickup_location_id' => $this->pickupLocation->id,
-        ]));
+            'pickup_location_id' => $this->pickupLocation->id]));
         $resp->assertStatus(200);
         $resp->assertJsonPath('success', true);
 
@@ -702,8 +682,7 @@ class CartOrderLifecycleTest extends TestCase
         $this->checkout($this->user, $this->baseCheckoutPayload([
             'payment_method' => 'pay_at_cashier',
             'fulfillment_type' => 'pickup',
-            'pickup_location_id' => $this->pickupLocation->id,
-        ]))->assertStatus(200);
+            'pickup_location_id' => $this->pickupLocation->id]))->assertStatus(200);
 
         $order = Order::where('user_id', $this->user->id)->latest()->first();
         $this->assertEquals('pending', $order->status);
@@ -729,8 +708,7 @@ class CartOrderLifecycleTest extends TestCase
         $this->checkout($this->user, $this->baseCheckoutPayload([
             'payment_method' => 'pay_at_cashier',
             'fulfillment_type' => 'pickup',
-            'pickup_location_id' => $this->pickupLocation->id,
-        ]))->assertStatus(200);
+            'pickup_location_id' => $this->pickupLocation->id]))->assertStatus(200);
 
         $order = Order::where('user_id', $this->user->id)->latest()->first();
         $cartId = Cart::where('user_id', $this->user->id)->value('id');
@@ -772,16 +750,14 @@ class CartOrderLifecycleTest extends TestCase
             'start_date' => now()->subDay(),
             'end_date' => now()->addDay(),
             'limiter' => 10,
-            'used' => 0,
-        ]);
+            'used' => 0]);
         $cart = Cart::where('user_id', $this->user->id)->first();
         $cart->update(['coupon' => $coupon->code]);
 
         $this->checkout($this->user, $this->baseCheckoutPayload([
             'payment_method' => 'pay_at_cashier',
             'fulfillment_type' => 'pickup',
-            'pickup_location_id' => $this->pickupLocation->id,
-        ]))->assertStatus(200);
+            'pickup_location_id' => $this->pickupLocation->id]))->assertStatus(200);
 
         $order = Order::where('user_id', $this->user->id)->latest()->first();
         $cartId = Cart::where('user_id', $this->user->id)->value('id');
@@ -820,8 +796,7 @@ class CartOrderLifecycleTest extends TestCase
         $this->checkout($this->user, $this->baseCheckoutPayload([
             'payment_method' => 'pay_at_cashier',
             'fulfillment_type' => 'pickup',
-            'pickup_location_id' => $this->pickupLocation->id,
-        ]))->assertStatus(200);
+            'pickup_location_id' => $this->pickupLocation->id]))->assertStatus(200);
 
         $order = Order::where('user_id', $this->user->id)->latest()->first();
 
@@ -910,8 +885,7 @@ class CartOrderLifecycleTest extends TestCase
             'start_date' => now()->subDay(),
             'end_date' => now()->addDay(),
             'limiter' => 10,
-            'used' => 0,
-        ]);
+            'used' => 0]);
         $cart = Cart::where('user_id', $this->user->id)->first();
         $cart->update(['coupon' => $coupon->code]);
 
@@ -946,8 +920,7 @@ class CartOrderLifecycleTest extends TestCase
             'address' => json_encode(['street'=>'1']),
             'price' => 100,
             'total_price' => 100,
-            'status' => 'pending',
-        ]);
+            'status' => 'pending']);
 
         // authentication required — no user acting
         // Ensure no authenticated user lingering
@@ -989,8 +962,7 @@ class CartOrderLifecycleTest extends TestCase
             'address' => json_encode(['street'=>'1']),
             'price' => 100,
             'total_price' => 100,
-            'status' => 'completed',
-        ]);
+            'status' => 'completed']);
         $before = $order->fresh()->toArray();
         $resp = $this->patchJson('/api/v1/orders/'.$order->id.'/status', ['status' => 'pending']);
         $resp->assertStatus(422);
@@ -1005,8 +977,7 @@ class CartOrderLifecycleTest extends TestCase
             'address' => json_encode(['street'=>'1']),
             'price' => 100,
             'total_price' => 100,
-            'status' => 'delivered',
-        ]);
+            'status' => 'delivered']);
         $resp2 = $this->patchJson('/api/v1/orders/'.$order2->id.'/status', ['status' => 'cancelled']);
         $resp2->assertStatus(422);
         $this->assertDatabaseHas('orders', ['id' => $order2->id, 'status' => 'delivered']);
@@ -1020,8 +991,7 @@ class CartOrderLifecycleTest extends TestCase
             'address' => json_encode(['street'=>'1']),
             'price' => 100,
             'total_price' => 100,
-            'status' => 'cancelled',
-        ]);
+            'status' => 'cancelled']);
         $resp3 = $this->patchJson('/api/v1/orders/'.$order3->id.'/status', ['status' => 'processing']);
         $resp3->assertStatus(422);
         $this->assertDatabaseHas('orders', ['id' => $order3->id, 'status' => 'cancelled']);
@@ -1046,8 +1016,7 @@ class CartOrderLifecycleTest extends TestCase
             'start_date' => now()->subDay(),
             'end_date' => now()->addDay(),
             'limiter' => 10,
-            'used' => 0,
-        ]);
+            'used' => 0]);
         $cart = Cart::where('user_id', $this->user->id)->first();
         $cart->update(['coupon' => $coupon->code]);
 
@@ -1204,8 +1173,7 @@ class CartOrderLifecycleTest extends TestCase
             'start_date' => now()->subDay(),
             'end_date' => now()->addDay(),
             'limiter' => 5,
-            'used' => 0,
-        ]);
+            'used' => 0]);
         $this->createCartWithItems($this->user, [['product' => $this->product, 'quantity' => 1]]);
         $cart = Cart::where('user_id', $this->user->id)->first();
         $cart->update(['coupon' => $coupon->code]);
@@ -1232,8 +1200,7 @@ class CartOrderLifecycleTest extends TestCase
             'start_date' => now()->subDay(),
             'end_date' => now()->addDay(),
             'limiter' => 5,
-            'used' => 0,
-        ]);
+            'used' => 0]);
         $this->createCartWithItems($this->user, [['product' => $this->product, 'quantity' => 1]]);
         $cart = Cart::where('user_id', $this->user->id)->first();
         $cart->update(['coupon' => $coupon->code]);
@@ -1277,8 +1244,7 @@ class CartOrderLifecycleTest extends TestCase
             'start_date' => now()->subDay(),
             'end_date' => now()->addDay(),
             'limiter' => 5,
-            'used' => 0,
-        ]);
+            'used' => 0]);
         $this->createCartWithItems($this->user, [['product' => $this->product, 'quantity' => 1]]);
         $cart = Cart::where('user_id', $this->user->id)->first();
         $cart->update(['coupon' => $coupon->code]);
@@ -1324,8 +1290,7 @@ class CartOrderLifecycleTest extends TestCase
             'start_date' => now()->subDay(),
             'end_date' => now()->addDay(),
             'limiter' => 5,
-            'used' => 0,
-        ]);
+            'used' => 0]);
         $this->createCartWithItems($this->user, [['product' => $this->product, 'quantity' => 1]]);
         $cart = Cart::where('user_id', $this->user->id)->first();
         $cart->update(['coupon' => $coupon->code]);
@@ -1362,8 +1327,7 @@ class CartOrderLifecycleTest extends TestCase
             'start_date' => now()->subDay(),
             'end_date' => now()->addDay(),
             'limiter' => 5,
-            'used' => 0,
-        ]);
+            'used' => 0]);
         $couponB = Coupon::create([
             'code' => 'COUPB-'.Str::random(4),
             'name' => 'Coupon B',
@@ -1374,8 +1338,7 @@ class CartOrderLifecycleTest extends TestCase
             'start_date' => now()->subDay(),
             'end_date' => now()->addDay(),
             'limiter' => 5,
-            'used' => 0,
-        ]);
+            'used' => 0]);
 
         // Checkout with Coupon A (creates pending order)
         $this->createCartWithItems($this->user, [['product' => $this->product, 'quantity' => 1]]);
@@ -1524,8 +1487,7 @@ class CartOrderLifecycleTest extends TestCase
             'start_date' => now()->subDay(),
             'end_date' => now()->addDay(),
             'limiter' => 1,
-            'used' => 0,
-        ]);
+            'used' => 0]);
 
         $userA = User::create(['name'=>'UA','email'=>'ua-'.Str::random(4).'@test.com','password'=>bcrypt('pass'),'type'=>'user','is_active'=>true,'email_verified_at'=>now()]);
         $userB = User::create(['name'=>'UB','email'=>'ub-'.Str::random(4).'@test.com','password'=>bcrypt('pass'),'type'=>'user','is_active'=>true,'email_verified_at'=>now()]);
@@ -1542,8 +1504,7 @@ class CartOrderLifecycleTest extends TestCase
         // User A checkout succeeds and reserves coupon
         Sanctum::actingAs($userA);
         $respA = $this->postJson(self::CHECKOUT_PREFIX.'/checkout', [
-            'name' => 'UA','user_phone'=>'01000000000','user_email'=>$userA->email,'address'=>['street'=>'1'],'governorate_id'=>$this->governorate->id,'payment_method'=>'cod',
-        ]);
+            'name' => 'UA','user_phone'=>'01000000000','user_email'=>$userA->email,'address'=>['street'=>'1'],'governorate_id'=>$this->governorate->id,'payment_method'=>'cod']);
         $respA->assertStatus(200);
         $orderA = Order::where('user_id', $userA->id)->latest()->first();
         $this->assertDatabaseHas('coupon_reservations', ['order_id'=>$orderA->id]);
@@ -1551,8 +1512,7 @@ class CartOrderLifecycleTest extends TestCase
         // User B checkout should fail due to coupon limit (reservation race)
         Sanctum::actingAs($userB);
         $respB = $this->postJson(self::CHECKOUT_PREFIX.'/checkout', [
-            'name' => 'UB','user_phone'=>'01000000000','user_email'=>$userB->email,'address'=>['street'=>'1'],'governorate_id'=>$this->governorate->id,'payment_method'=>'cod',
-        ]);
+            'name' => 'UB','user_phone'=>'01000000000','user_email'=>$userB->email,'address'=>['street'=>'1'],'governorate_id'=>$this->governorate->id,'payment_method'=>'cod']);
         // Expect 422 coupon limit or similar failure
         $this->assertContains($respB->status(), [422,400,500]);
         // Ensure only one reservation exists
@@ -1638,8 +1598,7 @@ class CartOrderLifecycleTest extends TestCase
         $this->checkout($this->user, $this->baseCheckoutPayload([
             'payment_method' => 'pay_at_cashier',
             'fulfillment_type' => 'pickup',
-            'pickup_location_id' => $this->pickupLocation->id,
-        ]))->assertStatus(200);
+            'pickup_location_id' => $this->pickupLocation->id]))->assertStatus(200);
         $order = Order::where('user_id', $this->user->id)->latest()->first();
         // Force expiry
         $order->update(['reservation_expires_at' => now()->subSecond()]);
@@ -1667,8 +1626,7 @@ class CartOrderLifecycleTest extends TestCase
             'payment_method' => 'pay_at_cashier',
             'status' => 'pending',
             'amount' => $order2->total_price,
-            'currency' => 'EGP',
-        ]);
+            'currency' => 'EGP']);
         $order2->update(['reservation_expires_at' => now()->subSecond()]);
         $this->runReaper();
         $order2->refresh();

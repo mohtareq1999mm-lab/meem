@@ -19,6 +19,7 @@ use Marvel\Database\Models\User;
 use Marvel\Database\Models\Wallet;
 use Marvel\Database\Repositories\UserRepository;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use App\Events\AdminLoggedIn;
 use App\Events\UserRolesUpdated;
 use Marvel\Exceptions\MarvelException;
@@ -270,7 +271,7 @@ class UserController extends CoreController
     public function update(UserUpdateRequest $request, $id)
     {
         try {
-            if ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
+            if ($request->user()->hasRole(Role::SUPER_ADMIN)) {
                 $user = $this->repository->findOrFail($id);
                 $updatedUser = $this->repository->updateUser($request, $user);
                 return $this->apiResponse(USER_UPDATED_SUCCESSFULLY, 200, true, UserResource::make($updatedUser));
@@ -1353,11 +1354,11 @@ $userCreated->providers()->updateOrCreate(
             return $query->permission(null);
         }
         switch ($permission) {
-            case Permission::SUPER_ADMIN:
-                $query->permission($permission);
+            case Role::SUPER_ADMIN:
+                $query->role($permission);
                 break;
             case Permission::STORE_OWNER:
-                $excludeUsers = User::permission(Permission::SUPER_ADMIN)->pluck('id')->toArray();
+                $excludeUsers = User::role(Role::SUPER_ADMIN)->pluck('id')->toArray();
                 if (isset($request->exclude)) {
                     $excludeUsers = [...$excludeUsers, $request->exclude];
                 }
@@ -1367,7 +1368,7 @@ $userCreated->providers()->updateOrCreate(
                 $query->permission($permission);
                 break;
             case Permission::CUSTOMER:
-                $excludeUsers = User::permission([Permission::SUPER_ADMIN, Permission::STORE_OWNER, Permission::STAFF])
+                $excludeUsers = User::role([Role::SUPER_ADMIN, Role::STORE_OWNER, Role::STAFF])
                     ->pluck('id')->toArray();
                 $query->permission($permission)->whereNotIn('id', $excludeUsers);
                 break;

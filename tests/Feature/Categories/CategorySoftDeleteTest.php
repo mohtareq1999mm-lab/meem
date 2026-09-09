@@ -37,8 +37,7 @@ class CategorySoftDeleteTest extends TestCase
     {
         $category = Category::create([
             'name' => ['en' => 'Delete Me'],
-            'slug' => 'delete-me',
-        ]);
+            'slug' => 'delete-me']);
 
         $category->delete();
 
@@ -52,8 +51,7 @@ class CategorySoftDeleteTest extends TestCase
 
         $category = Category::create([
             'name' => ['en' => 'Gone'],
-            'slug' => 'gone',
-        ]);
+            'slug' => 'gone']);
 
         $category->delete();
 
@@ -70,8 +68,7 @@ class CategorySoftDeleteTest extends TestCase
 
         $category = Category::create([
             'name' => ['en' => 'Ghost'],
-            'slug' => 'ghost',
-        ]);
+            'slug' => 'ghost']);
 
         $category->delete();
 
@@ -83,8 +80,7 @@ class CategorySoftDeleteTest extends TestCase
     {
         $category = Category::create([
             'name' => ['en' => 'Permanent Delete'],
-            'slug' => 'permanent-delete',
-        ]);
+            'slug' => 'permanent-delete']);
 
         $categoryId = $category->id;
         $category->forceDelete();
@@ -108,12 +104,10 @@ class CategorySoftDeleteTest extends TestCase
     private function createSuperAdminUser(): User
     {
         $permissions = [
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_CATEGORIES,
             PermissionEnum::CREATE_CATEGORY,
             PermissionEnum::UPDATE_CATEGORY,
-            PermissionEnum::DELETE_CATEGORY,
-        ];
+            PermissionEnum::DELETE_CATEGORY];
 
         foreach ($permissions as $perm) {
             Permission::findOrCreate($perm, self::GUARD);
@@ -122,8 +116,7 @@ class CategorySoftDeleteTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => 'Super Admin',
-        ]);
+            'display_name' => 'Super Admin']);
 
         foreach ($permissions as $perm) {
             $role->givePermissionTo($perm);
@@ -135,8 +128,7 @@ class CategorySoftDeleteTest extends TestCase
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
 
         $user->assignRole($role);
 

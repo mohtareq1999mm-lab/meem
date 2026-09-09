@@ -35,29 +35,25 @@ class SettingsValidationTest extends TestCase
 
     private function createSuperAdmin(): User
     {
-        Permission::findOrCreate(PermissionEnum::SUPER_ADMIN, self::GUARD);
+        Permission::findOrCreate(self::GUARD);
         Permission::findOrCreate(PermissionEnum::VIEW_SETTINGS, self::GUARD);
         Permission::findOrCreate(PermissionEnum::UPDATE_SETTINGS, self::GUARD);
 
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => json_encode(['en' => 'Super Admin']),
-        ]);
+            'display_name' => json_encode(['en' => 'Super Admin'])]);
 
         $role->givePermissionTo([
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_SETTINGS,
-            PermissionEnum::UPDATE_SETTINGS,
-        ]);
+            PermissionEnum::UPDATE_SETTINGS]);
 
         $user = User::create([
             'name' => 'Super Admin',
             'email' => 'admin@example.com',
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
-            'is_active' => true,
-        ]);
+            'is_active' => true]);
 
         $user->assignRole($role);
 
@@ -80,16 +76,14 @@ class SettingsValidationTest extends TestCase
             'tiktok' => 'https://tiktok.com/store',
             'snapchat' => 'https://snapchat.com/store',
             'phone' => '1234567890',
-            'fast_shipping_page_publish' => '1',
-        ];
+            'fast_shipping_page_publish' => '1'];
     }
 
     private function createExistingSettings(): void
     {
         Settings::create([
             'site_name' => json_encode(['en' => 'Existing']),
-            'options' => [],
-        ]);
+            'options' => []]);
     }
 
     /** @test */

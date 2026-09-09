@@ -39,8 +39,7 @@ class TagCrudTest extends TestCase
             'password' => bcrypt('password'),
             'type' => 'admin',
             'is_active' => true,
-            'email_verified_at' => now(),
-        ]);
+            'email_verified_at' => now()]);
 
         $this->normalUser = User::create([
             'name' => 'Normal User',
@@ -48,8 +47,7 @@ class TagCrudTest extends TestCase
             'password' => bcrypt('password'),
             'type' => 'user',
             'is_active' => true,
-            'email_verified_at' => now(),
-        ]);
+            'email_verified_at' => now()]);
 
         Role::create(['name' => 'super_admin', 'guard_name' => 'api']);
         Role::create(['name' => 'customer', 'guard_name' => 'api']);
@@ -61,8 +59,7 @@ class TagCrudTest extends TestCase
             Permission::VIEW_TAGS,
             Permission::CREATE_TAGS,
             Permission::UPDATE_TAGS,
-            Permission::DELETE_TAGS,
-        ] as $perm) {
+            Permission::DELETE_TAGS] as $perm) {
             \Spatie\Permission\Models\Permission::create(['name' => $perm, 'guard_name' => 'api']);
         }
 
@@ -70,8 +67,7 @@ class TagCrudTest extends TestCase
             Permission::VIEW_TAGS,
             Permission::CREATE_TAGS,
             Permission::UPDATE_TAGS,
-            Permission::DELETE_TAGS,
-        ]);
+            Permission::DELETE_TAGS]);
 
         $this->productA = $this->createProduct('Tag Product A');
         $this->productB = $this->createProduct('Tag Product B');
@@ -96,16 +92,14 @@ class TagCrudTest extends TestCase
             'product_type' => ProductType::SIMPLE,
             'status' => true,
             'in_stock' => true,
-            'stock_quantity' => 10,
-        ], $extra));
+            'stock_quantity' => 10], $extra));
     }
 
     private function createTag(string $name = 'Organic', array $extra = []): Tag
     {
         return Tag::create(array_merge([
             'name' => $name,
-            'slug' => Str::slug($name) . '-' . Str::random(4),
-        ], $extra));
+            'slug' => Str::slug($name) . '-' . Str::random(4)], $extra));
     }
 
     // =========================================================================
@@ -124,8 +118,7 @@ class TagCrudTest extends TestCase
         $response->assertJsonPath('success', true);
         $response->assertJsonPath('status', 200);
         $response->assertJsonStructure([
-            'success', 'message', 'status', 'data' => ['data'],
-        ]);
+            'success', 'message', 'status', 'data' => ['data']]);
         $this->assertIsArray($response->json('data.data'));
     }
 
@@ -138,8 +131,7 @@ class TagCrudTest extends TestCase
         $this->authAdmin();
 
         $response = $this->postJson(self::PREFIX . '/tags', [
-            'name' => ['en' => 'Organic', 'ar' => 'عضوي'],
-        ]);
+            'name' => ['en' => 'Organic', 'ar' => 'عضوي']]);
 
         $response->assertStatus(201);
         $response->assertJsonPath('success', true);
@@ -155,8 +147,7 @@ class TagCrudTest extends TestCase
 
         $response = $this->postJson(self::PREFIX . '/tags', [
             'name' => ['en' => 'Organic'],
-            'products' => [$this->productA->id, $this->productB->id],
-        ]);
+            'products' => [$this->productA->id, $this->productB->id]]);
 
         $response->assertStatus(201);
         $this->assertCount(2, $response->json('data.products'));
@@ -175,8 +166,7 @@ class TagCrudTest extends TestCase
 
         $response = $this->postJson(self::PREFIX . '/tags', [
             'name' => ['en' => 'Invalid Products'],
-            'products' => [999999],
-        ]);
+            'products' => [999999]]);
 
         $response->assertStatus(422);
     }
@@ -222,8 +212,7 @@ class TagCrudTest extends TestCase
         $tag = $this->createTag('Organic');
 
         $response = $this->putJson(self::PREFIX . '/tags/' . $tag->id, [
-            'name' => ['en' => 'Organic Premium'],
-        ]);
+            'name' => ['en' => 'Organic Premium']]);
 
         $response->assertOk();
         $response->assertJsonPath('success', true);
@@ -239,8 +228,7 @@ class TagCrudTest extends TestCase
         $tag->products()->attach([$this->productA->id]);
 
         $response = $this->putJson(self::PREFIX . '/tags/' . $tag->id, [
-            'products' => [$this->productB->id],
-        ]);
+            'products' => [$this->productB->id]]);
 
         $response->assertOk();
         $this->assertCount(1, $response->json('data.products'));
@@ -257,8 +245,7 @@ class TagCrudTest extends TestCase
         $tag->products()->attach([$this->productA->id]);
 
         $response = $this->putJson(self::PREFIX . '/tags/' . $tag->id, [
-            'products' => [],
-        ]);
+            'products' => []]);
 
         $response->assertOk();
         $this->assertDatabaseMissing('product_tag', ['tag_id' => $tag->id, 'product_id' => $this->productA->id]);
@@ -270,8 +257,7 @@ class TagCrudTest extends TestCase
         $tag = $this->createTag('Organic');
 
         $response = $this->putJson(self::PREFIX . '/tags/' . $tag->id, [
-            'products' => [999999],
-        ]);
+            'products' => [999999]]);
 
         $response->assertStatus(422);
     }

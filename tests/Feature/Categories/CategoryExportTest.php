@@ -41,10 +41,8 @@ class CategoryExportTest extends TestCase
     private function createSuperAdminUser(): User
     {
         $permissions = [
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::EXPORT_CATEGORY,
-            PermissionEnum::IMPORT_CATEGORY,
-        ];
+            PermissionEnum::IMPORT_CATEGORY];
 
         foreach ($permissions as $perm) {
             Permission::findOrCreate($perm, self::GUARD);
@@ -53,8 +51,7 @@ class CategoryExportTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => 'Super Admin',
-        ]);
+            'display_name' => 'Super Admin']);
 
         foreach ($permissions as $perm) {
             $role->givePermissionTo($perm);
@@ -66,8 +63,7 @@ class CategoryExportTest extends TestCase
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
 
         $user->assignRole($role);
 
@@ -100,8 +96,7 @@ class CategoryExportTest extends TestCase
         $this->assertDatabaseHas('imports', [
             'id' => $response->json('data.export_id'),
             'type' => 'category-export',
-            'status' => 'pending',
-        ]);
+            'status' => 'pending']);
 
         Queue::assertPushed(ExportCategoriesJob::class);
     }
@@ -119,8 +114,7 @@ class CategoryExportTest extends TestCase
             'processed_rows' => 3,
             'success_rows' => 3,
             'failed_rows' => 0,
-            'created_by' => $this->adminUser->id,
-        ]);
+            'created_by' => $this->adminUser->id]);
 
         $response = $this->getJson(self::PREFIX . "/categories/export/{$import->id}");
 
@@ -143,8 +137,7 @@ class CategoryExportTest extends TestCase
             'processed_rows' => 0,
             'success_rows' => 0,
             'failed_rows' => 0,
-            'created_by' => $this->adminUser->id,
-        ]);
+            'created_by' => $this->adminUser->id]);
 
         $response = $this->getJson(self::PREFIX . "/categories/export/{$import->id}/download");
 
@@ -166,8 +159,7 @@ class CategoryExportTest extends TestCase
             'processed_rows' => 1,
             'success_rows' => 1,
             'failed_rows' => 0,
-            'created_by' => $this->adminUser->id,
-        ]);
+            'created_by' => $this->adminUser->id]);
 
         Storage::disk('public')->put('categories-export-test.xlsx', 'fake-content');
 
@@ -190,8 +182,7 @@ class CategoryExportTest extends TestCase
             'status',
             'is_featured',
             'image_desktop_url',
-            'image_mobile_url',
-        ], $export->headings());
+            'image_mobile_url'], $export->headings());
     }
 
     public function test_export_class_maps_parent_name_en(): void
@@ -201,8 +192,7 @@ class CategoryExportTest extends TestCase
             'name' => ['en' => 'Phones', 'ar' => 'هواتف'],
             'slug' => 'phones',
             'parent_id' => $electronics->id,
-            'details' => ['en' => 'Mobile phones', 'ar' => 'هواتف محمولة'],
-        ]);
+            'details' => ['en' => 'Mobile phones', 'ar' => 'هواتف محمولة']]);
 
         $export = new CategoriesExport();
 
@@ -268,8 +258,7 @@ class CategoryExportTest extends TestCase
             'processed_rows' => 0,
             'success_rows' => 0,
             'failed_rows' => 0,
-            'created_by' => $this->adminUser->id,
-        ]);
+            'created_by' => $this->adminUser->id]);
 
         $job = new ExportCategoriesJob($import->id);
         $job->handle();

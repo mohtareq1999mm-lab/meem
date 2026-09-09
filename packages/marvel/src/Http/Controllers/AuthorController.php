@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Repositories\AuthorRepository;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\AuthorRequest;
 use Marvel\Http\Resources\AuthorResource;
@@ -249,7 +250,7 @@ class AuthorController extends CoreController
     }
     public function deleteAuthor(Request $request)
     {
-        if ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if ($request->user()->hasRole(Role::SUPER_ADMIN)) {
             $author = $this->repository->findOrFail($request->id);
             $author->delete();
             return $author;

@@ -34,7 +34,7 @@ class FaqValidationTest extends TestCase
 
     private function createSuperAdmin(): User
     {
-        Permission::findOrCreate(PermissionEnum::SUPER_ADMIN, self::GUARD);
+        Permission::findOrCreate(self::GUARD);
         Permission::findOrCreate(PermissionEnum::VIEW_FAQS, self::GUARD);
         Permission::findOrCreate(PermissionEnum::CREATE_FAQ, self::GUARD);
         Permission::findOrCreate(PermissionEnum::UPDATE_FAQ, self::GUARD);
@@ -43,16 +43,13 @@ class FaqValidationTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => json_encode(['en' => 'Super Admin']),
-        ]);
+            'display_name' => json_encode(['en' => 'Super Admin'])]);
 
         $role->givePermissionTo([
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_FAQS,
             PermissionEnum::CREATE_FAQ,
             PermissionEnum::UPDATE_FAQ,
-            PermissionEnum::DELETE_FAQ,
-        ]);
+            PermissionEnum::DELETE_FAQ]);
 
         $user = User::create([
             'name' => 'Super Admin',
@@ -60,8 +57,7 @@ class FaqValidationTest extends TestCase
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
 
         $user->assignRole($role);
 
@@ -73,12 +69,10 @@ class FaqValidationTest extends TestCase
     {
         $faq = Faqs::create([
             'faq_title' => ['en' => 'Original'],
-            'faq_description' => ['en' => 'Original description'],
-        ]);
+            'faq_description' => ['en' => 'Original description']]);
 
         $response = $this->putJson(self::PREFIX . "/faqs/{$faq->id}", [
-            'faq_title' => ['en' => 'Only Title Updated'],
-        ]);
+            'faq_title' => ['en' => 'Only Title Updated']]);
 
         $response->assertOk();
         $this->assertEquals('Original description', $faq->fresh()->getTranslation('faq_description', 'en'));
@@ -89,12 +83,10 @@ class FaqValidationTest extends TestCase
     {
         $faq = Faqs::create([
             'faq_title' => ['en' => 'Status Test'],
-            'faq_description' => ['en' => 'Status description'],
-        ]);
+            'faq_description' => ['en' => 'Status description']]);
 
         $response = $this->putJson(self::PREFIX . "/faqs/{$faq->id}", [
-            'status' => 0,
-        ]);
+            'status' => 0]);
 
         $response->assertOk();
         $this->assertEquals(0, $faq->fresh()->status);
@@ -105,12 +97,10 @@ class FaqValidationTest extends TestCase
     {
         $faq = Faqs::create([
             'faq_title' => ['en' => 'Self Title'],
-            'faq_description' => ['en' => 'Description'],
-        ]);
+            'faq_description' => ['en' => 'Description']]);
 
         $response = $this->putJson(self::PREFIX . "/faqs/{$faq->id}", [
-            'faq_title' => ['en' => 'Self Title'],
-        ]);
+            'faq_title' => ['en' => 'Self Title']]);
 
         $response->assertOk();
     }

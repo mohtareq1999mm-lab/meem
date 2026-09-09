@@ -275,18 +275,14 @@ class MeemForensicFullTest extends TestCase
             'password' => Hash::make('password'),
             'is_active' => true,
             'type' => $type,
-            'phone_number' => '0100' . rand(1000000, 9999999),
-        ]);
+            'phone_number' => '0100' . rand(1000000, 9999999)]);
     }
 
     private function makeAdmin(): User
     {
         $user = $this->makeUser('admin-'.Str::random(6).'@example.com', 'admin');
-        // give super permission if exists
         try {
-            $perm = Permission::findOrCreate('super_admin', 'api');
             $role = Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'api'], ['display_name' => 'Super Admin']);
-            $role->givePermissionTo($perm);
             $user->assignRole($role);
         } catch (\Throwable $e) {}
         return $user;
@@ -631,8 +627,7 @@ class MeemForensicFullTest extends TestCase
             'address'=>'test address',
             'user_phone'=>'01000000000',
             'user_email'=>'test@test.com',
-            'name'=>'Test',
-        ]);
+            'name'=>'Test']);
         $this->assertTrue(in_array($res->status(), [400,422]));
     }
 

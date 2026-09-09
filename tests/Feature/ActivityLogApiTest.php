@@ -151,15 +151,14 @@ class ActivityLogApiTest extends TestCase
 
     private function createSuperAdmin(): User
     {
-        Permission::findOrCreate(PermissionEnum::SUPER_ADMIN, self::GUARD);
+        Permission::findOrCreate(self::GUARD);
         Permission::findOrCreate(PermissionEnum::VIEW_ACTIVITY_LOG, self::GUARD);
 
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'display_name' => json_encode(['en' => 'Super Admin', 'ar' => 'مدير النظام']),
-            'guard_name' => self::GUARD,
-        ]);
-        $role->givePermissionTo([PermissionEnum::SUPER_ADMIN, PermissionEnum::VIEW_ACTIVITY_LOG]);
+            'guard_name' => self::GUARD]);
+        $role->givePermissionTo([PermissionEnum::VIEW_ACTIVITY_LOG]);
 
         $user = User::create([
             'name' => 'Super Admin',
@@ -167,12 +166,9 @@ class ActivityLogApiTest extends TestCase
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'phone_number' => '01000000001',
-        ]);
+            'phone_number' => '01000000001']);
 
         $user->assignRole($role);
-        $user->givePermissionTo(PermissionEnum::SUPER_ADMIN);
-
         return $user;
     }
 
@@ -196,8 +192,7 @@ class ActivityLogApiTest extends TestCase
             'subject_id' => 1,
             'subject_type' => User::class,
             'causer_id' => $user->id,
-            'causer_type' => User::class,
-        ]);
+            'causer_type' => User::class]);
 
         $response = $this->getJson(self::PREFIX . '/logs/activity');
 
@@ -206,10 +201,8 @@ class ActivityLogApiTest extends TestCase
             'success',
             'message',
             'data' => [
-                '*' => ['id', 'log_name', 'description', 'event', 'subject_id', 'subject_type', 'causer_id', 'causer_type', 'properties', 'created_at', 'updated_at'],
-            ],
-            'meta' => ['current_page', 'per_page', 'total', 'last_page'],
-        ]);
+                '*' => ['id', 'log_name', 'description', 'event', 'subject_id', 'subject_type', 'causer_id', 'causer_type', 'properties', 'created_at', 'updated_at']],
+            'meta' => ['current_page', 'per_page', 'total', 'last_page']]);
         $response->assertJsonPath('success', true);
         $response->assertJsonPath('meta.total', 1);
         $response->assertJsonFragment(['description' => 'Test log entry']);
@@ -251,11 +244,10 @@ class ActivityLogApiTest extends TestCase
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'phone_number' => '01000000002',
-        ]);
-        Permission::findOrCreate(PermissionEnum::SUPER_ADMIN, self::GUARD);
+            'phone_number' => '01000000002']);
+        Permission::findOrCreate(self::GUARD);
         Permission::findOrCreate(PermissionEnum::VIEW_ACTIVITY_LOG, self::GUARD);
-        $user->givePermissionTo([PermissionEnum::SUPER_ADMIN, PermissionEnum::VIEW_ACTIVITY_LOG]);
+        $user->givePermissionTo([PermissionEnum::VIEW_ACTIVITY_LOG]);
         Sanctum::actingAs($user);
 
         $response = $this->getJson(self::PREFIX . '/logs/activity');
@@ -267,7 +259,7 @@ class ActivityLogApiTest extends TestCase
 
     public function test_non_admin_cannot_access_activity_logs(): void
     {
-        Permission::findOrCreate(PermissionEnum::SUPER_ADMIN, self::GUARD);
+        Permission::findOrCreate(self::GUARD);
 
         $user = User::create([
             'name' => 'Regular User',
@@ -275,8 +267,7 @@ class ActivityLogApiTest extends TestCase
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'phone_number' => '01000000003',
-        ]);
+            'phone_number' => '01000000003']);
         Sanctum::actingAs($user);
 
         $response = $this->getJson(self::PREFIX . '/logs/activity');

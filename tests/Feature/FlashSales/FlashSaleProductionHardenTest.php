@@ -58,8 +58,7 @@ class FlashSaleProductionHardenTest extends TestCase
             'stock_quantity' => 10,
             'product_type' => 'simple',
             'has_discount' => false,
-            'has_flash_sale' => false,
-        ]);
+            'has_flash_sale' => false]);
 
         $flashSale = FlashSale::create([
             'title' => 'Test Flash Sale',
@@ -68,15 +67,13 @@ class FlashSaleProductionHardenTest extends TestCase
             'start_date' => Carbon::yesterday()->format('Y-m-d'),
             'end_date' => Carbon::tomorrow()->format('Y-m-d'),
             'type' => FlashSaleType::PERCENTAGE,
-            'discount' => 10,
-        ]);
+            'discount' => 10]);
 
         $flashSale->products()->attach($product->id);
 
         $optionalData = [
             'attached_product_ids' => [$product->id],
-            'requested_flash_sale' => $flashSale,
-        ];
+            'requested_flash_sale' => $flashSale];
 
         $event = new FlashSaleProcessed('append_attached_products', 'en', $optionalData);
         $listener = app(FlashSaleProductProcess::class);
@@ -99,13 +96,11 @@ class FlashSaleProductionHardenTest extends TestCase
             'stock_quantity' => 10,
             'product_type' => 'simple',
             'has_discount' => false,
-            'has_flash_sale' => true,
-        ]);
+            'has_flash_sale' => true]);
 
         $optionalData = [
             'detached_product_ids' => [$product->id],
-            'requested_flash_sale' => null,
-        ];
+            'requested_flash_sale' => null];
 
         $event = new FlashSaleProcessed('remove_attached_products', 'en', $optionalData);
         $listener = app(FlashSaleProductProcess::class);
@@ -128,13 +123,11 @@ class FlashSaleProductionHardenTest extends TestCase
             'stock_quantity' => 10,
             'product_type' => 'simple',
             'has_discount' => false,
-            'has_flash_sale' => true,
-        ]);
+            'has_flash_sale' => true]);
 
         $optionalData = [
             'detached_products' => [$product->id],
-            'requested_flash_sale' => null,
-        ];
+            'requested_flash_sale' => null];
 
         $event = new FlashSaleProcessed('delete_vendor_request', 'en', $optionalData);
         $listener = app(FlashSaleProductProcess::class);
@@ -159,8 +152,7 @@ class FlashSaleProductionHardenTest extends TestCase
             'end_date' => Carbon::tomorrow()->format('Y-m-d'),
             'type' => FlashSaleType::PERCENTAGE,
             'discount' => 15,
-            'status' => 1,
-        ]);
+            'status' => 1]);
 
         $response->assertStatus(422);
     }
@@ -179,8 +171,7 @@ class FlashSaleProductionHardenTest extends TestCase
             'stock_quantity' => 10,
             'product_type' => 'simple',
             'has_discount' => false,
-            'has_flash_sale' => false,
-        ]);
+            'has_flash_sale' => false]);
 
         $data = [
             'title' => ['en' => 'New Flash Sale'],
@@ -190,8 +181,7 @@ class FlashSaleProductionHardenTest extends TestCase
             'type' => FlashSaleType::PERCENTAGE,
             'discount' => 15,
             'status' => 1,
-            'products' => [$product->id],
-        ];
+            'products' => [$product->id]];
 
         $flashSale = app(\Marvel\Database\Repositories\FlashSaleRepository::class)->storeFlashSale(new Request($data));
 
@@ -212,13 +202,11 @@ class FlashSaleProductionHardenTest extends TestCase
             'start_date' => Carbon::yesterday()->format('Y-m-d'),
             'end_date' => Carbon::tomorrow()->format('Y-m-d'),
             'type' => FlashSaleType::PERCENTAGE,
-            'discount' => 10,
-        ]);
+            'discount' => 10]);
 
         $response = $this->putJson(self::PREFIX . '/flash-sale/' . $flashSale->id, [
             'discount' => 25,
-            'title' => ['en' => 'Updated Title'],
-        ]);
+            'title' => ['en' => 'Updated Title']]);
 
         $response->assertOk();
         $response->assertJsonPath('success', true);
@@ -239,8 +227,7 @@ class FlashSaleProductionHardenTest extends TestCase
             'start_date' => Carbon::yesterday()->format('Y-m-d'),
             'end_date' => Carbon::tomorrow()->format('Y-m-d'),
             'type' => FlashSaleType::PERCENTAGE,
-            'discount' => 10,
-        ]);
+            'discount' => 10]);
 
         $response = $this->deleteJson(self::PREFIX . '/flash-sale/' . $flashSale->id);
 
@@ -266,8 +253,7 @@ class FlashSaleProductionHardenTest extends TestCase
             'has_discount' => true,
             'discount_type' => 'percentage',
             'discount_amount' => 50,
-            'has_flash_sale' => true,
-        ]);
+            'has_flash_sale' => true]);
 
         $flashSale = FlashSale::create([
             'title' => 'Active Flash',
@@ -276,8 +262,7 @@ class FlashSaleProductionHardenTest extends TestCase
             'start_date' => Carbon::yesterday()->format('Y-m-d'),
             'end_date' => Carbon::tomorrow()->format('Y-m-d'),
             'type' => FlashSaleType::PERCENTAGE,
-            'discount' => 20,
-        ]);
+            'discount' => 20]);
         $product->flash_sales()->attach($flashSale->id);
 
         $pricing = $this->pricingService->calculateProductPricing($product);
@@ -303,8 +288,7 @@ class FlashSaleProductionHardenTest extends TestCase
             'has_discount' => true,
             'discount_type' => 'percentage',
             'discount_amount' => 20,
-            'has_flash_sale' => true,
-        ]);
+            'has_flash_sale' => true]);
 
         $flashSale = FlashSale::create([
             'title' => 'Expired Sale',
@@ -313,8 +297,7 @@ class FlashSaleProductionHardenTest extends TestCase
             'start_date' => Carbon::parse('-10 days')->format('Y-m-d'),
             'end_date' => Carbon::parse('-1 day')->format('Y-m-d'),
             'type' => FlashSaleType::PERCENTAGE,
-            'discount' => 10,
-        ]);
+            'discount' => 10]);
         $product->flash_sales()->attach($flashSale->id);
 
         $pricing = $this->pricingService->calculateProductPricing($product);
@@ -339,8 +322,7 @@ class FlashSaleProductionHardenTest extends TestCase
             'has_discount' => true,
             'discount_type' => 'percentage',
             'discount_amount' => 20,
-            'has_flash_sale' => true,
-        ]);
+            'has_flash_sale' => true]);
 
         $flashSale = FlashSale::create([
             'title' => 'Inactive Sale',
@@ -349,8 +331,7 @@ class FlashSaleProductionHardenTest extends TestCase
             'start_date' => Carbon::yesterday()->format('Y-m-d'),
             'end_date' => Carbon::tomorrow()->format('Y-m-d'),
             'type' => FlashSaleType::PERCENTAGE,
-            'discount' => 10,
-        ]);
+            'discount' => 10]);
         $product->flash_sales()->attach($flashSale->id);
 
         $pricing = $this->pricingService->calculateProductPricing($product);
@@ -429,8 +410,7 @@ class FlashSaleProductionHardenTest extends TestCase
             'start_date' => Carbon::yesterday()->format('Y-m-d'),
             'end_date' => Carbon::tomorrow()->format('Y-m-d'),
             'type' => FlashSaleType::PERCENTAGE,
-            'discount' => 10,
-        ]);
+            'discount' => 10]);
 
         $response = $this->getJson(self::PREFIX . '/flash-sale/' . $flashSale->id);
 
@@ -439,9 +419,7 @@ class FlashSaleProductionHardenTest extends TestCase
             'data' => [
                 'id', 'title', 'slug', 'image', 'description',
                 'start_date', 'end_date', 'status', 'is_valid',
-                'type', 'discount', 'max_discount_amount', 'created_at',
-            ],
-        ]);
+                'type', 'discount', 'max_discount_amount', 'created_at']]);
     }
 
     // ========== Validation & Security ==========
@@ -460,8 +438,7 @@ class FlashSaleProductionHardenTest extends TestCase
     public function unauthenticated_user_cannot_create_flash_sale(): void
     {
         $response = $this->postJson(self::PREFIX . '/flash-sale', [
-            'title' => 'Hacked Sale',
-        ]);
+            'title' => 'Hacked Sale']);
 
         $response->assertStatus(401);
     }
@@ -498,8 +475,7 @@ class FlashSaleProductionHardenTest extends TestCase
             'end_date' => Carbon::tomorrow()->format('Y-m-d'),
             'type' => 'invalid_type',
             'discount' => 10,
-            'status' => 1,
-        ]);
+            'status' => 1]);
 
         $response->assertStatus(422);
     }
@@ -516,8 +492,7 @@ class FlashSaleProductionHardenTest extends TestCase
             'end_date' => Carbon::tomorrow()->format('Y-m-d'),
             'type' => FlashSaleType::PERCENTAGE,
             'discount' => 'not-a-number',
-            'status' => 1,
-        ]);
+            'status' => 1]);
 
         $response->assertStatus(422);
     }
@@ -534,8 +509,7 @@ class FlashSaleProductionHardenTest extends TestCase
             'start_date' => Carbon::yesterday()->format('Y-m-d'),
             'end_date' => Carbon::tomorrow()->format('Y-m-d'),
             'type' => FlashSaleType::PERCENTAGE,
-            'discount' => 10,
-        ]);
+            'discount' => 10]);
 
         $inactiveSale = FlashSale::create([
             'title' => 'Inactive Sale',
@@ -544,8 +518,7 @@ class FlashSaleProductionHardenTest extends TestCase
             'start_date' => Carbon::yesterday()->format('Y-m-d'),
             'end_date' => Carbon::tomorrow()->format('Y-m-d'),
             'type' => FlashSaleType::PERCENTAGE,
-            'discount' => 10,
-        ]);
+            'discount' => 10]);
 
         $expiredSale = FlashSale::create([
             'title' => 'Expired Sale',
@@ -554,8 +527,7 @@ class FlashSaleProductionHardenTest extends TestCase
             'start_date' => Carbon::parse('-10 days')->format('Y-m-d'),
             'end_date' => Carbon::parse('-1 day')->format('Y-m-d'),
             'type' => FlashSaleType::PERCENTAGE,
-            'discount' => 10,
-        ]);
+            'discount' => 10]);
 
         $validSales = FlashSale::valid()->get();
 
@@ -576,8 +548,7 @@ class FlashSaleProductionHardenTest extends TestCase
             'stock_quantity' => 10,
             'product_type' => 'simple',
             'has_discount' => false,
-            'has_flash_sale' => true,
-        ]);
+            'has_flash_sale' => true]);
 
         $flashSale = FlashSale::create([
             'title' => 'Active Flash',
@@ -586,8 +557,7 @@ class FlashSaleProductionHardenTest extends TestCase
             'start_date' => Carbon::yesterday()->format('Y-m-d'),
             'end_date' => Carbon::tomorrow()->format('Y-m-d'),
             'type' => FlashSaleType::PERCENTAGE,
-            'discount' => 10,
-        ]);
+            'discount' => 10]);
         $product->flash_sales()->attach($flashSale->id);
 
         $result = $product->getActiveFlashSale();
@@ -608,8 +578,7 @@ class FlashSaleProductionHardenTest extends TestCase
             'stock_quantity' => 10,
             'product_type' => 'simple',
             'has_discount' => false,
-            'has_flash_sale' => false,
-        ]);
+            'has_flash_sale' => false]);
 
         $this->assertNull($product->getActiveFlashSale());
     }
@@ -626,8 +595,7 @@ class FlashSaleProductionHardenTest extends TestCase
             'start_date' => Carbon::yesterday()->format('Y-m-d'),
             'end_date' => Carbon::tomorrow()->format('Y-m-d'),
             'type' => FlashSaleType::PERCENTAGE,
-            'discount' => 10,
-        ]);
+            'discount' => 10]);
 
         $flashSale->delete();
         $this->assertSoftDeleted($flashSale);
@@ -644,8 +612,7 @@ class FlashSaleProductionHardenTest extends TestCase
         Sanctum::actingAs($this->adminUser);
 
         $response = $this->putJson(self::PREFIX . '/flash-sale/reorder', [
-            'flash_sales' => [],
-        ]);
+            'flash_sales' => []]);
 
         // Should hit validation, not 404 as a show route
         $response->assertStatus(422);
@@ -653,7 +620,7 @@ class FlashSaleProductionHardenTest extends TestCase
 
     private function createSuperAdmin(): User
     {
-        Permission::findOrCreate(PermissionEnum::SUPER_ADMIN, self::GUARD);
+        Permission::findOrCreate(self::GUARD);
         Permission::findOrCreate(PermissionEnum::VIEW_FlASH_SALE, self::GUARD);
         Permission::findOrCreate(PermissionEnum::CREATE_FlASH_SALE, self::GUARD);
         Permission::findOrCreate(PermissionEnum::UPDATE_FlASH_SALE, self::GUARD);
@@ -662,24 +629,20 @@ class FlashSaleProductionHardenTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => json_encode(['en' => 'Super Admin']),
-        ]);
+            'display_name' => json_encode(['en' => 'Super Admin'])]);
 
         $role->givePermissionTo([
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_FlASH_SALE,
             PermissionEnum::CREATE_FlASH_SALE,
             PermissionEnum::UPDATE_FlASH_SALE,
-            PermissionEnum::DELETE_FlASH_SALE,
-        ]);
+            PermissionEnum::DELETE_FlASH_SALE]);
 
         $user = User::create([
             'name' => 'Super Admin',
             'email' => 'admin.flashsale.harden@example.com',
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
-            'is_active' => true,
-        ]);
+            'is_active' => true]);
 
         $user->assignRole($role);
 
@@ -693,8 +656,7 @@ class FlashSaleProductionHardenTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::CUSTOMER,
             'guard_name' => self::GUARD,
-            'display_name' => json_encode(['en' => 'Customer']),
-        ]);
+            'display_name' => json_encode(['en' => 'Customer'])]);
 
         $role->givePermissionTo([PermissionEnum::CUSTOMER]);
 
@@ -703,8 +665,7 @@ class FlashSaleProductionHardenTest extends TestCase
             'email' => 'customer.flashsale@example.com',
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
-            'is_active' => true,
-        ]);
+            'is_active' => true]);
 
         $user->assignRole($role);
 

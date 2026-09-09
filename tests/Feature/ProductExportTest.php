@@ -28,10 +28,8 @@ class ProductExportTest extends TestCase
     private function createSuperAdminUser(): User
     {
         $permissions = [
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::EXPORT_PRODUCT,
-            PermissionEnum::VIEW_PRODUCTS,
-        ];
+            PermissionEnum::VIEW_PRODUCTS];
 
         foreach ($permissions as $perm) {
             Permission::findOrCreate($perm, self::GUARD);
@@ -40,8 +38,7 @@ class ProductExportTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => json_encode(['en' => 'Super Admin', 'ar' => 'مدير النظام']),
-        ]);
+            'display_name' => json_encode(['en' => 'Super Admin', 'ar' => 'مدير النظام'])]);
 
         foreach ($permissions as $perm) {
             $role->givePermissionTo($perm);
@@ -54,8 +51,7 @@ class ProductExportTest extends TestCase
             'email_verified_at' => now(),
             'is_active' => true,
             'type' => 'admin',
-            'phone_number' => '+1-555-0100',
-        ]);
+            'phone_number' => '+1-555-0100']);
 
         $user->assignRole($role);
 
@@ -89,8 +85,7 @@ class ProductExportTest extends TestCase
             'product_type' => 'simple',
             'stock_quantity' => 10,
             'quantity' => 10,
-            'sku' => 'TEST-001',
-        ]);
+            'sku' => 'TEST-001']);
 
         $response = $this->getJson(self::PREFIX . '/products/export');
 
@@ -129,8 +124,7 @@ class ProductExportTest extends TestCase
             'product_type' => 'simple',
             'stock_quantity' => 5,
             'quantity' => 5,
-            'sku' => 'SKU-A',
-        ]);
+            'sku' => 'SKU-A']);
 
         Product::create([
             'name' => ['en' => 'Product B'],
@@ -141,8 +135,7 @@ class ProductExportTest extends TestCase
             'product_type' => 'simple',
             'stock_quantity' => 0,
             'quantity' => 0,
-            'sku' => 'SKU-B',
-        ]);
+            'sku' => 'SKU-B']);
 
         $response = $this->getJson(self::PREFIX . '/products/export?status=1');
 
@@ -189,8 +182,7 @@ class ProductExportTest extends TestCase
             'email' => 'other-' . uniqid() . '@test.local',
             'password' => Hash::make('password'),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
         $perm = Permission::findOrCreate(PermissionEnum::EXPORT_PRODUCT, self::GUARD);
         $role = Role::create(['name' => 'r' . uniqid(), 'guard_name' => self::GUARD, 'display_name' => 'r']);
         $role->givePermissionTo($perm);

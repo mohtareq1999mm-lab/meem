@@ -47,11 +47,9 @@ class DashboardTest extends TestCase
     private function createSuperAdminUser(): User
     {
         $permissions = [
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::CREATE_PRODUCT,
             PermissionEnum::VIEW_PRODUCTS,
-            PermissionEnum::VIEW_ANALYTICS,
-        ];
+            PermissionEnum::VIEW_ANALYTICS];
 
         foreach ($permissions as $perm) {
             Permission::findOrCreate($perm, self::GUARD);
@@ -60,8 +58,7 @@ class DashboardTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => json_encode(['en' => 'Super Admin', 'ar' => 'مدير النظام']),
-        ]);
+            'display_name' => json_encode(['en' => 'Super Admin', 'ar' => 'مدير النظام'])]);
 
         foreach ($permissions as $perm) {
             $role->givePermissionTo($perm);
@@ -74,8 +71,7 @@ class DashboardTest extends TestCase
             'email_verified_at' => now(),
             'is_active' => true,
             'type' => 'admin',
-            'phone_number' => '+1-555-0100',
-        ]);
+            'phone_number' => '+1-555-0100']);
 
         $user->assignRole($role);
 
@@ -96,8 +92,7 @@ class DashboardTest extends TestCase
             'sold_quantity' => 10,
             'in_stock' => true,
             'status' => true,
-            'product_type' => ProductType::SIMPLE,
-        ], $overrides));
+            'product_type' => ProductType::SIMPLE], $overrides));
     }
 
     private function makeOrder(array $overrides = []): Order
@@ -114,8 +109,7 @@ class DashboardTest extends TestCase
             'shipping_price' => 15.00,
             'fast_shipping_fee' => 5.00,
             'status' => 'completed',
-            'shipping_method' => 'SCHEDULED',
-        ], $overrides));
+            'shipping_method' => 'SCHEDULED'], $overrides));
     }
 
     private function makeTransaction(int $orderId, array $overrides = []): Transaction
@@ -124,8 +118,7 @@ class DashboardTest extends TestCase
             'invoice_id' => rand(1000, 9999),
             'user_id' => 1,
             'payment_method' => 'stripe',
-            'order_id' => $orderId,
-        ], $overrides));
+            'order_id' => $orderId], $overrides));
     }
 
     private function makeRefund(int $orderId, array $overrides = []): void
@@ -135,13 +128,11 @@ class DashboardTest extends TestCase
             'title' => 'Test Refund',
             'status' => RefundPolicyStatus::APPROVED,
             'order_id' => $orderId,
-            'user_id' => 1,
-        ], $overrides);
+            'user_id' => 1], $overrides);
 
         DB::table('refunds')->insert($data + [
             'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+            'updated_at' => now()]);
     }
 
     private function makeCart(array $overrides = []): Cart
@@ -150,8 +141,7 @@ class DashboardTest extends TestCase
         return Cart::create(array_merge([
             'user_id' => $user->id,
             'total_price' => 150.00,
-            'status' => 'active',
-        ], $overrides));
+            'status' => 'active'], $overrides));
     }
 
     private function makeCartItem(int $cartId, int $productId, array $overrides = []): CartItem
@@ -161,8 +151,7 @@ class DashboardTest extends TestCase
             'product_id' => $productId,
             'quantity' => 2,
             'price' => 100.00,
-            'total_price' => 200.00,
-        ], $overrides));
+            'total_price' => 200.00], $overrides));
     }
 
     private function makeCoupon(array $overrides = []): Coupon
@@ -174,8 +163,7 @@ class DashboardTest extends TestCase
             'discount' => 10.00,
             'start_date' => now()->toDateString(),
             'end_date' => now()->addMonth()->toDateString(),
-            'status' => true,
-        ], $overrides));
+            'status' => true], $overrides));
     }
 
     private function makeCouponUsage(int $couponId, int $userId, int $orderId): CouponUsage
@@ -183,8 +171,7 @@ class DashboardTest extends TestCase
         return CouponUsage::create([
             'coupon_id' => $couponId,
             'user_id' => $userId,
-            'order_id' => $orderId,
-        ]);
+            'order_id' => $orderId]);
     }
 
     /**
@@ -194,8 +181,7 @@ class DashboardTest extends TestCase
     {
         $cat = Category::create([
             'name' => ['en' => 'Test Category ' . Str::random(6)],
-            'slug' => 'test-category-' . Str::random(8),
-        ]);
+            'slug' => 'test-category-' . Str::random(8)]);
         return ['category_id' => $cat->id, 'category_name' => (string) $cat->name];
     }
 
@@ -203,8 +189,7 @@ class DashboardTest extends TestCase
     {
         DB::table('category_product')->insert([
             'product_id' => $productId,
-            'category_id' => $categoryId,
-        ]);
+            'category_id' => $categoryId]);
     }
 
     private function attachOrderProduct(int $orderId, int $productId, array $overrides = []): void
@@ -215,8 +200,7 @@ class DashboardTest extends TestCase
             'product_name' => 'Test Product',
             'product_quantity' => 2,
             'product_price' => 100.00,
-            'product_total_price' => 200.00,
-        ], $overrides));
+            'product_total_price' => 200.00], $overrides));
     }
 
     // =========================================================================
@@ -229,8 +213,7 @@ class DashboardTest extends TestCase
             'overview', 'revenue', 'order-stats', 'recent-orders',
             'top-products', 'category-stats', 'low-stock',
             'sales', 'customers', 'products', 'orders',
-            'categories', 'coupons', 'cart', 'finance',
-        ];
+            'categories', 'coupons', 'cart', 'finance'];
 
         foreach ($endpoints as $ep) {
             $response = $this->getJson(self::PREFIX . '/dashboard/' . $ep);
@@ -260,9 +243,7 @@ class DashboardTest extends TestCase
         $response->assertJsonStructure([
             'success', 'message', 'data' => [
                 'total_revenue', 'todays_revenue', 'total_refunds',
-                'total_orders', 'total_products', 'total_customers', 'new_customers',
-            ],
-        ]);
+                'total_orders', 'total_products', 'total_customers', 'new_customers']]);
         $this->assertEquals(800.0, $response->json('data.total_revenue'), '', 0.01);
     }
 
@@ -280,9 +261,7 @@ class DashboardTest extends TestCase
         $response->assertJsonPath('success', true);
         $response->assertJsonStructure([
             'success', 'message', 'data' => [
-                'total_revenue', 'todays_revenue', 'monthly_breakdown',
-            ],
-        ]);
+                'total_revenue', 'todays_revenue', 'monthly_breakdown']]);
         $this->assertEquals(1000.0, $response->json('data.total_revenue'), '', 0.01);
     }
 
@@ -300,9 +279,7 @@ class DashboardTest extends TestCase
         $response->assertOk();
         $response->assertJsonStructure([
             'success', 'message', 'data' => [
-                'today', 'weekly', 'monthly', 'yearly',
-            ],
-        ]);
+                'today', 'weekly', 'monthly', 'yearly']]);
     }
 
     public function test_recent_orders_returns_limited_orders(): void
@@ -356,9 +333,7 @@ class DashboardTest extends TestCase
         $response->assertJsonPath('success', true);
         $response->assertJsonStructure([
             'success', 'message', 'data' => [
-                'product_distribution', 'sales_distribution',
-            ],
-        ]);
+                'product_distribution', 'sales_distribution']]);
     }
 
     public function test_low_stock_returns_products_below_threshold(): void
@@ -398,9 +373,7 @@ class DashboardTest extends TestCase
                 'daily_revenue' => ['today', 'yesterday', 'last_7_days', 'last_30_days'],
                 'revenue_comparison',
                 'average_order_value',
-                'revenue_by_payment_method',
-            ],
-        ]);
+                'revenue_by_payment_method']]);
     }
 
     public function test_sales_analytics_shows_revenue_by_payment_method(): void
@@ -443,9 +416,7 @@ class DashboardTest extends TestCase
                 'monthly_growth',
                 'top_customers' => ['by_orders', 'by_revenue'],
                 'customer_lifetime_value',
-                'active_customers' => ['last_7_days', 'last_30_days', 'last_90_days'],
-            ],
-        ]);
+                'active_customers' => ['last_7_days', 'last_30_days', 'last_90_days']]]);
     }
 
     // =========================================================================
@@ -470,9 +441,7 @@ class DashboardTest extends TestCase
                 'worst_selling',
                 'never_sold',
                 'out_of_stock',
-                'inventory_value',
-            ],
-        ]);
+                'inventory_value']]);
     }
 
     public function test_product_analytics_includes_never_sold(): void
@@ -510,9 +479,7 @@ class DashboardTest extends TestCase
             'success', 'message', 'data' => [
                 'timeline' => ['daily', 'weekly', 'monthly'],
                 'success_rate' => ['completed', 'cancelled', 'refunded', 'total'],
-                'refund_rate',
-            ],
-        ]);
+                'refund_rate']]);
     }
 
     public function test_order_analytics_refund_rate_is_calculated(): void
@@ -545,8 +512,7 @@ class DashboardTest extends TestCase
         $order = $this->makeOrder(['status' => 'completed']);
         $this->attachOrderProduct($order->id, $product->id, [
             'product_quantity' => 2,
-            'product_price' => 100.00,
-        ]);
+            'product_price' => 100.00]);
 
         $response = $this->getJson(self::PREFIX . '/dashboard/categories');
 
@@ -557,9 +523,7 @@ class DashboardTest extends TestCase
                 'product_distribution',
                 'highest_revenue',
                 'lowest_revenue',
-                'category_growth',
-            ],
-        ]);
+                'category_growth']]);
     }
 
     // =========================================================================
@@ -584,9 +548,7 @@ class DashboardTest extends TestCase
                 'total_usage',
                 'top_coupons',
                 'revenue_by_coupon',
-                'total_coupon_discount',
-            ],
-        ]);
+                'total_coupon_discount']]);
         $this->assertGreaterThanOrEqual(1, $response->json('data.total_usage'));
     }
 
@@ -614,9 +576,7 @@ class DashboardTest extends TestCase
                 'abandonment_rate',
                 'most_added_products',
                 'average_cart_value',
-                'checkout_dropoff_rate',
-            ],
-        ]);
+                'checkout_dropoff_rate']]);
     }
 
     public function test_cart_analytics_shows_zero_when_no_carts(): void
@@ -646,8 +606,7 @@ class DashboardTest extends TestCase
             'shipping_price' => 50,
             'fast_shipping_fee' => 10,
             'status' => 'completed',
-            'coupon_discount' => 30,
-        ]);
+            'coupon_discount' => 30]);
         $this->makeRefund($order->id);
 
         $response = $this->getJson(self::PREFIX . '/dashboard/finance');
@@ -660,9 +619,7 @@ class DashboardTest extends TestCase
                 'net_revenue',
                 'refund_amount',
                 'total_discount',
-                'shipping_revenue',
-            ],
-        ]);
+                'shipping_revenue']]);
         $this->assertEquals(1000.00, $response->json('data.gross_revenue'));
         $this->assertEquals(60.00, $response->json('data.shipping_revenue'));
     }
@@ -706,8 +663,7 @@ class DashboardTest extends TestCase
             'overview', 'revenue', 'order-stats', 'recent-orders',
             'top-products', 'category-stats', 'low-stock',
             'sales', 'customers', 'products', 'orders',
-            'categories', 'coupons', 'cart', 'finance',
-        ];
+            'categories', 'coupons', 'cart', 'finance'];
 
         foreach ($endpoints as $ep) {
             $response = $this->getJson(self::PREFIX . '/dashboard/' . $ep);
@@ -871,8 +827,7 @@ class DashboardTest extends TestCase
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'user',
-        ]);
+            'type' => 'user']);
         Sanctum::actingAs($customer);
 
         $this->makeOrder(['total_price' => 100, 'status' => 'completed']);

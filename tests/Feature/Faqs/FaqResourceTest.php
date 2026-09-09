@@ -34,7 +34,7 @@ class FaqResourceTest extends TestCase
 
     private function createSuperAdmin(): User
     {
-        Permission::findOrCreate(PermissionEnum::SUPER_ADMIN, self::GUARD);
+        Permission::findOrCreate(self::GUARD);
         Permission::findOrCreate(PermissionEnum::VIEW_FAQS, self::GUARD);
         Permission::findOrCreate(PermissionEnum::CREATE_FAQ, self::GUARD);
         Permission::findOrCreate(PermissionEnum::UPDATE_FAQ, self::GUARD);
@@ -43,16 +43,13 @@ class FaqResourceTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => json_encode(['en' => 'Super Admin']),
-        ]);
+            'display_name' => json_encode(['en' => 'Super Admin'])]);
 
         $role->givePermissionTo([
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_FAQS,
             PermissionEnum::CREATE_FAQ,
             PermissionEnum::UPDATE_FAQ,
-            PermissionEnum::DELETE_FAQ,
-        ]);
+            PermissionEnum::DELETE_FAQ]);
 
         $user = User::create([
             'name' => 'Super Admin',
@@ -60,8 +57,7 @@ class FaqResourceTest extends TestCase
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
 
         $user->assignRole($role);
 
@@ -84,9 +80,7 @@ class FaqResourceTest extends TestCase
                 'to',
                 'last_page',
                 'per_page',
-                'total',
-            ],
-        ]);
+                'total']]);
     }
 
     /** @test */
@@ -131,9 +125,7 @@ class FaqResourceTest extends TestCase
                 'faq_title',
                 'faq_description',
                 'status',
-                'order',
-            ],
-        ]);
+                'order']]);
     }
 
     /** @test */
@@ -157,8 +149,7 @@ class FaqResourceTest extends TestCase
         $response->assertJsonStructure([
             'status',
             'message',
-            'success',
-        ]);
+            'success']);
         $response->assertJsonPath('status', 200);
         $response->assertJsonPath('success', true);
     }

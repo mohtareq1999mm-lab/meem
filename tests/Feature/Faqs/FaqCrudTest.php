@@ -34,7 +34,7 @@ class FaqCrudTest extends TestCase
 
     private function createSuperAdmin(): User
     {
-        Permission::findOrCreate(PermissionEnum::SUPER_ADMIN, self::GUARD);
+        Permission::findOrCreate(self::GUARD);
         Permission::findOrCreate(PermissionEnum::VIEW_FAQS, self::GUARD);
         Permission::findOrCreate(PermissionEnum::CREATE_FAQ, self::GUARD);
         Permission::findOrCreate(PermissionEnum::UPDATE_FAQ, self::GUARD);
@@ -43,16 +43,13 @@ class FaqCrudTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => json_encode(['en' => 'Super Admin']),
-        ]);
+            'display_name' => json_encode(['en' => 'Super Admin'])]);
 
         $role->givePermissionTo([
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_FAQS,
             PermissionEnum::CREATE_FAQ,
             PermissionEnum::UPDATE_FAQ,
-            PermissionEnum::DELETE_FAQ,
-        ]);
+            PermissionEnum::DELETE_FAQ]);
 
         $user = User::create([
             'name' => 'Super Admin',
@@ -60,8 +57,7 @@ class FaqCrudTest extends TestCase
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
 
         $user->assignRole($role);
 
@@ -73,15 +69,13 @@ class FaqCrudTest extends TestCase
     {
         $response = $this->postJson(self::PREFIX . '/faqs', [
             'faq_title' => ['en' => 'How to return a product?'],
-            'faq_description' => ['en' => 'You can return any product within 30 days.'],
-        ]);
+            'faq_description' => ['en' => 'You can return any product within 30 days.']]);
 
         $response->assertStatus(201);
         $response->assertJsonPath('success', true);
 
         $this->assertDatabaseHas('faqs', [
-            'id' => $response->json('data.id'),
-        ]);
+            'id' => $response->json('data.id')]);
     }
 
     /** @test */
@@ -102,8 +96,7 @@ class FaqCrudTest extends TestCase
     {
         $faq = Faqs::create([
             'faq_title' => ['en' => 'Specific FAQ'],
-            'faq_description' => ['en' => 'Specific description'],
-        ]);
+            'faq_description' => ['en' => 'Specific description']]);
 
         $response = $this->getJson(self::PREFIX . "/faqs/{$faq->id}");
 
@@ -116,12 +109,10 @@ class FaqCrudTest extends TestCase
     {
         $faq = Faqs::create([
             'faq_title' => ['en' => 'Original Title'],
-            'faq_description' => ['en' => 'Original description'],
-        ]);
+            'faq_description' => ['en' => 'Original description']]);
 
         $response = $this->putJson(self::PREFIX . "/faqs/{$faq->id}", [
-            'faq_title' => ['en' => 'Updated Title'],
-        ]);
+            'faq_title' => ['en' => 'Updated Title']]);
 
         $response->assertOk();
         $response->assertJsonPath('success', true);
@@ -134,8 +125,7 @@ class FaqCrudTest extends TestCase
     {
         $faq = Faqs::create([
             'faq_title' => ['en' => 'To Delete'],
-            'faq_description' => ['en' => 'Will be deleted'],
-        ]);
+            'faq_description' => ['en' => 'Will be deleted']]);
 
         $response = $this->deleteJson(self::PREFIX . "/faqs/{$faq->id}");
 

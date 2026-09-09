@@ -34,15 +34,13 @@ class CategoryAuthenticationTest extends TestCase
 
         Category::create([
             'name' => ['en' => 'Test Category'],
-            'slug' => 'test-category',
-        ]);
+            'slug' => 'test-category']);
     }
 
     public function test_unauthenticated_user_cannot_create_category(): void
     {
         $response = $this->postJson(self::PREFIX . '/categories', [
-            'name' => ['en' => 'New Category'],
-        ]);
+            'name' => ['en' => 'New Category']]);
 
         $response->assertUnauthorized();
     }
@@ -50,8 +48,7 @@ class CategoryAuthenticationTest extends TestCase
     public function test_unauthenticated_user_cannot_update_category(): void
     {
         $response = $this->putJson(self::PREFIX . '/categories/1', [
-            'name' => ['en' => 'Updated'],
-        ]);
+            'name' => ['en' => 'Updated']]);
 
         $response->assertUnauthorized();
     }
@@ -66,8 +63,7 @@ class CategoryAuthenticationTest extends TestCase
     public function test_unauthenticated_user_cannot_toggle_featured(): void
     {
         $response = $this->putJson(self::PREFIX . '/categories/feature', [
-            'id' => 1,
-        ]);
+            'id' => 1]);
 
         $response->assertUnauthorized();
     }
@@ -108,12 +104,10 @@ class CategoryAuthenticationTest extends TestCase
     private function createSuperAdminUser(): User
     {
         $permissions = [
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_CATEGORIES,
             PermissionEnum::CREATE_CATEGORY,
             PermissionEnum::UPDATE_CATEGORY,
-            PermissionEnum::DELETE_CATEGORY,
-        ];
+            PermissionEnum::DELETE_CATEGORY];
 
         foreach ($permissions as $perm) {
             Permission::findOrCreate($perm, self::GUARD);
@@ -122,8 +116,7 @@ class CategoryAuthenticationTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => 'Super Admin',
-        ]);
+            'display_name' => 'Super Admin']);
 
         foreach ($permissions as $perm) {
             $role->givePermissionTo($perm);
@@ -135,8 +128,7 @@ class CategoryAuthenticationTest extends TestCase
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
 
         $user->assignRole($role);
 

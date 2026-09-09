@@ -43,10 +43,8 @@ class ProductImportTest extends TestCase
     private function createSuperAdminUser(): User
     {
         $permissions = [
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::CREATE_PRODUCT,
-            PermissionEnum::VIEW_PRODUCTS,
-        ];
+            PermissionEnum::VIEW_PRODUCTS];
 
         foreach ($permissions as $perm) {
             Permission::findOrCreate($perm, self::GUARD);
@@ -55,8 +53,7 @@ class ProductImportTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => json_encode(['en' => 'Super Admin', 'ar' => 'مدير النظام']),
-        ]);
+            'display_name' => json_encode(['en' => 'Super Admin', 'ar' => 'مدير النظام'])]);
 
         foreach ($permissions as $perm) {
             $role->givePermissionTo($perm);
@@ -69,8 +66,7 @@ class ProductImportTest extends TestCase
             'email_verified_at' => now(),
             'is_active' => true,
             'type' => 'admin',
-            'phone_number' => '+1-555-0100',
-        ]);
+            'phone_number' => '+1-555-0100']);
 
         $user->assignRole($role);
 
@@ -145,8 +141,7 @@ class ProductImportTest extends TestCase
         $file = UploadedFile::fake()->create('document.pdf', 100);
 
         $response = $this->postJson(self::PREFIX . '/products/import', [
-            'file' => $file,
-        ]);
+            'file' => $file]);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['file']);
@@ -164,8 +159,7 @@ class ProductImportTest extends TestCase
         $file = UploadedFile::fake()->create('products.xlsx', 100, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 
         $response = $this->postJson(self::PREFIX . '/products/import', [
-            'file' => $file,
-        ]);
+            'file' => $file]);
 
         $response->assertStatus(202);
         $response->assertJsonPath('success', true);
@@ -173,8 +167,7 @@ class ProductImportTest extends TestCase
 
         $this->assertDatabaseHas('imports', [
             'id' => $response->json('data.import_id'),
-            'status' => 'pending',
-        ]);
+            'status' => 'pending']);
 
         Queue::assertPushed(\Marvel\Jobs\ImportProductsJob::class);
     }
@@ -193,8 +186,7 @@ class ProductImportTest extends TestCase
             'processed_rows' => 10,
             'success_rows' => 8,
             'failed_rows' => 2,
-            'created_by' => $user->id,
-        ]);
+            'created_by' => $user->id]);
 
         $response = $this->getJson(self::PREFIX . "/products/import/{$import->id}");
 
@@ -230,10 +222,8 @@ class ProductImportTest extends TestCase
             'success_rows' => 0,
             'failed_rows' => 1,
             'errors' => [
-                ['sheet' => 'products', 'row' => 5, 'sku' => 'TEST-001', 'error_message' => 'Invalid price'],
-            ],
-            'created_by' => $user->id,
-        ]);
+                ['sheet' => 'products', 'row' => 5, 'sku' => 'TEST-001', 'error_message' => 'Invalid price']],
+            'created_by' => $user->id]);
 
         $response = $this->getJson(self::PREFIX . "/products/import/{$import->id}/download-errors");
 
@@ -255,8 +245,7 @@ class ProductImportTest extends TestCase
             'success_rows' => 1,
             'failed_rows' => 0,
             'errors' => null,
-            'created_by' => $user->id,
-        ]);
+            'created_by' => $user->id]);
 
         $response = $this->getJson(self::PREFIX . "/products/import/{$import->id}/download-errors");
 
@@ -274,14 +263,12 @@ class ProductImportTest extends TestCase
             'quantity' => 10,
             'product_type' => 'simple',
             'status' => 1,
-            'in_stock' => 1,
-        ];
+            'in_stock' => 1];
 
         $service->processProductRow($row, 2);
 
         $this->assertDatabaseHas('products', [
-            'sku' => 'REGRESSION-TEST-001',
-        ]);
+            'sku' => 'REGRESSION-TEST-001']);
 
         $product = Product::where('sku', 'REGRESSION-TEST-001')->first();
         $this->assertNotNull($product);
@@ -300,15 +287,13 @@ class ProductImportTest extends TestCase
             'quantity' => 5,
             'product_type' => 'simple',
             'status' => 1,
-            'in_stock' => 1,
-        ];
+            'in_stock' => 1];
 
         $service->processProductRow($row, 2);
 
         $this->assertDatabaseHas('products', [
             'sku' => 'REGRESSION-TEST-002',
-            'price' => 50,
-        ]);
+            'price' => 50]);
 
         $updatedRow = [
             'sku' => 'REGRESSION-TEST-002',
@@ -317,15 +302,13 @@ class ProductImportTest extends TestCase
             'quantity' => 10,
             'product_type' => 'simple',
             'status' => 1,
-            'in_stock' => 1,
-        ];
+            'in_stock' => 1];
 
         $service->processProductRow($updatedRow, 3);
 
         $this->assertDatabaseHas('products', [
             'sku' => 'REGRESSION-TEST-002',
-            'price' => 75,
-        ]);
+            'price' => 75]);
     }
 
     public function test_process_product_row_handles_empty_sku(): void
@@ -338,8 +321,7 @@ class ProductImportTest extends TestCase
             'quantity' => 3,
             'product_type' => 'simple',
             'status' => 1,
-            'in_stock' => 1,
-        ];
+            'in_stock' => 1];
 
         $service->processProductRow($row, 2);
 
@@ -362,8 +344,7 @@ class ProductImportTest extends TestCase
             'quantity' => 10,
             'product_type' => 'simple',
             'status' => 1,
-            'in_stock' => 1,
-        ];
+            'in_stock' => 1];
 
         $service->processProductRow($row, 2);
 
@@ -382,8 +363,7 @@ class ProductImportTest extends TestCase
             'quantity' => 10,
             'product_type' => 'simple',
             'status' => 1,
-            'in_stock' => 1,
-        ];
+            'in_stock' => 1];
 
         $row2 = [
             'sku' => 'REGRESSION-TRACK-002',
@@ -392,8 +372,7 @@ class ProductImportTest extends TestCase
             'quantity' => 20,
             'product_type' => 'simple',
             'status' => 1,
-            'in_stock' => 1,
-        ];
+            'in_stock' => 1];
 
         $service->processProductRow($row1, 2);
         $service->processProductRow($row2, 3);
@@ -416,8 +395,7 @@ class ProductImportTest extends TestCase
             'password' => Hash::make('password'),
             'is_active' => true,
             'type' => 'admin',
-            'phone_number' => '+1-555-0000',
-        ]);
+            'phone_number' => '+1-555-0000']);
 
         $import = Import::create([
             'type' => 'product',
@@ -428,8 +406,7 @@ class ProductImportTest extends TestCase
             'processed_rows' => 0,
             'success_rows' => 0,
             'failed_rows' => 0,
-            'created_by' => $user->id,
-        ]);
+            'created_by' => $user->id]);
 
         $service = new ProductImportService();
 
@@ -441,8 +418,7 @@ class ProductImportTest extends TestCase
                 'quantity' => 10,
                 'product_type' => 'simple',
                 'status' => 1,
-                'in_stock' => 1,
-            ], $i + 1);
+                'in_stock' => 1], $i + 1);
         }
 
         $import->refresh();
@@ -459,8 +435,7 @@ class ProductImportTest extends TestCase
             'password' => Hash::make('password'),
             'is_active' => true,
             'type' => 'admin',
-            'phone_number' => '+1-555-0000',
-        ]);
+            'phone_number' => '+1-555-0000']);
 
         $import = Import::create([
             'type' => 'product',
@@ -471,8 +446,7 @@ class ProductImportTest extends TestCase
             'processed_rows' => 0,
             'success_rows' => 0,
             'failed_rows' => 0,
-            'created_by' => $user->id,
-        ]);
+            'created_by' => $user->id]);
 
         $service = new ProductImportService($import->id);
 
@@ -486,8 +460,7 @@ class ProductImportTest extends TestCase
                 'quantity' => 10,
                 'product_type' => 'simple',
                 'status' => 1,
-                'in_stock' => 1,
-            ], $i + 1);
+                'in_stock' => 1], $i + 1);
         }
 
         $import->refresh();
@@ -510,8 +483,7 @@ class ProductImportTest extends TestCase
             'quantity' => 10,
             'product_type' => 'simple',
             'status' => 1,
-            'in_stock' => 1,
-        ], 24);
+            'in_stock' => 1], 24);
 
         $import->refresh();
         $this->assertEquals(20, $import->processed_rows, 'DB still 20 after 23rd row (threshold not hit)');
@@ -528,8 +500,7 @@ class ProductImportTest extends TestCase
             'password' => Hash::make('password'),
             'is_active' => true,
             'type' => 'admin',
-            'phone_number' => '+1-555-0000',
-        ]);
+            'phone_number' => '+1-555-0000']);
 
         $import = Import::create([
             'type' => 'product',
@@ -540,8 +511,7 @@ class ProductImportTest extends TestCase
             'processed_rows' => 0,
             'success_rows' => 0,
             'failed_rows' => 0,
-            'created_by' => $user->id,
-        ]);
+            'created_by' => $user->id]);
 
         $service = new ProductImportService($import->id);
 
@@ -553,8 +523,7 @@ class ProductImportTest extends TestCase
                 'quantity' => 10,
                 'product_type' => 'simple',
                 'status' => 1,
-                'in_stock' => 1,
-            ], $i + 1);
+                'in_stock' => 1], $i + 1);
         }
 
         $import->refresh();
@@ -576,8 +545,7 @@ class ProductImportTest extends TestCase
             'password' => Hash::make('password'),
             'is_active' => true,
             'type' => 'admin',
-            'phone_number' => '+1-555-0000',
-        ]);
+            'phone_number' => '+1-555-0000']);
 
         $import = Import::create([
             'type' => 'product',
@@ -588,8 +556,7 @@ class ProductImportTest extends TestCase
             'processed_rows' => 0,
             'success_rows' => 0,
             'failed_rows' => 0,
-            'created_by' => $user->id,
-        ]);
+            'created_by' => $user->id]);
 
         $service = new ProductImportService($import->id);
 
@@ -601,8 +568,7 @@ class ProductImportTest extends TestCase
                 'quantity' => 10,
                 'product_type' => 'simple',
                 'status' => 1,
-                'in_stock' => 1,
-            ], $i + 1);
+                'in_stock' => 1], $i + 1);
         }
 
         $import->refresh();
@@ -618,8 +584,7 @@ class ProductImportTest extends TestCase
             'quantity' => 10,
             'product_type' => 'simple',
             'status' => 1,
-            'in_stock' => 1,
-        ], 52);
+            'in_stock' => 1], 52);
 
         $import->refresh();
         $this->assertEquals(50, $import->processed_rows, 'DB shows 50 after 51st row (threshold at 50)');
@@ -653,8 +618,7 @@ class ProductImportTest extends TestCase
             'processed_rows' => 30,
             'success_rows' => 30,
             'failed_rows' => 0,
-            'created_by' => $user->id,
-        ]);
+            'created_by' => $user->id]);
 
         $response = $this->postJson(self::PREFIX . "/products/import/{$import->id}/cancel");
 
@@ -664,8 +628,7 @@ class ProductImportTest extends TestCase
 
         $this->assertDatabaseHas('imports', [
             'id' => $import->id,
-            'status' => 'cancelled',
-        ]);
+            'status' => 'cancelled']);
     }
 
     public function test_cannot_cancel_completed_import(): void
@@ -682,8 +645,7 @@ class ProductImportTest extends TestCase
             'processed_rows' => 10,
             'success_rows' => 10,
             'failed_rows' => 0,
-            'created_by' => $user->id,
-        ]);
+            'created_by' => $user->id]);
 
         $response = $this->postJson(self::PREFIX . "/products/import/{$import->id}/cancel");
 
@@ -704,8 +666,7 @@ class ProductImportTest extends TestCase
             'processed_rows' => 5,
             'success_rows' => 3,
             'failed_rows' => 2,
-            'created_by' => $user->id,
-        ]);
+            'created_by' => $user->id]);
 
         $response = $this->postJson(self::PREFIX . "/products/import/{$import->id}/cancel");
 
@@ -734,8 +695,7 @@ class ProductImportTest extends TestCase
         $file = UploadedFile::fake()->create('products.xlsx', 100, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 
         $response = $this->postJson(self::PREFIX . '/products/import', [
-            'file' => $file,
-        ]);
+            'file' => $file]);
 
         $response->assertStatus(202);
         $importId = $response->json('data.import_id');
@@ -748,8 +708,7 @@ class ProductImportTest extends TestCase
         $this->assertDatabaseHas('imports', [
             'id' => $importId,
             'status' => 'cancelled',
-            'processed_rows' => 0,
-        ]);
+            'processed_rows' => 0]);
     }
 
     public function test_service_rollback_deletes_created_products_and_variants(): void
@@ -760,8 +719,7 @@ class ProductImportTest extends TestCase
             'password' => Hash::make('password'),
             'is_active' => true,
             'type' => 'admin',
-            'phone_number' => '+1-555-0000',
-        ]);
+            'phone_number' => '+1-555-0000']);
 
         $import = Import::create([
             'type' => 'product',
@@ -772,8 +730,7 @@ class ProductImportTest extends TestCase
             'processed_rows' => 0,
             'success_rows' => 0,
             'failed_rows' => 0,
-            'created_by' => $user->id,
-        ]);
+            'created_by' => $user->id]);
 
         $service = new ProductImportService($import->id);
 
@@ -784,8 +741,7 @@ class ProductImportTest extends TestCase
             'quantity' => 10,
             'product_type' => 'simple',
             'status' => 1,
-            'in_stock' => 1,
-        ], 2);
+            'in_stock' => 1], 2);
 
         $service->processProductRow([
             'sku' => 'ROLLBACK-TEST-002',
@@ -794,8 +750,7 @@ class ProductImportTest extends TestCase
             'quantity' => 20,
             'product_type' => 'simple',
             'status' => 1,
-            'in_stock' => 1,
-        ], 3);
+            'in_stock' => 1], 3);
 
         $this->assertDatabaseHas('products', ['sku' => 'ROLLBACK-TEST-001']);
         $this->assertDatabaseHas('products', ['sku' => 'ROLLBACK-TEST-002']);
@@ -814,8 +769,7 @@ class ProductImportTest extends TestCase
             'password' => Hash::make('password'),
             'is_active' => true,
             'type' => 'admin',
-            'phone_number' => '+1-555-0000',
-        ]);
+            'phone_number' => '+1-555-0000']);
 
         $import = Import::create([
             'type' => 'product',
@@ -826,8 +780,7 @@ class ProductImportTest extends TestCase
             'processed_rows' => 0,
             'success_rows' => 0,
             'failed_rows' => 0,
-            'created_by' => $user->id,
-        ]);
+            'created_by' => $user->id]);
 
         $service = new ProductImportService($import->id);
 
@@ -838,8 +791,7 @@ class ProductImportTest extends TestCase
             'quantity' => 10,
             'product_type' => 'simple',
             'status' => 1,
-            'in_stock' => 1,
-        ], 2);
+            'in_stock' => 1], 2);
 
         $import->refresh();
         $this->assertEquals(0, $import->processed_rows, 'DB shows 0 after 1st row (threshold not hit)');
@@ -855,8 +807,7 @@ class ProductImportTest extends TestCase
                 'quantity' => 20,
                 'product_type' => 'simple',
                 'status' => 1,
-                'in_stock' => 1,
-            ], 3);
+                'in_stock' => 1], 3);
             $this->fail('ImportCancelledException should have been thrown');
         } catch (\Marvel\Exceptions\ImportCancelledException $e) {
             $import->refresh();
@@ -873,8 +824,7 @@ class ProductImportTest extends TestCase
             'password' => Hash::make('password'),
             'is_active' => true,
             'type' => 'admin',
-            'phone_number' => '+1-555-0000',
-        ]);
+            'phone_number' => '+1-555-0000']);
 
         $import = Import::create([
             'type' => 'product',
@@ -885,8 +835,7 @@ class ProductImportTest extends TestCase
             'processed_rows' => 0,
             'success_rows' => 0,
             'failed_rows' => 0,
-            'created_by' => $user->id,
-        ]);
+            'created_by' => $user->id]);
 
         $service = new ProductImportService($import->id);
 
@@ -897,8 +846,7 @@ class ProductImportTest extends TestCase
             'quantity' => 10,
             'product_type' => 'simple',
             'status' => 1,
-            'in_stock' => 1,
-        ], 2);
+            'in_stock' => 1], 2);
 
         $this->writeSignalFile($import->id, 'cancel', ['cancelled_at' => now()->toIso8601String()]);
         $import->update(['status' => 'cancelled']);
@@ -915,8 +863,7 @@ class ProductImportTest extends TestCase
             'password' => Hash::make('password'),
             'is_active' => true,
             'type' => 'admin',
-            'phone_number' => '+1-555-0000',
-        ]);
+            'phone_number' => '+1-555-0000']);
 
         $existingProduct = Product::create([
             'sku' => 'EXISTING-PRODUCT',
@@ -929,8 +876,7 @@ class ProductImportTest extends TestCase
             'status' => 'publish',
             'in_stock' => true,
             'is_active' => true,
-            'type' => 'simple',
-        ]);
+            'type' => 'simple']);
 
         $import = Import::create([
             'type' => 'product',
@@ -941,8 +887,7 @@ class ProductImportTest extends TestCase
             'processed_rows' => 0,
             'success_rows' => 0,
             'failed_rows' => 0,
-            'created_by' => $user->id,
-        ]);
+            'created_by' => $user->id]);
 
         $service = new ProductImportService($import->id);
 
@@ -953,8 +898,7 @@ class ProductImportTest extends TestCase
             'quantity' => 10,
             'product_type' => 'simple',
             'status' => 1,
-            'in_stock' => 1,
-        ], 2);
+            'in_stock' => 1], 2);
 
         $service->processProductRow([
             'sku' => 'NEW-ROLLBACK-PRODUCT',
@@ -963,8 +907,7 @@ class ProductImportTest extends TestCase
             'quantity' => 10,
             'product_type' => 'simple',
             'status' => 1,
-            'in_stock' => 1,
-        ], 3);
+            'in_stock' => 1], 3);
 
         $service->rollbackCreatedData();
 
@@ -980,8 +923,7 @@ class ProductImportTest extends TestCase
             'password' => Hash::make('password'),
             'is_active' => true,
             'type' => 'admin',
-            'phone_number' => '+1-555-0000',
-        ]);
+            'phone_number' => '+1-555-0000']);
 
         $import = Import::create([
             'type' => 'product',
@@ -992,8 +934,7 @@ class ProductImportTest extends TestCase
             'processed_rows' => 0,
             'success_rows' => 0,
             'failed_rows' => 0,
-            'created_by' => $user->id,
-        ]);
+            'created_by' => $user->id]);
 
         $service = new ProductImportService($import->id);
 
@@ -1006,8 +947,7 @@ class ProductImportTest extends TestCase
             'quantity' => 10,
             'product_type' => 'simple',
             'status' => 1,
-            'in_stock' => 1,
-        ], 2);
+            'in_stock' => 1], 2);
 
         $signal = $this->readSignalFile($import->id, 'progress');
         $this->assertNotNull($signal, 'Signal file should be set after first row');
@@ -1030,14 +970,12 @@ class ProductImportTest extends TestCase
             'processed_rows' => 0,
             'success_rows' => 0,
             'failed_rows' => 0,
-            'created_by' => $user->id,
-        ]);
+            'created_by' => $user->id]);
 
         $this->writeSignalFile($import->id, 'progress', [
             'processed_rows' => 42,
             'success_rows' => 40,
-            'failed_rows' => 2,
-        ]);
+            'failed_rows' => 2]);
 
         $response = $this->getJson(self::PREFIX . "/products/import/{$import->id}");
 
@@ -1062,8 +1000,7 @@ class ProductImportTest extends TestCase
             'processed_rows' => 8,
             'success_rows' => 6,
             'failed_rows' => 2,
-            'created_by' => $user->id,
-        ]);
+            'created_by' => $user->id]);
 
         $this->removeSignalFile($import->id, 'progress');
 
@@ -1101,8 +1038,7 @@ class ProductImportTest extends TestCase
 
         $this->assertDatabaseHas('imports', [
             'id' => $importId,
-            'status' => 'cancelled',
-        ]);
+            'status' => 'cancelled']);
     }
 
     public function test_status_endpoint_shows_cancelling_when_cancel_signal_set(): void
@@ -1119,8 +1055,7 @@ class ProductImportTest extends TestCase
             'processed_rows' => 15,
             'success_rows' => 15,
             'failed_rows' => 0,
-            'created_by' => $user->id,
-        ]);
+            'created_by' => $user->id]);
 
         $this->writeSignalFile($import->id, 'cancel', ['cancelled_at' => now()->toIso8601String()]);
 
@@ -1145,8 +1080,7 @@ class ProductImportTest extends TestCase
             'processed_rows' => 0,
             'success_rows' => 0,
             'failed_rows' => 0,
-            'created_by' => $user->id,
-        ]);
+            'created_by' => $user->id]);
 
         $response = $this->postJson(self::PREFIX . "/products/import/{$import->id}/cancel");
 
@@ -1169,22 +1103,19 @@ class ProductImportTest extends TestCase
             'stock_quantity' => 10,
             'product_type' => 'variable',
             'status' => true,
-            'in_stock' => true,
-        ]);
+            'in_stock' => true]);
 
         $orphanVariant = \Marvel\Database\Models\ProductVariant::create([
             'product_id' => $product->id,
             'sku' => 'ORPHAN-VAR',
             'price' => 80,
-            'stock_quantity' => 5,
-        ]);
+            'stock_quantity' => 5]);
 
         $keptVariant = \Marvel\Database\Models\ProductVariant::create([
             'product_id' => $product->id,
             'sku' => 'KEPT-VAR',
             'price' => 90,
-            'stock_quantity' => 5,
-        ]);
+            'stock_quantity' => 5]);
 
         $service = new ProductImportService();
 
@@ -1193,8 +1124,7 @@ class ProductImportTest extends TestCase
             'variant_sku' => 'KEPT-VAR',
             'price' => 90,
             'quantity' => 5,
-            'in_stock' => 1,
-        ], 2);
+            'in_stock' => 1], 2);
 
         $this->assertDatabaseHas('product_variants', ['id' => $orphanVariant->id]);
         $this->assertDatabaseHas('product_variants', ['id' => $keptVariant->id]);

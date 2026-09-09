@@ -22,7 +22,7 @@ Artisan::call('migrate:fresh', ['--force'=>true]);
 echo "migrated\n";
 
 function makeAdmin() {
-    foreach ([Perm::IMPORT_PRODUCT, Perm::EXPORT_PRODUCT, Perm::SUPER_ADMIN] as $p) Permission::findOrCreate($p, 'api');
+    foreach ([Perm::IMPORT_PRODUCT, Perm::EXPORT_PRODUCT] as $p) Permission::findOrCreate($p, 'api');
     $role = Role::create(['name'=>'bench'.uniqid(),'guard_name'=>'api','display_name'=>'bench']);
     $role->givePermissionTo(Perm::IMPORT_PRODUCT);
     $u = User::create(['name'=>'bench','email'=>uniqid().'@bench.local','password'=>Hash::make('password'),'email_verified_at'=>now(),'is_active'=>true,'type'=>'admin']);

@@ -2,6 +2,8 @@
 
 namespace App\Listeners;
 
+use Marvel\Enums\Role;
+
 use App\Notifications\AdminQueueJobFailedNotification;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Support\Facades\Log;
@@ -28,9 +30,7 @@ class HandleFailedQueueJob
         ]);
 
         try {
-            $admins = \Marvel\Database\Models\User::permission(
-                \Marvel\Enums\Permission::SUPER_ADMIN
-            )->get();
+            $admins = \Marvel\Database\Models\User::role(\Marvel\Enums\Role::SUPER_ADMIN)->get();
 
             if ($admins->isNotEmpty()) {
                 Notification::send($admins, new AdminQueueJobFailedNotification($jobName, $queue, $message));

@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Builder;
 use Marvel\Database\Models\User;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Events\StoreNoticeEvent;
 use Marvel\Notifications\StoreNoticeNotification;
 
@@ -31,8 +32,8 @@ class StoreNoticeListener implements ShouldQueue
      */
     public function handle(StoreNoticeEvent $event)
     {
-        $users = User::whereHas('permissions', function (Builder $query) {
-            $query->whereIn('name', [Permission::SUPER_ADMIN]);
+        $users = User::whereHas('roles', function (Builder $query) {
+            $query->whereIn('name', [Role::SUPER_ADMIN]);
         })->get();
 
         if (!empty($users)) {

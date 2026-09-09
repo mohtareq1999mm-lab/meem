@@ -62,8 +62,7 @@ class FlashSaleRegressionTest extends TestCase
             'type' => 'percentage',
             'discount' => 20,
             'end_date' => now()->addDays(10),
-            'status' => true,
-        ]);
+            'status' => true]);
 
         $response = $this->getJson(self::PREFIX . '/flash-sale/summer-sale');
 
@@ -92,8 +91,7 @@ class FlashSaleRegressionTest extends TestCase
             'type' => 'percentage',
             'discount' => 15,
             'end_date' => now()->addDays(5),
-            'status' => true,
-        ]);
+            'status' => true]);
 
         $response = $this->getJson(self::PREFIX . '/flash-sale/' . $flashSale->id);
 
@@ -102,14 +100,12 @@ class FlashSaleRegressionTest extends TestCase
             'status', 'message', 'success', 'data' => [
                 'id', 'title', 'slug', 'image', 'description',
                 'start_date', 'end_date', 'status', 'is_valid',
-                'type', 'discount', 'max_discount_amount', 'created_at',
-            ],
-        ]);
+                'type', 'discount', 'max_discount_amount', 'created_at']]);
     }
 
     private function createSuperAdmin(): User
     {
-        Permission::findOrCreate(PermissionEnum::SUPER_ADMIN, self::GUARD);
+        Permission::findOrCreate(self::GUARD);
         Permission::findOrCreate(PermissionEnum::VIEW_FlASH_SALE, self::GUARD);
         Permission::findOrCreate(PermissionEnum::CREATE_FlASH_SALE, self::GUARD);
         Permission::findOrCreate(PermissionEnum::UPDATE_FlASH_SALE, self::GUARD);
@@ -118,24 +114,20 @@ class FlashSaleRegressionTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => json_encode(['en' => 'Super Admin']),
-        ]);
+            'display_name' => json_encode(['en' => 'Super Admin'])]);
 
         $role->givePermissionTo([
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_FlASH_SALE,
             PermissionEnum::CREATE_FlASH_SALE,
             PermissionEnum::UPDATE_FlASH_SALE,
-            PermissionEnum::DELETE_FlASH_SALE,
-        ]);
+            PermissionEnum::DELETE_FlASH_SALE]);
 
         $user = User::create([
             'name' => 'Super Admin',
             'email' => 'admin.flashsale@example.com',
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
-            'is_active' => true,
-        ]);
+            'is_active' => true]);
 
         $user->assignRole($role);
 

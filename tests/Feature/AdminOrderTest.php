@@ -37,8 +37,7 @@ class AdminOrderTest extends TestCase
             'password' => bcrypt('password'),
             'type' => 'admin',
             'is_active' => true,
-            'email_verified_at' => now(),
-        ]);
+            'email_verified_at' => now()]);
 
         $this->normalUser = User::create([
             'name' => 'Normal User',
@@ -46,8 +45,7 @@ class AdminOrderTest extends TestCase
             'password' => bcrypt('password'),
             'type' => 'user',
             'is_active' => true,
-            'email_verified_at' => now(),
-        ]);
+            'email_verified_at' => now()]);
 
         Role::create(['name' => 'super_admin', 'guard_name' => 'api']);
         Role::create(['name' => 'customer', 'guard_name' => 'api']);
@@ -62,16 +60,14 @@ class AdminOrderTest extends TestCase
         $this->admin->givePermissionTo([
             Permission::VIEW_ORDERS,
             Permission::VIEW_ORDER,
-            Permission::UPDATE_ORDER_STATUS,
-        ]);
+            Permission::UPDATE_ORDER_STATUS]);
 
         $this->product = Product::create([
             'name' => 'Test Product',
             'slug' => 'test-product-' . Str::random(6),
             'price' => 100.00,
             'product_type' => 'simple',
-            'status' => 'publish',
-        ]);
+            'status' => 'publish']);
     }
 
     private function authAdmin(): void
@@ -97,8 +93,7 @@ class AdminOrderTest extends TestCase
             'total_price' => 120.00,
             'shipping_price' => 20.00,
             'status' => 'pending',
-            'shipping_method' => 'SCHEDULED',
-        ], $overrides);
+            'shipping_method' => 'SCHEDULED'], $overrides);
 
         // Production constraint: only one pending per user (partial unique index).
         // For tests that need multiple orders, automatically use a new user for additional pendings.
@@ -111,8 +106,7 @@ class AdminOrderTest extends TestCase
                     'password' => bcrypt('password'),
                     'type' => 'user',
                     'is_active' => true,
-                    'email_verified_at' => now(),
-                ]);
+                    'email_verified_at' => now()]);
                 $data['user_id'] = $newUser->id;
             }
         }
@@ -128,8 +122,7 @@ class AdminOrderTest extends TestCase
             'product_sku' => 'TP-001',
             'product_quantity' => 2,
             'product_price' => 100.00,
-            'product_total_price' => 200.00,
-        ]);
+            'product_total_price' => 200.00]);
 
         return $order->fresh();
     }
@@ -141,8 +134,7 @@ class AdminOrderTest extends TestCase
             'payment_method' => 'cod',
             'status' => 'paid',
             'amount' => 120.00,
-            'user_id' => $this->normalUser->id,
-        ]);
+            'user_id' => $this->normalUser->id]);
 
         return $order->fresh();
     }
@@ -182,9 +174,7 @@ class AdminOrderTest extends TestCase
             'status', 'message', 'success',
             'data' => [
                 'data',
-                'links' => ['current_page', 'from', 'to', 'last_page', 'per_page', 'total'],
-            ],
-        ]);
+                'links' => ['current_page', 'from', 'to', 'last_page', 'per_page', 'total']]]);
     }
 
     public function test_index_respects_limit_parameter()
@@ -253,8 +243,7 @@ class AdminOrderTest extends TestCase
             'email' => 'other@example.com',
             'password' => bcrypt('password'),
             'type' => 'user',
-            'email_verified_at' => now(),
-        ]);
+            'email_verified_at' => now()]);
 
         $this->createOrder(['user_id' => $this->normalUser->id]);
         $this->createOrder(['user_id' => $otherUser->id]);
@@ -290,12 +279,10 @@ class AdminOrderTest extends TestCase
 
         $matching = $this->createOrder([
             'name' => 'John Smith',
-            'user_email' => 'john@example.com',
-        ]);
+            'user_email' => 'john@example.com']);
         $nonMatching = $this->createOrder([
             'name' => 'Jane Doe',
-            'user_email' => 'jane@example.com',
-        ]);
+            'user_email' => 'jane@example.com']);
 
         $response = $this->getJson(self::PREFIX . '/orders?search=doe');
 
@@ -402,9 +389,7 @@ class AdminOrderTest extends TestCase
                 'price',
                 'total_price',
                 'order_items',
-                'transactions',
-            ],
-        ]);
+                'transactions']]);
     }
 
     public function test_show_returns_404_for_nonexistent_order()
@@ -494,8 +479,7 @@ class AdminOrderTest extends TestCase
         $order = $this->createOrder();
 
         $response = $this->patchJson(self::PREFIX . '/orders/' . $order->id . '/status', [
-            'status' => 'completed',
-        ]);
+            'status' => 'completed']);
 
         $response->assertStatus(401);
     }
@@ -506,8 +490,7 @@ class AdminOrderTest extends TestCase
 
         $this->authUser();
         $response = $this->patchJson(self::PREFIX . '/orders/' . $order->id . '/status', [
-            'status' => 'completed',
-        ]);
+            'status' => 'completed']);
 
         $response->assertStatus(403);
     }
@@ -519,8 +502,7 @@ class AdminOrderTest extends TestCase
         $order = $this->createOrder();
 
         $response = $this->patchJson(self::PREFIX . '/orders/' . $order->id . '/status', [
-            'status' => 'completed',
-        ]);
+            'status' => 'completed']);
 
         $response->assertStatus(200);
         $response->assertJsonStructure([
@@ -532,16 +514,13 @@ class AdminOrderTest extends TestCase
                 'payment_status',
                 'customer',
                 'created_at',
-                'updated_at',
-            ],
-        ]);
+                'updated_at']]);
         $this->assertTrue($response->json('success'));
         $this->assertEquals('completed', $response->json('data.status'));
 
         $this->assertDatabaseHas('orders', [
             'id' => $order->id,
-            'status' => 'completed',
-        ]);
+            'status' => 'completed']);
 
         $fresh = $order->fresh();
         $this->assertEquals('payment-success', $fresh->payment_status);
@@ -555,15 +534,13 @@ class AdminOrderTest extends TestCase
         $order = $this->createOrder();
 
         $response = $this->patchJson(self::PREFIX . '/orders/' . $order->id . '/status', [
-            'status' => 'processing',
-        ]);
+            'status' => 'processing']);
 
         $response->assertStatus(200);
         $this->assertEquals('processing', $response->json('data.status'));
         $this->assertDatabaseHas('orders', [
             'id' => $order->id,
-            'status' => 'processing',
-        ]);
+            'status' => 'processing']);
     }
 
     public function test_update_status_completed_to_delivered()
@@ -573,15 +550,13 @@ class AdminOrderTest extends TestCase
         $order = $this->createOrder(['status' => 'completed']);
 
         $response = $this->patchJson(self::PREFIX . '/orders/' . $order->id . '/status', [
-            'status' => 'delivered',
-        ]);
+            'status' => 'delivered']);
 
         $response->assertStatus(200);
         $this->assertEquals('delivered', $response->json('data.status'));
         $this->assertDatabaseHas('orders', [
             'id' => $order->id,
-            'status' => 'delivered',
-        ]);
+            'status' => 'delivered']);
     }
 
     public function test_update_status_to_cancelled_sets_cancelled_at()
@@ -591,15 +566,13 @@ class AdminOrderTest extends TestCase
         $order = $this->createOrder();
 
         $response = $this->patchJson(self::PREFIX . '/orders/' . $order->id . '/status', [
-            'status' => 'cancelled',
-        ]);
+            'status' => 'cancelled']);
 
         $response->assertStatus(200);
         $this->assertEquals('cancelled', $response->json('data.status'));
         $this->assertDatabaseHas('orders', [
             'id' => $order->id,
-            'status' => 'cancelled',
-        ]);
+            'status' => 'cancelled']);
         $this->assertNotNull($order->fresh()->cancelled_at);
     }
 
@@ -608,8 +581,7 @@ class AdminOrderTest extends TestCase
         $this->authAdmin();
 
         $response = $this->patchJson(self::PREFIX . '/orders/99999/status', [
-            'status' => 'completed',
-        ]);
+            'status' => 'completed']);
 
         $response->assertStatus(404);
         $this->assertFalse($response->json('success'));
@@ -634,8 +606,7 @@ class AdminOrderTest extends TestCase
         $order = $this->createOrder();
 
         $response = $this->patchJson(self::PREFIX . '/orders/' . $order->id . '/status', [
-            'status' => 'shipped',
-        ]);
+            'status' => 'shipped']);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['status']);
@@ -648,16 +619,14 @@ class AdminOrderTest extends TestCase
         $order = $this->createOrder(['status' => 'delivered']);
 
         $response = $this->patchJson(self::PREFIX . '/orders/' . $order->id . '/status', [
-            'status' => 'pending',
-        ]);
+            'status' => 'pending']);
 
         $response->assertStatus(422);
         $this->assertFalse($response->json('success'));
 
         $this->assertDatabaseHas('orders', [
             'id' => $order->id,
-            'status' => 'delivered',
-        ]);
+            'status' => 'delivered']);
     }
 
     public function test_update_status_response_includes_order_details()
@@ -669,8 +638,7 @@ class AdminOrderTest extends TestCase
         $this->createOrderWithTransaction($order);
 
         $response = $this->patchJson(self::PREFIX . '/orders/' . $order->id . '/status', [
-            'status' => 'completed',
-        ]);
+            'status' => 'completed']);
 
         $response->assertStatus(200);
         $data = $response->json('data');
@@ -688,8 +656,7 @@ class AdminOrderTest extends TestCase
         $order = $this->createOrder(['status' => 'pending']);
 
         $response = $this->patchJson(self::PREFIX . '/orders/' . $order->id . '/status', [
-            'status' => 'processing',
-        ]);
+            'status' => 'processing']);
 
         $response->assertStatus(200);
         $this->assertEqualsCanonicalizing(
@@ -708,15 +675,13 @@ class AdminOrderTest extends TestCase
         $order = $this->createOrder(['status' => $from]);
 
         $response = $this->patchJson(self::PREFIX . '/orders/' . $order->id . '/status', [
-            'status' => $to,
-        ]);
+            'status' => $to]);
 
         $response->assertStatus(200);
         $this->assertEquals($to, $response->json('data.status'));
         $this->assertDatabaseHas('orders', [
             'id' => $order->id,
-            'status' => $to,
-        ]);
+            'status' => $to]);
     }
 
     /**
@@ -729,16 +694,14 @@ class AdminOrderTest extends TestCase
         $order = $this->createOrder(['status' => $from]);
 
         $response = $this->patchJson(self::PREFIX . '/orders/' . $order->id . '/status', [
-            'status' => $to,
-        ]);
+            'status' => $to]);
 
         $response->assertStatus(422);
         $this->assertFalse($response->json('success'));
 
         $this->assertDatabaseHas('orders', [
             'id' => $order->id,
-            'status' => $from,
-        ]);
+            'status' => $from]);
     }
 
     public static function allowedTransitionsProvider(): array
@@ -748,8 +711,7 @@ class AdminOrderTest extends TestCase
             'processing' => ['processing', 'completed', 'cancelled'],
             'completed' => ['completed', 'delivered'],
             'delivered' => ['delivered'],
-            'cancelled' => ['cancelled'],
-        ];
+            'cancelled' => ['cancelled']];
 
         $cases = [];
         foreach ($matrix as $from => $targets) {
@@ -769,8 +731,7 @@ class AdminOrderTest extends TestCase
             'processing' => ['processing', 'completed', 'cancelled'],
             'completed' => ['completed', 'delivered'],
             'delivered' => ['delivered'],
-            'cancelled' => ['cancelled'],
-        ];
+            'cancelled' => ['cancelled']];
 
         $cases = [];
         foreach ($all as $from) {

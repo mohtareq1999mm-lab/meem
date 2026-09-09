@@ -29,13 +29,11 @@ class CategoryPermissionTest extends TestCase
 
     private const CATEGORY_IMPORT_EXPORT_PERMISSIONS = [
         'import-category',
-        'export-category',
-    ];
+        'export-category'];
 
     private const PERMISSION_LABELS = [
         'import-category' => ['en' => 'Import categories', 'ar' => 'استيراد التصنيفات'],
-        'export-category' => ['en' => 'Export categories', 'ar' => 'تصدير التصنيفات'],
-    ];
+        'export-category' => ['en' => 'Export categories', 'ar' => 'تصدير التصنيفات']];
 
     protected function setUp(): void
     {
@@ -53,8 +51,7 @@ class CategoryPermissionTest extends TestCase
         $role = Role::create([
             'name' => 'test-role-' . uniqid(),
             'guard_name' => self::GUARD,
-            'display_name' => json_encode(['en' => 'Test Role']),
-        ]);
+            'display_name' => json_encode(['en' => 'Test Role'])]);
 
         $role->givePermissionTo($permissions);
 
@@ -64,8 +61,7 @@ class CategoryPermissionTest extends TestCase
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => $type,
-        ]);
+            'type' => $type]);
 
         $user->assignRole($role);
 
@@ -80,8 +76,7 @@ class CategoryPermissionTest extends TestCase
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'user',
-        ]);
+            'type' => 'user']);
 
         Sanctum::actingAs($user);
 
@@ -99,8 +94,7 @@ class CategoryPermissionTest extends TestCase
             'processed_rows' => 5,
             'success_rows' => 5,
             'failed_rows' => 0,
-            'created_by' => 1,
-        ], $overrides));
+            'created_by' => 1], $overrides));
     }
 
     private function sampleFile(): UploadedFile
@@ -117,7 +111,7 @@ class CategoryPermissionTest extends TestCase
     {
         $this->assertSame('import-category', PermissionEnum::IMPORT_CATEGORY);
         $this->assertSame('export-category', PermissionEnum::EXPORT_CATEGORY);
-        $this->assertSame('super_admin', PermissionEnum::SUPER_ADMIN);
+        $this->assertSame('super_admin');
     }
 
     /** @test */
@@ -128,8 +122,7 @@ class CategoryPermissionTest extends TestCase
         foreach (self::CATEGORY_IMPORT_EXPORT_PERMISSIONS as $name) {
             $this->assertDatabaseHas('permissions', [
                 'name' => $name,
-                'guard_name' => self::GUARD,
-            ]);
+                'guard_name' => self::GUARD]);
         }
     }
 
@@ -336,8 +329,7 @@ class CategoryPermissionTest extends TestCase
         $completed = $this->createImport([
             'type' => 'category',
             'status' => 'completed',
-            'errors' => [['row' => 3, 'error_message' => 'Bad']],
-        ]);
+            'errors' => [['row' => 3, 'error_message' => 'Bad']]]);
         $this->getJson(self::PREFIX . "/categories/import/{$completed->id}/download-errors")->assertStatus(200);
 
         $exportResponse = $this->getJson(self::PREFIX . '/categories/export');
@@ -350,8 +342,7 @@ class CategoryPermissionTest extends TestCase
             'type' => 'category-export',
             'file_path' => 'exports/categories.xlsx',
             'file_name' => 'categories.xlsx',
-            'status' => 'completed',
-        ]);
+            'status' => 'completed']);
         Storage::disk('public')->put('exports/categories.xlsx', 'x');
         $this->getJson(self::PREFIX . "/categories/export/{$exportDone->id}/download")->assertStatus(200);
     }
@@ -370,8 +361,7 @@ class CategoryPermissionTest extends TestCase
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
         $user->assignRole(RoleEnum::SUPER_ADMIN);
 
         app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
@@ -403,8 +393,7 @@ class CategoryPermissionTest extends TestCase
             'file_path' => 'exports/categories.xlsx',
             'file_name' => 'categories.xlsx',
             'status' => 'completed',
-            'created_by' => $user->id,
-        ]);
+            'created_by' => $user->id]);
         Storage::disk('public')->put('exports/categories.xlsx', 'x');
         $this->getJson(self::PREFIX . "/categories/export/{$exportDone->id}/download")->assertStatus(200);
     }
@@ -414,8 +403,7 @@ class CategoryPermissionTest extends TestCase
     {
         $controllers = [
             \Marvel\Http\Controllers\CategoryImportController::class,
-            \Marvel\Http\Controllers\CategoryExportController::class,
-        ];
+            \Marvel\Http\Controllers\CategoryExportController::class];
 
         foreach ($controllers as $controller) {
             $reflection = new \ReflectionClass($controller);

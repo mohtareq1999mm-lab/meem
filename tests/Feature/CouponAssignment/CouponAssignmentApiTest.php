@@ -42,12 +42,10 @@ class CouponAssignmentApiTest extends TestCase
     private function createAdminUser(): User
     {
         $permissions = [
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_COUPON_ASSIGNMENTS,
             PermissionEnum::CREATE_COUPON_ASSIGNMENT,
             PermissionEnum::UPDATE_COUPON_ASSIGNMENT,
-            PermissionEnum::DELETE_COUPON_ASSIGNMENT,
-        ];
+            PermissionEnum::DELETE_COUPON_ASSIGNMENT];
 
         foreach ($permissions as $perm) {
             Permission::findOrCreate($perm, self::GUARD);
@@ -56,8 +54,7 @@ class CouponAssignmentApiTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'display_name' => json_encode(['en' => 'Super Admin', 'ar' => 'مدير النظام']),
-            'guard_name' => self::GUARD,
-        ]);
+            'guard_name' => self::GUARD]);
 
         foreach ($permissions as $perm) {
             $role->givePermissionTo($perm);
@@ -83,8 +80,7 @@ class CouponAssignmentApiTest extends TestCase
             'discount' => 10,
             'status' => true,
             'start_date' => now()->subDay(),
-            'end_date' => now()->addMonth(),
-        ], $overrides));
+            'end_date' => now()->addMonth()], $overrides));
 
         $coupon->update(['code' => $code]);
 
@@ -99,8 +95,7 @@ class CouponAssignmentApiTest extends TestCase
             'max_uses' => 1,
             'used' => 0,
             'assigned_at' => now(),
-            'expires_at' => null,
-        ], $overrides));
+            'expires_at' => null], $overrides));
     }
 
     private function authAdmin(): void
@@ -166,8 +161,7 @@ class CouponAssignmentApiTest extends TestCase
         $response->assertJsonPath('success', true);
         $response->assertJsonStructure([
             'status', 'message', 'success',
-            'data' => ['data', 'current_page', 'from', 'last_page', 'per_page', 'to', 'total'],
-        ]);
+            'data' => ['data', 'current_page', 'from', 'last_page', 'per_page', 'to', 'total']]);
         $this->assertCount(2, $response->json('data.data'));
         $this->assertEquals(2, $response->json('data.total'));
     }
@@ -229,15 +223,13 @@ class CouponAssignmentApiTest extends TestCase
 
         $response = $this->postJson($this->assignmentUrl(), [
             'user_id' => $this->customer->id,
-            'max_uses' => 3,
-        ]);
+            'max_uses' => 3]);
 
         $response->assertStatus(201);
         $response->assertJsonPath('success', true);
         $response->assertJsonStructure([
             'status', 'message', 'success',
-            'data' => ['id', 'coupon_id', 'user_id', 'user', 'max_uses', 'used', 'remaining', 'is_expired', 'assigned_at'],
-        ]);
+            'data' => ['id', 'coupon_id', 'user_id', 'user', 'max_uses', 'used', 'remaining', 'is_expired', 'assigned_at']]);
         $response->assertJsonPath('data.coupon_id', $this->coupon->id);
         $response->assertJsonPath('data.user_id', $this->customer->id);
         $response->assertJsonPath('data.max_uses', 3);
@@ -248,8 +240,7 @@ class CouponAssignmentApiTest extends TestCase
             'coupon_id' => $this->coupon->id,
             'user_id' => $this->customer->id,
             'max_uses' => 3,
-            'used' => 0,
-        ]);
+            'used' => 0]);
     }
 
     /** @test */
@@ -260,8 +251,7 @@ class CouponAssignmentApiTest extends TestCase
         $response = $this->postJson($this->assignmentUrl(), [
             'user_id' => $this->customer->id,
             'max_uses' => 5,
-            'expires_at' => now()->addWeek()->toISOString(),
-        ]);
+            'expires_at' => now()->addWeek()->toISOString()]);
 
         $response->assertStatus(201);
         $response->assertJsonPath('success', true);
@@ -277,8 +267,7 @@ class CouponAssignmentApiTest extends TestCase
 
         $response = $this->postJson($this->assignmentUrl(), [
             'user_id' => $this->customer->id,
-            'max_uses' => 1,
-        ]);
+            'max_uses' => 1]);
 
         $response->assertStatus(409);
         $response->assertJsonPath('success', false);
@@ -291,8 +280,7 @@ class CouponAssignmentApiTest extends TestCase
 
         $response = $this->postJson(self::PREFIX . '/coupons/99999/assignments', [
             'user_id' => $this->customer->id,
-            'max_uses' => 1,
-        ]);
+            'max_uses' => 1]);
 
         $response->assertStatus(404);
         $response->assertJsonPath('success', false);
@@ -320,8 +308,7 @@ class CouponAssignmentApiTest extends TestCase
         $response->assertJsonPath('data.remaining', 1);
         $response->assertJsonPath('data.is_expired', false);
         $response->assertJsonStructure([
-            'data' => ['user' => ['id', 'name', 'email']],
-        ]);
+            'data' => ['user' => ['id', 'name', 'email']]]);
         $response->assertJsonPath('data.user.id', $this->customer->id);
     }
 
@@ -360,8 +347,7 @@ class CouponAssignmentApiTest extends TestCase
         $assignment = $this->createAssignment($this->coupon, $this->customer);
 
         $response = $this->putJson($this->assignmentUrl() . '/' . $assignment->id, [
-            'max_uses' => 10,
-        ]);
+            'max_uses' => 10]);
 
         $response->assertOk();
         $response->assertJsonPath('success', true);
@@ -369,8 +355,7 @@ class CouponAssignmentApiTest extends TestCase
         $response->assertJsonPath('data.remaining', 10);
         $this->assertDatabaseHas('coupon_assignments', [
             'id' => $assignment->id,
-            'max_uses' => 10,
-        ]);
+            'max_uses' => 10]);
     }
 
     /** @test */
@@ -381,8 +366,7 @@ class CouponAssignmentApiTest extends TestCase
         $newExpiry = now()->addMonth()->toISOString();
 
         $response = $this->putJson($this->assignmentUrl() . '/' . $assignment->id, [
-            'expires_at' => $newExpiry,
-        ]);
+            'expires_at' => $newExpiry]);
 
         $response->assertOk();
         $response->assertJsonPath('success', true);
@@ -394,12 +378,10 @@ class CouponAssignmentApiTest extends TestCase
     {
         $this->authAdmin();
         $assignment = $this->createAssignment($this->coupon, $this->customer, [
-            'expires_at' => now()->addWeek(),
-        ]);
+            'expires_at' => now()->addWeek()]);
 
         $response = $this->putJson($this->assignmentUrl() . '/' . $assignment->id, [
-            'expires_at' => null,
-        ]);
+            'expires_at' => null]);
 
         $response->assertOk();
         $response->assertJsonPath('success', true);
@@ -412,19 +394,16 @@ class CouponAssignmentApiTest extends TestCase
         $this->authAdmin();
         $assignment = $this->createAssignment($this->coupon, $this->customer, [
             'max_uses' => 5,
-            'used' => 3,
-        ]);
+            'used' => 3]);
 
         $response = $this->putJson($this->assignmentUrl() . '/' . $assignment->id, [
-            'max_uses' => 2,
-        ]);
+            'max_uses' => 2]);
 
         $response->assertStatus(422);
         $response->assertJsonPath('success', false);
         $this->assertDatabaseHas('coupon_assignments', [
             'id' => $assignment->id,
-            'max_uses' => 5,
-        ]);
+            'max_uses' => 5]);
     }
 
     /** @test */
@@ -433,8 +412,7 @@ class CouponAssignmentApiTest extends TestCase
         $this->authAdmin();
 
         $response = $this->putJson($this->assignmentUrl() . '/99999', [
-            'max_uses' => 5,
-        ]);
+            'max_uses' => 5]);
 
         $response->assertStatus(404);
         $response->assertJsonPath('success', false);
@@ -455,8 +433,7 @@ class CouponAssignmentApiTest extends TestCase
         $response->assertOk();
         $response->assertJsonPath('success', true);
         $this->assertDatabaseMissing('coupon_assignments', [
-            'id' => $assignment->id,
-        ]);
+            'id' => $assignment->id]);
     }
 
     /** @test */
@@ -465,16 +442,14 @@ class CouponAssignmentApiTest extends TestCase
         $this->authAdmin();
         $assignment = $this->createAssignment($this->coupon, $this->customer, [
             'max_uses' => 5,
-            'used' => 2,
-        ]);
+            'used' => 2]);
 
         $response = $this->deleteJson($this->assignmentUrl() . '/' . $assignment->id);
 
         $response->assertStatus(409);
         $response->assertJsonPath('success', false);
         $this->assertDatabaseHas('coupon_assignments', [
-            'id' => $assignment->id,
-        ]);
+            'id' => $assignment->id]);
     }
 
     /** @test */
@@ -498,8 +473,7 @@ class CouponAssignmentApiTest extends TestCase
         $this->authAdmin();
         $assignment = $this->createAssignment($this->coupon, $this->customer, [
             'max_uses' => 10,
-            'used' => 3,
-        ]);
+            'used' => 3]);
 
         $response = $this->getJson($this->assignmentUrl() . '/' . $assignment->id);
 
@@ -512,8 +486,7 @@ class CouponAssignmentApiTest extends TestCase
         $this->authAdmin();
         $assignment = $this->createAssignment($this->coupon, $this->customer, [
             'max_uses' => 3,
-            'used' => 5,
-        ]);
+            'used' => 5]);
 
         $response = $this->getJson($this->assignmentUrl() . '/' . $assignment->id);
 
@@ -525,8 +498,7 @@ class CouponAssignmentApiTest extends TestCase
     {
         $this->authAdmin();
         $assignment = $this->createAssignment($this->coupon, $this->customer, [
-            'expires_at' => now()->subDay(),
-        ]);
+            'expires_at' => now()->subDay()]);
 
         $response = $this->getJson($this->assignmentUrl() . '/' . $assignment->id);
 
@@ -538,8 +510,7 @@ class CouponAssignmentApiTest extends TestCase
     {
         $this->authAdmin();
         $assignment = $this->createAssignment($this->coupon, $this->customer, [
-            'expires_at' => now()->addWeek(),
-        ]);
+            'expires_at' => now()->addWeek()]);
 
         $response = $this->getJson($this->assignmentUrl() . '/' . $assignment->id);
 

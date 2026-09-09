@@ -43,11 +43,9 @@ class UserStaffMiscTest extends TestCase
                 'language' => 'en',
                 'options' => json_encode([
                     'app_settings' => ['trust' => true],
-                    'useMustVerifyEmail' => false,
-                ]),
+                    'useMustVerifyEmail' => false]),
                 'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+                'updated_at' => now()]);
         }
 
         if (!Schema::hasTable('shops')) {
@@ -90,14 +88,12 @@ class UserStaffMiscTest extends TestCase
         }
 
         $permissions = [
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_USERS,
             PermissionEnum::CREATE_USER,
             PermissionEnum::DELETE_USER,
             PermissionEnum::EDIT_USER,
             PermissionEnum::STORE_OWNER,
-            PermissionEnum::STAFF,
-        ];
+            PermissionEnum::STAFF];
 
         foreach ($permissions as $perm) {
             Permission::findOrCreate($perm, self::GUARD);
@@ -106,16 +102,13 @@ class UserStaffMiscTest extends TestCase
         $superRole = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'display_name' => 'Super Admin',
-            'guard_name' => self::GUARD,
-        ]);
-        $superRole->givePermissionTo(PermissionEnum::SUPER_ADMIN);
+            'guard_name' => self::GUARD]);
         $superRole->givePermissionTo(PermissionEnum::VIEW_USERS);
 
         $ownerRole = Role::create([
             'name' => RoleEnum::STORE_OWNER,
             'display_name' => 'Store Owner',
-            'guard_name' => self::GUARD,
-        ]);
+            'guard_name' => self::GUARD]);
         $ownerRole->givePermissionTo(PermissionEnum::STORE_OWNER);
 
         $this->admin = User::create([
@@ -125,8 +118,7 @@ class UserStaffMiscTest extends TestCase
             'email_verified_at' => now(),
             'type' => 'admin',
             'is_active' => true,
-            'phone_number' => '01000000085',
-        ]);
+            'phone_number' => '01000000085']);
         $this->admin->assignRole($superRole);
 
         $this->shopOwner = User::create([
@@ -136,8 +128,7 @@ class UserStaffMiscTest extends TestCase
             'email_verified_at' => now(),
             'type' => 'admin',
             'is_active' => true,
-            'phone_number' => '01000000084',
-        ]);
+            'phone_number' => '01000000084']);
         $this->shopOwner->assignRole($ownerRole);
     }
 
@@ -158,8 +149,7 @@ class UserStaffMiscTest extends TestCase
         Sanctum::actingAs($this->admin);
 
         $this->postJson(self::PREFIX . '/license-key/verify', [
-            'license_key' => 12345,
-        ])->assertStatus(422);
+            'license_key' => 12345])->assertStatus(422);
     }
 
     // ========================================================================
@@ -218,8 +208,7 @@ class UserStaffMiscTest extends TestCase
         User::create([
             'name' => 'Type User', 'email' => 'typeuser@example.com',
             'password' => Hash::make('p'), 'type' => 'user', 'is_active' => true,
-            'phone_number' => '01000000083',
-        ]);
+            'phone_number' => '01000000083']);
 
         $response = $this->getJson(self::PREFIX . '/users?type=admin');
 
@@ -235,8 +224,7 @@ class UserStaffMiscTest extends TestCase
         User::create([
             'name' => 'Flagged User', 'email' => 'flagged@example.com',
             'password' => Hash::make('p'), 'type' => 'user', 'is_active' => true,
-            'phone_number' => '01000000082',
-        ]);
+            'phone_number' => '01000000082']);
 
         $response = $this->getJson(self::PREFIX . '/users?users=true');
 

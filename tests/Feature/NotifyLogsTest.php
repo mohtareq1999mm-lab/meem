@@ -128,8 +128,7 @@ class NotifyLogsTest extends TestCase
 
         \Spatie\Permission\Models\Permission::create([
             'name' => 'super_admin',
-            'guard_name' => 'api',
-        ]);
+            'guard_name' => 'api']);
     }
 
     private function createUser(array $overrides = []): User
@@ -141,8 +140,7 @@ class NotifyLogsTest extends TestCase
             'email_verified_at' => now(),
             'is_active' => true,
             'type' => 'user',
-            'phone_number' => fake()->unique()->phoneNumber(),
-        ], $overrides));
+            'phone_number' => fake()->unique()->phoneNumber()], $overrides));
     }
 
     private function createNotifyLog(User $receiver, ?User $sender = null, array $overrides = []): NotifyLogs
@@ -154,8 +152,7 @@ class NotifyLogsTest extends TestCase
             'notify_receiver_type' => 'customer',
             'is_read' => false,
             'notify_text' => 'Test notification',
-            'notify_tracker' => 'TRK-' . fake()->uuid(),
-        ], $overrides));
+            'notify_tracker' => 'TRK-' . fake()->uuid()], $overrides));
     }
 
     // ==================== AUTHENTICATION ====================
@@ -239,8 +236,7 @@ class NotifyLogsTest extends TestCase
         $user = $this->createUser();
         $sender = $this->createUser([
             'email' => 'sender@example.com',
-            'phone_number' => '01009999999',
-        ]);
+            'phone_number' => '01009999999']);
 
         $this->createNotifyLog($user, $sender);
 
@@ -368,8 +364,7 @@ class NotifyLogsTest extends TestCase
         Sanctum::actingAs($user);
 
         $response = $this->postJson(self::PREFIX . '/notify-log-read-all', [
-            'set_all_read' => true,
-        ]);
+            'set_all_read' => true]);
 
         $response->assertStatus(200);
         $this->assertCount(3, $response->json());
@@ -390,8 +385,7 @@ class NotifyLogsTest extends TestCase
 
         $response = $this->postJson(self::PREFIX . '/notify-log-read-all', [
             'set_all_read' => true,
-            'notify_type' => 'order',
-        ]);
+            'notify_type' => 'order']);
 
         $response->assertStatus(200);
         $this->assertCount(2, $response->json());
@@ -415,8 +409,7 @@ class NotifyLogsTest extends TestCase
 
         $response = $this->postJson(self::PREFIX . '/notify-log-read-all', [
             'set_all_read' => true,
-            'receiver' => $userB->id,
-        ]);
+            'receiver' => $userB->id]);
 
         $response->assertStatus(200);
 
@@ -477,8 +470,6 @@ class NotifyLogsTest extends TestCase
             'sender',
             'sender_user' => [
                 'id',
-                'name',
-            ],
-        ]);
+                'name']]);
     }
 }

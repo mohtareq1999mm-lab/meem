@@ -11,6 +11,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 use Marvel\Database\Repositories\NotifyLogsRepository;
 use Marvel\Database\Repositories\UserRepository;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\NotifyLogsReadAllRequest;
 use Marvel\Http\Requests\NotifyLogsReadRequest;
@@ -120,7 +121,7 @@ class NotifyLogsController extends CoreController
     public function deleteNotifyLogs(Request $request)
     {
         try {
-            if ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
+            if ($request->user()->hasRole(Role::SUPER_ADMIN)) {
                 return $this->repository->findOrFail($request->id)->delete();
             }
         } catch (MarvelException $th) {

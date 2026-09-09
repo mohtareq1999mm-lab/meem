@@ -7,6 +7,7 @@ namespace Marvel\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\CmsPageRequest;
 use Marvel\Http\Resources\CmsPageResource;
@@ -367,7 +368,7 @@ class CmsPageController extends CoreController
     {
         $user = $request->user();
 
-        if (!$user || (!$user->hasPermissionTo(Permission::SUPER_ADMIN) && !$user->hasPermissionTo(Permission::EDITOR))) {
+        if (!$user || (!$user->hasRole(Role::SUPER_ADMIN) && !$user->hasPermissionTo(Permission::EDITOR))) {
             throw new MarvelException(NOT_AUTHORIZED);
         }
     }

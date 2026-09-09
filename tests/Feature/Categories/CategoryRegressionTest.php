@@ -38,8 +38,7 @@ class CategoryRegressionTest extends TestCase
     {
         $category = Category::create([
             'name' => ['en' => 'B1 Test'],
-            'slug' => 'b1-test',
-        ]);
+            'slug' => 'b1-test']);
 
         $categoryId = $category->id;
         $category->delete();
@@ -55,8 +54,7 @@ class CategoryRegressionTest extends TestCase
 
         $category = Category::create([
             'name' => ['en' => 'English Name', 'ar' => 'الاسم العربي'],
-            'slug' => 'b2-test',
-        ]);
+            'slug' => 'b2-test']);
 
         $response = $this->getJson(self::PREFIX . '/categories/' . $category->id);
         $response->assertOk();
@@ -75,8 +73,7 @@ class CategoryRegressionTest extends TestCase
         $category = Category::create([
             'name' => ['en' => 'Test'],
             'slug' => 'b2-details',
-            'details' => ['en' => 'English details', 'ar' => 'تفاصيل بالعربية'],
-        ]);
+            'details' => ['en' => 'English details', 'ar' => 'تفاصيل بالعربية']]);
 
         $response = $this->getJson(self::PREFIX . '/categories/' . $category->id);
         $response->assertOk();
@@ -101,8 +98,7 @@ class CategoryRegressionTest extends TestCase
             'CATEGORY_CREATED_SUCCESSFULLY',
             'CATEGORY_UPDATED_SUCCESSFULLY',
             'CATEGORY_DELETED_SUCCESSFULLY',
-            'CATEGORY_FEATURE_TOGGLED_SUCCESSFULLY',
-        ];
+            'CATEGORY_FEATURE_TOGGLED_SUCCESSFULLY'];
 
         foreach ($keys as $key) {
             $this->assertNotNull(__('message.' . $key), "Translation key message.{$key} is missing");
@@ -121,8 +117,7 @@ class CategoryRegressionTest extends TestCase
     {
         $category = Category::create([
             'name' => ['en' => 'Normal Slug'],
-            'slug' => 'normal-slug',
-        ]);
+            'slug' => 'normal-slug']);
 
         $this->assertEquals('normal-slug', $category->slug);
     }
@@ -149,8 +144,7 @@ class CategoryRegressionTest extends TestCase
     {
         $category = Category::create([
             'name' => ['en' => 'My Category'],
-            'slug' => 'custom-slug-123',
-        ]);
+            'slug' => 'custom-slug-123']);
 
         $this->assertEquals('custom-slug-123', $category->slug);
     }
@@ -159,8 +153,7 @@ class CategoryRegressionTest extends TestCase
     public function test_b7_slug_auto_generated_when_not_provided(): void
     {
         $category = Category::create([
-            'name' => ['en' => 'Auto Generated Slug'],
-        ]);
+            'name' => ['en' => 'Auto Generated Slug']]);
 
         $this->assertEquals('auto-generated-slug', $category->slug);
     }
@@ -170,8 +163,7 @@ class CategoryRegressionTest extends TestCase
     {
         $category = Category::create([
             'name' => ['en' => 'Original'],
-            'slug' => 'original-slug',
-        ]);
+            'slug' => 'original-slug']);
 
         $category->update(['details' => 'Updated details']);
 
@@ -183,8 +175,7 @@ class CategoryRegressionTest extends TestCase
     {
         $category = Category::create([
             'name' => ['en' => 'Old Name'],
-            'slug' => 'old-name',
-        ]);
+            'slug' => 'old-name']);
 
         $category->update(['name' => ['en' => 'New Name']]);
 
@@ -196,13 +187,11 @@ class CategoryRegressionTest extends TestCase
     {
         $category = Category::create([
             'name' => ['en' => 'Original'],
-            'slug' => 'original-slug',
-        ]);
+            'slug' => 'original-slug']);
 
         $category->update([
             'name' => ['en' => 'Updated Name'],
-            'slug' => 'explicit-slug',
-        ]);
+            'slug' => 'explicit-slug']);
 
         $this->assertEquals('explicit-slug', $category->slug);
     }
@@ -210,12 +199,10 @@ class CategoryRegressionTest extends TestCase
     private function createSuperAdminUser(): User
     {
         $permissions = [
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_CATEGORIES,
             PermissionEnum::CREATE_CATEGORY,
             PermissionEnum::UPDATE_CATEGORY,
-            PermissionEnum::DELETE_CATEGORY,
-        ];
+            PermissionEnum::DELETE_CATEGORY];
 
         foreach ($permissions as $perm) {
             Permission::findOrCreate($perm, self::GUARD);
@@ -224,8 +211,7 @@ class CategoryRegressionTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => 'Super Admin',
-        ]);
+            'display_name' => 'Super Admin']);
 
         foreach ($permissions as $perm) {
             $role->givePermissionTo($perm);
@@ -237,8 +223,7 @@ class CategoryRegressionTest extends TestCase
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
 
         $user->assignRole($role);
 

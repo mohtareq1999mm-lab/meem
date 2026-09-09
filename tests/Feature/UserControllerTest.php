@@ -43,11 +43,9 @@ class UserControllerTest extends TestCase
                 'language' => 'en',
                 'options' => json_encode([
                     'app_settings' => ['trust' => true],
-                    'useMustVerifyEmail' => false,
-                ]),
+                    'useMustVerifyEmail' => false]),
                 'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+                'updated_at' => now()]);
         }
 
         $this->beginDatabaseTransaction();
@@ -218,14 +216,12 @@ class UserControllerTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'phone_number' => '0100000' . self::$phoneCounter,
-            'is_active' => true,
-        ], $overrides);
+            'is_active' => true], $overrides);
     }
 
     private function createSuperAdminUser(): User
     {
         $permissionNames = [
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_USERS,
             PermissionEnum::CREATE_USER,
             PermissionEnum::DELETE_USER,
@@ -233,8 +229,7 @@ class UserControllerTest extends TestCase
             PermissionEnum::BAN_USER,
             PermissionEnum::ACTIVATE_USER,
             PermissionEnum::MAKE_ADMIN,
-            PermissionEnum::RESTORE_USER,
-        ];
+            PermissionEnum::RESTORE_USER];
 
         $permissions = collect($permissionNames)->map(fn($name) =>
             \Spatie\Permission\Models\Permission::findOrCreate($name, self::GUARD)
@@ -250,8 +245,7 @@ class UserControllerTest extends TestCase
             'email_verified_at' => now(),
             'type' => 'admin',
             'is_active' => true,
-            'phone_number' => '01000000001',
-        ]);
+            'phone_number' => '01000000001']);
 
         $user->assignRole($role);
 
@@ -267,8 +261,7 @@ class UserControllerTest extends TestCase
             'email_verified_at' => now(),
             'type' => 'user',
             'is_active' => true,
-            'phone_number' => '01000000999',
-        ]);
+            'phone_number' => '01000000999']);
     }
 
     // --- GET /users tests ---
@@ -283,8 +276,7 @@ class UserControllerTest extends TestCase
             'password' => Hash::make('password'),
             'is_active' => true,
             'type' => 'user',
-            'phone_number' => '01000000002',
-        ]);
+            'phone_number' => '01000000002']);
 
         User::create([
             'name' => 'Inactive User',
@@ -292,8 +284,7 @@ class UserControllerTest extends TestCase
             'password' => Hash::make('password'),
             'is_active' => false,
             'type' => 'user',
-            'phone_number' => '01000000003',
-        ]);
+            'phone_number' => '01000000003']);
 
         Sanctum::actingAs($admin);
 
@@ -318,8 +309,7 @@ class UserControllerTest extends TestCase
             'password' => Hash::make('password'),
             'is_active' => true,
             'type' => 'user',
-            'phone_number' => '01000000004',
-        ]);
+            'phone_number' => '01000000004']);
 
         User::create([
             'name' => 'Inactive User',
@@ -327,8 +317,7 @@ class UserControllerTest extends TestCase
             'password' => Hash::make('password'),
             'is_active' => false,
             'type' => 'user',
-            'phone_number' => '01000000005',
-        ]);
+            'phone_number' => '01000000005']);
 
         Sanctum::actingAs($admin);
 
@@ -352,8 +341,7 @@ class UserControllerTest extends TestCase
             'password' => Hash::make('password'),
             'is_active' => true,
             'type' => 'user',
-            'phone_number' => '01000000006',
-        ]);
+            'phone_number' => '01000000006']);
 
         User::create([
             'name' => 'Inactive User',
@@ -361,8 +349,7 @@ class UserControllerTest extends TestCase
             'password' => Hash::make('password'),
             'is_active' => false,
             'type' => 'user',
-            'phone_number' => '01000000007',
-        ]);
+            'phone_number' => '01000000007']);
 
         Sanctum::actingAs($admin);
 
@@ -393,20 +380,17 @@ class UserControllerTest extends TestCase
             'password_confirmation' => 'password123',
             'roles' => [$role->id],
             'is_active' => true,
-        'phone_number' => '0100000201',
-        ]);
+        'phone_number' => '0100000201']);
 
         $response->assertOk();
         $response->assertJsonPath('success', true);
         $response->assertJsonPath('status', 200);
         $response->assertJsonStructure([
-            'status', 'message', 'success', 'data' => ['id', 'name', 'email'],
-        ]);
+            'status', 'message', 'success', 'data' => ['id', 'name', 'email']]);
 
         $this->assertDatabaseHas('users', [
             'email' => 'newadmin@example.com',
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
     }
 
     public function test_create_admin_user_succeeds_without_roles(): void
@@ -421,13 +405,11 @@ class UserControllerTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'phone_number' => '0100000202',
-            'roles' => [],
-        ])->assertOk()->assertJsonPath('success', true);
+            'roles' => []])->assertOk()->assertJsonPath('success', true);
 
         $this->assertDatabaseHas('users', [
             'email' => 'norole@example.com',
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
     }
 
     public function test_create_admin_user_fails_with_duplicate_email(): void
@@ -442,8 +424,7 @@ class UserControllerTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'roles' => [],
-        'phone_number' => '0100000203',
-        ])->assertStatus(422);
+        'phone_number' => '0100000203'])->assertStatus(422);
     }
 
     public function test_non_admin_cannot_create_admin_user(): void
@@ -457,8 +438,7 @@ class UserControllerTest extends TestCase
             'email' => 'hacker@example.com',
             'password' => 'password123',
             'password_confirmation' => 'password123',
-            'roles' => [],
-        ])->assertStatus(403);
+            'roles' => []])->assertStatus(403);
     }
 
     public function test_create_admin_user_fails_without_name(): void
@@ -474,8 +454,7 @@ class UserControllerTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'roles' => [$role->id],
-        'phone_number' => '0100000204',
-        ])->assertStatus(422);
+        'phone_number' => '0100000204'])->assertStatus(422);
     }
 
     public function test_create_admin_user_fails_without_email(): void
@@ -491,8 +470,7 @@ class UserControllerTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'roles' => [$role->id],
-        'phone_number' => '0100000205',
-        ])->assertStatus(422);
+        'phone_number' => '0100000205'])->assertStatus(422);
     }
 
     public function test_create_admin_user_fails_with_invalid_email(): void
@@ -509,8 +487,7 @@ class UserControllerTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'roles' => [$role->id],
-        'phone_number' => '0100000206',
-        ])->assertStatus(422);
+        'phone_number' => '0100000206'])->assertStatus(422);
     }
 
     public function test_create_admin_user_fails_without_password(): void
@@ -526,8 +503,7 @@ class UserControllerTest extends TestCase
             'email' => 'nopassword@example.com',
             'password_confirmation' => 'password123',
             'roles' => [$role->id],
-        'phone_number' => '0100000207',
-        ])->assertStatus(422);
+        'phone_number' => '0100000207'])->assertStatus(422);
     }
 
     public function test_create_admin_user_fails_with_short_password(): void
@@ -544,8 +520,7 @@ class UserControllerTest extends TestCase
             'password' => '12345',
             'password_confirmation' => '12345',
             'roles' => [$role->id],
-        'phone_number' => '0100000208',
-        ])->assertStatus(422);
+        'phone_number' => '0100000208'])->assertStatus(422);
     }
 
     public function test_create_admin_user_fails_without_password_confirmation(): void
@@ -561,8 +536,7 @@ class UserControllerTest extends TestCase
             'email' => 'noconfirm@example.com',
             'password' => 'password123',
             'roles' => [$role->id],
-        'phone_number' => '0100000209',
-        ])->assertStatus(422);
+        'phone_number' => '0100000209'])->assertStatus(422);
     }
 
     public function test_create_admin_user_fails_with_mismatched_password_confirmation(): void
@@ -579,8 +553,7 @@ class UserControllerTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'different456',
             'roles' => [$role->id],
-        'phone_number' => '0100000210',
-        ])->assertStatus(422);
+        'phone_number' => '0100000210'])->assertStatus(422);
     }
 
     public function test_create_admin_user_fails_with_invalid_is_active(): void
@@ -598,8 +571,7 @@ class UserControllerTest extends TestCase
             'password_confirmation' => 'password123',
             'roles' => [$role->id],
             'is_active' => 'invalid',
-        'phone_number' => '0100000211',
-        ])->assertStatus(422);
+        'phone_number' => '0100000211'])->assertStatus(422);
     }
 
     public function test_create_admin_user_fails_with_nonexistent_role_id(): void
@@ -614,8 +586,7 @@ class UserControllerTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'roles' => [99999],
-        'phone_number' => '0100000212',
-        ])->assertStatus(422);
+        'phone_number' => '0100000212'])->assertStatus(422);
     }
 
     public function test_create_admin_user_with_phone_number(): void
@@ -632,16 +603,14 @@ class UserControllerTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'roles' => [$role->id],
-            'phone_number' => '01000000123',
-        ]);
+            'phone_number' => '01000000123']);
 
         $response->assertOk();
         $response->assertJsonPath('success', true);
 
         $this->assertDatabaseHas('users', [
             'email' => 'withphone@example.com',
-            'phone_number' => '01000000123',
-        ]);
+            'phone_number' => '01000000123']);
     }
 
     public function test_create_admin_user_with_is_active_false(): void
@@ -659,16 +628,14 @@ class UserControllerTest extends TestCase
             'password_confirmation' => 'password123',
             'roles' => [$role->id],
             'is_active' => 0,
-        'phone_number' => '0100000213',
-        ]);
+        'phone_number' => '0100000213']);
 
         $response->assertOk();
         $response->assertJsonPath('success', true);
 
         $this->assertDatabaseHas('users', [
             'email' => 'inactiveadmin@example.com',
-            'is_active' => false,
-        ]);
+            'is_active' => false]);
     }
 
     // --- PUT /admin-users/update-activation tests ---
@@ -681,8 +648,7 @@ class UserControllerTest extends TestCase
         Sanctum::actingAs($admin);
 
         $deactivate = $this->putJson(self::PREFIX . '/admin-users/update-activation', [
-            'user_id' => $target->id,
-        ]);
+            'user_id' => $target->id]);
 
         $deactivate->assertOk();
         $deactivate->assertJsonPath('success', true);
@@ -690,20 +656,17 @@ class UserControllerTest extends TestCase
 
         $this->assertDatabaseHas('users', [
             'id' => $target->id,
-            'is_active' => false,
-        ]);
+            'is_active' => false]);
 
         $reactivate = $this->putJson(self::PREFIX . '/admin-users/update-activation', [
-            'user_id' => $target->id,
-        ]);
+            'user_id' => $target->id]);
 
         $reactivate->assertOk();
         $reactivate->assertJsonPath('success', true);
 
         $this->assertDatabaseHas('users', [
             'id' => $target->id,
-            'is_active' => true,
-        ]);
+            'is_active' => true]);
     }
 
     public function test_cannot_deactivate_active_admin_user(): void
@@ -717,14 +680,12 @@ class UserControllerTest extends TestCase
             'email_verified_at' => now(),
             'type' => 'admin',
             'is_active' => true,
-            'phone_number' => '01000000998',
-        ]);
+            'phone_number' => '01000000998']);
 
         Sanctum::actingAs($admin);
 
         $this->putJson(self::PREFIX . '/admin-users/update-activation', [
-            'user_id' => $otherAdmin->id,
-        ])->assertOk();
+            'user_id' => $otherAdmin->id])->assertOk();
     }
 
     public function test_update_activation_fails_without_user_id(): void
@@ -744,8 +705,7 @@ class UserControllerTest extends TestCase
         Sanctum::actingAs($admin);
 
         $this->putJson(self::PREFIX . '/admin-users/update-activation', [
-            'user_id' => 99999,
-        ])->assertStatus(422);
+            'user_id' => 99999])->assertStatus(422);
     }
 
     // --- DELETE /admin-users/delete/{id} tests ---
@@ -777,8 +737,7 @@ class UserControllerTest extends TestCase
             'email_verified_at' => now(),
             'type' => 'admin',
             'is_active' => true,
-            'phone_number' => '01000000997',
-        ]);
+            'phone_number' => '01000000997']);
 
         $adminRole = Role::where('name', RoleEnum::SUPER_ADMIN)->first();
         if ($adminRole) {
@@ -849,8 +808,7 @@ class UserControllerTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'roles' => [$role->id],
-        'phone_number' => '0100000214',
-        ]);
+        'phone_number' => '0100000214']);
 
         $response->assertJsonStructure([
             'status',
@@ -859,9 +817,7 @@ class UserControllerTest extends TestCase
             'data' => [
                 'id',
                 'name',
-                'email',
-            ],
-        ]);
+                'email']]);
     }
 
     public function test_update_activation_response_has_correct_structure(): void
@@ -872,8 +828,7 @@ class UserControllerTest extends TestCase
         Sanctum::actingAs($admin);
 
         $response = $this->putJson(self::PREFIX . '/admin-users/update-activation', [
-            'user_id' => $target->id,
-        ]);
+            'user_id' => $target->id]);
 
         $response->assertJsonStructure(['status', 'message', 'success']);
     }
@@ -908,13 +863,11 @@ class UserControllerTest extends TestCase
             'password_confirmation' => 'password123',
             'roles' => [$role->id],
             'is_active' => true,
-        'phone_number' => '0100000215',
-        ]);
+        'phone_number' => '0100000215']);
 
         $this->assertDatabaseHas('users', [
             'email' => 'fillable@example.com',
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
     }
 
     public function test_default_user_type_is_user_when_not_specified(): void
@@ -922,13 +875,11 @@ class UserControllerTest extends TestCase
         $user = User::create([
             'name' => 'Default Type User',
             'email' => 'defaulttype@example.com',
-            'password' => Hash::make('password'),
-        ]);
+            'password' => Hash::make('password')]);
 
         $this->assertDatabaseHas('users', [
             'email' => 'defaulttype@example.com',
-            'type' => 'user',
-        ]);
+            'type' => 'user']);
     }
 
     public function test_phone_number_is_persisted_through_endpoint(): void
@@ -944,13 +895,11 @@ class UserControllerTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'roles' => [$role->id],
-            'phone_number' => '01009998877',
-        ]);
+            'phone_number' => '01009998877']);
 
         $this->assertDatabaseHas('users', [
             'email' => 'phonepersist@example.com',
-            'phone_number' => '01009998877',
-        ]);
+            'phone_number' => '01009998877']);
     }
 
     // ========================================================================
@@ -970,8 +919,7 @@ class UserControllerTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'roles' => [$role->id],
-        'phone_number' => '0100000216',
-        ]);
+        'phone_number' => '0100000216']);
 
         $response->assertOk();
         $response->assertJsonPath('success', true);
@@ -994,16 +942,14 @@ class UserControllerTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'roles' => [$role->id],
-        'phone_number' => '0100000217',
-        ]);
+        'phone_number' => '0100000217']);
 
         $response->assertOk();
         $response->assertJsonPath('success', true);
         $this->assertDatabaseHas('users', ['email' => 'singlerole@example.com']);
         $this->assertDatabaseHas('model_has_roles', [
             'role_id' => $role->id,
-            'model_id' => User::where('email', 'singlerole@example.com')->first()->id,
-        ]);
+            'model_id' => User::where('email', 'singlerole@example.com')->first()->id]);
     }
 
     public function test_create_admin_user_with_multiple_roles(): void
@@ -1020,8 +966,7 @@ class UserControllerTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'roles' => [$role1->id, $role2->id],
-        'phone_number' => '0100000218',
-        ]);
+        'phone_number' => '0100000218']);
 
         $response->assertOk();
         $response->assertJsonPath('success', true);
@@ -1029,12 +974,10 @@ class UserControllerTest extends TestCase
         $user = User::where('email', 'multirole@example.com')->first();
         $this->assertDatabaseHas('model_has_roles', [
             'role_id' => $role1->id,
-            'model_id' => $user->id,
-        ]);
+            'model_id' => $user->id]);
         $this->assertDatabaseHas('model_has_roles', [
             'role_id' => $role2->id,
-            'model_id' => $user->id,
-        ]);
+            'model_id' => $user->id]);
     }
 
     public function test_create_admin_user_with_duplicate_role_ids(): void
@@ -1050,8 +993,7 @@ class UserControllerTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'roles' => [$role->id, $role->id],
-        'phone_number' => '0100000219',
-        ]);
+        'phone_number' => '0100000219']);
 
         $response->assertOk();
         $response->assertJsonPath('success', true);
@@ -1073,8 +1015,7 @@ class UserControllerTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'roles' => [$role->id, 99999],
-        'phone_number' => '0100000220',
-        ])->assertStatus(422);
+        'phone_number' => '0100000220'])->assertStatus(422);
     }
 
     // ========================================================================
@@ -1091,8 +1032,7 @@ class UserControllerTest extends TestCase
         $response->assertOk();
         $response->assertJsonStructure([
             'data' => ['current_page', 'data', 'first_page_url', 'from', 'last_page',
-            'last_page_url', 'next_page_url', 'path', 'per_page', 'prev_page_url', 'to', 'total'],
-        ]);
+            'last_page_url', 'next_page_url', 'path', 'per_page', 'prev_page_url', 'to', 'total']]);
     }
 
     public function test_users_endpoint_custom_per_page(): void
@@ -1137,8 +1077,7 @@ class UserControllerTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'roles' => [$role->id],
-        'phone_number' => '0100000221',
-        ])->assertOk();
+        'phone_number' => '0100000221'])->assertOk();
     }
 
     public function test_create_admin_user_fails_with_duplicate_phone(): void
@@ -1154,8 +1093,7 @@ class UserControllerTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'roles' => [$role->id],
-            'phone_number' => '01000000123',
-        ])->assertOk();
+            'phone_number' => '01000000123'])->assertOk();
 
         $this->postJson(self::PREFIX . '/admin-users/add', [
             'name' => 'Dup Phone 2',
@@ -1163,8 +1101,7 @@ class UserControllerTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'roles' => [$role->id],
-            'phone_number' => '01000000123',
-        ])->assertStatus(422);
+            'phone_number' => '01000000123'])->assertStatus(422);
     }
 
     // ========================================================================
@@ -1190,13 +1127,11 @@ class UserControllerTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'roles' => [$role->id],
-        'phone_number' => '0100000222',
-        ]);
+        'phone_number' => '0100000222']);
 
         $this->assertDatabaseHas('users', [
             'email' => 'typecheck@example.com',
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
     }
 
     // ========================================================================
@@ -1224,8 +1159,7 @@ class UserControllerTest extends TestCase
         Sanctum::actingAs($admin);
 
         $response = $this->postJson(self::PREFIX . '/users/make-admin', [
-            'user_id' => $target->id,
-        ]);
+            'user_id' => $target->id]);
 
         $response->assertOk();
 
@@ -1244,14 +1178,12 @@ class UserControllerTest extends TestCase
             'email_verified_at' => now(),
             'type' => 'admin',
             'is_active' => true,
-            'phone_number' => '01000000996',
-        ]);
+            'phone_number' => '01000000996']);
 
         Sanctum::actingAs($admin);
 
         $response = $this->postJson(self::PREFIX . '/users/make-admin', [
-            'user_id' => $target->id,
-        ]);
+            'user_id' => $target->id]);
 
         $response->assertOk();
 
@@ -1266,8 +1198,7 @@ class UserControllerTest extends TestCase
         Sanctum::actingAs($admin);
 
         $response = $this->postJson(self::PREFIX . '/users/make-admin', [
-            'user_id' => 99999,
-        ]);
+            'user_id' => 99999]);
 
         $response->assertStatus(404);
     }
@@ -1281,21 +1212,18 @@ class UserControllerTest extends TestCase
             'password' => Hash::make('password'),
             'type' => 'user',
             'is_active' => true,
-            'phone_number' => '01000000993',
-        ]);
+            'phone_number' => '01000000993']);
 
         Sanctum::actingAs($user);
 
         $this->postJson(self::PREFIX . '/users/make-admin', [
-            'user_id' => $target->id,
-        ])->assertStatus(404);
+            'user_id' => $target->id])->assertStatus(404);
     }
 
     public function test_make_admin_fails_for_unauthenticated_user(): void
     {
         $this->postJson(self::PREFIX . '/users/make-admin', [
-            'user_id' => 1,
-        ])->assertStatus(401);
+            'user_id' => 1])->assertStatus(401);
     }
 
     // ========================================================================
@@ -1310,15 +1238,13 @@ class UserControllerTest extends TestCase
         Sanctum::actingAs($admin);
 
         $response = $this->postJson(self::PREFIX . '/users/block-user', [
-            'id' => $target->id,
-        ]);
+            'id' => $target->id]);
 
         $response->assertOk();
 
         $this->assertDatabaseHas('users', [
             'id' => $target->id,
-            'is_active' => false,
-        ]);
+            'is_active' => false]);
     }
 
     public function test_ban_user_already_banned_succeeds(): void
@@ -1330,20 +1256,17 @@ class UserControllerTest extends TestCase
             'password' => Hash::make('password'),
             'is_active' => false,
             'type' => 'user',
-            'phone_number' => '01000000995',
-        ]);
+            'phone_number' => '01000000995']);
 
         Sanctum::actingAs($admin);
 
         $response = $this->postJson(self::PREFIX . '/users/block-user', [
-            'id' => $target->id,
-        ]);
+            'id' => $target->id]);
 
         $response->assertOk();
         $this->assertDatabaseHas('users', [
             'id' => $target->id,
-            'is_active' => false,
-        ]);
+            'is_active' => false]);
     }
 
     public function test_ban_user_fails_for_nonexistent_user(): void
@@ -1353,8 +1276,7 @@ class UserControllerTest extends TestCase
         Sanctum::actingAs($admin);
 
         $this->postJson(self::PREFIX . '/users/block-user', [
-            'id' => 99999,
-        ])->assertStatus(404);
+            'id' => 99999])->assertStatus(404);
     }
 
     public function test_ban_user_fails_for_unauthorized_user(): void
@@ -1364,15 +1286,13 @@ class UserControllerTest extends TestCase
         Sanctum::actingAs($user);
 
         $this->postJson(self::PREFIX . '/users/block-user', [
-            'id' => 1,
-        ])->assertStatus(403);
+            'id' => 1])->assertStatus(403);
     }
 
     public function test_ban_user_fails_for_unauthenticated_user(): void
     {
         $this->postJson(self::PREFIX . '/users/block-user', [
-            'id' => 1,
-        ])->assertStatus(401);
+            'id' => 1])->assertStatus(401);
     }
 
     // ========================================================================
@@ -1388,21 +1308,18 @@ class UserControllerTest extends TestCase
             'password' => Hash::make('password'),
             'is_active' => false,
             'type' => 'user',
-            'phone_number' => '01000000994',
-        ]);
+            'phone_number' => '01000000994']);
 
         Sanctum::actingAs($admin);
 
         $response = $this->postJson(self::PREFIX . '/users/unblock-user', [
-            'id' => $target->id,
-        ]);
+            'id' => $target->id]);
 
         $response->assertOk();
 
         $this->assertDatabaseHas('users', [
             'id' => $target->id,
-            'is_active' => true,
-        ]);
+            'is_active' => true]);
     }
 
     public function test_activate_user_already_active_succeeds(): void
@@ -1413,14 +1330,12 @@ class UserControllerTest extends TestCase
         Sanctum::actingAs($admin);
 
         $response = $this->postJson(self::PREFIX . '/users/unblock-user', [
-            'id' => $target->id,
-        ]);
+            'id' => $target->id]);
 
         $response->assertOk();
         $this->assertDatabaseHas('users', [
             'id' => $target->id,
-            'is_active' => true,
-        ]);
+            'is_active' => true]);
     }
 
     public function test_activate_user_fails_for_nonexistent_user(): void
@@ -1430,8 +1345,7 @@ class UserControllerTest extends TestCase
         Sanctum::actingAs($admin);
 
         $this->postJson(self::PREFIX . '/users/unblock-user', [
-            'id' => 99999,
-        ])->assertStatus(404);
+            'id' => 99999])->assertStatus(404);
     }
 
     public function test_activate_user_fails_for_unauthorized_user(): void
@@ -1441,15 +1355,13 @@ class UserControllerTest extends TestCase
         Sanctum::actingAs($user);
 
         $this->postJson(self::PREFIX . '/users/unblock-user', [
-            'id' => 1,
-        ])->assertStatus(403);
+            'id' => 1])->assertStatus(403);
     }
 
     public function test_activate_user_fails_for_unauthenticated_user(): void
     {
         $this->postJson(self::PREFIX . '/users/unblock-user', [
-            'id' => 1,
-        ])->assertStatus(401);
+            'id' => 1])->assertStatus(401);
     }
 
     // ========================================================================
@@ -1463,8 +1375,7 @@ class UserControllerTest extends TestCase
             'name' => 'John Doe',
             'email' => 'john@example.com',
             'password' => Hash::make('password'),
-            'type' => 'user',
-        ]);
+            'type' => 'user']);
 
         Sanctum::actingAs($admin);
 
@@ -1482,8 +1393,7 @@ class UserControllerTest extends TestCase
             'name' => 'Email Search',
             'email' => 'emailsearch@example.com',
             'password' => Hash::make('password'),
-            'type' => 'user',
-        ]);
+            'type' => 'user']);
 
         Sanctum::actingAs($admin);
 
@@ -1501,8 +1411,7 @@ class UserControllerTest extends TestCase
             'name' => 'Partial Match User',
             'email' => 'partialmatch@example.com',
             'password' => Hash::make('password'),
-            'type' => 'user',
-        ]);
+            'type' => 'user']);
 
         Sanctum::actingAs($admin);
 
@@ -1532,8 +1441,7 @@ class UserControllerTest extends TestCase
             'name' => 'Paginated Search',
             'email' => 'paginated@example.com',
             'password' => Hash::make('password'),
-            'type' => 'user',
-        ]);
+            'type' => 'user']);
 
         Sanctum::actingAs($admin);
 
@@ -1564,8 +1472,7 @@ class UserControllerTest extends TestCase
             'email' => 'inactivesearch@example.com',
             'password' => Hash::make('password'),
             'is_active' => false,
-            'type' => 'user',
-        ]);
+            'type' => 'user']);
 
         Sanctum::actingAs($admin);
 
@@ -1590,8 +1497,7 @@ class UserControllerTest extends TestCase
         Sanctum::actingAs($admin);
 
         $this->postJson(self::PREFIX . '/users/make-admin', [
-            'user_id' => $target->id,
-        ]);
+            'user_id' => $target->id]);
 
         Event::assertDispatched(UserRolesUpdated::class);
     }
@@ -1608,14 +1514,12 @@ class UserControllerTest extends TestCase
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
             'type' => 'admin',
-            'is_active' => true,
-        ]);
+            'is_active' => true]);
 
         Sanctum::actingAs($admin);
 
         $this->postJson(self::PREFIX . '/users/make-admin', [
-            'user_id' => $target->id,
-        ]);
+            'user_id' => $target->id]);
 
         Event::assertDispatched(UserRolesUpdated::class);
     }

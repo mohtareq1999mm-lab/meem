@@ -34,7 +34,7 @@ class ContactValidationTest extends TestCase
 
     private function createSuperAdmin(): User
     {
-        Permission::findOrCreate(PermissionEnum::SUPER_ADMIN, self::GUARD);
+        Permission::findOrCreate(self::GUARD);
         Permission::findOrCreate(PermissionEnum::VIEW_CONTACTS, self::GUARD);
         Permission::findOrCreate(PermissionEnum::UPDATE_CONTACT, self::GUARD);
         Permission::findOrCreate(PermissionEnum::DELETE_CONTACT, self::GUARD);
@@ -43,16 +43,13 @@ class ContactValidationTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => json_encode(['en' => 'Super Admin']),
-        ]);
+            'display_name' => json_encode(['en' => 'Super Admin'])]);
 
         $role->givePermissionTo([
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_CONTACTS,
             PermissionEnum::UPDATE_CONTACT,
             PermissionEnum::DELETE_CONTACT,
-            PermissionEnum::DELETE_READ_CONTACTS,
-        ]);
+            PermissionEnum::DELETE_READ_CONTACTS]);
 
         $user = User::create([
             'name' => 'Super Admin',
@@ -60,8 +57,7 @@ class ContactValidationTest extends TestCase
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
 
         $user->assignRole($role);
 
@@ -73,8 +69,7 @@ class ContactValidationTest extends TestCase
     {
         $response = $this->postJson(self::PREFIX . '/contacts', [
             'subject' => 'Test',
-            'message' => 'Test message body.',
-        ]);
+            'message' => 'Test message body.']);
 
         $response->assertStatus(422);
     }
@@ -85,8 +80,7 @@ class ContactValidationTest extends TestCase
         $response = $this->postJson(self::PREFIX . '/contacts', [
             'email' => 'not-an-email',
             'subject' => 'Test',
-            'message' => 'Test message body.',
-        ]);
+            'message' => 'Test message body.']);
 
         $response->assertStatus(422);
     }
@@ -96,8 +90,7 @@ class ContactValidationTest extends TestCase
     {
         $response = $this->postJson(self::PREFIX . '/contacts', [
             'email' => 'test@example.com',
-            'message' => 'Test message body.',
-        ]);
+            'message' => 'Test message body.']);
 
         $response->assertStatus(422);
     }
@@ -107,8 +100,7 @@ class ContactValidationTest extends TestCase
     {
         $response = $this->postJson(self::PREFIX . '/contacts', [
             'email' => 'test@example.com',
-            'subject' => 'Test',
-        ]);
+            'subject' => 'Test']);
 
         $response->assertStatus(422);
     }
@@ -119,8 +111,7 @@ class ContactValidationTest extends TestCase
         $response = $this->postJson(self::PREFIX . '/contacts', [
             'email' => 'test@example.com',
             'subject' => 'Test',
-            'message' => 'AB',
-        ]);
+            'message' => 'AB']);
 
         $response->assertStatus(422);
     }
@@ -131,8 +122,7 @@ class ContactValidationTest extends TestCase
         $response = $this->postJson(self::PREFIX . '/contacts', [
             'email' => 'test@example.com',
             'subject' => 'Test',
-            'message' => 'A valid message body.',
-        ]);
+            'message' => 'A valid message body.']);
 
         $response->assertStatus(422);
     }

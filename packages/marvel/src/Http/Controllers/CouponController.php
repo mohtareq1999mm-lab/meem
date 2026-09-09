@@ -18,6 +18,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Marvel\Database\Models\Coupon;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Http\Resources\CouponResource;
 use Marvel\Traits\ApiResponse;
 use Svg\Tag\Rect;
@@ -53,7 +54,7 @@ class CouponController extends CoreController
         $this->middleware("permission:" . Permission::CREATE_COUPON, ["only" => ["store"]]);
         $this->middleware("permission:" . Permission::UPDATE_COUPON, ["only" => ["update"]]);
         $this->middleware("permission:" . Permission::DELETE_COUPON, ["only" => ["destroy"]]);
-        $this->middleware("permission:" . Permission::SUPER_ADMIN, ["only" => ["approveCoupon", "disApproveCoupon"]]);
+        $this->middleware("role:" . Role::SUPER_ADMIN, ["only" => ["approveCoupon", "disApproveCoupon"]]);
     }
 
     /**
@@ -201,7 +202,7 @@ class CouponController extends CoreController
 
     public function approveCoupon(Request $request)
     {
-        if (!auth()->user()?->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if (!auth()->user()?->hasRole(Role::SUPER_ADMIN)) {
             throw new AuthorizationException(NOT_AUTHORIZED);
         }
         try {
@@ -216,7 +217,7 @@ class CouponController extends CoreController
 
     public function disApproveCoupon(Request $request)
     {
-        if (!auth()->user()?->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if (!auth()->user()?->hasRole(Role::SUPER_ADMIN)) {
             throw new AuthorizationException(NOT_AUTHORIZED);
         }
         try {

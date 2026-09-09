@@ -216,7 +216,7 @@ class ShopController extends CoreController
         //        $shop = $this->repository
         //            ->with(['categories', 'owner', 'ownership_history'])
         //            ->withCount(['orders', 'products']);
-        //        if ($request->user() && ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN) || $request->user()->shops->contains('slug', $slug))) {
+        //        if ($request->user() && ($request->user()->hasRole(Role::SUPER_ADMIN) || $request->user()->shops->contains('slug', $slug))) {
         //            $shop = $shop->with('balance');
         //        }
         //        if (!$shop) {
@@ -417,7 +417,7 @@ class ShopController extends CoreController
     {
 
         try {
-            if (!$request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
+            if (!$request->user()->hasRole(Role::SUPER_ADMIN)) {
                 throw new MarvelException(NOT_AUTHORIZED);
             }
             $id = $request->id;
@@ -474,7 +474,7 @@ class ShopController extends CoreController
     public function disApproveShop(Request $request)
     {
         try {
-            if (!$request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
+            if (!$request->user()->hasRole(Role::SUPER_ADMIN)) {
                 throw new MarvelException(NOT_AUTHORIZED);
             }
             $id = $request->id;

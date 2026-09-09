@@ -35,7 +35,7 @@ class FaqAuthorizationTest extends TestCase
 
     private function createSuperAdmin(): User
     {
-        Permission::findOrCreate(PermissionEnum::SUPER_ADMIN, self::GUARD);
+        Permission::findOrCreate(self::GUARD);
         Permission::findOrCreate(PermissionEnum::VIEW_FAQS, self::GUARD);
         Permission::findOrCreate(PermissionEnum::CREATE_FAQ, self::GUARD);
         Permission::findOrCreate(PermissionEnum::UPDATE_FAQ, self::GUARD);
@@ -44,16 +44,13 @@ class FaqAuthorizationTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => json_encode(['en' => 'Super Admin']),
-        ]);
+            'display_name' => json_encode(['en' => 'Super Admin'])]);
 
         $role->givePermissionTo([
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_FAQS,
             PermissionEnum::CREATE_FAQ,
             PermissionEnum::UPDATE_FAQ,
-            PermissionEnum::DELETE_FAQ,
-        ]);
+            PermissionEnum::DELETE_FAQ]);
 
         $user = User::create([
             'name' => 'Super Admin',
@@ -61,8 +58,7 @@ class FaqAuthorizationTest extends TestCase
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
 
         $user->assignRole($role);
 
@@ -76,8 +72,7 @@ class FaqAuthorizationTest extends TestCase
             'email' => uniqid() . '@example.com',
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
-            'is_active' => true,
-        ]);
+            'is_active' => true]);
 
         foreach ($permissionNames as $perm) {
             $permission = Permission::findOrCreate($perm, self::GUARD);
@@ -91,8 +86,7 @@ class FaqAuthorizationTest extends TestCase
     {
         return Faqs::create([
             'faq_title' => ['en' => 'Test FAQ'],
-            'faq_description' => ['en' => 'Test description'],
-        ]);
+            'faq_description' => ['en' => 'Test description']]);
     }
 
     /** @test */
@@ -114,8 +108,7 @@ class FaqAuthorizationTest extends TestCase
 
         $this->postJson(self::PREFIX . '/faqs', [
             'faq_title' => ['en' => 'New FAQ'],
-            'faq_description' => ['en' => 'Description'],
-        ])->assertStatus(403);
+            'faq_description' => ['en' => 'Description']])->assertStatus(403);
     }
 
     /** @test */
@@ -126,8 +119,7 @@ class FaqAuthorizationTest extends TestCase
         $faq = $this->createFaq();
 
         $this->putJson(self::PREFIX . "/faqs/{$faq->id}", [
-            'faq_title' => ['en' => 'Updated'],
-        ])->assertStatus(403);
+            'faq_title' => ['en' => 'Updated']])->assertStatus(403);
     }
 
     /** @test */
@@ -147,8 +139,7 @@ class FaqAuthorizationTest extends TestCase
         Sanctum::actingAs($user);
 
         $this->putJson(self::PREFIX . '/faqs/reorder', [
-            'faqs' => [1, 2],
-        ])->assertStatus(403);
+            'faqs' => [1, 2]])->assertStatus(403);
     }
 
     /** @test */
@@ -156,8 +147,7 @@ class FaqAuthorizationTest extends TestCase
     {
         $user = $this->createUserWithPermissions([
             PermissionEnum::VIEW_FAQS,
-            PermissionEnum::CREATE_FAQ,
-        ]);
+            PermissionEnum::CREATE_FAQ]);
         Sanctum::actingAs($user);
 
         $route = \Illuminate\Support\Facades\Route::getRoutes()->getByName('faqs.store');
@@ -167,8 +157,7 @@ class FaqAuthorizationTest extends TestCase
 
         $response = $this->postJson(self::PREFIX . '/faqs', [
             'faq_title' => ['en' => 'Brand New FAQ'],
-            'faq_description' => ['en' => 'Brand new description'],
-        ]);
+            'faq_description' => ['en' => 'Brand new description']]);
         if ($response->getStatusCode() === 403) {
             $response->dump();
         }
@@ -180,8 +169,7 @@ class FaqAuthorizationTest extends TestCase
     {
         $user = $this->createUserWithPermissions([
             PermissionEnum::VIEW_FAQS,
-            PermissionEnum::UPDATE_FAQ,
-        ]);
+            PermissionEnum::UPDATE_FAQ]);
         Sanctum::actingAs($user);
         $faq = $this->createFaq();
 
@@ -190,8 +178,7 @@ class FaqAuthorizationTest extends TestCase
         $this->assertContains('permission:update-faq', $route->gatherMiddleware(), 'Route must have permission:update-faq middleware');
 
         $response = $this->putJson(self::PREFIX . "/faqs/{$faq->id}", [
-            'faq_title' => ['en' => 'Updated Title'],
-        ]);
+            'faq_title' => ['en' => 'Updated Title']]);
         if ($response->getStatusCode() === 403) {
             $response->dump();
         }
@@ -203,16 +190,14 @@ class FaqAuthorizationTest extends TestCase
     {
         $user = $this->createUserWithPermissions([
             PermissionEnum::VIEW_FAQS,
-            PermissionEnum::UPDATE_FAQ,
-        ]);
+            PermissionEnum::UPDATE_FAQ]);
         Sanctum::actingAs($user);
 
         $faq1 = $this->createFaq();
         $faq2 = $this->createFaq();
 
         $this->putJson(self::PREFIX . '/faqs/reorder', [
-            'faqs' => [$faq2->id, $faq1->id],
-        ])->assertOk();
+            'faqs' => [$faq2->id, $faq1->id]])->assertOk();
     }
 
     /** @test */
@@ -220,8 +205,7 @@ class FaqAuthorizationTest extends TestCase
     {
         $user = $this->createUserWithPermissions([
             PermissionEnum::VIEW_FAQS,
-            PermissionEnum::DELETE_FAQ,
-        ]);
+            PermissionEnum::DELETE_FAQ]);
         Sanctum::actingAs($user);
         $faq = $this->createFaq();
 
@@ -239,7 +223,7 @@ class FaqAuthorizationTest extends TestCase
     /** @test */
     public function user_with_no_faq_permissions_gets_forbidden(): void
     {
-        $user = $this->createUserWithPermissions([PermissionEnum::SUPER_ADMIN]);
+        $user = $this->createUserWithPermissions([PermissionEnum::VIEW_USERS]);
         Sanctum::actingAs($user);
 
         $this->getJson(self::PREFIX . '/faqs')->assertStatus(403);

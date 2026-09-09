@@ -40,8 +40,7 @@ class ProductTagTest extends TestCase
             'password' => bcrypt('password'),
             'type' => 'admin',
             'is_active' => true,
-            'email_verified_at' => now(),
-        ]);
+            'email_verified_at' => now()]);
 
         $this->normalUser = User::create([
             'name' => 'Normal User',
@@ -49,8 +48,7 @@ class ProductTagTest extends TestCase
             'password' => bcrypt('password'),
             'type' => 'user',
             'is_active' => true,
-            'email_verified_at' => now(),
-        ]);
+            'email_verified_at' => now()]);
 
         Role::create(['name' => 'super_admin', 'guard_name' => 'api']);
         Role::create(['name' => 'customer', 'guard_name' => 'api']);
@@ -67,8 +65,7 @@ class ProductTagTest extends TestCase
             Permission::VIEW_PRODUCTS,
             Permission::CREATE_PRODUCT,
             Permission::UPDATE_PRODUCT,
-            Permission::DELETE_PRODUCT,
-        ]);
+            Permission::DELETE_PRODUCT]);
 
         $this->tagGaming = Tag::create(['name' => 'Gaming']);
         $this->tagWireless = Tag::create(['name' => 'Wireless']);
@@ -94,8 +91,7 @@ class ProductTagTest extends TestCase
             'product_type' => ProductType::SIMPLE,
             'status' => true,
             'in_stock' => true,
-            'stock_quantity' => 10,
-        ], $extra));
+            'stock_quantity' => 10], $extra));
     }
 
     // =========================================================================
@@ -108,8 +104,7 @@ class ProductTagTest extends TestCase
         $product = $this->createProduct('Add Tags');
 
         $response = $this->putJson(self::PREFIX . "/products/{$product->id}", [
-            'tags' => [$this->tagGaming->id, $this->tagWireless->id],
-        ]);
+            'tags' => [$this->tagGaming->id, $this->tagWireless->id]]);
 
         $response->assertStatus(200);
         $tags = $response->json('data.tags');
@@ -125,8 +120,7 @@ class ProductTagTest extends TestCase
         $product->tags()->attach([$this->tagGaming->id, $this->tagWireless->id]);
 
         $response = $this->putJson(self::PREFIX . "/products/{$product->id}", [
-            'tags' => [$this->tagAccessory->id],
-        ]);
+            'tags' => [$this->tagAccessory->id]]);
 
         $response->assertStatus(200);
         $tags = $response->json('data.tags');
@@ -143,8 +137,7 @@ class ProductTagTest extends TestCase
         $product->tags()->attach([$this->tagGaming->id, $this->tagWireless->id]);
 
         $response = $this->putJson(self::PREFIX . "/products/{$product->id}", [
-            'tags' => [],
-        ]);
+            'tags' => []]);
 
         $response->assertStatus(200);
         $this->assertEmpty($response->json('data.tags'));
@@ -157,8 +150,7 @@ class ProductTagTest extends TestCase
 
         $this->authUser();
         $response = $this->putJson(self::PREFIX . "/products/{$product->id}", [
-            'tags' => [$this->tagWireless->id],
-        ]);
+            'tags' => [$this->tagWireless->id]]);
 
         $response->assertStatus(403);
     }
@@ -170,8 +162,7 @@ class ProductTagTest extends TestCase
         $product->tags()->attach([$this->tagGaming->id]);
 
         $response = $this->putJson(self::PREFIX . "/products/{$product->id}", [
-            'tags' => [99999],
-        ]);
+            'tags' => [99999]]);
 
         $response->assertStatus(422);
     }
@@ -183,8 +174,7 @@ class ProductTagTest extends TestCase
         $product->tags()->attach([$this->tagGaming->id, $this->tagWireless->id]);
 
         $response = $this->putJson(self::PREFIX . "/products/{$product->id}", [
-            'price' => 199.99,
-        ]);
+            'price' => 199.99]);
 
         $response->assertStatus(200);
         $product->refresh();
@@ -228,8 +218,7 @@ class ProductTagTest extends TestCase
             'in_stock' => 1,
             'has_discount' => 0,
             'has_flash_sale' => 0,
-            'tags' => [99999],
-        ]);
+            'tags' => [99999]]);
         $response->assertStatus(422);
     }
 
@@ -250,8 +239,7 @@ class ProductTagTest extends TestCase
             'in_stock' => 1,
             'has_discount' => 0,
             'has_flash_sale' => 0,
-            'tags' => [$this->tagGaming->id, $this->tagWireless->id],
-        ]);
+            'tags' => [$this->tagGaming->id, $this->tagWireless->id]]);
 
         $this->assertContains($response->status(), [201, 422],
             'Create product with valid tags should be accepted');

@@ -29,14 +29,14 @@ class CategoryBrandImportTest extends TestCase
     private function makeAdmin(array $perms = []): User
     {
         foreach ($perms as $p) Permission::findOrCreate($p, 'api');
-        Permission::findOrCreate(Perm::SUPER_ADMIN, 'api');
+        Permission::findOrCreate('api');
         $role = Role::create(['name'=>'r'.uniqid(),'guard_name'=>'api','display_name'=>'r']);
         foreach ($perms as $p) $role->givePermissionTo($p);
-        $role->givePermissionTo(Perm::SUPER_ADMIN);
+
         $u = User::create(['name'=>'u'.uniqid(),'email'=>uniqid().'@test.local','password'=>Hash::make('password'),'email_verified_at'=>now(),'is_active'=>true,'type'=>'admin']);
         $u->assignRole($role);
         foreach ($perms as $p) $u->givePermissionTo($p);
-        $u->givePermissionTo(Perm::SUPER_ADMIN);
+
         return $u;
     }
 

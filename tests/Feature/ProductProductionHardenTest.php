@@ -67,8 +67,7 @@ class ProductProductionHardenTest extends TestCase
             'password' => bcrypt('password'),
             'type' => 'admin',
             'is_active' => true,
-            'email_verified_at' => now(),
-        ]);
+            'email_verified_at' => now()]);
 
         Role::create(['name' => 'super_admin', 'guard_name' => 'api']);
         $this->admin->assignRole('super_admin');
@@ -80,8 +79,7 @@ class ProductProductionHardenTest extends TestCase
             Permission::VIEW_PRODUCTS,
             Permission::CREATE_PRODUCT,
             Permission::UPDATE_PRODUCT,
-            Permission::DELETE_PRODUCT,
-        ]);
+            Permission::DELETE_PRODUCT]);
 
         $this->pricingService = app(ProductPricingService::class);
     }
@@ -100,8 +98,7 @@ class ProductProductionHardenTest extends TestCase
             'product_type' => ProductType::SIMPLE,
             'status' => ProductStatus::PUBLISH,
             'in_stock' => true,
-            'stock_quantity' => 50,
-        ], $overrides));
+            'stock_quantity' => 50], $overrides));
     }
 
     private function makeSettingsTable(): void
@@ -128,8 +125,7 @@ class ProductProductionHardenTest extends TestCase
             'name_en' => 'No SKU Product',
             'price' => 25,
             'quantity' => 3,
-            'product_type' => 'simple',
-        ];
+            'product_type' => 'simple'];
 
         $service->processProductRow($row, 2);
 
@@ -148,8 +144,7 @@ class ProductProductionHardenTest extends TestCase
             'name_en' => 'Empty SKU Product',
             'price' => 50,
             'quantity' => 10,
-            'product_type' => 'simple',
-        ];
+            'product_type' => 'simple'];
 
         $service->processProductRow($row, 2);
 
@@ -172,8 +167,7 @@ class ProductProductionHardenTest extends TestCase
             'email' => 'order-user@example.com',
             'password' => bcrypt('password'),
             'is_active' => true,
-            'email_verified_at' => now(),
-        ]);
+            'email_verified_at' => now()]);
 
         // Product A: 1 completed, 2 non-completed
         $this->createOrderWithProduct($user, $productA, 'order-completed');
@@ -198,8 +192,7 @@ class ProductProductionHardenTest extends TestCase
             'user_id' => $user->id,
             'status' => $orderStatus,
             'price' => $product->price,
-            'total_price' => $product->price,
-        ]);
+            'total_price' => $product->price]);
         // order_status is not in fillable, set it directly
         $order->setAttribute('order_status', $orderStatus);
         $order->save();
@@ -209,8 +202,7 @@ class ProductProductionHardenTest extends TestCase
             'product_id' => $product->id,
             'order_quantity' => 1,
             'product_price' => $product->price,
-            'product_total_price' => $product->price,
-        ]);
+            'product_total_price' => $product->price]);
 
         return $order;
     }
@@ -258,8 +250,7 @@ class ProductProductionHardenTest extends TestCase
             'has_discount' => true,
             'discount_type' => DiscountType::PERCENTAGE,
             'discount_amount' => 10,
-            'discount_status' => '0',
-        ];
+            'discount_status' => '0'];
 
         $pricing = $this->pricingService->calculateProductPricingFromData($data);
         $this->assertNull($pricing['price_after_discount'], 'Discount should be inactive when discount_status is "0"');
@@ -273,8 +264,7 @@ class ProductProductionHardenTest extends TestCase
             'has_discount' => true,
             'discount_type' => DiscountType::PERCENTAGE,
             'discount_amount' => 10,
-            'discount_status' => false,
-        ];
+            'discount_status' => false];
 
         $pricing = $this->pricingService->calculateProductPricingFromData($data);
         $this->assertNull($pricing['price_after_discount'], 'Discount should be inactive when discount_status is false');
@@ -288,8 +278,7 @@ class ProductProductionHardenTest extends TestCase
             'has_discount' => true,
             'discount_type' => DiscountType::PERCENTAGE,
             'discount_amount' => 10,
-            'discount_status' => 'false',
-        ];
+            'discount_status' => 'false'];
 
         $pricing = $this->pricingService->calculateProductPricingFromData($data);
         $this->assertNull($pricing['price_after_discount'], 'Discount should be inactive when discount_status is "false"');
@@ -303,8 +292,7 @@ class ProductProductionHardenTest extends TestCase
             'has_discount' => true,
             'discount_type' => DiscountType::PERCENTAGE,
             'discount_amount' => 10,
-            'discount_status' => 0,
-        ];
+            'discount_status' => 0];
 
         $pricing = $this->pricingService->calculateProductPricingFromData($data);
         $this->assertNull($pricing['price_after_discount'], 'Discount should be inactive when discount_status is 0');
@@ -318,8 +306,7 @@ class ProductProductionHardenTest extends TestCase
             'has_discount' => true,
             'discount_type' => DiscountType::PERCENTAGE,
             'discount_amount' => 10,
-            'discount_status' => '1',
-        ];
+            'discount_status' => '1'];
 
         $pricing = $this->pricingService->calculateProductPricingFromData($data);
         $this->assertNotNull($pricing['price_after_discount'], 'Discount should be active when discount_status is "1"');
@@ -332,8 +319,7 @@ class ProductProductionHardenTest extends TestCase
             'price' => 100,
             'has_discount' => true,
             'discount_type' => DiscountType::PERCENTAGE,
-            'discount_amount' => 10,
-        ];
+            'discount_amount' => 10];
 
         $pricing = $this->pricingService->calculateProductPricingFromData($data);
         $this->assertNotNull($pricing['price_after_discount'], 'Discount should be active when discount_status is absent and has_discount is true');
@@ -347,8 +333,7 @@ class ProductProductionHardenTest extends TestCase
             'has_discount' => true,
             'discount_type' => DiscountType::PERCENTAGE,
             'discount_amount' => 10,
-            'discount_status' => null,
-        ];
+            'discount_status' => null];
 
         $pricing = $this->pricingService->calculateProductPricingFromData($data);
         $this->assertNotNull($pricing['price_after_discount'], 'Discount should be active when discount_status is null and has_discount is true');
@@ -372,8 +357,7 @@ class ProductProductionHardenTest extends TestCase
             'in_stock' => 1,
             'has_discount' => 0,
             'has_flash_sale' => 0,
-            'status' => ProductStatus::PUBLISH,
-        ]);
+            'status' => ProductStatus::PUBLISH]);
 
         $this->assertContains($response->status(), [201, 422],
             'Product with publish status should be accepted');
@@ -392,8 +376,7 @@ class ProductProductionHardenTest extends TestCase
             'in_stock' => 1,
             'has_discount' => 0,
             'has_flash_sale' => 0,
-            'status' => ProductStatus::DRAFT,
-        ]);
+            'status' => ProductStatus::DRAFT]);
 
         $this->assertContains($response->status(), [201, 422],
             'Product with draft status should be accepted');
@@ -412,8 +395,7 @@ class ProductProductionHardenTest extends TestCase
             'in_stock' => 1,
             'has_discount' => 0,
             'has_flash_sale' => 0,
-            'status' => ProductStatus::UNDER_REVIEW,
-        ]);
+            'status' => ProductStatus::UNDER_REVIEW]);
 
         $this->assertContains($response->status(), [201, 422],
             'Product with under_review status should be accepted');
@@ -432,14 +414,12 @@ class ProductProductionHardenTest extends TestCase
             'product_type' => ProductType::VARIABLE,
             'status' => ProductStatus::PUBLISH,
             'in_stock' => true,
-            'stock_quantity' => 50,
-        ]);
+            'stock_quantity' => 50]);
 
         $variant = ProductVariant::create([
             'product_id' => $product->id,
             'price' => 50,
-            'stock_quantity' => 10,
-        ]);
+            'stock_quantity' => 10]);
 
         $this->assertNotNull($variant->id);
         $this->assertEquals($product->id, $variant->product_id);
@@ -457,8 +437,7 @@ class ProductProductionHardenTest extends TestCase
             'product_type' => ProductType::VARIABLE,
             'status' => ProductStatus::PUBLISH,
             'in_stock' => true,
-            'stock_quantity' => 50,
-        ]);
+            'stock_quantity' => 50]);
 
         ProductVariant::create(['product_id' => $product->id, 'price' => 30, 'stock_quantity' => 5]);
         ProductVariant::create(['product_id' => $product->id, 'price' => 40, 'stock_quantity' => 3]);
@@ -479,8 +458,7 @@ class ProductProductionHardenTest extends TestCase
     {
         $product = $this->createProduct([
             'stock_quantity' => 100,
-            'reserved_quantity' => 30,
-        ]);
+            'reserved_quantity' => 30]);
 
         $this->assertEquals(70, $product->available_stock);
     }
@@ -489,8 +467,7 @@ class ProductProductionHardenTest extends TestCase
     {
         $product = $this->createProduct([
             'stock_quantity' => 10,
-            'reserved_quantity' => 100,
-        ]);
+            'reserved_quantity' => 100]);
 
         $this->assertEquals(0, $product->available_stock);
     }
@@ -509,8 +486,7 @@ class ProductProductionHardenTest extends TestCase
             'email' => 'bestseller@example.com',
             'password' => bcrypt('password'),
             'is_active' => true,
-            'email_verified_at' => now(),
-        ]);
+            'email_verified_at' => now()]);
 
         $this->createOrderWithProduct($user, $product, 'order-completed');
         $this->createOrderWithProduct($user, $product, 'order-cancelled');
@@ -557,8 +533,7 @@ class ProductProductionHardenTest extends TestCase
             'slug' => 'auto-sku-' . Str::random(8),
             'price' => 100,
             'product_type' => ProductType::SIMPLE,
-            'status' => ProductStatus::PUBLISH,
-        ]);
+            'status' => ProductStatus::PUBLISH]);
 
         $this->assertNotNull($product->sku);
         $this->assertStringStartsWith('PRD-', $product->sku);
@@ -574,8 +549,7 @@ class ProductProductionHardenTest extends TestCase
             'has_discount' => true,
             'discount_status' => false,
             'discount_type' => DiscountType::PERCENTAGE,
-            'discount_amount' => 10,
-        ]);
+            'discount_amount' => 10]);
 
         $this->assertFalse($product->isDiscountActive());
     }
@@ -588,8 +562,7 @@ class ProductProductionHardenTest extends TestCase
             'discount_type' => DiscountType::PERCENTAGE,
             'discount_amount' => 10,
             'start_date' => Carbon::now()->addDay(),
-            'end_date' => Carbon::now()->addDays(10),
-        ]);
+            'end_date' => Carbon::now()->addDays(10)]);
 
         $this->assertFalse($product->isDiscountActive());
     }
@@ -602,8 +575,7 @@ class ProductProductionHardenTest extends TestCase
             'discount_type' => DiscountType::PERCENTAGE,
             'discount_amount' => 10,
             'start_date' => Carbon::now()->subDays(10),
-            'end_date' => Carbon::now()->subDay(),
-        ]);
+            'end_date' => Carbon::now()->subDay()]);
 
         $this->assertFalse($product->isDiscountActive());
     }

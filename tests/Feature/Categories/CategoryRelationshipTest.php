@@ -39,14 +39,12 @@ class CategoryRelationshipTest extends TestCase
 
         $parent = Category::create([
             'name' => ['en' => 'Parent'],
-            'slug' => 'parent',
-        ]);
+            'slug' => 'parent']);
 
         $child = Category::create([
             'name' => ['en' => 'Child'],
             'slug' => 'child',
-            'parent_id' => $parent->id,
-        ]);
+            'parent_id' => $parent->id]);
 
         $this->assertTrue($parent->children->contains($child));
         $this->assertEquals($parent->id, $child->parent->id);
@@ -58,14 +56,12 @@ class CategoryRelationshipTest extends TestCase
 
         $parent = Category::create([
             'name' => ['en' => 'Parent'],
-            'slug' => 'parent',
-        ]);
+            'slug' => 'parent']);
 
         $child = Category::create([
             'name' => ['en' => 'Child'],
             'slug' => 'child',
-            'parent_id' => $parent->id,
-        ]);
+            'parent_id' => $parent->id]);
 
         $response = $this->getJson(self::PREFIX . '/categories/' . $child->id);
         $response->assertOk();
@@ -77,20 +73,17 @@ class CategoryRelationshipTest extends TestCase
 
         $parent = Category::create([
             'name' => ['en' => 'Parent'],
-            'slug' => 'parent',
-        ]);
+            'slug' => 'parent']);
 
         $child1 = Category::create([
             'name' => ['en' => 'Child 1'],
             'slug' => 'child-1',
-            'parent_id' => $parent->id,
-        ]);
+            'parent_id' => $parent->id]);
 
         $child2 = Category::create([
             'name' => ['en' => 'Child 2'],
             'slug' => 'child-2',
-            'parent_id' => $parent->id,
-        ]);
+            'parent_id' => $parent->id]);
 
         $response = $this->getJson(self::PREFIX . '/categories/' . $parent->id);
         $response->assertOk();
@@ -100,14 +93,12 @@ class CategoryRelationshipTest extends TestCase
     {
         $parent = Category::create([
             'name' => ['en' => 'Parent'],
-            'slug' => 'parent',
-        ]);
+            'slug' => 'parent']);
 
         $child = Category::create([
             'name' => ['en' => 'Child'],
             'slug' => 'child',
-            'parent_id' => $parent->id,
-        ]);
+            'parent_id' => $parent->id]);
 
         $parent->delete();
 
@@ -122,12 +113,10 @@ class CategoryRelationshipTest extends TestCase
 
         $category = Category::create([
             'name' => ['en' => 'Test'],
-            'slug' => 'test',
-        ]);
+            'slug' => 'test']);
 
         $response = $this->putJson(self::PREFIX . '/categories/' . $category->id, [
-            'parent_id' => 99999,
-        ]);
+            'parent_id' => 99999]);
 
         $response->assertStatus(422);
     }
@@ -135,12 +124,10 @@ class CategoryRelationshipTest extends TestCase
     private function createSuperAdminUser(): User
     {
         $permissions = [
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_CATEGORIES,
             PermissionEnum::CREATE_CATEGORY,
             PermissionEnum::UPDATE_CATEGORY,
-            PermissionEnum::DELETE_CATEGORY,
-        ];
+            PermissionEnum::DELETE_CATEGORY];
 
         foreach ($permissions as $perm) {
             Permission::findOrCreate($perm, self::GUARD);
@@ -149,8 +136,7 @@ class CategoryRelationshipTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => 'Super Admin',
-        ]);
+            'display_name' => 'Super Admin']);
 
         foreach ($permissions as $perm) {
             $role->givePermissionTo($perm);
@@ -162,8 +148,7 @@ class CategoryRelationshipTest extends TestCase
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
 
         $user->assignRole($role);
 

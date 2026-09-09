@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Marvel\Database\Repositories\RefundPolicyRepository;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Exceptions\MarvelNotFoundException;
 use Marvel\Http\Requests\StoreRefundPolicyRequest;
@@ -206,7 +207,7 @@ class RefundPolicyController extends CoreController
     {
         $slug = $request->id ?? $request->slug;
         $language = $request->language ?? DEFAULT_LANGUAGE;
-        if ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if ($request->user()->hasRole(Role::SUPER_ADMIN)) {
             $refundPolicy = $this->repository->findRefundPolicy($slug, $language);
             $refundPolicy->delete();
             return $refundPolicy;

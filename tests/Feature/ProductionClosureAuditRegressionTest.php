@@ -13,6 +13,7 @@ use Marvel\Database\Models\Order;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\User;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Enums\ProductType;
 use Spatie\Permission\Models\Permission as SpatiePermission;
 use Tests\Concerns\CreatesTestTables;
@@ -71,7 +72,7 @@ class ProductionClosureAuditRegressionTest extends TestCase
             });
         }
 
-        foreach ([Permission::CREATE_REVIEW, Permission::UPDATE_REVIEW, Permission::APPROVE_REVIEWS, Permission::DELETE_REVIEWS, Permission::VIEW_ANALYTICS, Permission::SUPER_ADMIN, Permission::CREATE_FlASH_SALE, Permission::CREATE_SHIPMENT] as $perm) {
+        foreach ([Permission::CREATE_REVIEW, Permission::UPDATE_REVIEW, Permission::APPROVE_REVIEWS, Permission::DELETE_REVIEWS, Permission::VIEW_ANALYTICS, Permission::CREATE_FlASH_SALE, Permission::CREATE_SHIPMENT] as $perm) {
             SpatiePermission::firstOrCreate(['name' => $perm, 'guard_name' => 'api']);
         }
 
@@ -116,7 +117,6 @@ class ProductionClosureAuditRegressionTest extends TestCase
             'type' => 'admin',
         ]);
         $this->superAdmin->givePermissionTo([
-            Permission::SUPER_ADMIN,
             Permission::CREATE_REVIEW,
             Permission::UPDATE_REVIEW,
             Permission::VIEW_ANALYTICS,

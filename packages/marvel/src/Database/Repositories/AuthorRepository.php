@@ -5,6 +5,7 @@ namespace Marvel\Database\Repositories;
 
 use Marvel\Database\Models\Author;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Prettus\Repository\Exceptions\RepositoryException;
 
@@ -57,7 +58,7 @@ class AuthorRepository extends BaseRepository
     {
         $data = $request->only($this->dataArray);
         $data['slug'] = $this->makeSlug($request);
-        if ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if ($request->user()->hasRole(Role::SUPER_ADMIN)) {
             $data['is_approved'] = true;
         } else {
             $data['is_approved'] = false;
@@ -68,7 +69,7 @@ class AuthorRepository extends BaseRepository
     public function updateAuthor($request, $author)
     {
         $data = $request->only($this->dataArray);
-        if (!$request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if (!$request->user()->hasRole(Role::SUPER_ADMIN)) {
             $data['is_approved'] = false;
         }
         $data = $request->only($this->dataArray);

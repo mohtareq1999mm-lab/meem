@@ -182,20 +182,17 @@ class NotificationTest extends TestCase
 
     private function createSuperAdmin(): User
     {
-        Permission::findOrCreate(PermissionEnum::SUPER_ADMIN, self::GUARD);
+        Permission::findOrCreate(self::GUARD);
         Permission::findOrCreate(PermissionEnum::VIEW_NOTIFICATIONS, self::GUARD);
         Permission::findOrCreate(PermissionEnum::MANAGE_NOTIFICATIONS, self::GUARD);
 
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'display_name' => json_encode(['en' => 'Super Admin', 'ar' => 'مدير النظام']),
-            'guard_name' => self::GUARD,
-        ]);
+            'guard_name' => self::GUARD]);
         $role->givePermissionTo([
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_NOTIFICATIONS,
-            PermissionEnum::MANAGE_NOTIFICATIONS,
-        ]);
+            PermissionEnum::MANAGE_NOTIFICATIONS]);
 
         $user = User::create([
             'name' => 'Super Admin',
@@ -204,12 +201,9 @@ class NotificationTest extends TestCase
             'email_verified_at' => now(),
             'is_active' => true,
             'type' => 'admin',
-            'phone_number' => '01000000001',
-        ]);
+            'phone_number' => '01000000001']);
 
         $user->assignRole($role);
-        $user->givePermissionTo(PermissionEnum::SUPER_ADMIN);
-
         return $user;
     }
 
@@ -224,8 +218,7 @@ class NotificationTest extends TestCase
             'email_verified_at' => now(),
             'is_active' => true,
             'type' => 'admin',
-            'phone_number' => '01000000002',
-        ]);
+            'phone_number' => '01000000002']);
 
         $user->givePermissionTo(PermissionEnum::VIEW_NOTIFICATIONS);
 
@@ -241,8 +234,7 @@ class NotificationTest extends TestCase
             'email_verified_at' => now(),
             'is_active' => true,
             'type' => 'user',
-            'phone_number' => '01000000003',
-        ]);
+            'phone_number' => '01000000003']);
 
         return $user;
     }
@@ -260,10 +252,8 @@ class NotificationTest extends TestCase
                 'icon' => 'bell',
                 'resource_type' => 'test',
                 'resource_id' => 1,
-                'action_url' => '/admin/test',
-            ],
-            'read_at' => $read ? now() : null,
-        ]);
+                'action_url' => '/admin/test'],
+            'read_at' => $read ? now() : null]);
 
         return $notification;
     }
@@ -346,8 +336,7 @@ class NotificationTest extends TestCase
             'email_verified_at' => now(),
             'is_active' => true,
             'type' => 'admin',
-            'phone_number' => '01000000004',
-        ]);
+            'phone_number' => '01000000004']);
         Sanctum::actingAs($user);
 
         $response = $this->getJson(self::PREFIX . '/notifications');
@@ -411,11 +400,8 @@ class NotificationTest extends TestCase
             'message',
             'data' => [
                 'data' => [
-                    '*' => ['id', 'type', 'title', 'message', 'icon', 'resource_type', 'resource_id', 'action_url', 'created_at', 'read_at'],
-                ],
-                'meta' => ['current_page', 'per_page', 'total', 'last_page', 'from', 'to'],
-            ],
-        ]);
+                    '*' => ['id', 'type', 'title', 'message', 'icon', 'resource_type', 'resource_id', 'action_url', 'created_at', 'read_at']],
+                'meta' => ['current_page', 'per_page', 'total', 'last_page', 'from', 'to']]]);
         $response->assertJsonPath('success', true);
         $response->assertJsonPath('data.meta.total', 2);
     }
@@ -667,8 +653,7 @@ class NotificationTest extends TestCase
             'user_id' => $admin->id,
             'order_number' => 'ORD-00000001',
             'status' => 'pending',
-            'payment_status' => 'pending',
-        ]);
+            'payment_status' => 'pending']);
 
         OrderCreated::dispatch($order);
 
@@ -688,8 +673,7 @@ class NotificationTest extends TestCase
             'name' => 'Test User',
             'email' => 'test@example.com',
             'subject' => 'Test Subject',
-            'message' => 'Test message body',
-        ]);
+            'message' => 'Test message body']);
 
         ContactMessageReceived::dispatch($contact);
 
@@ -743,19 +727,14 @@ class NotificationTest extends TestCase
                         'resource_id',
                         'action_url',
                         'created_at',
-                        'read_at',
-                    ],
-                ],
+                        'read_at']],
                 'meta' => [
                     'current_page',
                     'per_page',
                     'total',
                     'last_page',
                     'from',
-                    'to',
-                ],
-            ],
-        ]);
+                    'to']]]);
     }
 
     public function test_unread_response_structure(): void
@@ -784,14 +763,9 @@ class NotificationTest extends TestCase
                         'resource_id',
                         'action_url',
                         'created_at',
-                        'read_at',
-                    ],
-                ],
+                        'read_at']],
                 'meta' => [
-                    'total',
-                ],
-            ],
-        ]);
+                    'total']]]);
     }
 
     public function test_mark_as_read_response_structure(): void
@@ -818,9 +792,7 @@ class NotificationTest extends TestCase
                 'resource_id',
                 'action_url',
                 'created_at',
-                'read_at',
-            ],
-        ]);
+                'read_at']]);
     }
 
     public function test_mark_all_as_read_response_structure(): void
@@ -838,9 +810,7 @@ class NotificationTest extends TestCase
             'success',
             'message',
             'data' => [
-                'marked_count',
-            ],
-        ]);
+                'marked_count']]);
     }
 
     public function test_delete_all_response_structure(): void
@@ -858,8 +828,6 @@ class NotificationTest extends TestCase
             'success',
             'message',
             'data' => [
-                'deleted_count',
-            ],
-        ]);
+                'deleted_count']]);
     }
 }

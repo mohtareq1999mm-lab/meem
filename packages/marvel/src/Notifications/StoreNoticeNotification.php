@@ -8,6 +8,7 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Marvel\Database\Models\StoreNotice;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 
 class StoreNoticeNotification extends Notification implements ShouldQueue
 {
@@ -49,7 +50,7 @@ class StoreNoticeNotification extends Notification implements ShouldQueue
      */
     public function toMail($notifiable)
     {
-        if ($this->storeNotice->creator->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if ($this->storeNotice->creator->hasRole(Role::SUPER_ADMIN)) {
             $role = "Admin";
         } else {
             $role = "Shop Owner";

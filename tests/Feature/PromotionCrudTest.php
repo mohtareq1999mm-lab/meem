@@ -29,14 +29,12 @@ class PromotionCrudTest extends TestCase
         $role = Role::create([
             'name' => 'super_admin',
             'guard_name' => 'api',
-            'display_name' => json_encode(['en' => 'Super Admin']),
-        ]);
+            'display_name' => json_encode(['en' => 'Super Admin'])]);
         $role->givePermissionTo([
             'view-promotion',
             'create-promotion',
             'update-promotion',
-            'delete-promotion',
-        ]);
+            'delete-promotion']);
 
         $user = User::factory()->create();
         $user->assignRole('super_admin');
@@ -55,8 +53,7 @@ class PromotionCrudTest extends TestCase
             'discount' => 10,
             'minimum_order_amount' => 0,
             'apply_to' => 'all_products',
-            'status' => true,
-        ], $overrides));
+            'status' => true], $overrides));
     }
 
     public function test_admin_can_list_promotions(): void
@@ -73,10 +70,7 @@ class PromotionCrudTest extends TestCase
         $response->assertJsonStructure([
             'data' => [
                 'data' => [
-                    '*' => ['id', 'name', 'code', 'type', 'discount_type', 'status'],
-                ],
-            ],
-        ]);
+                    '*' => ['id', 'name', 'code', 'type', 'discount_type', 'status']]]]);
     }
 
     public function test_admin_can_show_promotion(): void
@@ -102,8 +96,7 @@ class PromotionCrudTest extends TestCase
         $payload = [
             'name' => ['en' => 'Updated Name'],
             'value' => 25,
-            'discount' => 25,
-        ];
+            'discount' => 25];
 
         $response = $this->putJson(self::PREFIX . '/promotions/' . $promotion->id, $payload);
 
@@ -144,8 +137,7 @@ class PromotionCrudTest extends TestCase
 
         $response = $this->putJson(self::PREFIX . '/promotions/' . $promotion->id, [
             'type' => 'invalid_type',
-            'type_amount' => 'invalid_amount',
-        ]);
+            'type_amount' => 'invalid_amount']);
 
         $response->assertStatus(422);
     }
@@ -154,8 +146,7 @@ class PromotionCrudTest extends TestCase
     {
         $response = $this->postJson(self::PREFIX . '/promotions', [
             'name' => ['en' => 'Hacked Promo'],
-            'code' => 'HACKED',
-        ]);
+            'code' => 'HACKED']);
 
         $response->assertStatus(401);
     }

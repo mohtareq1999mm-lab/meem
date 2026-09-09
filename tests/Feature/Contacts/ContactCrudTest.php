@@ -34,7 +34,7 @@ class ContactCrudTest extends TestCase
 
     private function createSuperAdmin(): User
     {
-        Permission::findOrCreate(PermissionEnum::SUPER_ADMIN, self::GUARD);
+        Permission::findOrCreate(self::GUARD);
         Permission::findOrCreate(PermissionEnum::VIEW_CONTACTS, self::GUARD);
         Permission::findOrCreate(PermissionEnum::UPDATE_CONTACT, self::GUARD);
         Permission::findOrCreate(PermissionEnum::DELETE_CONTACT, self::GUARD);
@@ -43,16 +43,13 @@ class ContactCrudTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => json_encode(['en' => 'Super Admin']),
-        ]);
+            'display_name' => json_encode(['en' => 'Super Admin'])]);
 
         $role->givePermissionTo([
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_CONTACTS,
             PermissionEnum::UPDATE_CONTACT,
             PermissionEnum::DELETE_CONTACT,
-            PermissionEnum::DELETE_READ_CONTACTS,
-        ]);
+            PermissionEnum::DELETE_READ_CONTACTS]);
 
         $user = User::create([
             'name' => 'Super Admin',
@@ -60,8 +57,7 @@ class ContactCrudTest extends TestCase
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
 
         $user->assignRole($role);
 
@@ -87,8 +83,7 @@ class ContactCrudTest extends TestCase
             'name' => 'Alice',
             'email' => 'alice@example.com',
             'subject' => 'Help',
-            'message' => 'Need assistance.',
-        ]);
+            'message' => 'Need assistance.']);
 
         $response = $this->getJson(self::PREFIX . "/contacts/{$contact->id}");
 
@@ -103,8 +98,7 @@ class ContactCrudTest extends TestCase
             'name' => 'Bob',
             'email' => 'bob@example.com',
             'subject' => 'Support',
-            'message' => 'Need help.',
-        ]);
+            'message' => 'Need help.']);
 
         $this->assertFalse((bool) $contact->is_read);
 
@@ -121,8 +115,7 @@ class ContactCrudTest extends TestCase
             'name' => 'Charlie',
             'email' => 'charlie@example.com',
             'subject' => 'Delete',
-            'message' => 'Delete me.',
-        ]);
+            'message' => 'Delete me.']);
 
         $response = $this->deleteJson(self::PREFIX . "/contacts/{$contact->id}");
 

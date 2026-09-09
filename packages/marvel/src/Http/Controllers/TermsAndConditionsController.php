@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Marvel\Database\Models\TermsAndConditions;
 use Marvel\Database\Repositories\TermsAndConditionsRepository;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\CreateTermsAndConditionsRequest;
 use Marvel\Http\Requests\UpdateTermsAndConditionsRequest;
@@ -101,7 +102,7 @@ class TermsAndConditionsController extends CoreController
 
             if (isset($user)) {
                 switch ($user) {
-                    case $user->hasPermissionTo(Permission::SUPER_ADMIN):
+                    case $user->hasRole(Role::SUPER_ADMIN):
                         return $this->repository->with('shop')->where('language', $language);
                         break;
 
@@ -226,7 +227,7 @@ class TermsAndConditionsController extends CoreController
     {
         try {
             $user = $request->user();
-            if ($user && ($user->hasPermissionTo(Permission::SUPER_ADMIN) || $user->hasPermissionTo(Permission::STORE_OWNER) || $user->hasPermissionTo(Permission::STAFF))) {
+            if ($user && ($user->hasRole(Role::SUPER_ADMIN) || $user->hasPermissionTo(Permission::STORE_OWNER) || $user->hasPermissionTo(Permission::STAFF))) {
                 return $this->repository->findOrFail($request->id)->delete();
             }
         } catch (MarvelException $e) {
@@ -243,7 +244,7 @@ class TermsAndConditionsController extends CoreController
     public function approveTerm(Request $request)
     {
         try {
-            if (!$request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
+            if (!$request->user()->hasRole(Role::SUPER_ADMIN)) {
                 throw new MarvelException(NOT_AUTHORIZED);
             }
             $id = $request->id;
@@ -269,7 +270,7 @@ class TermsAndConditionsController extends CoreController
     public function disApproveTerm(Request $request)
     {
         try {
-            if (!$request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
+            if (!$request->user()->hasRole(Role::SUPER_ADMIN)) {
                 throw new MarvelException(NOT_AUTHORIZED);
             }
             $id = $request->id;

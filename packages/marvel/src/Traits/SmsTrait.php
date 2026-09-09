@@ -10,6 +10,7 @@ use Marvel\Database\Models\Profile;
 use Marvel\Database\Models\User;
 use Marvel\Enums\EventType;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Otp\Gateways\OtpGateway;
 
 trait SmsTrait
@@ -144,7 +145,7 @@ trait SmsTrait
      */
     public function adminList(): Collection
     {
-        return User::permission(Permission::SUPER_ADMIN)->get();
+        return User::role(Role::SUPER_ADMIN)->get();
     }
 
     public function getWhichUserWillGetEmail($emailEventName, $language): array

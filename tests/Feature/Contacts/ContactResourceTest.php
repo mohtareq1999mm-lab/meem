@@ -35,7 +35,7 @@ class ContactResourceTest extends TestCase
 
     private function createSuperAdmin(): User
     {
-        Permission::findOrCreate(PermissionEnum::SUPER_ADMIN, self::GUARD);
+        Permission::findOrCreate(self::GUARD);
         Permission::findOrCreate(PermissionEnum::VIEW_CONTACTS, self::GUARD);
         Permission::findOrCreate(PermissionEnum::UPDATE_CONTACT, self::GUARD);
         Permission::findOrCreate(PermissionEnum::DELETE_CONTACT, self::GUARD);
@@ -44,16 +44,13 @@ class ContactResourceTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => json_encode(['en' => 'Super Admin']),
-        ]);
+            'display_name' => json_encode(['en' => 'Super Admin'])]);
 
         $role->givePermissionTo([
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_CONTACTS,
             PermissionEnum::UPDATE_CONTACT,
             PermissionEnum::DELETE_CONTACT,
-            PermissionEnum::DELETE_READ_CONTACTS,
-        ]);
+            PermissionEnum::DELETE_READ_CONTACTS]);
 
         $user = User::create([
             'name' => 'Super Admin',
@@ -61,8 +58,7 @@ class ContactResourceTest extends TestCase
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
 
         $user->assignRole($role);
 
@@ -86,10 +82,7 @@ class ContactResourceTest extends TestCase
                     'to',
                     'last_page',
                     'per_page',
-                    'total',
-                ],
-            ],
-        ]);
+                    'total']]]);
     }
 
     /** @test */
@@ -116,8 +109,7 @@ class ContactResourceTest extends TestCase
             'name' => 'C',
             'email' => 'c@test.com',
             'subject' => 'S2',
-            'message' => 'M2',
-        ]);
+            'message' => 'M2']);
 
         $response = $this->getJson(self::PREFIX . "/contacts/{$contact->id}");
 
@@ -130,9 +122,7 @@ class ContactResourceTest extends TestCase
                 'message',
                 'is_read',
                 'is_replay',
-                'created_at',
-            ],
-        ]);
+                'created_at']]);
     }
 
     /** @test */
@@ -155,8 +145,7 @@ class ContactResourceTest extends TestCase
         $response->assertJsonStructure([
             'status',
             'message',
-            'success',
-        ]);
+            'success']);
         $response->assertJsonPath('status', 200);
         $response->assertJsonPath('success', true);
     }
@@ -170,8 +159,7 @@ class ContactResourceTest extends TestCase
             'name' => 'New User',
             'email' => 'new@example.com',
             'subject' => 'New Inquiry',
-            'message' => 'This is a new message.',
-        ]);
+            'message' => 'This is a new message.']);
 
         $response->assertStatus(201);
         $response->assertJsonStructure([
@@ -182,9 +170,7 @@ class ContactResourceTest extends TestCase
                 'message',
                 'is_read',
                 'is_replay',
-                'created_at',
-            ],
-        ]);
+                'created_at']]);
         $response->assertJsonPath('data.is_read', false);
         $response->assertJsonPath('data.is_replay', false);
     }

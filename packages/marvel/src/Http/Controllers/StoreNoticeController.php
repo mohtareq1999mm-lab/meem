@@ -12,6 +12,7 @@ use Marvel\Database\Models\StoreNotice;
 use Marvel\Database\Repositories\StoreNoticeReadRepository;
 use Marvel\Database\Repositories\StoreNoticeRepository;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Enums\StoreNoticeType;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\StoreNoticeRequest;
@@ -136,7 +137,7 @@ class StoreNoticeController extends CoreController
     public function store(StoreNoticeRequest $request)
     {
         try {
-            if ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN) || $this->repository->hasPermission($request->user(), $request->received_by[0] ?? 0)) {
+            if ($request->user()->hasRole(Role::SUPER_ADMIN) || $this->repository->hasPermission($request->user(), $request->received_by[0] ?? 0)) {
                 return $this->repository->saveStoreNotice($request);
             }
             throw new AuthorizationException(NOT_AUTHORIZED);

@@ -15,6 +15,7 @@ use Marvel\Database\Models\User;
 use Marvel\Database\Repositories\AddressRepository;
 use Marvel\Enums\OrderStatus;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Exceptions\MarvelException;
 use Spatie\Permission\Models\Permission as ModelsPermission;
 
@@ -98,7 +99,7 @@ class AnalyticsController extends CoreController
                 );
 
             // Revenue section : Total
-            if ($user && $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+            if ($user && $user->hasRole(Role::SUPER_ADMIN)) {
                 $totalRevenueQuery = $totalRevenueQuery->get();
                 $totalRevenue = $totalRevenueQuery->sum('paid_total')
                     + $totalRevenueQuery->unique('parent_id')->sum('delivery_fee')
@@ -127,7 +128,7 @@ class AnalyticsController extends CoreController
                     'A.shop_id'
                 );
 
-            if ($user && $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+            if ($user && $user->hasRole(Role::SUPER_ADMIN)) {
                 $todaysRevenueQuery = $todaysRevenueQuery->get();
                 $todaysRevenue =  $todaysRevenueQuery->sum('paid_total') +
                     $todaysRevenueQuery->unique('parent_id')->sum('delivery_fee') +
@@ -138,7 +139,7 @@ class AnalyticsController extends CoreController
 
             // total refunds
             $totalRefundQuery = DB::table('refunds')->whereDate('created_at', '<', Carbon::now());
-            if ($user && $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+            if ($user && $user->hasRole(Role::SUPER_ADMIN)) {
                 $totalRefunds = $totalRefundQuery->where('shop_id', null)->sum('amount');
             } else {
                 $totalRefunds = $totalRefundQuery->whereIn('shop_id', $shops)->sum('amount');
@@ -146,14 +147,14 @@ class AnalyticsController extends CoreController
 
             // total orders
             $totalOrdersQuery = DB::table('orders')->whereDate('created_at', '<=', Carbon::now());
-            if ($user && $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+            if ($user && $user->hasRole(Role::SUPER_ADMIN)) {
                 $totalOrders = $totalOrdersQuery->where('parent_id', null)->count();
             } else {
                 $totalOrders = $totalOrdersQuery->whereIn('shop_id', $shops)->count();
             }
 
             // total shops
-            if ($user && $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+            if ($user && $user->hasRole(Role::SUPER_ADMIN)) {
                 $totalVendors = User::whereHas('permissions', function ($query) {
                     $query->where('name', Permission::STORE_OWNER);
                 })->count();
@@ -201,7 +202,7 @@ class AnalyticsController extends CoreController
             ->where('A.order_status', OrderStatus::COMPLETED)
             ->whereYear('A.created_at', Carbon::now()->year);
 
-        if ($user && $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if ($user && $user->hasRole(Role::SUPER_ADMIN)) {
             $query->whereNull('A.parent_id')
                 ->join('orders as B', 'A.id', '=', 'B.parent_id')
                 ->where('B.order_status', OrderStatus::COMPLETED)
@@ -237,7 +238,7 @@ class AnalyticsController extends CoreController
         $user = $request->user();
 
         switch ($user) {
-            case $user->hasPermissionTo(Permission::SUPER_ADMIN):
+            case $user->hasRole(Role::SUPER_ADMIN):
                 $query =  DB::table('orders as A')
                     ->where('A.parent_id', '=', null)
                     ->whereDate('A.created_at', '>', Carbon::now()->subDays($days))
@@ -278,7 +279,7 @@ class AnalyticsController extends CoreController
                 break;
         }
 
-        // if ($user && $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        // if ($user && $user->hasRole(Role::SUPER_ADMIN)) {
         //     // for super-admin
         //     $query =  DB::table('orders as A')
         //         ->where('A.parent_id', '=', null)
@@ -444,7 +445,7 @@ class AnalyticsController extends CoreController
         $mostProductCategory = [];
 
         switch ($user) {
-            case $user->hasPermissionTo(Permission::SUPER_ADMIN):
+            case $user->hasRole(Role::SUPER_ADMIN):
 
                 $mostProductCategory = DB::table('category_product')
                     ->select(
@@ -559,7 +560,7 @@ class AnalyticsController extends CoreController
         $mostSoldProductCategory = [];
 
         switch ($user) {
-            case $user->hasPermissionTo(Permission::SUPER_ADMIN):
+            case $user->hasRole(Role::SUPER_ADMIN):
 
                 $mostSoldProductCategory = DB::table('categories')
                     ->select(
@@ -688,7 +689,7 @@ class AnalyticsController extends CoreController
         $topRatedProducts = [];
 
         switch ($user) {
-            case $user->hasPermissionTo(Permission::SUPER_ADMIN):
+            case $user->hasRole(Role::SUPER_ADMIN):
                 $topRatedProducts = DB::table('reviews')
                     ->join('products', 'products.id', '=', 'reviews.product_id')
                     ->join('types', 'types.id', '=', 'products.type_id')

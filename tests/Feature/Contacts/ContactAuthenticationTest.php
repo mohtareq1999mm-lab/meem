@@ -34,7 +34,7 @@ class ContactAuthenticationTest extends TestCase
 
     private function createAuthenticatedUser(): User
     {
-        Permission::findOrCreate(PermissionEnum::SUPER_ADMIN, self::GUARD);
+        Permission::findOrCreate(self::GUARD);
         Permission::findOrCreate(PermissionEnum::VIEW_CONTACTS, self::GUARD);
         Permission::findOrCreate(PermissionEnum::UPDATE_CONTACT, self::GUARD);
         Permission::findOrCreate(PermissionEnum::DELETE_CONTACT, self::GUARD);
@@ -43,16 +43,13 @@ class ContactAuthenticationTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => json_encode(['en' => 'Super Admin']),
-        ]);
+            'display_name' => json_encode(['en' => 'Super Admin'])]);
 
         $role->givePermissionTo([
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_CONTACTS,
             PermissionEnum::UPDATE_CONTACT,
             PermissionEnum::DELETE_CONTACT,
-            PermissionEnum::DELETE_READ_CONTACTS,
-        ]);
+            PermissionEnum::DELETE_READ_CONTACTS]);
 
         $user = User::create([
             'name' => 'Super Admin',
@@ -60,8 +57,7 @@ class ContactAuthenticationTest extends TestCase
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
 
         $user->assignRole($role);
 
@@ -83,8 +79,7 @@ class ContactAuthenticationTest extends TestCase
             'name' => 'Test',
             'email' => 'test@example.com',
             'subject' => 'Test',
-            'message' => 'Test message body',
-        ]);
+            'message' => 'Test message body']);
 
         $response = $this->getJson(self::PREFIX . "/contacts/{$contact->id}");
 
@@ -98,8 +93,7 @@ class ContactAuthenticationTest extends TestCase
             'name' => 'Test',
             'email' => 'test@example.com',
             'subject' => 'Test',
-            'message' => 'Test message body',
-        ]);
+            'message' => 'Test message body']);
 
         $response = $this->deleteJson(self::PREFIX . "/contacts/{$contact->id}");
 
@@ -129,13 +123,11 @@ class ContactAuthenticationTest extends TestCase
             'name' => 'Test',
             'email' => 'test@example.com',
             'subject' => 'Test',
-            'message' => 'Test message body',
-        ]);
+            'message' => 'Test message body']);
 
         $response = $this->postJson(self::PREFIX . "/contacts/{$contact->id}/reply", [
             'subject' => 'Re: Test',
-            'message' => 'Reply body',
-        ]);
+            'message' => 'Reply body']);
 
         $response->assertStatus(401);
     }
@@ -149,8 +141,7 @@ class ContactAuthenticationTest extends TestCase
             'name' => 'John Doe',
             'email' => 'john@example.com',
             'subject' => 'Inquiry',
-            'message' => 'I have a question about your service.',
-        ]);
+            'message' => 'I have a question about your service.']);
 
         $response->assertStatus(201);
     }

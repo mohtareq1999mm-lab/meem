@@ -34,7 +34,7 @@ class FaqTranslationTest extends TestCase
 
     private function createSuperAdmin(): User
     {
-        Permission::findOrCreate(PermissionEnum::SUPER_ADMIN, self::GUARD);
+        Permission::findOrCreate(self::GUARD);
         Permission::findOrCreate(PermissionEnum::VIEW_FAQS, self::GUARD);
         Permission::findOrCreate(PermissionEnum::CREATE_FAQ, self::GUARD);
         Permission::findOrCreate(PermissionEnum::UPDATE_FAQ, self::GUARD);
@@ -43,16 +43,13 @@ class FaqTranslationTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => json_encode(['en' => 'Super Admin']),
-        ]);
+            'display_name' => json_encode(['en' => 'Super Admin'])]);
 
         $role->givePermissionTo([
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_FAQS,
             PermissionEnum::CREATE_FAQ,
             PermissionEnum::UPDATE_FAQ,
-            PermissionEnum::DELETE_FAQ,
-        ]);
+            PermissionEnum::DELETE_FAQ]);
 
         $user = User::create([
             'name' => 'Super Admin',
@@ -60,8 +57,7 @@ class FaqTranslationTest extends TestCase
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
 
         $user->assignRole($role);
 
@@ -74,13 +70,10 @@ class FaqTranslationTest extends TestCase
         $response = $this->postJson(self::PREFIX . '/faqs', [
             'faq_title' => [
                 'en' => 'How to return?',
-                'ar' => 'كيفية الإرجاع؟',
-            ],
+                'ar' => 'كيفية الإرجاع؟'],
             'faq_description' => [
                 'en' => 'Return policy details.',
-                'ar' => 'تفاصيل سياسة الإرجاع.',
-            ],
-        ]);
+                'ar' => 'تفاصيل سياسة الإرجاع.']]);
 
         $response->assertStatus(201);
 
@@ -94,8 +87,7 @@ class FaqTranslationTest extends TestCase
     {
         Faqs::create([
             'faq_title' => ['en' => 'English Title', 'ar' => 'عنوان عربي'],
-            'faq_description' => ['en' => 'English desc', 'ar' => 'وصف عربي'],
-        ]);
+            'faq_description' => ['en' => 'English desc', 'ar' => 'وصف عربي']]);
 
         app()->setLocale('en');
         $response = $this->withHeaders(['lang' => 'en'])->getJson(self::PREFIX . '/faqs');
@@ -108,8 +100,7 @@ class FaqTranslationTest extends TestCase
     {
         Faqs::create([
             'faq_title' => ['en' => 'English Title', 'ar' => 'عنوان عربي'],
-            'faq_description' => ['en' => 'English desc', 'ar' => 'وصف عربي'],
-        ]);
+            'faq_description' => ['en' => 'English desc', 'ar' => 'وصف عربي']]);
 
         $response = $this->withHeaders(['lang' => 'ar'])->getJson(self::PREFIX . '/faqs');
         $response->assertOk();
@@ -121,8 +112,7 @@ class FaqTranslationTest extends TestCase
     {
         $faq = Faqs::create([
             'faq_title' => ['en' => 'Show Title', 'ar' => 'عنوان العرض'],
-            'faq_description' => ['en' => 'Show desc', 'ar' => 'وصف العرض'],
-        ]);
+            'faq_description' => ['en' => 'Show desc', 'ar' => 'وصف العرض']]);
 
         $response = $this->getJson(self::PREFIX . "/faqs/{$faq->id}");
         $response->assertOk();

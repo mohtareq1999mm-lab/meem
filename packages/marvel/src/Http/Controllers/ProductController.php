@@ -32,6 +32,7 @@ use Marvel\Database\Models\Tag;
 use Marvel\Exceptions\MarvelNotFoundException;
 use \OpenAI;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Http\Requests\BulkDeleteProductsRequest;
 use Marvel\Http\Resources\product\ProductCollection;
 use Marvel\Http\Resources\ProductResource;
@@ -961,7 +962,7 @@ class ProductController extends CoreController
         $products_query = $this->repository->with(['type', 'shop'])->where('language', $language);
 
         switch ($user) {
-            case $user->hasPermissionTo(Permission::SUPER_ADMIN):
+            case $user->hasRole(Role::SUPER_ADMIN):
                 return $products_query->whereIn('shop_id', $user->shops->pluck('id'));
                 break;
 
@@ -1028,7 +1029,7 @@ class ProductController extends CoreController
         $products_query = $this->repository->with(['type', 'shop'])->where('language', $language)->where('stock_quantity', '<', 10);
 
         switch ($user) {
-            case $user->hasPermissionTo(Permission::SUPER_ADMIN):
+            case $user->hasRole(Role::SUPER_ADMIN):
                 if (isset($request->shop_id)) {
                     return $products_query->where('shop_id', '=', $request->shop_id);
                 } else {

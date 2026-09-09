@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Marvel\Database\Models\Shop;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Exceptions\MarvelException;
 use Prettus\Repository\Contracts\CacheableInterface;
 use Prettus\Repository\Traits\CacheableRepository;
@@ -171,7 +172,7 @@ abstract class BaseRepository extends Repository implements CacheableInterface
 
     public function hasPermission($user, $shop_id = null)
     {
-        if ($user && $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if ($user && $user->hasRole(Role::SUPER_ADMIN)) {
             return true;
         }
         try {

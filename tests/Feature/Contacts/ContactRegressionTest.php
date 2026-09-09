@@ -37,7 +37,7 @@ class ContactRegressionTest extends TestCase
 
     private function createSuperAdmin(): User
     {
-        Permission::findOrCreate(PermissionEnum::SUPER_ADMIN, self::GUARD);
+        Permission::findOrCreate(self::GUARD);
         Permission::findOrCreate(PermissionEnum::VIEW_CONTACTS, self::GUARD);
         Permission::findOrCreate(PermissionEnum::UPDATE_CONTACT, self::GUARD);
         Permission::findOrCreate(PermissionEnum::DELETE_CONTACT, self::GUARD);
@@ -46,16 +46,13 @@ class ContactRegressionTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => json_encode(['en' => 'Super Admin']),
-        ]);
+            'display_name' => json_encode(['en' => 'Super Admin'])]);
 
         $role->givePermissionTo([
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_CONTACTS,
             PermissionEnum::UPDATE_CONTACT,
             PermissionEnum::DELETE_CONTACT,
-            PermissionEnum::DELETE_READ_CONTACTS,
-        ]);
+            PermissionEnum::DELETE_READ_CONTACTS]);
 
         $user = User::create([
             'name' => 'Super Admin',
@@ -63,8 +60,7 @@ class ContactRegressionTest extends TestCase
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
 
         $user->assignRole($role);
 
@@ -78,8 +74,7 @@ class ContactRegressionTest extends TestCase
             'name' => 'B1',
             'email' => 'b1@example.com',
             'subject' => 'B1',
-            'message' => 'B1 message.',
-        ]);
+            'message' => 'B1 message.']);
 
         $contact->delete();
 
@@ -103,8 +98,7 @@ class ContactRegressionTest extends TestCase
             'name' => 'Public',
             'email' => 'public@example.com',
             'subject' => 'Public',
-            'message' => 'Public message.',
-        ]);
+            'message' => 'Public message.']);
 
         $response->assertStatus(201);
     }
@@ -118,8 +112,7 @@ class ContactRegressionTest extends TestCase
             'name' => 'ContactUs',
             'email' => 'contactus@example.com',
             'subject' => 'Contact Us',
-            'message' => 'Contact us message.',
-        ]);
+            'message' => 'Contact us message.']);
 
         $response->assertStatus(201);
     }
@@ -170,8 +163,7 @@ class ContactRegressionTest extends TestCase
             'MESSAGE.REPLAY_SENT_SUCCESSFULLY',
             'MESSAGE.CONTACT_DELETED_SUCCESSFULLY',
             'MESSAGE.ALL_CONTACTS_DELETED_SUCCESSFULLY',
-            'MESSAGE.ALL_READ_CONTACTS_DELETED_SUCCESSFULLY',
-        ];
+            'MESSAGE.ALL_READ_CONTACTS_DELETED_SUCCESSFULLY'];
 
         $arMessages = include resource_path('lang/ar/message.php');
         foreach ($expectedKeys as $key) {
@@ -199,8 +191,7 @@ class ContactRegressionTest extends TestCase
             'name' => 'Test',
             'email' => 'test@test.com',
             'subject' => 'Subject',
-            'message' => 'Test message body.',
-        ]);
+            'message' => 'Test message body.']);
 
         ContactMessageReceived::dispatch($contact);
 

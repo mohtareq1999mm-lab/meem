@@ -11,6 +11,7 @@ use Marvel\Database\Models\Balance;
 use Marvel\Database\Models\Withdraw;
 use Marvel\Database\Repositories\WithdrawRepository;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Enums\WithdrawStatus;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\UpdateWithdrawRequest;
@@ -84,13 +85,13 @@ class WithdrawController extends CoreController
             if ($shop_id) {
                 if ($user->shops->contains('id', $shop_id)) {
                     return $this->repository->with(['shop'])->where('shop_id', '=', $shop_id);
-                } elseif ($user && $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+                } elseif ($user && $user->hasRole(Role::SUPER_ADMIN)) {
                     return $this->repository->with(['shop'])->where('shop_id', '=', $shop_id);
                 } else {
                     throw new AuthorizationException(NOT_AUTHORIZED);
                 }
             } else {
-                if ($user && $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+                if ($user && $user->hasRole(Role::SUPER_ADMIN)) {
                     return $this->repository->with(['shop'])->where('id', '!=', null);
                 } else {
                     throw new AuthorizationException(NOT_AUTHORIZED);
@@ -133,7 +134,7 @@ class WithdrawController extends CoreController
     public function store(WithdrawRequest $request)
     {
         try {
-            if ($request->user() && ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN) || $request->user()->shops->contains('id', $request->shop_id))) {
+            if ($request->user() && ($request->user()->hasRole(Role::SUPER_ADMIN) || $request->user()->shops->contains('id', $request->shop_id))) {
                 $validatedData = $request->validated();
                 if (!isset($validatedData['shop_id'])) {
                     throw new BadRequestHttpException(WITHDRAW_MUST_BE_ATTACHED_TO_SHOP);
@@ -185,7 +186,7 @@ class WithdrawController extends CoreController
         try {
             $id = $request->id;
             $withdraw = $this->repository->with(['shop'])->findOrFail($id);
-            if ($request->user() && ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN) || $request->user()->shops->contains('id', $withdraw->shop_id))) {
+            if ($request->user() && ($request->user()->hasRole(Role::SUPER_ADMIN) || $request->user()->shops->contains('id', $withdraw->shop_id))) {
                 return $withdraw;
             }
             throw new AuthorizationException(NOT_AUTHORIZED);
@@ -224,7 +225,7 @@ class WithdrawController extends CoreController
     public function destroy(Request $request, $id)
     {
         try {
-            if ($request->user() && $request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
+            if ($request->user() && $request->user()->hasRole(Role::SUPER_ADMIN)) {
                 return $this->repository->findOrFail($id)->delete();
             }
             throw new AuthorizationException(NOT_AUTHORIZED);
@@ -258,7 +259,7 @@ class WithdrawController extends CoreController
     public function approveWithdraw(Request $request)
     {
         try {
-            if ($request->user() && $request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
+            if ($request->user() && $request->user()->hasRole(Role::SUPER_ADMIN)) {
                 $id = $request->id;
                 $status = $request->status->value ?? $request->status;
                 $withdraw = $this->repository->findOrFail($id);

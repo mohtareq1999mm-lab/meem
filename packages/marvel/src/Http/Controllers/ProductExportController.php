@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Marvel\Database\Models\Import;
 use Marvel\Enums\FileOperationType;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Http\Requests\ProductExportRequest;
 use Marvel\Jobs\ExportProductsJob;
 use Marvel\Traits\ApiResponse;
@@ -23,7 +24,7 @@ class ProductExportController extends Controller
     public function __construct()
     {
         $this->middleware('auth:sanctum');
-        $this->middleware('permission:' . Permission::EXPORT_PRODUCT . '|' . Permission::SUPER_ADMIN);
+        $this->middleware('permission:' . Permission::EXPORT_PRODUCT);
     }
 
     public function export(\Illuminate\Http\Request $request): JsonResponse
@@ -86,7 +87,7 @@ class ProductExportController extends Controller
     {
         $user = auth()->user();
         $baseQuery = Import::whereOperationType(FileOperationType::PRODUCT_EXPORT);
-        if ($user && ! $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if ($user && ! $user->hasRole(Role::SUPER_ADMIN)) {
             $baseQuery->where('created_by', $user->id);
         }
         $exportOperation = $baseQuery
@@ -124,7 +125,7 @@ class ProductExportController extends Controller
     {
         $user = auth()->user();
         $baseQuery = Import::whereOperationType(FileOperationType::PRODUCT_EXPORT);
-        if ($user && ! $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if ($user && ! $user->hasRole(Role::SUPER_ADMIN)) {
             $baseQuery->where('created_by', $user->id);
         }
         $exportOperation = $baseQuery

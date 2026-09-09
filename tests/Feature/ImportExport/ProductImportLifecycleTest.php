@@ -29,16 +29,16 @@ class ProductImportLifecycleTest extends TestCase
 
     private function makeAdmin(): User
     {
-        foreach ([Perm::IMPORT_PRODUCT, Perm::EXPORT_PRODUCT, Perm::SUPER_ADMIN] as $p) Permission::findOrCreate($p, self::GUARD);
+        foreach ([Perm::IMPORT_PRODUCT, Perm::EXPORT_PRODUCT] as $p) Permission::findOrCreate($p, self::GUARD);
         // Keep legacy perms for backward compat
         foreach ([Perm::CREATE_PRODUCT, Perm::VIEW_PRODUCTS] as $p) Permission::findOrCreate($p, self::GUARD);
         $role = Role::create(['name'=>'r'.uniqid(),'guard_name'=>self::GUARD,'display_name'=>'r']);
         $role->givePermissionTo(Perm::IMPORT_PRODUCT);
-        $role->givePermissionTo(Perm::SUPER_ADMIN);
+
         $user = User::create(['name'=>'u'.uniqid(),'email'=>uniqid().'@test.local','password'=>Hash::make('password'),'email_verified_at'=>now(),'is_active'=>true,'type'=>'admin']);
         $user->assignRole($role);
         $user->givePermissionTo(Perm::IMPORT_PRODUCT);
-        $user->givePermissionTo(Perm::SUPER_ADMIN);
+
         return $user;
     }
 

@@ -52,8 +52,7 @@ class BugFixesValidationTest extends TestCase
             'email' => 'admin@test.com',
             'password' => bcrypt('password'),
             'type' => 'super_admin',
-            'is_active' => true,
-        ]);
+            'is_active' => true]);
         $this->admin->assignRole('admin');
 
         $this->customer = User::create([
@@ -61,20 +60,17 @@ class BugFixesValidationTest extends TestCase
             'email' => 'customer@test.com',
             'password' => bcrypt('password'),
             'type' => 'customer',
-            'is_active' => true,
-        ]);
+            'is_active' => true]);
 
         InvoiceSequence::where('series', 'INV')->where('sequence_year', now()->year)->delete();
         InvoiceSequence::create([
             'series' => 'INV',
             'sequence_year' => now()->year,
-            'last_sequence' => 1,
-        ]);
+            'last_sequence' => 1]);
         InvoiceSequence::create([
             'series' => 'DN',
             'sequence_year' => now()->year,
-            'last_sequence' => 0,
-        ]);
+            'last_sequence' => 0]);
     }
 
     private function createBaseTables(): void
@@ -263,8 +259,7 @@ class BugFixesValidationTest extends TestCase
             Permission::VIEW_INVOICE,
             Permission::REGENERATE_INVOICE,
             Permission::CORRECT_INVOICE,
-            Permission::CANCEL_INVOICE,
-        ]);
+            Permission::CANCEL_INVOICE]);
     }
 
     private function dropInvoiceOrderIdUniqueConstraint(): void
@@ -327,8 +322,7 @@ class BugFixesValidationTest extends TestCase
             'payment_gateway' => 'myfatoorah',
             'price' => 100,
             'total_price' => 100,
-            'shipping_price' => 0,
-        ]);
+            'shipping_price' => 0]);
 
         Transaction::create([
             'order_id' => $order->id,
@@ -338,8 +332,7 @@ class BugFixesValidationTest extends TestCase
             'status' => 'pending',
             'amount' => 100,
             'currency' => 'EGP',
-            'payment_method' => 'myfatoorah',
-        ]);
+            'payment_method' => 'myfatoorah']);
 
         $response = $this->get(route('api.checkout.errorCallback', ['paymentId' => 'TST-001']));
 
@@ -375,8 +368,7 @@ class BugFixesValidationTest extends TestCase
             'payment_gateway' => 'myfatoorah',
             'price' => 100,
             'total_price' => 100,
-            'shipping_price' => 0,
-        ]);
+            'shipping_price' => 0]);
 
         $transaction = Transaction::create([
             'order_id' => $order->id,
@@ -386,8 +378,7 @@ class BugFixesValidationTest extends TestCase
             'status' => 'pending',
             'amount' => 100,
             'currency' => 'EGP',
-            'payment_method' => 'myfatoorah',
-        ]);
+            'payment_method' => 'myfatoorah']);
 
         $response = $this->get(route('api.checkout.errorCallback', ['paymentId' => 'TST-002']));
 
@@ -413,8 +404,7 @@ class BugFixesValidationTest extends TestCase
             'name' => 'Test User',
             'user_email' => 'test@example.com',
             'user_phone' => '01000000000',
-            'address' => json_encode(['city' => 'Cairo']),
-        ]);
+            'address' => json_encode(['city' => 'Cairo'])]);
 
         $original = Invoice::create([
             'order_id' => $order->id,
@@ -436,12 +426,10 @@ class BugFixesValidationTest extends TestCase
                 'shipping_address' => ['city' => 'Cairo'],
                 'items' => [],
                 'pricing_breakdown' => ['subtotal' => 100, 'total' => 100, 'currency' => 'EGP'],
-                'audit' => [],
-            ],
+                'audit' => []],
             'snapshot_hash' => hash('sha256', 'test'),
             'verification_hash' => hash('sha256', 'test' . config('app.key')),
-            'generated_at' => now(),
-        ]);
+            'generated_at' => now()]);
 
         $service = app(InvoiceService::class);
         $correction = $service->correctInvoice($original->id, ['total' => 90], 'Price adjustment', $this->admin->id);
@@ -475,8 +463,7 @@ class BugFixesValidationTest extends TestCase
             'name' => 'Test User',
             'user_email' => 'test@example.com',
             'user_phone' => '01000000000',
-            'address' => json_encode(['city' => 'Cairo']),
-        ]);
+            'address' => json_encode(['city' => 'Cairo'])]);
 
         $invoice = Invoice::create([
             'order_id' => $order->id,
@@ -498,12 +485,10 @@ class BugFixesValidationTest extends TestCase
                 'shipping_address' => ['city' => 'Cairo'],
                 'items' => [],
                 'pricing_breakdown' => ['subtotal' => 100, 'total' => 100, 'currency' => 'EGP'],
-                'audit' => [],
-            ],
+                'audit' => []],
             'snapshot_hash' => hash('sha256', 'test'),
             'verification_hash' => hash('sha256', 'test' . config('app.key')),
-            'generated_at' => now(),
-        ]);
+            'generated_at' => now()]);
 
         $job = new GenerateInvoicePdfJob($invoice);
         $job->handle();
@@ -550,8 +535,7 @@ class BugFixesValidationTest extends TestCase
             'payment_gateway' => 'myfatoorah',
             'price' => 100,
             'total_price' => 100,
-            'shipping_price' => 0,
-        ]);
+            'shipping_price' => 0]);
 
         $this->assertEquals(PaymentStatus::PENDING, $order->payment_status);
 
@@ -561,8 +545,7 @@ class BugFixesValidationTest extends TestCase
             'status' => 'paid',
             'amount' => 100,
             'currency' => 'EGP',
-            'payment_method' => 'myfatoorah',
-        ]);
+            'payment_method' => 'myfatoorah']);
 
         $this->assertEquals(PaymentStatus::SUCCESS, $order->fresh()->payment_status);
     }
@@ -576,8 +559,7 @@ class BugFixesValidationTest extends TestCase
             'payment_method' => 'cod',
             'price' => 100,
             'total_price' => 100,
-            'shipping_price' => 0,
-        ]);
+            'shipping_price' => 0]);
 
         $this->assertEquals(PaymentStatus::PENDING, $order->payment_status);
 
@@ -597,8 +579,7 @@ class BugFixesValidationTest extends TestCase
             'payment_status' => PaymentStatus::SUCCESS,
             'price' => 100,
             'total_price' => 100,
-            'shipping_price' => 0,
-        ]);
+            'shipping_price' => 0]);
 
         $this->assertEquals(PaymentStatus::SUCCESS, $order->payment_status);
     }

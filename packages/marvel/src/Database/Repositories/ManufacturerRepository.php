@@ -7,6 +7,7 @@ use Marvel\Database\Models\Manufacturer;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Prettus\Repository\Exceptions\RepositoryException;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 
 
 class ManufacturerRepository extends BaseRepository
@@ -58,7 +59,7 @@ class ManufacturerRepository extends BaseRepository
     {
         $data = $request->only($this->dataArray);
         $data['slug'] = $this->makeSlug($request);
-        if ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if ($request->user()->hasRole(Role::SUPER_ADMIN)) {
             $data['is_approved'] = true;
         } else {
             $data['is_approved'] = false;

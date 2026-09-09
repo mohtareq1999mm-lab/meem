@@ -36,29 +36,25 @@ class SettingsCrudTest extends TestCase
 
     private function createSuperAdmin(): User
     {
-        Permission::findOrCreate(PermissionEnum::SUPER_ADMIN, self::GUARD);
+        Permission::findOrCreate(self::GUARD);
         Permission::findOrCreate(PermissionEnum::VIEW_SETTINGS, self::GUARD);
         Permission::findOrCreate(PermissionEnum::UPDATE_SETTINGS, self::GUARD);
 
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'guard_name' => self::GUARD,
-            'display_name' => json_encode(['en' => 'Super Admin']),
-        ]);
+            'display_name' => json_encode(['en' => 'Super Admin'])]);
 
         $role->givePermissionTo([
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_SETTINGS,
-            PermissionEnum::UPDATE_SETTINGS,
-        ]);
+            PermissionEnum::UPDATE_SETTINGS]);
 
         $user = User::create([
             'name' => 'Super Admin',
             'email' => 'admin@example.com',
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
-            'is_active' => true,
-        ]);
+            'is_active' => true]);
 
         $user->assignRole($role);
 
@@ -70,8 +66,7 @@ class SettingsCrudTest extends TestCase
     {
         Settings::create([
             'site_name' => json_encode(['en' => 'Test Site']),
-            'options' => ['currency' => 'USD', 'siteTitle' => 'Test'],
-        ]);
+            'options' => ['currency' => 'USD', 'siteTitle' => 'Test']]);
 
         $response = $this->getJson(self::PREFIX . '/settings');
 
@@ -99,8 +94,7 @@ class SettingsCrudTest extends TestCase
             'snapchat' => 'https://snapchat.com/old',
             'phone' => '1234567890',
             'fast_shipping_page_publish' => true,
-            'options' => ['currency' => 'USD'],
-        ]);
+            'options' => ['currency' => 'USD']]);
 
         $response = $this->putJson(self::PREFIX . '/settings', [
             'site_name' => ['en' => 'New Name'],
@@ -118,8 +112,7 @@ class SettingsCrudTest extends TestCase
             'tiktok' => 'https://tiktok.com/new',
             'snapchat' => 'https://snapchat.com/new',
             'phone' => '0987654321',
-            'fast_shipping_page_publish' => '1',
-        ]);
+            'fast_shipping_page_publish' => '1']);
 
         $response->assertOk();
         $response->assertJsonPath('success', true);
@@ -134,8 +127,7 @@ class SettingsCrudTest extends TestCase
     {
         Settings::create([
             'site_name' => json_encode(['en' => 'Test Site']),
-            'options' => ['currency' => 'USD'],
-        ]);
+            'options' => ['currency' => 'USD']]);
 
         $response = $this->getJson(self::PREFIX . '/settings');
 
@@ -161,9 +153,7 @@ class SettingsCrudTest extends TestCase
                 'snapchat',
                 'phone',
                 'fast_shipping_page_publish',
-                'options',
-            ],
-        ]);
+                'options']]);
     }
 
     /** @test */
@@ -173,13 +163,11 @@ class SettingsCrudTest extends TestCase
             'site_name' => json_encode(['en' => 'Test Site']),
             'tiktok' => 'https://tiktok.com/old',
             'snapchat' => 'https://snapchat.com/old',
-            'options' => ['currency' => 'USD'],
-        ]);
+            'options' => ['currency' => 'USD']]);
 
         $response = $this->putJson(self::PREFIX . '/settings', [
             'site_name' => ['en' => 'Updated Site'],
-            'fast_shipping_page_publish' => '1',
-        ]);
+            'fast_shipping_page_publish' => '1']);
 
         $response->assertOk();
 
@@ -192,8 +180,7 @@ class SettingsCrudTest extends TestCase
     {
         Settings::create([
             'site_name' => json_encode(['en' => 'Test Site']),
-            'options' => ['currency' => 'USD'],
-        ]);
+            'options' => ['currency' => 'USD']]);
 
         $updateResponse = $this->putJson(self::PREFIX . '/settings', [
             'site_name' => ['en' => 'Updated Site'],
@@ -203,8 +190,7 @@ class SettingsCrudTest extends TestCase
             'instagram' => 'https://instagram.com/meem',
             'linkedin' => 'https://linkedin.com/meem',
             'youtube' => 'https://youtube.com/meem',
-            'fast_shipping_page_publish' => '1',
-        ]);
+            'fast_shipping_page_publish' => '1']);
 
         $updateResponse->assertOk();
         $updateResponse->assertJsonPath('data.tiktok', 'https://tiktok.com/meem');

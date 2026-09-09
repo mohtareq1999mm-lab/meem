@@ -197,8 +197,7 @@ class DigitalFulfillmentTest extends TestCase
             'email_verified_at' => now(),
             'password' => Hash::make('Password123!'),
             'is_active' => true,
-            'type' => 'customer',
-        ]);
+            'type' => 'customer']);
     }
 
     private function makeOrderWithDigitalItem(array $productOverrides = []): array
@@ -216,8 +215,7 @@ class DigitalFulfillmentTest extends TestCase
             'product_type' => ProductType::SIMPLE,
             'item_type' => 'DIGITAL',
             'stock_quantity' => 100,
-            'in_stock' => true,
-        ], $productOverrides));
+            'in_stock' => true], $productOverrides));
 
         DigitalAsset::create([
             'product_id' => $product->id,
@@ -225,8 +223,7 @@ class DigitalFulfillmentTest extends TestCase
             'path' => 'digital-assets/' . $product->id . '/asset.pdf',
             'original_name' => 'Ebook.pdf',
             'mime' => 'application/pdf',
-            'size' => 1024,
-        ]);
+            'size' => 1024]);
 
         $order = Order::create([
             'user_id' => $user->id,
@@ -235,8 +232,7 @@ class DigitalFulfillmentTest extends TestCase
             'payment_status' => 'payment-pending',
             'fulfillment_status' => 'pending',
             'payment_method' => 'online',
-            'total_price' => 50.00,
-        ]);
+            'total_price' => 50.00]);
 
         $item = OrderProduct::create([
             'order_id' => $order->id,
@@ -245,8 +241,7 @@ class DigitalFulfillmentTest extends TestCase
             'product_quantity' => 1,
             'product_price' => 50.00,
             'product_total_price' => 50.00,
-            'item_type' => 'DIGITAL',
-        ]);
+            'item_type' => 'DIGITAL']);
 
         return [$order, $item, $product];
     }
@@ -293,8 +288,7 @@ class DigitalFulfillmentTest extends TestCase
             'price' => 20.00,
             'product_type' => ProductType::SIMPLE,
             'item_type' => 'PHYSICAL',
-            'stock_quantity' => 10,
-        ]);
+            'stock_quantity' => 10]);
 
         $physicalItem = OrderProduct::create([
             'order_id' => $order->id,
@@ -303,8 +297,7 @@ class DigitalFulfillmentTest extends TestCase
             'product_quantity' => 1,
             'product_price' => 20.00,
             'product_total_price' => 20.00,
-            'item_type' => 'PHYSICAL',
-        ]);
+            'item_type' => 'PHYSICAL']);
 
         $this->fulfill($order);
 
@@ -320,14 +313,12 @@ class DigitalFulfillmentTest extends TestCase
             'description' => ['en' => 'P'],
             'price' => 10.00,
             'product_type' => ProductType::SIMPLE,
-            'item_type' => 'PHYSICAL',
-        ]);
+            'item_type' => 'PHYSICAL']);
 
         $order = Order::create([
             'user_id' => $this->user->id,
             'order_number' => 'ORD-PHY-' . uniqid(),
-            'status' => 'completed',
-        ]);
+            'status' => 'completed']);
 
         $item = OrderProduct::create([
             'order_id' => $order->id,
@@ -336,8 +327,7 @@ class DigitalFulfillmentTest extends TestCase
             'product_quantity' => 1,
             'product_price' => 10.00,
             'product_total_price' => 10.00,
-            'item_type' => 'PHYSICAL',
-        ]);
+            'item_type' => 'PHYSICAL']);
 
         $this->fulfill($order);
 
@@ -372,8 +362,7 @@ class DigitalFulfillmentTest extends TestCase
             'email_verified_at' => now(),
             'password' => Hash::make('Password123!'),
             'is_active' => true,
-            'type' => \App\Enums\UserType::USER->value,
-        ]);
+            'type' => \App\Enums\UserType::USER->value]);
 
         [$order] = $this->makeOrderForUser($realUser);
         $this->fulfill($order);
@@ -421,19 +410,16 @@ class DigitalFulfillmentTest extends TestCase
         $guard = config('auth.defaults.guard', 'api');
         $roleId = DB::table('roles')->insertGetId([
             'name' => 'super_admin',
-            'guard_name' => $guard,
-        ]);
+            'guard_name' => $guard]);
 
         $admin = User::create([
             'name' => 'Ops Admin',
             'email' => 'ops-' . uniqid() . '@example.com',
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
         DB::table('model_has_roles')->insert([
             'role_id' => $roleId,
             'model_type' => get_class($admin),
-            'model_id' => $admin->id,
-        ]);
+            'model_id' => $admin->id]);
 
         [$order] = $this->makeOrderWithDigitalItem();
 
@@ -535,14 +521,12 @@ class DigitalFulfillmentTest extends TestCase
             'description' => ['en' => 'P'],
             'price' => 15.00,
             'product_type' => ProductType::SIMPLE,
-            'item_type' => 'PHYSICAL',
-        ]);
+            'item_type' => 'PHYSICAL']);
 
         $order = Order::create([
             'user_id' => $this->user->id,
             'order_number' => 'ORD-PHY2-' . uniqid(),
-            'status' => 'completed',
-        ]);
+            'status' => 'completed']);
 
         OrderProduct::create([
             'order_id' => $order->id,
@@ -551,8 +535,7 @@ class DigitalFulfillmentTest extends TestCase
             'product_quantity' => 1,
             'product_price' => 15.00,
             'product_total_price' => 15.00,
-            'item_type' => 'PHYSICAL',
-        ]);
+            'item_type' => 'PHYSICAL']);
 
         $order->load(['digitalEntitlements.assets']);
         $raw = (new \App\Http\Resources\Order\OrderResource($order))->toArray(request());

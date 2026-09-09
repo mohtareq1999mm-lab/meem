@@ -10,6 +10,7 @@ use Marvel\Database\Models\Import;
 use Marvel\Enums\FileOperationType;
 use Marvel\Enums\ImportType;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Jobs\ExportBrandsJob;
 use Marvel\Traits\ApiResponse;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -21,7 +22,7 @@ class BrandExportController extends Controller
     public function __construct()
     {
         $this->middleware('auth:sanctum');
-        $this->middleware('permission:' . Permission::EXPORT_BRAND . '|' . Permission::SUPER_ADMIN);
+        $this->middleware('permission:' . Permission::EXPORT_BRAND);
     }
 
     public function export(\Illuminate\Http\Request $request): JsonResponse
@@ -72,7 +73,7 @@ class BrandExportController extends Controller
     {
         $user = auth()->user();
         $baseQuery = Import::whereOperationType(FileOperationType::BRAND_EXPORT);
-        if ($user && ! $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if ($user && ! $user->hasRole(Role::SUPER_ADMIN)) {
             $baseQuery->where('created_by', $user->id);
         }
         $exportOperation = $baseQuery
@@ -120,7 +121,7 @@ class BrandExportController extends Controller
     {
         $user = auth()->user();
         $baseQuery = Import::whereOperationType(FileOperationType::BRAND_EXPORT);
-        if ($user && ! $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if ($user && ! $user->hasRole(Role::SUPER_ADMIN)) {
             $baseQuery->where('created_by', $user->id);
         }
         $exportOperation = $baseQuery

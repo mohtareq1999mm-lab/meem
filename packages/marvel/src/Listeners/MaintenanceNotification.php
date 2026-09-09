@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Notification;
 use Marvel\Database\Models\Settings;
 use Marvel\Database\Models\User;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Events\Maintenance;
 use Marvel\Events\StoreNoticeEvent;
 use Marvel\Notifications\MaintenanceReminder;
@@ -43,7 +44,7 @@ class MaintenanceNotification
 
         if (!$shouldSendEmail) return;
 
-        $admins = User::permission(Permission::SUPER_ADMIN)->pluck('id')->toArray();
+        $admins = User::role(Role::SUPER_ADMIN)->pluck('id')->toArray();
         $users = User::permission(Permission::STORE_OWNER)->whereNotIN('id', $admins)->get();
         if ($users) {
             foreach ($users as $user) {

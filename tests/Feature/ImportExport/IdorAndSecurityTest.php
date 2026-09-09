@@ -25,7 +25,7 @@ class IdorAndSecurityTest extends TestCase
     private function createUser(array $perms, bool $super = false): User
     {
         foreach ($perms as $p) Permission::findOrCreate($p, self::GUARD);
-        Permission::findOrCreate(Perm::SUPER_ADMIN, self::GUARD);
+        Permission::findOrCreate(self::GUARD);
         // also ensure product perms exist for our tests
         Permission::findOrCreate(Perm::IMPORT_PRODUCT, self::GUARD);
         Permission::findOrCreate(Perm::EXPORT_PRODUCT, self::GUARD);
@@ -35,7 +35,7 @@ class IdorAndSecurityTest extends TestCase
         Permission::findOrCreate(Perm::EXPORT_BRAND, self::GUARD);
         $role = Role::create(['name' => 'r_' . uniqid(), 'guard_name' => self::GUARD, 'display_name' => 'test']);
         foreach ($perms as $p) $role->givePermissionTo($p);
-        if ($super) $role->givePermissionTo(Perm::SUPER_ADMIN);
+        if ($super)
         $user = User::create([
             'name' => 'u_' . uniqid(),
             'email' => uniqid() . '@test.local',
@@ -46,7 +46,7 @@ class IdorAndSecurityTest extends TestCase
         ]);
         $user->assignRole($role);
         foreach ($perms as $p) $user->givePermissionTo($p);
-        if ($super) $user->givePermissionTo(Perm::SUPER_ADMIN);
+        if ($super)
         return $user;
     }
 
@@ -182,7 +182,7 @@ class IdorAndSecurityTest extends TestCase
     public function test_super_admin_can_view_other_users_import(): void
     {
         $userA = $this->createUser([Perm::IMPORT_PRODUCT]);
-        $super = $this->createUser([Perm::SUPER_ADMIN], true);
+        $super = $this->createUser([], true);
         $import = $this->createImport($userA, ImportType::PRODUCT_IMPORT);
         Sanctum::actingAs($super);
         $resp = $this->getJson(self::PREFIX . "/products/import/{$import->id}");

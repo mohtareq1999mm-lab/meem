@@ -32,8 +32,7 @@ class CategoryAuthorizationTest extends TestCase
 
         $this->category = Category::create([
             'name' => ['en' => 'Test Category'],
-            'slug' => 'test-category',
-        ]);
+            'slug' => 'test-category']);
     }
 
     public function test_user_with_view_only_can_index_and_show(): void
@@ -51,8 +50,7 @@ class CategoryAuthorizationTest extends TestCase
         Sanctum::actingAs($user);
 
         $response = $this->postJson(self::PREFIX . '/categories', [
-            'name' => ['en' => 'New Cat'],
-        ]);
+            'name' => ['en' => 'New Cat']]);
         $response->assertForbidden();
     }
 
@@ -62,8 +60,7 @@ class CategoryAuthorizationTest extends TestCase
         Sanctum::actingAs($user);
 
         $response = $this->putJson(self::PREFIX . '/categories/' . $this->category->id, [
-            'name' => ['en' => 'Updated'],
-        ]);
+            'name' => ['en' => 'Updated']]);
         $response->assertForbidden();
     }
 
@@ -82,8 +79,7 @@ class CategoryAuthorizationTest extends TestCase
         Sanctum::actingAs($user);
 
         $response = $this->putJson(self::PREFIX . '/categories/feature', [
-            'id' => $this->category->id,
-        ]);
+            'id' => $this->category->id]);
         $response->assertForbidden();
     }
 
@@ -93,8 +89,7 @@ class CategoryAuthorizationTest extends TestCase
         Sanctum::actingAs($user);
 
         $response = $this->postJson(self::PREFIX . '/categories', [
-            'name' => ['en' => 'New Category'],
-        ]);
+            'name' => ['en' => 'New Category']]);
 
         $this->assertNotEquals(403, $response->getStatusCode());
     }
@@ -113,8 +108,7 @@ class CategoryAuthorizationTest extends TestCase
         Sanctum::actingAs($user);
 
         $response = $this->putJson(self::PREFIX . '/categories/' . $this->category->id, [
-            'name' => ['en' => 'Updated Name'],
-        ]);
+            'name' => ['en' => 'Updated Name']]);
         $response->assertOk();
     }
 
@@ -136,7 +130,7 @@ class CategoryAuthorizationTest extends TestCase
 
     public function test_user_with_no_category_permissions_gets_forbidden(): void
     {
-        $user = $this->createUserWithPermissions([PermissionEnum::SUPER_ADMIN]);
+        $user = $this->createUserWithPermissions([PermissionEnum::VIEW_USERS]);
         Sanctum::actingAs($user);
 
         $this->getJson(self::PREFIX . '/categories')->assertForbidden();
@@ -155,8 +149,7 @@ class CategoryAuthorizationTest extends TestCase
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
             'is_active' => true,
-            'type' => 'admin',
-        ]);
+            'type' => 'admin']);
 
         foreach ($permissions as $perm) {
             $user->givePermissionTo($perm);

@@ -43,11 +43,9 @@ class UserCrudTest extends TestCase
                 'language' => 'en',
                 'options' => json_encode([
                     'app_settings' => ['trust' => true],
-                    'useMustVerifyEmail' => false,
-                ]),
+                    'useMustVerifyEmail' => false]),
                 'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+                'updated_at' => now()]);
         }
 
         $this->beginDatabaseTransaction();
@@ -183,7 +181,6 @@ class UserCrudTest extends TestCase
     private function createSuperAdminUser(): User
     {
         $permissions = [
-            PermissionEnum::SUPER_ADMIN,
             PermissionEnum::VIEW_USERS,
             PermissionEnum::CREATE_USER,
             PermissionEnum::DELETE_USER,
@@ -191,8 +188,7 @@ class UserCrudTest extends TestCase
             PermissionEnum::RESTORE_USER,
             PermissionEnum::ADD_POINTS,
             PermissionEnum::BAN_USER,
-            PermissionEnum::ACTIVATE_USER,
-        ];
+            PermissionEnum::ACTIVATE_USER];
 
         foreach ($permissions as $perm) {
             Permission::findOrCreate($perm, self::GUARD);
@@ -201,8 +197,7 @@ class UserCrudTest extends TestCase
         $role = Role::create([
             'name' => RoleEnum::SUPER_ADMIN,
             'display_name' => json_encode(['en' => 'Super Admin']),
-            'guard_name' => self::GUARD,
-        ]);
+            'guard_name' => self::GUARD]);
 
         foreach ($permissions as $perm) {
             $role->givePermissionTo($perm);
@@ -215,8 +210,7 @@ class UserCrudTest extends TestCase
             'email_verified_at' => now(),
             'type' => 'admin',
             'is_active' => true,
-            'phone_number' => '01000000001',
-        ]);
+            'phone_number' => '01000000001']);
 
         $user->assignRole($role);
 
@@ -232,8 +226,7 @@ class UserCrudTest extends TestCase
             'email_verified_at' => now(),
             'type' => 'user',
             'is_active' => true,
-            'phone_number' => '01000000999',
-        ]);
+            'phone_number' => '01000000999']);
     }
 
     // ========================================================================
@@ -270,8 +263,7 @@ class UserCrudTest extends TestCase
         $user = $this->createRegularUser();
         $target = User::create([
             'name' => 'Target', 'email' => 'showtarget@example.com',
-            'password' => Hash::make('p'), 'type' => 'user', 'is_active' => true, 'phone_number' => '01000000991',
-        ]);
+            'password' => Hash::make('p'), 'type' => 'user', 'is_active' => true, 'phone_number' => '01000000991']);
 
         Sanctum::actingAs($user);
 
@@ -300,8 +292,7 @@ class UserCrudTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'phone_number' => '01000001000',
-            'policy' => true,
-        ]);
+            'policy' => true]);
 
         $response->assertOk();
         $response->assertJsonPath('success', true);
@@ -316,8 +307,7 @@ class UserCrudTest extends TestCase
         $this->postJson(self::PREFIX . '/users', [
             'email' => 'noname@example.com',
             'password' => 'password123',
-            'password_confirmation' => 'password123',
-        ])->assertStatus(422);
+            'password_confirmation' => 'password123'])->assertStatus(422);
     }
 
     // ========================================================================
@@ -332,15 +322,13 @@ class UserCrudTest extends TestCase
         Sanctum::actingAs($admin);
 
         $response = $this->putJson(self::PREFIX . '/users/' . $target->id, [
-            'name' => 'Updated By Admin',
-        ]);
+            'name' => 'Updated By Admin']);
 
         $response->assertOk();
         $response->assertJsonPath('success', true);
         $this->assertDatabaseHas('users', [
             'id' => $target->id,
-            'name' => 'Updated By Admin',
-        ]);
+            'name' => 'Updated By Admin']);
     }
 
     public function test_user_cannot_update_self_without_permission(): void
@@ -349,8 +337,7 @@ class UserCrudTest extends TestCase
         Sanctum::actingAs($user);
 
         $this->putJson(self::PREFIX . '/users/' . $user->id, [
-            'name' => 'Self Updated',
-        ])->assertStatus(403);
+            'name' => 'Self Updated'])->assertStatus(403);
     }
 
     public function test_user_cannot_update_other_user(): void
@@ -358,8 +345,7 @@ class UserCrudTest extends TestCase
         $user = $this->createRegularUser();
         $other = User::create([
             'name' => 'Other', 'email' => 'otherupdate@example.com',
-            'password' => Hash::make('p'), 'type' => 'user', 'is_active' => true, 'phone_number' => '01000000990',
-        ]);
+            'password' => Hash::make('p'), 'type' => 'user', 'is_active' => true, 'phone_number' => '01000000990']);
 
         Sanctum::actingAs($user);
 
@@ -506,8 +492,7 @@ class UserCrudTest extends TestCase
 
         $response = $this->postJson(self::PREFIX . '/add-points', [
             'customer_id' => $target->id,
-            'points' => 100,
-        ]);
+            'points' => 100]);
 
         $response->assertOk();
         $response->assertJsonPath('success', true);
@@ -515,8 +500,7 @@ class UserCrudTest extends TestCase
         $this->assertDatabaseHas('wallets', [
             'customer_id' => $target->id,
             'total_points' => 100,
-            'available_points' => 100,
-        ]);
+            'available_points' => 100]);
     }
 
     public function test_add_points_accumulates(): void
@@ -532,8 +516,7 @@ class UserCrudTest extends TestCase
         $this->assertDatabaseHas('wallets', [
             'customer_id' => $target->id,
             'total_points' => 150,
-            'available_points' => 150,
-        ]);
+            'available_points' => 150]);
     }
 
     public function test_add_points_fails_without_customer_id(): void
@@ -561,15 +544,13 @@ class UserCrudTest extends TestCase
 
         $response = $this->postJson(self::PREFIX . '/add-points', [
             'customer_id' => $target->id,
-            'points' => -50,
-        ]);
+            'points' => -50]);
 
         $response->assertOk();
         $this->assertDatabaseHas('wallets', [
             'customer_id' => $target->id,
             'total_points' => -50,
-            'available_points' => -50,
-        ]);
+            'available_points' => -50]);
     }
 
     public function test_add_points_fails_for_unauthorized_user(): void
@@ -591,8 +572,7 @@ class UserCrudTest extends TestCase
         Sanctum::actingAs($admin);
 
         $response = $this->postJson(self::PREFIX . '/users/block-user', [
-            'id' => $admin->id,
-        ]);
+            'id' => $admin->id]);
 
         $response->assertStatus(403);
     }
@@ -608,8 +588,7 @@ class UserCrudTest extends TestCase
         }
 
         $response = $this->postJson(self::PREFIX . '/subscribe-to-newsletter', [
-            'email' => 'subscriber@example.com',
-        ]);
+            'email' => 'subscriber@example.com']);
 
         $response->assertOk();
         $response->assertJsonPath('success', true);
@@ -677,8 +656,7 @@ class UserCrudTest extends TestCase
         Sanctum::actingAs($admin);
 
         $response = $this->postJson(self::PREFIX . '/users/make-admin', [
-            'user_id' => $target->id,
-        ]);
+            'user_id' => $target->id]);
 
         $response->assertOk();
         $target->refresh();
@@ -695,8 +673,7 @@ class UserCrudTest extends TestCase
 
         $response = $this->putJson(self::PREFIX . '/users/' . $target->id, [
             'name' => 'Admin Update Same Email',
-            'email' => 'regular@example.com',
-        ]);
+            'email' => 'regular@example.com']);
 
         $response->assertOk();
         $response->assertJsonPath('success', true);
@@ -716,14 +693,12 @@ class UserCrudTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'phone_number' => '01099998888',
-            'policy' => true,
-        ]);
+            'policy' => true]);
 
         $response->assertOk();
         $this->assertDatabaseHas('users', [
             'email' => 'phonetest@gmail.com',
-            'phone_number' => '01099998888',
-        ]);
+            'phone_number' => '01099998888']);
     }
 
     /** @see BUG-6: destroy() missing self/super_admin guard */
@@ -749,8 +724,7 @@ class UserCrudTest extends TestCase
             'email_verified_at' => now(),
             'type' => 'admin',
             'is_active' => true,
-            'phone_number' => '01000000002',
-        ]);
+            'phone_number' => '01000000002']);
         $role = Role::where('name', RoleEnum::SUPER_ADMIN)->first();
         $anotherAdmin->assignRole($role);
 
@@ -776,9 +750,7 @@ class UserCrudTest extends TestCase
         $response->assertJsonStructure([
             'data' => [
                 'id', 'name', 'email', 'email_verified_at', 'is_active',
-                'type', 'phone_number', 'created_at', 'updated_at',
-            ],
-        ]);
+                'type', 'phone_number', 'created_at', 'updated_at']]);
         $response->assertJsonPath('data.type', 'user');
         $response->assertJsonPath('data.phone_number', '01000000999');
     }

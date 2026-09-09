@@ -13,6 +13,7 @@ use Marvel\Database\Models\Import;
 use Marvel\Enums\FileOperationType;
 use Marvel\Enums\ImportType;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Http\Requests\BrandImportRequest;
 use Marvel\Jobs\ImportBrandsJob;
 use Marvel\Traits\ApiResponse;
@@ -232,7 +233,7 @@ class BrandImportController extends Controller
     {
         $user = auth()->user();
         $baseQuery = Import::whereOperationType(FileOperationType::BRAND_IMPORT);
-        if ($user && ! $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if ($user && ! $user->hasRole(Role::SUPER_ADMIN)) {
             $baseQuery->where('created_by', $user->id);
         }
         $import = $baseQuery
@@ -300,7 +301,7 @@ class BrandImportController extends Controller
     {
         $user = auth()->user();
         $baseQuery = Import::whereOperationType(FileOperationType::BRAND_IMPORT);
-        if ($user && ! $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if ($user && ! $user->hasRole(Role::SUPER_ADMIN)) {
             $baseQuery->where('created_by', $user->id);
         }
         $import = $baseQuery
@@ -352,7 +353,7 @@ class BrandImportController extends Controller
     {
         $user = auth()->user();
         $baseQuery = Import::whereOperationType(FileOperationType::BRAND_IMPORT);
-        if ($user && ! $user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+        if ($user && ! $user->hasRole(Role::SUPER_ADMIN)) {
             $baseQuery->where('created_by', $user->id);
         }
         $import = $baseQuery
