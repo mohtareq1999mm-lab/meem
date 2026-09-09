@@ -5,12 +5,10 @@
 ## Overview
 
 Static pages are **fixed, seeded pages** (About Us, Terms & Conditions, Privacy Policy). The page
-set and slugs never change — the frontend only renders pages and lets admins edit their content
+set and slugs never change — the frontend only renders pages and lets admins edit their typed content
 sections. There is no create/delete page UI.
 
-Every page has a translatable `title`, an `is_active` flag, and an ordered list of free-form
-`content` sections. The `content` shape is not fixed by the backend, so the frontend must render
-it generically and let admins edit it as a per-locale object tree.
+Every page has a translatable `title`, an `is_active` flag, and an ordered list of typed sections (`text|image|video|screenshot`). Each section has translatable `title`, free-form translatable `content` (alt/caption/body per locale), nullable `config` (e.g. video poster), `is_active`, `order`, and optional `media {url,thumb_url,mime_type,size}`.
 
 ---
 
@@ -20,10 +18,9 @@ All titles and content are translated via the `lang` header (`en` / `ar`, defaul
 
 - Public requests must send the header: `lang: en` or `lang: ar`
 - The response `title` is **already localized** (a plain string) for the requested lang
-- The response `content` is a **full locale map** `{ "en": {...}, "ar": {...} }` — pick the active
-  locale key, fall back to `en` when missing
-- When the UI locale changes, re-fetch (the server-side cache stores models, so a fresh request
-  with the new `lang` header returns the correct localization)
+- The response `content` is a **full locale map** `{ "en": {...}, "ar": {...} }` — pick the active locale key, fall back to `en` when missing
+- The response `media` is locale-independent (same URL for all langs)
+- When the UI locale changes, re-fetch (the server-side cache stores models, so a fresh request with the new `lang` header returns the correct localization)
 
 ```
 fetch('/api/v1/general/static-pages', { headers: { lang: 'ar', Accept: 'application/json' } })
@@ -51,37 +48,74 @@ fetch('/api/v1/general/static-pages', { headers: { lang: 'ar', Accept: 'applicat
         {
           "id": 1,
           "static_page_id": 1,
+          "type": "text",
           "title": "Our Story",
-          "content": { "en": { "heading": "Welcome", "body": "Hello" }, "ar": { "heading": "مرحبا", "body": "أهلا" } },
-          "order": 1
+          "content": { "en": { "body": "Welcome" }, "ar": { "body": "مرحبا" } },
+          "config": null,
+          "order": 1,
+          "is_active": true,
+          "media": null
+        },
+        {
+          "id": 2,
+          "static_page_id": 1,
+          "type": "image",
+          "title": "Hero",
+          "content": { "en": { "alt": "Team photo", "caption": "Caption" } },
+          "config": null,
+          "order": 2,
+          "is_active": true,
+          "media": {
+            "id": 10,
+            "url": "http://example.com/storage/static-pages/1/photo.jpg",
+            "thumb_url": "http://example.com/storage/static-pages/1/conversions/photo-thumb.jpg",
+            "collection_name": "static-section-image",
+            "mime_type": "image/jpeg",
+            "size": 123456
+          }
+        },
+        {
+          "id": 3,
+          "static_page_id": 1,
+          "type": "video",
+          "title": "Intro",
+          "content": { "en": { "caption": "Welcome video" } },
+          "config": { "poster": "https://..." },
+          "order": 3,
+          "is_active": true,
+          "media": {
+            "url": "http://example.com/storage/static-pages/1/video.mp4",
+            "mime_type": "video/mp4"
+          }
         }
       ]
     }
   ]
 }
 ```
+Public filters `is_active=false` sections out; `media` null for `text`.
 
 ### 2. GET /api/v1/general/static-pages/{slug} — Show One Active Page
 
-**Response 200:** Same StaticPageResource structure.
+**Response 200:** Same StaticPageResource structure (only active sections).
 **Response 404:** Slug not found OR the page is inactive.
 
 > Inactive pages are invisible to the public — treat 404 as "page not available".
+> Inactive sections are hidden — admin sees them, public does not.
 
 ---
 
 ## Admin Endpoints (Auth + Permission)
 
-All admin responses use the same envelope and resources. Permissions are enforced server-side;
-the frontend should hide/disable actions the current user cannot perform.
+All admin responses use the same envelope and resources. Permissions are enforced server-side; the frontend should hide/disable actions the current user cannot perform.
 
 | Endpoint | Permission | Use in UI |
 |----------|------------|-----------|
 | `GET /api/v1/static-pages` | view-static-pages | Page list |
-| `GET /api/v1/static-pages/{slug}` | view-static-pages | Edit form (load) |
+| `GET /api/v1/static-pages/{slug}` | view-static-pages | Edit form (load) — includes inactive sections |
 | `PUT /api/v1/static-pages/{slug}` | update-static-pages | Save title/active |
-| `POST /api/v1/static-pages/{slug}/sections` | create-static-sections | Add section |
-| `PUT /api/v1/static-pages/{slug}/sections/{id}` | update-static-sections | Edit section |
+| `POST /api/v1/static-pages/{slug}/sections` | create-static-sections | Add typed section (JSON for text, multipart for media) |
+| `PUT /api/v1/static-pages/{slug}/sections/{id}` | update-static-sections | Edit section (JSON or multipart) + remove_media |
 | `DELETE /api/v1/static-pages/{slug}/sections/{id}` | delete-static-sections | Delete section |
 | `POST /api/v1/static-pages/{slug}/sections/reorder` | update-static-sections | Drag-and-drop reorder |
 
@@ -96,47 +130,40 @@ Route: /pages/{slug}  (e.g. /pages/about-us)
 1. GET /api/v1/general/static-pages/{slug}  (headers: lang + Accept)
     │
     ▼
-2. 200 → page object (title localized, sections ordered by `order`)
+2. 200 → page object (title localized, sections ordered by `order`, filtered is_active, with media)
    │
    ▼
 3. Render <StaticPageRenderer>
    ├─ Page <h1>: title
    └─ For each section (sorted by `order`):
-        <StaticSection>
-          ├─ <h2>: section.title  (render only if non-empty)
-          └─ <ContentBlocks content={section.content} lang={activeLocale} />
-                └─ pick content[activeLocale] (fallback content.en)
-                   then map the object generically:
-                   { heading } → h3
-                   { body }    → paragraph
-                   { image }   → <img src>
-                   { list }    → <ul>
-                   { blocks }  → nested recursive blocks
-                   other keys  → key: value definition list
+        switch(section.type)
+          case 'text': <TextSection title, content[lang].body />
+          case 'image': <ImageSection title, content[lang].alt, media.url, thumb_url />
+          case 'screenshot': same as image (semantic label differs)
+          case 'video': <VideoSection title, media.url, poster=config.poster, content[lang].caption />
+        └─ content fallback: content[lang] ?? content.en
+          media fallback: if media null and type image/video → placeholder
    │
    ▼
 4. 404 → Not Found page (inactive or unknown)
 ```
 
-### Free-form Content Rendering
+### Typed Content Rendering
 
-Since `content` has no fixed schema, render a small **block renderer** that walks the locale map:
+- `text`: `content[lang] = { body, heading, list, blocks }` free-form but now always accompanied by `type=text` and no media.
+- `image`/`screenshot`: `content[lang] = { alt, caption }`, `media.url` is the image, `thumb_url` for preview, `config` null.
+- `video`: `content[lang] = { caption }`, `media.url` video, `config` may hold `{ poster, autoplay, muted, controls }`.
+
+Since `content` remains free-form, keep a small block renderer for unknown keys but branch on `type` for media.
 
 ```js
-function renderBlocks(node) {
-  if (Array.isArray(node))        return node.map(renderBlocks);
-  if (typeof node === 'object')   return Object.entries(node).map(([k, v]) =>
-      k === 'heading' ? <h3>{renderText(v)}</h3>
-    : k === 'body'    ? <p>{renderText(v)}</p>
-    : k === 'image'   ? <img src={v} />
-    : k === 'list'    ? <ul>{v.map(renderBlocks)}</ul>
-    : <dl><dt>{k}</dt><dd>{renderBlocks(v)}</dd></dl>);
-  return <span>{String(node)}</span>;
+function renderSection(s, lang) {
+  const c = s.content?.[lang] ?? s.content?.en ?? {};
+  if (s.type === 'text') return <TextSection title={s.title} body={c.body} />;
+  if (s.type === 'image' || s.type === 'screenshot') return <ImageSection alt={c.alt} caption={c.caption} url={s.media?.url} thumb={s.media?.thumb_url} />;
+  if (s.type === 'video') return <VideoSection caption={c.caption} url={s.media?.url} poster={s.config?.poster} />;
 }
 ```
-
-This guarantees any content an admin writes still renders, and unknown keys degrade gracefully
-instead of crashing.
 
 ---
 
@@ -150,48 +177,51 @@ instead of crashing.
 
 ### Screen B: Page Editor
 
-1. `GET /api/v1/static-pages/{slug}` → load page + sections
+1. `GET /api/v1/static-pages/{slug}` → load page + sections (including inactive, with media)
 2. Title inputs per locale (EN + AR); active toggle
 3. Save → `PUT /api/v1/static-pages/{slug}` with `{ "title": { "en": "...", "ar": "..." }, "is_active": true }`
    - Partial maps allowed: `{ "title": { "en": "..." } }` keeps the existing `ar`
-4. Below: the **Sections Manager** for this page (Screen C)
 
 ### Screen C: Sections Manager (per page)
 
-1. List sections sorted by `order`
-2. **Add/Edit section** — form with:
-   - Title: EN/AR inputs (partial maps OK)
-   - Content: per-locale object editor (see jira-frontend Task 4) — JSON tree per locale
-3. Create → `POST /api/v1/static-pages/{slug}/sections`
-4. Edit → `PUT /api/v1/static-pages/{slug}/sections/{id}`
-5. Delete → `DELETE /api/v1/static-pages/{slug}/sections/{id}` (confirmation modal)
-6. **Reorder** — drag-and-drop list → send full ordered id array:
-   ```json
-   { "sections": [3, 1, 2] }
-   ```
-   to `POST /api/v1/static-pages/{slug}/sections/reorder`
+1. List sections sorted by `order` (show `type` badge, `is_active` toggle, thumb for image/video)
+2. **Add section** — form with:
+   - `type` select: text|image|video|screenshot
+   - `title`: EN/AR inputs
+   - `content`: per-locale alt/caption/body inputs based on type
+   - `config` (video poster)
+   - `is_active` toggle
+   - `media` file input (required for image/video/screenshot, hidden for text)
+3. Create:
+   - `type=text` → `POST` JSON `{ type, title, content, config, is_active }`
+   - `type=image|screenshot|video` → `POST` multipart `type,title[en],content[en][alt],media,is_active`
+4. Edit → `PUT` JSON for text/config/is_active; multipart for `media` replacement; `remove_media` checkbox → `{ remove_media: true }` (clears media without new file)
+5. Delete → `DELETE` (confirmation)
+6. **Reorder** — drag-and-drop → `{ sections: [3,1,2] }` to `POST .../reorder`
 
 ---
 
 ## Data-Shape Contract Checklist
 
-When wiring API calls, verify every payload matches these exact shapes:
-
-| Call | Payload |
-|------|---------|
-| Update page | `{ "title": { "en": "…", "ar": "…" }, "is_active": true }` |
-| Create section | `{ "title": { "en": "…", "ar": "…" }, "content": { "en": {…}, "ar": {…} } }` |
-| Update section | same as create (partial maps allowed) |
-| Reorder | `{ "sections": [3, 1, 2] }` |
+| Call | Payload | Content-Type |
+|------|---------|--------------|
+| Update page | `{ "title": { "en": "…", "ar": "…" }, "is_active": true }` | json |
+| Create text | `{ "type":"text","title":{"en":"…"},"content":{"en":{"body":"…"}},"config":null,"is_active":true }` | json |
+| Create image | `type=image, title[en]=…, content[en][alt]=…, media=@a.jpg` | multipart |
+| Create screenshot | `type=screenshot, media=@a.png` | multipart |
+| Create video | `type=video, media=@a.mp4, config[poster]=...` | multipart |
+| Update section (text) | `{ "title":{"en":"…"},"content":{"en":{…}},"is_active":false }` | json |
+| Update replace media | `media=@b.jpg` (+ `_method=PUT` if using POST) | multipart |
+| Remove media | `{ "remove_media": true }` | json |
+| Reorder | `{ "sections": [3, 1, 2] }` | json |
 
 **Validation notes (422):**
-- `title` is required on create; `title.en` is required
-- `content` is required and must be an **object keyed by locale** — sending a JSON array at the
-  top level is rejected with `"The section content must be an object keyed by locale"`
-- 422 returns a **flat error map** (no `errors` wrapper), e.g.:
-  ```json
-  { "title": ["The title field is required."], "title.en": ["The title (English) field is required."] }
-  ```
+- `type` in:text,image,video,screenshot (legacy missing → text)
+- `title` required on create; `title.en` required string max:255
+- `content` required for `type=text`, must be locale-keyed object (top-level list rejected)
+- `media` required for image/video/screenshot (`image` max 5MB jpeg,png,webp,gif; `video` max 20MB mp4,webm,ogg,mov,avi), prohibited for `text`
+- `remove_media` true,1,on,yes → clear; omission → keep
+- 422 returns flat map (no `errors` wrapper)
 
 ---
 
@@ -199,22 +229,23 @@ When wiring API calls, verify every payload matches these exact shapes:
 
 | State | Behavior |
 |-------|----------|
-| **Loading** | Skeleton page + section placeholders |
-| **Empty** | Page with no sections → "No content" placeholder |
-| **Error (page)** | Toast with retry; 404 → not-found page |
-| **Section loading** | Skeleton per section |
-| **Section error** | Show section error, keep rendering other sections |
-| **Locale change** | Re-fetch page data with new `lang` header |
-| **Save (admin)** | Button spinner; disable until request resolves |
-| **422** | Inline field errors + toast |
+| Loading | Skeleton page + section placeholders |
+| Empty | Page with no sections → "No content" placeholder |
+| Error (page) | Toast with retry; 404 → not-found |
+| Section loading | Skeleton per section |
+| Section error | Show section error, keep others |
+| Locale change | Re-fetch with new `lang` header |
+| Save (admin) | Spinner; disable until 200 |
+| 422 | Inline field errors + toast |
+| Media upload | Progress bar, preview via `media.url`/`thumb_url` |
 
 ---
 
-## Delivery Checklist (Frontend Is Next)
+## Delivery Checklist
 
-- [ ] API client helper that always sends `lang` + `Accept: application/json`
-- [ ] Public `/pages/{slug}` route + renderer with the generic block renderer
-- [ ] Admin: pages list, page editor (localized title + active), sections manager, reorder, delete
+- [ ] API client helper that always sends `lang` + `Accept: application/json`; for multipart set `Content-Type: multipart/form-data` automatically
+- [ ] Public `/pages/{slug}` route + typed renderer (`text|image|video|screenshot`) with media
+- [ ] Admin: pages list, page editor (localized title + active), typed sections manager, reorder, delete, remove_media
 - [ ] Permission-aware UI (hide actions the role cannot perform)
 - [ ] Loading / empty / error states on every screen
-- [ ] Locale fallback (`content[lang]` → `content.en` → render raw values)
+- [ ] Locale fallback (`content[lang] → content.en`); media is locale-independent

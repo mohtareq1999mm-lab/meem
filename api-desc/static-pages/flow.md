@@ -12,62 +12,90 @@ StaticPageSeeder::run()
 - There is **no** create or delete page endpoint, so the page set is stable for frontend links
   and SEO.
 
-## 2. Public Read Flow (cached)
+## 2. Public Read Flow (cached, media-aware, active-filtered)
 
 ```
 GET /api/v1/general/static-pages        GET /api/v1/general/static-pages/{slug}
    │                                         │
    ├─ StaticPage::where('is_active', true)   └─ StaticPage::where slug + is_active(true)
-   │        ->with('staticSections')->get()        ->with('staticSections')->firstOrFail()
+   │   ->with(['staticSections'=>              ->with(['staticSections'=> 
+   │       where is_active true               where is_active true
+   │       ->with('media')                     ->with('media')
+   │       ->orderBy('order')])               ->orderBy('order')])
+   │       ->get()                             ->firstOrFail()
    │
-   └─ remember(tag 'static_pages', md5(fullUrl), closure)
-        • Cache HIT  → 0 DB queries (lazy closure never runs)
-        • Cache MISS → run query, cache models (NOT rendered resources)
+   └─ remember(tag 'static_pages', md5(fullUrl), closure) — lazy
+        • Cache HIT  → 0 DB queries (closure never runs)
+        • Cache MISS → run query, cache models+media (NOT rendered resources)
    │
-   └─ StaticPageResource::collection/make → localized title per `lang` header
+   └─ StaticPageResource::collection/make → localized title per `lang`, sections with media URLs
 ```
 
-- The cached value is the model set, so `lang: ar` requests still resolve the Arabic `title` and
-  the full `content` map at render time even on a cache hit.
+- The cached value is the model set with `media` eager loaded, so `lang: ar` still resolves Arabic `title` and full `content` map at render time even on hit. Inactive sections are excluded by the query, not filtered in resource.
 
-## 3. Admin Mutation Flow (cache-invalidating)
+## 3. Admin Mutation Flow (cache-invalidating, transactional, media lifecycle)
 
-Every mutation flushes the `static_pages` cache tag (controller + observers), so the next public
-request refetches:
+Every mutation flushes tag `static_pages` (controller `flushTag` + observers `StaticPageObserver|StaticSectionObserver` on created/updated/deleted). Reorder relies on controller flush (raw `setNewOrder` fires no events).
 
-| Action | Endpoint | Service method | Cache flush |
-|--------|----------|----------------|-------------|
-| Update page | PUT `/{slug}` | `updatePage` (title/is_active only) | controller + observer |
-| Create section | POST `/{slug}/sections` | `createSection` (next order auto) | controller + observer |
-| Update section | PUT `/{slug}/sections/{id}` | `updateSection` (ownership check) | controller + observer |
-| Delete section | DELETE `/{slug}/sections/{id}` | `deleteSection` (ownership check) | controller + observer |
-| Reorder | POST `/{slug}/sections/reorder` | `reorderSections` (page-scoped) | controller only (setNewOrder is a raw update, no model events) |
+| Action | Endpoint | Service method | Details | Cache |
+|--------|----------|----------------|---------|-------|
+| Update page | `PUT /{slug}` | `updatePage` (title/is_active only) | `load('staticSections.media')` | controller+observer |
+| Create text | `POST /{slug}/sections` type=text JSON | `createSection` | `DB::transaction` create, no media, validates `content` required, `media` prohibited | controller+observer |
+| Create image/screenshot | `POST /{slug}/sections` multipart `media` | `createSection` | `DB::transaction` create, then `validateMediaMime` + `addMedia()->toMediaCollection(static-section-image)` singleFile, compensates delete on failure | controller+observer |
+| Create video | `POST /{slug}/sections` multipart `media` | `createSection` | same → `static-section-video` max 20MB | controller+observer |
+| Update section | `PUT /{slug}/sections/{id}` | `updateSection` | `assert ownership` → `DB::transaction` update fields, then media branch (see §4) | controller+observer |
+| Delete section | `DELETE /{slug}/sections/{id}` | `deleteSection` | clears both collections then `delete()` (hard) | controller+observer |
+| Reorder | `POST /{slug}/sections/reorder` | `reorderSections` | `count where static_page_id whereIn` vs `array_unique` →404 on foreign, `DB::transaction` + `setNewOrder(...,scope where static_page_id)` | controller only |
 
-## 4. Section Ownership Guard
+## 4. Media Lifecycle (type + collection)
 
-Sections are hard-scoped to a page to prevent cross-page tampering and existence leaks:
+```
+type=image|screenshot → collection static-section-image (disk static-pages, singleFile, thumb 368x232)
+type=video           → collection static-section-video  (disk static-pages, singleFile)
+type=text            → no collection
+```
+
+**Create:** `media` required for `image|screenshot|video`, prohibited for `text`. Request validates `mimetypes` (image jpeg,png,webp,gif max 5MB; video mp4,webm,ogg,mov,avi max 20MB) + service `validateMediaMimeForType()`.
+
+**Update replacement matrix (all 8 transitions):**
+```
+image→image, image→video, image→screenshot
+video→video, video→image, video→screenshot
+screenshot→image, screenshot→video
+→ clear both collections, add to resolved collection, other empty, resource returns new media
+```
+Implemented as `clearMediaCollection(image)+clearMediaCollection(video)` then `addMedia` to `resolveCollectionForType(resolvedType)`.
+
+**Removal:** `remove_media=true` (accepts true,1,on,yes) → clear both collections. Omission → keep. `remove_media` prohibited on create.
+
+**Type change without file:** `image→text` or `video→text` → clear if no file and not already removing. `image→video` without file and no existing video media → 422 `media required when changing type`.
+
+**Delete:** clears both collections before `delete()` to avoid orphan files.
+
+## 5. Section Ownership Guard
 
 ```
 updateSection / deleteSection
    └─ assertSectionBelongsToPage(page, section)
-        └─ (int) $section->static_page_id !== (int) $page->id
-             └─ throw ModelNotFoundException  →  404
+        └─ (int) $section->static_page_id !== (int) $page->id → throw ModelNotFoundException → 404
 
 reorderSections
-   └─ every id must belong to the page (count check)  → else 404
-   └─ StaticSection::setNewOrder(ids, 1, 'id', fn($q) => $q->where('static_page_id', $page->id))
-        └─ second safety layer: update query scoped by page
+   └─ every id must belong to page (count check) → else 404
+   └─ setNewOrder(ids,1,'id',fn($q)=>where static_page_id = page.id) → second safety layer scoped update
+   └─ DB::transaction
 ```
 
-## 5. Section Ordering
+## 6. Section Ordering
 
-- New section → `order = max(order within page) + 1` (Spatie `sort_when_creating`).
-- Reorder → supplied id order becomes the new order (1-based).
-- Delete → remaining sections keep their `order` (gaps allowed); next create gets `max + 1`.
+- New section → `order = max(order within page)+1` (Spatie `sort_when_creating` scoped by `buildSortQuery()`).
+- Reorder → supplied id order becomes `1,2,3...` contiguous.
+- Delete → remaining keep `order` (gaps allowed); next create `max+1`.
 
-## 6. Validation Guard (free-form content)
+## 7. Validation Guard
 
-`content` is intentionally free-form, so only the **outer shape** is validated:
-- must be an object keyed by locale (`{ en: {...}, ar: {...} }`)
-- a top-level JSON list is rejected via a `withValidator` after-hook
-  (`MESSAGE.STATIC_SECTION_CONTENT_INVALID`, 422) before it can hit Spatie's single-locale branch.
+- `type`: `in:text,image,video,screenshot` (store `sometimes` defaults `text` for legacy), `title` required array `title.en` required string max:255, `content` outer `array_is_list` rejected (`STATIC_SECTION_CONTENT_INVALID` 422), `type=text` requires non-empty `content`, `config` nullable array, `is_active` in:0,1, `remove_media` in:0,1 boolean, `media` per-type file rules above.
+- TiDB-safe: `string` type not `ENUM`, `DB::transaction` without locking, `json` nullable.
+
+## 8. Backward Compatibility
+
+- Migration `type` default `text` backfills legacy `NULL/''` → `text`. Service `normalizeCreateData` defaults `type=text, is_active=true`. Resource defaults `type ?? text, is_active ?? true`. `Store` request `type` `sometimes` allows old `{title,content}` payloads → `text`. Existing 105 tests unchanged.

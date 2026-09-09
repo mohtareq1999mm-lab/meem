@@ -131,6 +131,12 @@ return [
             'url' => env('APP_URL') . '/storage/tags',
             'visibility' => 'public',
         ],
+        'static-pages' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/static-pages'),
+            'url' => env('APP_URL') . '/storage/static-pages',
+            'visibility' => 'public',
+        ],
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

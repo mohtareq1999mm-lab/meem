@@ -34,12 +34,14 @@ class StaticPageController extends CoreController
     public function index()
     {
         $pages = $this->staticPageService->getAll();
+        // Ensure media is eager loaded for resources (service already does, but keep defensive)
+        $pages->loadMissing('staticSections.media');
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, StaticPageResource::collection($pages));
     }
 
     public function show(StaticPage $static_page)
     {
-        $static_page->load('staticSections');
+        $static_page->load(['staticSections.media']);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, StaticPageResource::make($static_page));
     }
 
@@ -50,22 +52,33 @@ class StaticPageController extends CoreController
         return $this->apiResponse(STATIC_PAGE_UPDATED_SUCCESSFULLY, 200, true, StaticPageResource::make($page));
     }
 
-    public function storeSection( StoreStaticSectionRequest $request, StaticPage $static_page)
+    public function storeSection(StoreStaticSectionRequest $request, StaticPage $static_page)
     {
-        $section = $this->staticPageService->createSection($static_page, $request->validated());
+        $section = $this->staticPageService->createSection(
+            $static_page,
+            $request->validated(),
+            $request->file('media')
+        );
         $this->flushTag(FrontendResource::STATIC_PAGES->value);
-        return $this->apiResponse(STATIC_SECTION_CREATED_SUCCESSFULLY, 200, true, StaticSectionResource::make($section));
+        return $this->apiResponse(STATIC_SECTION_CREATED_SUCCESSFULLY, 200, true, StaticSectionResource::make($section->load('media')));
     }
 
     public function updateSection(UpdateStaticSectionRequest $request, StaticPage $static_page, StaticSection $static_section)
     {
         try {
-            $section = $this->staticPageService->updateSection($static_page, $static_section, $request->validated());
+            $section = $this->staticPageService->updateSection(
+                $static_page,
+                $static_section,
+                $request->validated(),
+                $request->file('media')
+            );
         } catch (ModelNotFoundException $e) {
             return $this->apiResponse(NOT_FOUND, 404, false);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         }
         $this->flushTag(FrontendResource::STATIC_PAGES->value);
-        return $this->apiResponse(STATIC_SECTION_UPDATED_SUCCESSFULLY, 200, true, StaticSectionResource::make($section));
+        return $this->apiResponse(STATIC_SECTION_UPDATED_SUCCESSFULLY, 200, true, StaticSectionResource::make($section->load('media')));
     }
 
     public function destroySection(StaticPage $static_page, StaticSection $static_section): JsonResponse

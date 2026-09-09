@@ -18,7 +18,9 @@ class StaticPageController extends Controller
         $pagesCache = $this->remember(
             FrontendResource::STATIC_PAGES->value,
             md5(request()->fullUrl()),
-            fn () => StaticPage::where('is_active', true)->with('staticSections')->get()
+            fn () => StaticPage::where('is_active', true)->with(['staticSections' => function ($q) {
+                $q->where('is_active', true)->with('media')->orderBy('order');
+            }])->get()
         );
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, StaticPageResource::collection($pagesCache));
     }
@@ -28,7 +30,9 @@ class StaticPageController extends Controller
         $staticPageCache = $this->remember(
             FrontendResource::STATIC_PAGES->value,
             md5(request()->fullUrl()),
-            fn () => StaticPage::where('slug', $slug)->where('is_active', true)->with('staticSections')->firstOrFail()
+            fn () => StaticPage::where('slug', $slug)->where('is_active', true)->with(['staticSections' => function ($q) {
+                $q->where('is_active', true)->with('media')->orderBy('order');
+            }])->firstOrFail()
         );
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, StaticPageResource::make($staticPageCache));
     }
