@@ -19,9 +19,66 @@ class UrlImageHandler
 
     protected int $maxRedirects = 5;
 
+    public function normalizeImageUrl(string $url): string
+    {
+        $url = trim($url);
+        // Preserve already-encoded %20, encode literal spaces safely
+        // Split URL into components to avoid double-encoding
+        $parts = parse_url($url);
+        if ($parts === false || !isset($parts['host'])) {
+            return $url;
+        }
+        $scheme = $parts['scheme'] ?? 'https';
+        $host = $parts['host'] ?? '';
+        $port = isset($parts['port']) ? ':' . $parts['port'] : '';
+        $path = $parts['path'] ?? '';
+        $query = $parts['query'] ?? null;
+        $fragment = $parts['fragment'] ?? null;
+
+        // Encode literal spaces in path/query without double-encoding %20
+        // Use rawurlencode on each path segment
+        if (str_contains($path, ' ')) {
+            $segments = explode('/', $path);
+            $segments = array_map(function ($seg) {
+                // Decode %20 to space then re-encode to normalize, avoid double %2520
+                $decoded = str_replace('%20', ' ', $seg);
+                // rawurlencode then revert %2F etc not needed for segment
+                return str_replace('%2F', '/', rawurlencode($decoded));
+            }, $segments);
+            $path = implode('/', $segments);
+            // fix double-encoding of already encoded chars like %20 -> %2520 edge
+            $path = str_replace('%2520', '%20', $path);
+        }
+        if ($query !== null && str_contains($query, ' ')) {
+            // Encode spaces in query as %20, preserve other encodings
+            $query = str_replace(' ', '%20', str_replace('%20', ' ', $query));
+            $query = str_replace(' ', '%20', $query);
+            // Use http_build_query safe? keep simple
+            $query = str_replace('%2520', '%20', $query);
+        }
+
+        $normalized = $scheme . '://' . $host . $port . $path;
+        if ($query !== null) {
+            $normalized .= '?' . $query;
+        }
+        if ($fragment !== null) {
+            $normalized .= '#' . $fragment;
+        }
+        // Preserve original if no spaces, avoid altering
+        if ($normalized !== $url && str_contains($url, ' ')) {
+            return $normalized;
+        }
+        // Fallback: simple space→%20 for literal spaces (covers most cases like "Definition Loose Powder - Sheer-500x500.png")
+        if (str_contains($url, ' ')) {
+            return str_replace(' ', '%20', $url);
+        }
+        return $url;
+    }
+
     public function download(string $url): ?string
     {
         $url = $this->normalizeGoogleDriveUrl($url);
+        $url = $this->normalizeImageUrl($url);
 
         try {
             $this->assertSafeUrl($url);
@@ -128,6 +185,7 @@ class UrlImageHandler
 
     public function isValidUrl(string $url): bool
     {
+        $url = $this->normalizeImageUrl($url);
         try {
             $this->assertSafeUrl($url);
             return true;

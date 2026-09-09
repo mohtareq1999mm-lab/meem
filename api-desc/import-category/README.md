@@ -77,9 +77,20 @@ name_en | name_ar | details_en | details_ar | parent_name_en | status | is_featu
 - The sheet title is `categories`
 - The exported Excel can be re-imported after editing
 
+## Image Contract — Single URL Per Collection
+
+- `image_desktop_url` = **one URL** → `categories-desktop` collection on disk `categories`
+- `image_mobile_url`  = **one URL** → `categories-mobile` collection on disk `categories`
+- **Maximum 2 media rows per category** (1 desktop + 1 mobile) through this import.
+- There is **no gallery** contract (`images`, `gallery`, `categories-gallery` do not exist).
+- Pipe-separated values like `url1|url2|url3` in a single cell are **one malformed URL** and fail validation (`INVALID_IMAGE_URL`), producing 0 media rows and a row-level error. Do not use `explode('|', ...)`.
+- Image download is best-effort: URL format validation still fails the row, but download/attachment failures (unsafe URL, too large, wrong MIME, corrupt image, network error) are logged and the category still succeeds with no/partial media, preserving existing valid media.
+- API returns `image.desktop = getFirstMediaUrl('categories-desktop')`, `image.mobile = getFirstMediaUrl('categories-mobile')` independently.
+- Export reads each collection independently: `image_desktop_url = desktop media URL`, `image_mobile_url = mobile media URL`.
+
 ## Import Identity
 
-- **`name_en` is the identity.** It is normalized (whitespace collapsed + trimmed) and matched against existing categories.
+- **`name_en` is the identity.** It is normalized (whitespace collapsed + trimmed, then case-insensitive via `mb_strtolower`) and matched against existing categories.
 - If a category with the same normalized English name exists → the existing category is **updated**.
 - If not found → a new category is created with slug `Str::slug(name_en)` (deterministic, no random suffix, `globalSlugify()` is never used).
 - If the generated slug is already owned by a different category → the row fails with a "slug conflict" error.

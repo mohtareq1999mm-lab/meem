@@ -25,7 +25,7 @@ class ImportProductsJob implements ShouldQueue
 
     public int $tries = 3;
 
-    public int $timeout = 1800;
+    public int $timeout = 1200;
 
     public array $backoff = [60, 120, 240];
 
@@ -203,8 +203,6 @@ class ImportProductsJob implements ShouldQueue
         $service->writeExplicitProgress(2.0);
 
         try {
-            $importObj = new ProductsImport($service);
-
             $readerType = \Maatwebsite\Excel\Excel::XLSX;
             $extension = strtolower(pathinfo($import->file_name, PATHINFO_EXTENSION));
             if ($extension === 'xls') {
@@ -213,15 +211,41 @@ class ImportProductsJob implements ShouldQueue
                 $readerType = \Maatwebsite\Excel\Excel::ODS;
             }
 
-            Excel::import($importObj, $filePath, null, $readerType);
+            // Phase 1: core import (products, variants, relations) without global transaction
+            // Must not hold DB transaction across 12k image downloads
+            $prevHandler = config('excel.transactions.handler');
+            config(['excel.transactions.handler' => 'null']);
+            try {
+                $coreImport = new ProductsImport($service, false);
+                Excel::import($coreImport, $filePath, null, $readerType);
+            } finally {
+                config(['excel.transactions.handler' => $prevHandler]);
+            }
 
             $service->flushPendingSyncs();
-
             $service->finalizeVariants();
 
-            $service->writeExplicitProgress(99.0);
-
+            // Persist core counters immediately so products are visible even if image phase is slow
             $service->finalizeProgress();
+            $failedRows = $service->getFailedRows();
+            $successCount = $service->getSuccessCount();
+            $coreTotal = $successCount + count($failedRows);
+            if ($coreTotal === 0 && $totalRows === 0) {
+                $coreTotal = 0;
+            } elseif ($coreTotal === 0) {
+                $coreTotal = $totalRows;
+            }
+            // Temporary status update for core; final status after images
+            $import->update([
+                'processed_rows' => $successCount + count($failedRows),
+                'success_rows' => $successCount,
+                'failed_rows' => count($failedRows),
+                'errors' => array_slice($service->getAllErrors(), 0, 1000),
+            ]);
+
+            // Phase 2: image processing in bounded async chunks (meem-medium)
+            $this->dispatchImageJobs($filePath, $service);
+            $service->writeExplicitProgress(99.0);
 
             $failedRows = $service->getFailedRows();
             $successCount = $service->getSuccessCount();
@@ -343,6 +367,46 @@ class ImportProductsJob implements ShouldQueue
                 ]);
             }
             throw $e;
+        }
+    }
+
+    protected function dispatchImageJobs(string $filePath, ProductImportService $service): void
+    {
+        try {
+            $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile($filePath);
+            $reader->setReadDataOnly(true);
+            $spreadsheet = $reader->load($filePath);
+            $sheet = $spreadsheet->getSheetByName('images');
+            if (!$sheet) {
+                $spreadsheet->disconnectWorksheets();
+                return;
+            }
+            $highest = $sheet->getHighestDataRow();
+            if ($highest < 2) {
+                $spreadsheet->disconnectWorksheets();
+                return;
+            }
+            $rows = [];
+            $chunkSize = 500;
+            for ($r = 2; $r <= $highest; $r++) {
+                $sku = trim((string) $sheet->getCell('A' . $r)->getValue());
+                $image = trim((string) $sheet->getCell('B' . $r)->getValue());
+                if ($sku === '' || $image === '') {
+                    continue;
+                }
+                $rows[] = ['product_sku' => $sku, 'image' => $image, 'row' => $r];
+                if (count($rows) >= $chunkSize) {
+                    ImportProductImagesJob::dispatch($this->importId, $rows);
+                    $rows = [];
+                }
+            }
+            if (!empty($rows)) {
+                ImportProductImagesJob::dispatch($this->importId, $rows);
+            }
+            $spreadsheet->disconnectWorksheets();
+            unset($spreadsheet, $reader);
+        } catch (\Throwable $e) {
+            report($e);
         }
     }
 

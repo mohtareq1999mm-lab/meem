@@ -124,8 +124,8 @@ class CategoryImportService
             'parent_name' => $this->normalizeText($row['parent_name_en'] ?? null),
             'status' => 1,
             'is_featured' => 0,
-            'image_desktop_url' => trim((string) ($row['image_desktop_url'] ?? '')),
-            'image_mobile_url' => trim((string) ($row['image_mobile_url'] ?? '')),
+            'image_desktop_url' => $this->normalizeImageUrl(trim((string) ($row['image_desktop_url'] ?? ''))),
+            'image_mobile_url' => $this->normalizeImageUrl(trim((string) ($row['image_mobile_url'] ?? ''))),
             'temp_desktop' => null,
             'temp_mobile' => null,
             'errors' => [],
@@ -142,10 +142,11 @@ class CategoryImportService
             $data['errors'][] = __('message.IMPORT.CATEGORY.NAME_AR_REQUIRED');
         }
 
-        if (isset($seenNames[$data['name_en']])) {
+        $nameKey = $this->normalizeKey($data['name_en']);
+        if ($nameKey !== '' && isset($seenNames[$nameKey])) {
             $data['errors'][] = __('message.IMPORT.CATEGORY.DUPLICATE_ROW');
-        } elseif ($data['name_en'] !== '') {
-            $seenNames[$data['name_en']] = true;
+        } elseif ($nameKey !== '') {
+            $seenNames[$nameKey] = true;
         }
 
         $status = $this->parseBooleanField($row['status'] ?? null);
@@ -176,16 +177,21 @@ class CategoryImportService
             return $data;
         }
 
+        // Best-effort image download: per-image failure does not fail the entire row.
+        // This aligns Category with Brand parity (BrandImportService) where images are
+        // optional; validation failures (INVALID_IMAGE_URL) still fail the row above.
         try {
             $data['temp_desktop'] = $data['image_desktop_url'] !== '' ? $this->downloadImage($data['image_desktop_url']) : null;
+        } catch (Throwable $e) {
+            report(new RuntimeException("Category '{$data['name_en']}' desktop image download failed: {$e->getMessage()}"));
+            $data['temp_desktop'] = null;
+        }
+
+        try {
             $data['temp_mobile'] = $data['image_mobile_url'] !== '' ? $this->downloadImage($data['image_mobile_url']) : null;
         } catch (Throwable $e) {
-            $message = $this->translateImageError($e->getMessage());
-            $data['errors'][] = $message;
-            $this->cleanupTempImages($data);
-            $this->addFailedRow($data, $message);
-
-            return $data;
+            report(new RuntimeException("Category '{$data['name_en']}' mobile image download failed: {$e->getMessage()}"));
+            $data['temp_mobile'] = null;
         }
 
         return $data;
@@ -200,7 +206,8 @@ class CategoryImportService
 
             try {
                 $nameEn = $row['name_en'];
-                $matches = $this->dbByName[$nameEn] ?? [];
+                $nameKey = $this->normalizeKey($nameEn);
+                $matches = $this->dbByName[$nameKey] ?? [];
 
                 if (count($matches) > 1) {
                     $message = __('message.IMPORT.CATEGORY.AMBIGUOUS_NAME');
@@ -267,7 +274,7 @@ class CategoryImportService
                         'parent_id' => null,
                     ]);
 
-                    $this->dbByName[$nameEn] = [$category];
+                    $this->dbByName[$nameKey] = [$category];
                     $this->dbBySlug[$slug][] = $category;
                     $this->createdSlugs[$slug] = $nameEn;
                     $this->createdIds[] = $category->id;
@@ -299,7 +306,8 @@ class CategoryImportService
             $parentError = null;
 
             if ($parentName !== '') {
-                $matches = $this->dbByName[$parentName] ?? [];
+                $parentKey = $this->normalizeKey($parentName);
+                $matches = $this->dbByName[$parentKey] ?? [];
 
                 if (count($matches) === 0) {
                     $parentError = __('message.IMPORT.CATEGORY.MISSING_PARENT');
@@ -311,8 +319,24 @@ class CategoryImportService
             }
 
             if ($parentError !== null) {
-                $this->failPendingRow($pending, $index, $row, $parentError);
-
+                // Non-fatal domain contract: missing/ambiguous parent does not fail the category.
+                // Persist as root (parent_id = null) and keep row as success candidate.
+                // Log warning for forensic audit, do not increment failedRows.
+                report(new \RuntimeException("Category '{$row['name_en']}' parent warning ({$parentError}): parent_name_en='{$row['parent_name']}'"));
+                try {
+                    $row['target']->parent_id = null;
+                    $row['target']->save();
+                } catch (\Throwable $e) {
+                    $this->failPendingRow($pending, $index, $row, $e->getMessage());
+                    if (!empty($row['is_new']) && $row['target'] !== null) {
+                        $this->removeOrphanCategory($pending, $index, $row);
+                    } else {
+                        $this->cleanupTempImages($row);
+                    }
+                    continue;
+                }
+                $pending[$index] = $row;
+                $this->flushProgressTick();
                 continue;
             }
 
@@ -324,18 +348,79 @@ class CategoryImportService
                 $row['target']->parent_id = $parentId;
                 $row['target']->save();
 
-                $this->successCount++;
+                // Success is counted authoritatively in attachImages after media handling.
+                // Parent assignment success only persists the hierarchy; not counted yet.
                 $pending[$index] = $row;
             } catch (ValidationException $e) {
                 $messages = collect($e->errors())->flatten()->implode(' ');
                 $message = $messages ?: __('message.IMPORT.CATEGORY.INVALID_PARENT');
                 $this->failPendingRow($pending, $index, $row, $message);
+                // Hierarchy validation failure (self/cycle) - keep newly created category as root
+                // per matrix: self parent stays root level 1, do not delete orphan.
+                $this->cleanupTempImages($row);
             } catch (Throwable $e) {
                 $this->failPendingRow($pending, $index, $row, $e->getMessage());
+                if (!empty($row['is_new']) && $row['target'] !== null) {
+                    $this->removeOrphanCategory($pending, $index, $row);
+                } else {
+                    $this->cleanupTempImages($row);
+                }
             }
 
             $this->flushProgressTick();
         }
+    }
+
+    protected function removeOrphanCategory(array &$pending, int $index, array $row): void
+    {
+        $category = $row['target'] ?? null;
+
+        if (!$category) {
+            return;
+        }
+
+        try {
+            // Soft-delete the orphaned newly created category to preserve audit trail
+            $category->delete();
+        } catch (Throwable $e) {
+            report($e);
+        }
+
+        // Remove from in-memory indexes to prevent later parent lookups finding the orphan
+        $nameKey = $this->normalizeKey($row['name_en'] ?? '');
+        if ($nameKey !== '' && isset($this->dbByName[$nameKey])) {
+            $this->dbByName[$nameKey] = array_values(array_filter(
+                $this->dbByName[$nameKey],
+                fn ($c) => (int) $c->id !== (int) $category->id
+            ));
+            if (empty($this->dbByName[$nameKey])) {
+                unset($this->dbByName[$nameKey]);
+            }
+        }
+
+        $slug = $category->slug ?? '';
+        if (is_string($slug) && $slug !== '') {
+            if (isset($this->dbBySlug[$slug])) {
+                $this->dbBySlug[$slug] = array_values(array_filter(
+                    $this->dbBySlug[$slug],
+                    fn ($c) => (int) $c->id !== (int) $category->id
+                ));
+                if (empty($this->dbBySlug[$slug])) {
+                    unset($this->dbBySlug[$slug]);
+                }
+            }
+            unset($this->createdSlugs[$slug]);
+        }
+
+        $this->createdIds = array_values(array_filter(
+            $this->createdIds,
+            fn ($id) => (int) $id !== (int) $category->id
+        ));
+
+        // Ensure temp images for this orphan row are cleaned
+        $this->cleanupTempImages($row);
+        // Mark pending row as failed state without target to prevent later attach
+        $pending[$index]['target'] = null;
     }
 
     protected function attachImages(array &$pending): void
@@ -355,9 +440,17 @@ class CategoryImportService
                 $attached = $this->attachImage($row['target'], $row['temp_mobile'], 'categories-mobile') && $attached;
             }
 
+            // Single authoritative success count. Images are best-effort (Brand parity):
+            // parent success + category persisted = row success, image attach failure is logged
+            // but does not revert success or delete existing valid media.
+            $this->successCount++;
+            $pending[$index] = $row;
+
             if (!$attached) {
-                $this->failPendingRow($pending, $index, $row, __('message.IMPORT.CATEGORY.IMAGE_IMPORT_FAILED'));
+                report(new RuntimeException("Category '{$row['name_en']}' image attachment failed (best-effort)"));
             }
+
+            $this->flushProgressTick();
         }
     }
 
@@ -416,7 +509,10 @@ class CategoryImportService
             $name = $this->categoryEnglishName($category);
 
             if ($name !== '') {
-                $this->dbByName[$name][] = $category;
+                $key = $this->normalizeKey($name);
+                if ($key !== '') {
+                    $this->dbByName[$key][] = $category;
+                }
             }
 
             if (is_string($category->slug) && $category->slug !== '') {
@@ -449,6 +545,46 @@ class CategoryImportService
         return preg_replace('/\s+/', ' ', trim($value)) ?? trim($value);
     }
 
+    protected function normalizeKey(?string $value): string
+    {
+        $normalized = $this->normalizeText($value);
+
+        return $normalized === '' ? '' : mb_strtolower($normalized, 'UTF-8');
+    }
+
+    protected function normalizeImageUrl(string $url): string
+    {
+        $url = trim($url);
+        if ($url === '') {
+            return '';
+        }
+        // Single-URL contract: pipe-separated gallery expectation must not be silently encoded.
+        // Leave '|' intact so isValidUrlFormat can reject it as malformed.
+        if (str_contains($url, '|')) {
+            return $url;
+        }
+        // Preserve already-encoded URLs without double-encoding
+        $parts = parse_url($url);
+        if ($parts === false || !isset($parts['scheme'], $parts['host'])) {
+            return $url;
+        }
+        $scheme = $parts['scheme'];
+        $host = $parts['host'];
+        $port = isset($parts['port']) ? ':' . $parts['port'] : '';
+        $user = $parts['user'] ?? '';
+        $pass = $parts['pass'] ?? '';
+        $credentials = $user !== '' ? $user . ($pass !== '' ? ':' . $pass : '') . '@' : '';
+        $path = $parts['path'] ?? '';
+        if ($path !== '') {
+            $segments = explode('/', $path);
+            $encoded = array_map(fn($seg) => rawurlencode(rawurldecode($seg)), $segments);
+            $path = implode('/', $encoded);
+        }
+        $query = isset($parts['query']) ? '?' . $parts['query'] : '';
+        $fragment = isset($parts['fragment']) ? '#' . $parts['fragment'] : '';
+        return $scheme . '://' . $credentials . $host . $port . $path . $query . $fragment;
+    }
+
     protected function parseBooleanField($value): ?string
     {
         if ($value === null || $value === '') {
@@ -474,7 +610,17 @@ class CategoryImportService
 
     protected function isValidUrlFormat(string $url): bool
     {
-        return filter_var($url, FILTER_VALIDATE_URL) !== false;
+        if (filter_var($url, FILTER_VALIDATE_URL) === false) {
+            return false;
+        }
+
+        // Single-URL contract: reject pipe-separated gallery expectations.
+        // A cell containing '|' is one malformed URL, not 3 images.
+        if (str_contains($url, '|')) {
+            return false;
+        }
+
+        return true;
     }
 
     protected function downloadImage(string $url): string

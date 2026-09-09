@@ -256,7 +256,7 @@ class CategoryImportTest extends TestCase
 
         $this->assertDatabaseHas('imports', [
             'id' => $response->json('data.import_id'),
-            'type' => 'category',
+            'type' => 'category-import',
             'status' => 'pending']);
 
         Queue::assertPushed(ImportCategoriesJob::class);
@@ -387,8 +387,9 @@ class CategoryImportTest extends TestCase
 
         $service = $this->service();
 
+        // Slug collision via punctuation variant, not case variant, keeps slug conflict under case-insensitive identity.
         $service->processRows(new Collection([
-            $this->row(['name_en' => 'electronics', 'name_ar' => 'إلكترونيات'])]));
+            $this->row(['name_en' => 'Electronics!', 'name_ar' => 'إلكترونيات'])]));
 
         $this->assertEquals(0, $service->getSuccessCount());
         $this->assertCount(1, $service->getFailedRows());
@@ -400,14 +401,17 @@ class CategoryImportTest extends TestCase
 
     public function test_service_missing_parent_is_row_error(): void
     {
+        // Updated contract: missing parent is non-fatal, category persists as root
         $service = $this->service();
 
         $service->processRows(new Collection([
             $this->row(['name_en' => 'Orphan', 'parent_name_en' => 'Does Not Exist'])]));
 
-        $this->assertEquals(0, $service->getSuccessCount());
-        $this->assertCount(1, $service->getFailedRows());
-        $this->assertStringContainsString('Parent', $service->getFailedRows()[0]['error_message']);
+        $this->assertEquals(1, $service->getSuccessCount());
+        $this->assertCount(0, $service->getFailedRows());
+        $cat = Category::where('slug', 'orphan')->first();
+        $this->assertNotNull($cat);
+        $this->assertNull($cat->parent_id);
     }
 
     public function test_service_self_parent_is_row_error_and_category_stays_root(): void

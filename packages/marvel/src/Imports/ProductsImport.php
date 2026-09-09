@@ -16,23 +16,28 @@ use Marvel\Services\Import\ProductImportService;
 class ProductsImport implements WithMultipleSheets
 {
     protected ProductImportService $service;
+    protected bool $withImages;
 
-    public function __construct(ProductImportService $service)
+    public function __construct(ProductImportService $service, bool $withImages = true)
     {
         $this->service = $service;
+        $this->withImages = $withImages;
     }
 
     public function sheets(): array
     {
-        return [
+        $sheets = [
             'products' => new ProductsSheetImport($this->service),
             'product_variants' => new ProductVariantsSheetImport($this->service),
-            'images' => new ImagesSheetImport($this->service),
             'categories' => new ProductCategoriesSheetImport($this->service),
             'brands' => new ProductBrandsSheetImport($this->service),
             'flash_sales' => new FlashSalesSheetImport($this->service),
             'sliders' => new SlidersSheetImport($this->service),
             'tags' => new TagsSheetImport($this->service),
         ];
+        if ($this->withImages) {
+            $sheets['images'] = new ImagesSheetImport($this->service);
+        }
+        return $sheets;
     }
 }

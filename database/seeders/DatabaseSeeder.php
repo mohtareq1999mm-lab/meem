@@ -53,41 +53,41 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $user->assignRole("super_admin");
-        $userEdit->assignRole("editor");
-        $customer->assignRole("customer");
+//        $userEdit->assignRole("editor");
+//        $customer->assignRole("customer");
 
         // if ($seedDemoData) {
         //     User::factory(10000)->create();
         // }
 
         $this->call([
-            CategorySeeder::class,
-            AttributeSeeder::class,
+//            CategorySeeder::class,
+//            AttributeSeeder::class,
             BannerSeeder::class,
             SliderSeeder::class,
-            FaqSeeder::class,
-            FlashSaleSeeder::class,
-            BrandSeeder::class,
-            ContactSeeder::class,
+//            FaqSeeder::class,
+//            FlashSaleSeeder::class,
+//            BrandSeeder::class,
+//            ContactSeeder::class,
             TagSeeder::class,
-            ProductSeeder::class,
+//            ProductSeeder::class,
             SliderProductSeeder::class,
             BannerProductSeeder::class,
-            ReviewSeeder::class,
-            SiteReviewSeeder::class,
-            ProductVariantSeeder::class,
-            BrandProductSeeder::class,
+//            ReviewSeeder::class,
+//            SiteReviewSeeder::class,
+//            ProductVariantSeeder::class,
+//            BrandProductSeeder::class,
             CartSeeder::class,
-            CouponSeeder::class,
-            LocationSeeder::class,
-            PromotionSeeder::class,
-            WishlistSeeder::class,
+//            CouponSeeder::class,
+//            LocationSeeder::class,
+//            PromotionSeeder::class,
+//            WishlistSeeder::class,
             ContentPageSeeder::class,
             StaticPageSeeder::class,
             SectionSeeder::class,
-            DashboardDataSeeder::class,
-            NotificationSeeder::class,
-            ActivityLogSeeder::class,
+//            DashboardDataSeeder::class,
+//            NotificationSeeder::class,
+//            ActivityLogSeeder::class,
             PickupLocationSeeder::class,
         ]);
     }

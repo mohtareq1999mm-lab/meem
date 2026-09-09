@@ -225,7 +225,13 @@ class ImportCategoriesJob implements ShouldQueue
 
         $service->writeExplicitProgress(2.0);
 
+        $previousHandler = config('excel.transactions.handler');
         try {
+            // Avoid wrapping HTTP image downloads in a DB transaction (long I/O inside transaction is anti-pattern).
+            // Brand/Category proven strategy: short transactions per entity, not one global Excel transaction.
+            // TransactionManager expects driver name 'null' (string) for NullTransactionHandler, not php null.
+            config(['excel.transactions.handler' => 'null']);
+
             $importObj = new CategoriesImport($service);
 
             $readerType = \Maatwebsite\Excel\Excel::XLSX;
@@ -273,7 +279,9 @@ class ImportCategoriesJob implements ShouldQueue
 
             $this->deleteImportFile($import);
             $this->removeSignalFile('progress');
+            config(['excel.transactions.handler' => $previousHandler]);
         } catch (ImportCancelledException $e) {
+            config(['excel.transactions.handler' => $previousHandler]);
             $service->rollbackCreatedData();
             $this->deleteImportFile($import);
             $this->cleanSignals();
@@ -295,6 +303,7 @@ class ImportCategoriesJob implements ShouldQueue
                 'failed_rows' => count($service->getFailedRows()),
             ]);
         } catch (Throwable $e) {
+            config(['excel.transactions.handler' => $previousHandler]);
             $sanitized = $this->sanitizeExceptionMessage($e);
             report($e);
 

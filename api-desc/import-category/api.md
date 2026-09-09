@@ -480,8 +480,8 @@ The exact columns used by both Import (`CategoriesImport`) and Export (`Categori
 
 ## Import Identity Behavior
 
-1. Normalize `name_en` (trim + collapse internal whitespace).
-2. Search for an existing Category using the normalized English name.
+1. Normalize `name_en` (trim + collapse internal whitespace, then `mb_strtolower` for case-insensitive matching).
+2. Search for an existing Category using the normalized English name (case-insensitive, Unicode-safe).
 3. **If found** → update that Category (name, details, status, is_featured).
 4. **If not found** → generate a deterministic slug using `Str::slug()`.
 5. **If the generated slug is already assigned to another Category** → the row fails with a "slug conflict" error.
@@ -493,26 +493,36 @@ The exact columns used by both Import (`CategoriesImport`) and Export (`Categori
 
 | `parent_name_en` | Result |
 |------------------|--------|
-| empty | Root category (`parent_id = null`, level 1) |
-| a Category's English name | Parent resolved → `parent_id` set, level = parent.level + 1 |
+| empty / whitespace | Root category (`parent_id = null`, level 1) → **SUCCESS** |
+| a Category's English name | Parent resolved case-insensitively (`mb_strtolower` + whitespace normalization) → `parent_id` set, level = parent.level + 1 |
 
-- **Missing parent** — no Category matches the name → row error
-- **Ambiguous parent** — multiple Categories share the English name → row error
-- **Self-parent** — a Category cannot be its own parent → row error
+- **Empty parent is valid root** — `parent_name_en = ""` → `parent_id = null`, row success, not `MISSING_PARENT`.
+- **Missing parent** — `parent_name_en` was specified but no Category matches the name → row error `MISSING_PARENT`; for a newly created category the row fails and the category is soft-deleted (no orphan remains); existing categories are never deleted.
+- **Ambiguous parent** — multiple Categories share the English name → row error `AMBIGUOUS_PARENT`; new orphans are removed similarly.
+- **Self-parent** — a Category cannot be its own parent → row error, but the newly created category remains as root (level 1) per matrix.
 - **Circular hierarchy** — assigning a descendant as a parent is detected and rejected → row error
 - **Multi-level hierarchy** — arbitrary depth is supported (e.g., Electronics → Phones → Smartphones)
 - **Row-order independence** — parents may appear on any row (before, after, or not at all); parent resolution runs after all rows are upserted
+- **Case-insensitive** — `Electronics`, `electronics`, ` ELECTRONICS ` all resolve to the same parent; matching uses `normalizeText` + `mb_strtolower` consistently for `seenNames`, `dbByName`, and parent lookup.
 
-## Image Import
+## Image Import — Single URL Per Collection Contract
 
 | Property | Value |
 |----------|-------|
-| `image_desktop_url` / `image_mobile_url` | Optional, URL-based |
+| `image_desktop_url` | **One URL** → `categories-desktop` on disk `categories` |
+| `image_mobile_url` | **One URL** → `categories-mobile` on disk `categories` |
+| Maximum media per category | **2** (1 desktop + 1 mobile) |
 | Protocols | `http`, `https` |
-| Supported formats | `jpeg`, `jpg`, `png`, `gif` |
-| **SVG** | **Not supported** for Excel image import |
-| Max size | 5 MB |
-| Redirect limit | 5 |
+| Supported formats | `jpeg`, `jpg`, `png`, `gif` (verified via `finfo` + `getimagesize`, not `Content-Type` or extension) |
+| **SVG / HTML / PHP** | **Not supported** — rejected as `UNSUPPORTED_IMAGE_TYPE` or `INVALID_IMAGE_FILE` |
+| Max size | 5 MB ( `Content-Length` + streamed size checked) |
+| Redirect limit | 5 (each redirect target re-validated for SSRF) |
 | Timeout | 30 s |
 
-Image URLs are protected against **SSRF**: private, loopback, link-local, reserved, and cloud metadata addresses are blocked, every redirect is re-validated, and the downloaded content must be a genuine JPEG/PNG/GIF (verified via MIME detection and image dimensions). Unsafe or unsupported URLs fail the row with an "unsafe image URL" / "unsupported image type" error.
+**Contract rules:**
+- Each column holds **exactly one URL**. No `images`, `gallery`, `categories-gallery`, pipe-separated, comma-separated, or JSON array contract exists.
+- `url1|url2|url3` in one cell is **one malformed URL** → fails `INVALID_IMAGE_URL` validation → 0 media rows, row error. Do not use `explode('|', $url)`.
+- URL validation is `filter_var` + pipe rejection; SSRF protection blocks private/loopback/cgNAT/multicast/IPv6 special ranges.
+- **Image failure policy (Category ↔ Brand parity):** URL format errors (`INVALID_IMAGE_URL`) fail the row. Download/attachment failures (unsafe URL, too large, wrong MIME, corrupt image, HTML pretending to be image, network error) are **best-effort** — the category still succeeds (`successCount` authoritative in `attachImages`) with 0/1 media, existing valid media is preserved (no `clearMediaCollection` before successful add), and failures are logged.
+
+**Flow:** `Excel → WithHeadingRow → trim → isValidUrlFormat → assertSafeUrl (SSRF) → Http (manual redirects, 30s, 5MB, MIME, SVG check) → temp file storage/app/temp/category_img_{random}.ext (validated via getimagesize) → upsert category → parent assignment → attachImages (clear+add per collection) → media table (`model_type=Category`, `collection_name` in `categories-desktop/mobile`, `disk=categories`) → API `CategoryResource` (`image.desktop/mobile` via `getFirstMediaUrl`) → Export (`CategoriesExport::firstImageUrl` per collection). Temp files are cleaned in `finally` (success/failure/cancel/retry) with `Str::random(16)` uniqueness.
