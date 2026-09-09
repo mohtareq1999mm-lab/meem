@@ -60,9 +60,7 @@ return [
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA', env('MYSQL_SSL_CA')),
-                // TiDB: Ensure pessimistic transaction mode for FOR UPDATE locking
-                // Default to pessimistic mode for production TiDB; harmless on MySQL/MariaDB
-                PDO::MYSQL_ATTR_INIT_COMMAND => env('DB_INIT_COMMAND', "SET SESSION tidb_txn_mode = 'pessimistic'"),
+                PDO::MYSQL_ATTR_INIT_COMMAND => env('DB_INIT_COMMAND'),
             ]) : [],
         ],
 
