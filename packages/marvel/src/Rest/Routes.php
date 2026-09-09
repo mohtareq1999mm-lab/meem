@@ -325,6 +325,7 @@ Route::middleware(['auth:sanctum', 'throttle:admin'])->group(function () {
     Route::post('add-points', [UserController::class, 'addPoints']);
     Route::post('users/make-admin', [UserController::class, 'makeOrRevokeAdmin']);
 
+
     Route::get('product-type', function () {
         $keys = [
             'best_product_sales',
