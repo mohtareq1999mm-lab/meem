@@ -221,4 +221,64 @@ return [
     'manage-digital-licenses' => 'Manage digital licenses',
     'manage-digital-access' => 'Manage digital access',
 
+    // 🏷️ Tags (plural)
+    'create-tags' => 'Create tags',
+    'update-tags' => 'Update tags',
+    'delete-tags' => 'Delete tags',
+
+    // 🏷️ Brand (singular)
+    'view-brand' => 'View brand',
+
+    // 🚚 Fast shipping
+    'view-fast-shipping' => 'View fast shipping',
+    'update-fast-shipping' => 'Update fast shipping',
+
+    // 📄 Content pages
+    'view-content-pages' => 'View content pages',
+    'create-content-pages' => 'Create content pages',
+    'update-content-pages' => 'Update content pages',
+    'delete-content-pages' => 'Delete content pages',
+
+    // 📦 Sections
+    'view-sections' => 'View sections',
+    'create-sections' => 'Create sections',
+    'update-sections' => 'Update sections',
+    'delete-sections' => 'Delete sections',
+
+    // 🏷️ Section types
+    'view-section-types' => 'View section types',
+    'create-section-types' => 'Create section types',
+    'update-section-types' => 'Update section types',
+    'delete-section-types' => 'Delete section types',
+
+    // 👤 User
+    'restore-user' => 'Restore user',
+
+    // 📦 Product import/export
+    'import-product' => 'Import products',
+    'export-product' => 'Export products',
+
+    // 🎟️ Coupon assignments
+    'view-coupon-assignments' => 'View coupon assignments',
+    'create-coupon-assignment' => 'Create coupon assignment',
+    'update-coupon-assignment' => 'Update coupon assignment',
+    'delete-coupon-assignment' => 'Delete coupon assignment',
+
+    // 🧾 Invoices
+    'view-invoices' => 'View invoices',
+    'view-invoice' => 'View invoice',
+    'regenerate-invoice' => 'Regenerate invoice',
+    'correct-invoice' => 'Correct invoice',
+    'cancel-invoice' => 'Cancel invoice',
+    'issue-debit-note' => 'Issue debit note',
+
+    // 📦 Shipments
+    'view-shipments' => 'View shipments',
+    'view-shipment' => 'View shipment',
+    'create-shipment' => 'Create shipment',
+    'update-shipment' => 'Update shipment',
+
+    // 📊 Analytics
+    'export-analytics' => 'Export analytics',
+
 ];

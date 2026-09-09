@@ -157,6 +157,7 @@ final class Permission extends Enum
     public const DELETE_CONTACT = 'delete-contact';
     public const DELETE_READ_CONTACTS = 'delete-read-contacts';
     public const VIEW_ANALYTICS = 'view-analytics';
+    public const EXPORT_ANALYTICS = 'export-analytics';
     public const VIEW_LOW_STOCK_PRODUCTS = 'view-low-stock-products';
     public const VIEW_DRAFT_PRODUCTS = 'view-draft-products';
     public const UPDATE_COUPON = 'update-coupon';
