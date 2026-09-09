@@ -216,6 +216,19 @@ $user ??= auth()->user() ?? auth('sanctum')->user();
                 throw new \RuntimeException('Settings record not found.');
             }
 
+            // IMMUTABILITY GUARD: Prevent base currency change when financial orders exist
+            // Once the first order reaches 'completed' + 'payment-success', the base currency
+            // used for converted_total_price becomes the immutable financial reporting currency.
+            // This prevents mixed-currency aggregation (e.g., summing USD + KWD values).
+            $hasFinancialOrders = \Marvel\Database\Models\Order::query()
+                ->where('status', \Marvel\Database\Models\Order::ORDER_STATUS_COMPLETED)
+                ->where('payment_status', \Marvel\Database\Models\Order::PAYMENT_STATUS_SUCCESS)
+                ->exists();
+
+            if ($hasFinancialOrders) {
+                throw CurrencyInUseException::hasFinancialOrders();
+            }
+
             if (!$currency->is_active) {
                 throw CurrencyInactiveException::forCurrency($currency->code);
             }
@@ -290,7 +303,39 @@ $user ??= auth()->user() ?? auth('sanctum')->user();
     {
         $before = [];
 
-        $updated = DB::transaction(function () use ($currency, $mode, $manualRate, &$before): Currency {
+        // AUTO must be provider-driven: if no fresh provider rate exists, fetch it automatically.
+        $autoFreshRate = null;
+        $autoFreshProvider = null;
+        $autoFreshProviderRateAt = null;
+        if ($mode === RateMode::AUTO) {
+            $current = Currency::query()->findOrFail($currency->getKey());
+            $needsFresh = !$current->provider_rate
+                || !$current->provider_rate_at
+                || $current->provider_rate_at->lt(now()->subHours((int) config('currency.sync.provider_data_max_age_hours', 72)));
+
+            // Anchor currency is always 1; no provider call needed.
+            $anchor = strtoupper((string) config('currency.anchor', 'USD'));
+            if (strtoupper($current->code) === $anchor) {
+                $autoFreshRate = '1.0000000000';
+                $autoFreshProvider = $current->provider ?? 'frankfurter';
+                $autoFreshProviderRateAt = now();
+                $needsFresh = false;
+            }
+
+            if ($needsFresh) {
+                $provider = app(\App\Contracts\ExchangeRateProviderInterface::class);
+                $snapshot = $provider->getLatestRates($anchor, [strtoupper($current->code)]);
+                $code = strtoupper($current->code);
+                if (!isset($snapshot->rates[$code])) {
+                    throw CurrencyRateNotFoundException::forCurrency($current->code, now()->toDateString());
+                }
+                $autoFreshRate = (string) $snapshot->rates[$code];
+                $autoFreshProvider = $snapshot->provider;
+                $autoFreshProviderRateAt = $snapshot->providerRateAt ?? now();
+            }
+        }
+
+        $updated = DB::transaction(function () use ($currency, $mode, $manualRate, &$before, $autoFreshRate, $autoFreshProvider, $autoFreshProviderRateAt): Currency {
             $lockedCurrency = Currency::query()->lockForUpdate()->findOrFail($currency->getKey());
             $before = [
                 'rate_mode' => $lockedCurrency->rate_mode?->value ?? (string) $lockedCurrency->rate_mode,
@@ -327,10 +372,33 @@ $user ??= auth()->user() ?? auth('sanctum')->user();
                 $lockedCurrency->rate_mode = RateMode::MANUAL;
                 $lockedCurrency->manual_rate = $manualRate;
             } else {
+                $previousProviderRate = $lockedCurrency->provider_rate;
+                // If we just fetched a fresh rate for this transition, persist it first.
+                if ($autoFreshRate !== null) {
+                    $lockedCurrency->provider_rate = $this->normalizePositiveRate($autoFreshRate);
+                    $lockedCurrency->provider = $autoFreshProvider ?? $lockedCurrency->provider;
+                    $lockedCurrency->provider_rate_at = $autoFreshProviderRateAt;
+                    $lockedCurrency->last_synced_at = now();
+                }
+
                 $providerRate = $this->normalizePositiveRate($lockedCurrency->provider_rate);
 
                 if (!$lockedCurrency->provider_rate_at || $lockedCurrency->provider_rate_at->lt(now()->subHours((int) config('currency.sync.provider_data_max_age_hours', 72)))) {
-                    throw CurrencyRateNotFoundException::forCurrency($lockedCurrency->code, $today);
+                    throw CurrencyRateNotFoundException::forCurrency($lockedCurrency->code, now()->toDateString());
+                }
+
+                if ($previousProviderRate !== null) {
+                    $maxChange = (string) config('currency.validation.max_rate_change_percent', '30');
+                    $difference = bcsub($providerRate, (string) $previousProviderRate, 10);
+                    $difference = str_starts_with($difference, '-') ? substr($difference, 1) : $difference;
+                    if (bccomp((string) $previousProviderRate, '0', 10) > 0) {
+                        $percentage = bcmul(bcdiv($difference, (string) $previousProviderRate, 10), '100', 4);
+                        if (bccomp($percentage, $maxChange, 4) > 0) {
+                            throw new \App\Exceptions\ExchangeRateValidationException(
+                                "Provider rate anomaly detected for {$lockedCurrency->code}."
+                            );
+                        }
+                    }
                 }
 
                 $effectiveChanged = !$rate || bccomp((string) $rate->exchange_rate, $providerRate, 10) !== 0;

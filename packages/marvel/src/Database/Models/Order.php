@@ -83,15 +83,11 @@ class Order extends Model
         'promotion_code',
         'promotion_type',
         'promotion_discount',
-        'tax_override_type',
-        'tax_override_tax_class_id',
-        'tax_class_id',
-        'tax_mode',
-        'tax_name',
-        'tax_rate',
-        'taxable_amount',
-        'tax_amount',
+        'product_taxable_amount',
         'product_tax_amount',
+        'order_tax_rate',
+        'order_taxable_amount',
+        'order_tax_amount',
         'status',
         'payment_status',
         'fulfillment_status',
@@ -124,10 +120,11 @@ class Order extends Model
         'inventory_reserved_at' => 'datetime',
         'reservation_expires_at' => 'datetime',
         'inventory_state_restored_at' => 'datetime',
-        'tax_rate' => 'float',
-        'taxable_amount' => 'float',
-        'tax_amount' => 'float',
+        'product_taxable_amount' => 'float',
         'product_tax_amount' => 'float',
+        'order_tax_rate' => 'float',
+        'order_taxable_amount' => 'float',
+        'order_tax_amount' => 'float',
     ];
 
     protected $hidden = [
@@ -157,20 +154,6 @@ class Order extends Model
     public function governorate(): BelongsTo
     {
         return $this->belongsTo(Governorate::class);
-    }
-
-    /**
-     * Tax class applied to this order (soft reference — the denormalized
-     * snapshot columns survive the class being edited or deleted).
-     */
-    public function taxClass(): BelongsTo
-    {
-        return $this->belongsTo(Tax::class, 'tax_class_id');
-    }
-
-    public function taxOverrideClass(): BelongsTo
-    {
-        return $this->belongsTo(Tax::class, 'tax_override_tax_class_id');
     }
 
     public function orderItems(): HasMany

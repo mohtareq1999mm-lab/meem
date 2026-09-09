@@ -113,13 +113,12 @@ Route::prefix('v1/general')->group(function () {
     Route::middleware(['api', 'auth:sanctum', 'throttle:authenticated'])->group(function () {
         //======================== coupons ========================/
         Route::post('coupons/apply', [CouponController::class, 'applyCoupon']);
+        Route::post('coupons/{id}/claim', [CouponController::class, 'claim']);
         //======================== checkout ========================//
         Route::get('checkout/promotions', [OrderController::class, 'eligiblePromotions']);
         Route::post('checkout', [OrderController::class, 'checkout']);
         Route::post('checkout/cod/{orderId}/mark-paid', [OrderController::class, 'markCodAsPaid'])->middleware(['permission:update-order-status']);
         Route::post('checkout/cashier/{orderId}/mark-paid', [OrderController::class, 'markCashierPaid'])->middleware(['permission:update-order-status']);
-        // Admin per-order tax override (pending orders only)
-        Route::put('orders/{orderId}/tax-override', [OrderController::class, 'applyTaxOverride'])->whereNumber('orderId')->middleware(['permission:override-order-tax']);
         //======================== fast shipping checkout ========================/
         Route::post('fast-shipping/checkout', [FastShippingController::class, 'checkout']);
         //======================== orders ========================//

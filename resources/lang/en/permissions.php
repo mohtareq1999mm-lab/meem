@@ -150,7 +150,6 @@ return [
     'update-settings' => 'Update settings',
     'delete-review' => 'Delete review',
     'delete-question' => 'Delete question',
-    'create-tax' => 'Create tax',
     'create-shipping' => 'Create shipping',
     'add-points' => 'Add points',
     'approve-coupon' => 'Approve coupon',

@@ -30,6 +30,7 @@ public $fillable = [
         'catalog_price',
         'catalog_total_price',
         'product_tax_rate',
+        'product_taxable_amount',
         'product_tax_amount',
     ];
 
@@ -44,6 +45,7 @@ public $fillable = [
         'catalog_price' => 'float',
         'catalog_total_price' => 'float',
         'product_tax_rate' => 'float',
+        'product_taxable_amount' => 'float',
         'product_tax_amount' => 'float',
     ];
 

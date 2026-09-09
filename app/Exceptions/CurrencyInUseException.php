@@ -8,6 +8,7 @@ class CurrencyInUseException extends Exception
 {
     public const REASON_BASE_CURRENCY = 'base_currency';
     public const REASON_REFERENCED_BY_RATES = 'referenced_by_rates';
+    public const REASON_HAS_FINANCIAL_ORDERS = 'has_financial_orders';
 
     public function __construct(
         string $message,
@@ -29,5 +30,13 @@ class CurrencyInUseException extends Exception
     public static function isOnlyEffectiveRate(): self
     {
         return new self('Cannot delete the only effective exchange rate.', self::REASON_REFERENCED_BY_RATES);
+    }
+
+    public static function hasFinancialOrders(): self
+    {
+        return new self(
+            'Cannot change base currency when financial orders exist. The base currency becomes immutable after the first completed payment.',
+            self::REASON_HAS_FINANCIAL_ORDERS
+        );
     }
 }

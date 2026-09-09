@@ -5,6 +5,8 @@ namespace Marvel\Http\Controllers;
 use App\Exceptions\CurrencyInactiveException;
 use App\Exceptions\CurrencyInUseException;
 use App\Exceptions\CurrencyRateNotFoundException;
+use App\Exceptions\ExchangeRateProviderException;
+use App\Exceptions\ExchangeRateValidationException;
 use App\Enums\RateMode;
 use App\Http\Requests\Currency\StoreCurrencyRequest;
 use App\Http\Requests\Currency\UpdateCurrencyRateModeRequest;
@@ -148,6 +150,8 @@ class CurrencyController extends CoreController
             return $this->apiResponse(CURRENCY_INACTIVE, 422, false);
         } catch (CurrencyRateNotFoundException $e) {
             return $this->apiResponse(EXCHANGE_RATE_NOT_FOUND, 422, false);
+        } catch (CurrencyInUseException $e) {
+            return $this->apiResponse(CANNOT_CHANGE_BASE_CURRENCY_FINANCIAL_ORDERS_EXIST, 409, false);
         }
 
         return $this->apiResponse(SET_BASE_CURRENCY_SUCCESSFULLY, 200, true, CurrencyResource::make($currency));
@@ -186,7 +190,7 @@ class CurrencyController extends CoreController
                 RateMode::from($validated['mode']),
                 $validated['manual_rate'] ?? null,
             );
-        } catch (CurrencyRateNotFoundException|\InvalidArgumentException $e) {
+        } catch (CurrencyRateNotFoundException|\InvalidArgumentException|ExchangeRateProviderException|ExchangeRateValidationException $e) {
             return $this->apiResponse(EXCHANGE_RATE_NOT_FOUND, 422, false);
         }
 

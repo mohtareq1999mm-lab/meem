@@ -316,6 +316,22 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
         return $this->hasMany(CouponUsage::class, 'user_id');
     }
 
+    /**
+     * @return HasOne
+     */
+    public function metrics(): HasOne
+    {
+        return $this->hasOne(CustomerMetrics::class, 'user_id');
+    }
+
+    /**
+     * @return HasMany
+     */
+    public function couponClaims(): HasMany
+    {
+        return $this->hasMany(CouponClaim::class, 'user_id');
+    }
+
     public function loadLastOrder()
     {
         $data = $this->orders()->whereNull('parent_id')

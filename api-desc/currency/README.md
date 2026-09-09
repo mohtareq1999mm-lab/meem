@@ -24,6 +24,7 @@ Currencies are fully translatable (name, symbol, country_name in en/ar), support
     |--- GET/POST/PUT/DELETE /api/v1/currencies         |
     |--- POST /api/v1/currencies/{id}/set-base          |--- GET /api/v1/general/currencies
     |--- POST /api/v1/currencies/{id}/set-catalog       |--- POST /api/v1/general/currencies/select
+    |--- PATCH /api/v1/currencies/{id}/rate-mode        |
     |--- GET/POST/PUT/DELETE /api/v1/currency-rates     |
     v                                           v
 [Marvel CurrencyController / CurrencyRateController]   [App\CurrencyController (public)]
@@ -31,13 +32,17 @@ Currencies are fully translatable (name, symbol, country_name in en/ar), support
     v                                           v
 [CurrencyService (singleton)]                  [CurrencyResource] + HasCache (tag: currencies)
     |--- store/update/delete currency
-    |--- setBaseCurrency / setCatalogCurrency
+    |--- setBaseCurrency / setCatalogCurrency / setRateMode
     |--- convert / convertPrice  -> [CurrencyConversionService]
-    |--- invalidatePriceCaches (tag flush)
+    |--- invalidatePriceCaches (tag flush + HomeService::clearCache + rateCache)
     v
-[CurrencyRateService] -> upsert / list rates (currency_id, effective_date, date_from, date_to, code)
+[CurrencyRateService] -> upsert / list rates (currency_id, effective_date, date_from, date_to, code) [source=manual/provider]
     v
-[Models: Currency, CurrencyRate]
+[Models: Currency(rate_mode, manual_rate, provider_rate, provider, last_synced_at...), CurrencyRate(source,provider)]
+    v
+[ExchangeRateProviderInterface -> FrankfurterProvider -> ExchangeRateSnapshot] (Frankfurter https://api.frankfurter.dev/v2/rates?base=USD, sync only, never customer path)
+    v
+[ExchangeRateSyncService -> everySixHours UTC withoutOverlapping onOneServer] -> currency:sync-rates [--dry-run] (provider frankfurter)
     v
 [OrderCreationService]  -> resolveCurrencySnapshot  (order price snapshot)
 [ConvertsProductPrice]  -> convertPrice              (product price conversion)
@@ -58,18 +63,19 @@ Currencies are fully translatable (name, symbol, country_name in en/ar), support
 | DELETE | `/currencies/{currency}` | `destroy` | `delete-currency` | Soft delete w/ guards |
 | POST | `/currencies/{id}/set-base` | `setBase` | `set-base-currency` | `{id}` must be numeric |
 | POST | `/currencies/{id}/set-catalog` | `setCatalog` | `set-catalog-currency` | `{id}` must be numeric |
+| PATCH | `/currencies/{id}/rate-mode` | `setRateMode` | `update-currency` | `{mode:auto|manual, manual_rate when manual}` |
 | GET | `/currency-rates` | `index` | `view-exchange-rates` | Filter currency_id / effective_date / date_from / date_to / code |
-| POST | `/currency-rates` | `store` | `create-exchange-rate` | Upsert per (currency, date) |
+| POST | `/currency-rates` | `store` | `create-exchange-rate` | Upsert per (currency, date), sets source=manual, today's → MANUAL |
 | GET | `/currency-rates/{currency_rate}` | `show` | `view-exchange-rates` | |
-| PUT | `/currency-rates/{currency_rate}` | `update` | `update-exchange-rate` | |
-| DELETE | `/currency-rates/{currency_rate}` | `destroy` | `update-exchange-rate` | |
+| PUT | `/currency-rates/{currency_rate}` | `update` | `update-exchange-rate` | Sets source=manual |
+| DELETE | `/currency-rates/{currency_rate}` | `destroy` | `delete-exchange-rate` | 409 if current effective rate |
 
 ### Public (prefix `/api/v1/general`, throttle:public-api, NO auth)
 
 | Method | URI | Controller Method | Permission | Notes |
 |--------|-----|-------------------|------------|-------|
 | GET | `/currencies` | `index` | — | Active currencies only, tag-cached 4h |
-| POST | `/currencies/select` | `select` | — | Persist user/guest currency preference + guest cookie; gated by `currency_selection_enabled` |
+| POST | `/currencies/select` | `select` | — | Persist user/guest currency preference + `X-Currency` header; gated by `currency_selection_enabled` |
 
 ## Key Files
 

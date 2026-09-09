@@ -3,20 +3,16 @@
 namespace Marvel\Http\Resources;
 
 use App\Services\Tax\ProductTaxPresenter;
-use App\Services\Tax\TaxClassMap;
 
 class ProductResource extends Resource
 {
     public function toArray($request): array
     {
         $product = $this->resource instanceof \Marvel\Database\Models\Product ? $this->resource : $this;
-        $taxMap = TaxClassMap::load([$product->tax_class_id]);
         // Admin semantics: current_price stays the pre-tax effective price;
         // the tax-inclusive value is exposed through price_including_tax.
-        $tax = $product->tax_class_id !== null
-            ? app(ProductTaxPresenter::class)->describe($product, (float) $product->current_price, $taxMap)
-            : null;
-        $priceIncludingTax = app(ProductTaxPresenter::class)->applyTo($product, (float) $product->current_price, $taxMap);
+        $tax = app(ProductTaxPresenter::class)->describe($product, (float) $product->current_price);
+        $priceIncludingTax = app(ProductTaxPresenter::class)->applyTo($product, (float) $product->current_price);
 
         return [
             'id'                     => $this->id,
@@ -25,7 +21,8 @@ class ProductResource extends Resource
             'description'            => request()->routeIs('products.index') ? $this->getTranslation('description', app()->getLocale()) : $this->getRawOriginal('description'), // Array فيه en/ar`
             'price'                  => $this->roundMoney($this->price),
             'current_price'          => $this->roundMoney($this->current_price),
-            'tax_class_id'           => $this->tax_class_id,
+            'tax_enabled'            => (bool) $this->tax_enabled,
+            'tax_rate'               => $this->tax_rate !== null ? (float) $this->tax_rate : null,
             'tax'                    => $tax,
             'price_including_tax'    => $this->roundMoney($priceIncludingTax),
             'price_after_discount'    => $this->roundMoney($this->price_after_discount),

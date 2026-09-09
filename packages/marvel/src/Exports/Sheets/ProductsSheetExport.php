@@ -26,7 +26,7 @@ class ProductsSheetExport implements FromQuery, WithTitle, WithHeadings, WithMap
     public function query()
     {
         $query = Product::query()
-            ->with(['variations', 'categories', 'brands', 'flash_sales', 'sliders', 'taxClass']);
+            ->with(['variations', 'categories', 'brands', 'flash_sales', 'sliders']);
 
         if (isset($this->filters['status'])) {
             $query->where('status', $this->filters['status']);
@@ -74,7 +74,8 @@ class ProductsSheetExport implements FromQuery, WithTitle, WithHeadings, WithMap
             'width',
             'length',
             'weight',
-            'tax_class',
+            'tax_enabled',
+            'tax_rate',
         ];
     }
 
@@ -104,7 +105,8 @@ class ProductsSheetExport implements FromQuery, WithTitle, WithHeadings, WithMap
             'width' => $product->width,
             'length' => $product->length,
             'weight' => $product->weight,
-            'tax_class' => $product->taxClass?->code ?? $product->taxClass?->name,
+            'tax_enabled' => $product->tax_enabled ? '1' : '0',
+            'tax_rate' => $product->tax_rate,
         ];
     }
 }

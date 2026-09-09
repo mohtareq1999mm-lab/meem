@@ -106,9 +106,9 @@
 
 **Acceptance Criteria:**
 - `POST /api/v1/general/currencies/select` accepts `currency_code` (must exist and be active)
-- Authenticated users' selection is stored as a preference; guests get a `guest_currency` cookie
+- Authenticated users' selection is stored as a preference (`user_preferences`); guests send `X-Currency` header (no `guest_currency` cookie; frontend owns header)
 - Returns `CURRENCY_SELECTED_SUCCESSFULLY` with the selected `CurrencyResource`
-- The selection only takes effect when the admin setting `currency_selection_enabled` is `true`; otherwise the effective currency stays the catalog code
+- The selection only takes effect when the admin setting `currency_selection_enabled` is `true`; otherwise the effective currency stays the catalog code (preference/header ignored)
 
 ### US-009: Currency Selection Toggle (Settings)
 

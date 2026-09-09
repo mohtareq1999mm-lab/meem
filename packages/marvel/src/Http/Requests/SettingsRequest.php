@@ -51,7 +51,8 @@ class SettingsRequest extends FormRequest
             'fast_shipping_page_publish' => ['sometimes', 'in:0,1'],
             'minimum_order_amount' => ['sometimes', 'numeric', 'min:0'],
             'currency_selection_enabled' => ['sometimes', 'boolean'],
-            'default_tax_class_id' => ['nullable', 'integer', 'exists:tax_classes,id,is_active,1'],
+            'order_tax_enabled' => ['sometimes', 'boolean'],
+            'order_tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'options' => ['sometimes', 'array'],
         ];
     }

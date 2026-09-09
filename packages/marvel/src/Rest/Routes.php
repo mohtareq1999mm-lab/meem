@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\Api\General\DashboardController;
-use App\Http\Controllers\Api\General\TaxController;
 use App\Http\Controllers\Api\InvoiceController;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
@@ -118,18 +117,6 @@ Route::middleware(['auth:sanctum', 'throttle:admin'])->group(function () {
     //======================== settings site ========================/
     Route::get('settings', [SettingsController::class, 'index']);
     Route::put('settings', [SettingsController::class, 'update']);
-
-    //======================== taxes ========================/
-    Route::get('taxes', [TaxController::class, 'index'])
-        ->middleware('permission:' . \Marvel\Enums\Permission::VIEW_TAXES);
-    Route::post('taxes', [TaxController::class, 'store'])
-        ->middleware('permission:' . \Marvel\Enums\Permission::CREATE_TAX);
-    Route::get('taxes/{tax}', [TaxController::class, 'show'])->whereNumber('tax')
-        ->middleware('permission:' . \Marvel\Enums\Permission::VIEW_TAX);
-    Route::put('taxes/{tax}', [TaxController::class, 'update'])->whereNumber('tax')
-        ->middleware('permission:' . \Marvel\Enums\Permission::UPDATE_TAX);
-    Route::delete('taxes/{tax}', [TaxController::class, 'destroy'])->whereNumber('tax')
-        ->middleware('permission:' . \Marvel\Enums\Permission::DELETE_TAX);
 
     Route::get('fast-shipping/settings', [FastShippingController::class, 'getSettings']);
     Route::put('fast-shipping/settings', [FastShippingController::class, 'updateSettings']);

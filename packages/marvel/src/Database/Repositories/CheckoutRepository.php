@@ -10,7 +10,6 @@ use Illuminate\Support\Arr;
 use Marvel\Database\Models\Cart;
 use Marvel\Database\Models\Coupon;
 use Marvel\Database\Models\Product;
-use Marvel\Database\Models\Tax;
 use Marvel\Database\Models\Shipping;
 use Marvel\Database\Models\Settings;
 use Marvel\Database\Models\User;
@@ -82,11 +81,10 @@ class CheckoutRepository
 
     public function calculateTax($request, $shipping_charge, $amount)
     {
-        $tax_class = $this->getTaxClass($request);
-        if ($tax_class) {
-            return $this->getTotalTax($amount, $tax_class);
-        }
-        return $tax_class;
+        // Tax is now product-owned / settings-owned direct rates; legacy
+        // TaxClass path always returns 0. Kept as a no-op for the legacy
+        // CheckoutRepository::verify() route (if still referenced).
+        return 0;
     }
 
     public function calculateAmountWithAvailable($products, $unavailable_products)
@@ -195,45 +193,5 @@ class CheckoutRepository
         }
     }
 
-    protected function getTaxClass($request)
-    {
-        try {
-            $settings = Settings::getData();
 
-            // Get tax settings from settings
-            $tax_class = $settings['options']['taxClass'];
-            return Tax::findOrFail($tax_class);
-        } catch (\Throwable $th) {
-            return 0;
-        }
-
-        // switch ($tax_type) {
-        //     case 'global':
-        //         return Tax::where('is_global', '=', true)->first();
-        //         break;
-        //     case 'billing_address':
-        //         $billing_address = $request['billing_address'];
-        //         return $this->getTaxClassByAddress($billing_address);
-        //         break;
-        //     case 'shipping_address':
-        //         $shipping_address = $request['shipping_address'];
-        //         return $this->getTaxClassByAddress($shipping_address);
-        //         break;
-        // }
-    }
-
-    protected function getTaxClassByAddress($address)
-    {
-        return Tax::where('country', '=', $address['country'])
-            ->orWhere('state', '=', $address['state'])
-            ->orWhere('city', '=', $address['city'])
-            ->orWhere('zip', '=', $address['zip'])
-            ->orderBy('priority', 'asc')
-            ->first();
-    }
-
-    protected function getTotalTax($amount, $tax_class)
-    {
-        return ($amount * $tax_class->rate) / 100;
-    }
 }

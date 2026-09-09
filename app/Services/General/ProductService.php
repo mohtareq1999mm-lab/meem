@@ -3,7 +3,6 @@
 namespace App\Services\General;
 
 use App\Services\Tax\ProductTaxPresenter;
-use App\Services\Tax\TaxClassMap;
 use App\Traits\HasChannelFilter;
 use Carbon\Carbon;
 use Exception;
@@ -36,17 +35,15 @@ class ProductService
         return app(ProductPricingService::class);
     }
 
-    public function enrichProductWithPricing(Product $product, ?TaxClassMap $taxMap = null): Product
+    public function enrichProductWithPricing(Product $product): Product
     {
         $pricingService = $this->pricingService();
         $flashSale = $pricingService->resolveActiveFlashSale($product);
         $pricing = $pricingService->calculateProductPricing($product, $flashSale);
 
-        $taxMap ??= TaxClassMap::load([$product->tax_class_id]);
-
         $product->setAttribute(
             'current_price',
-            $this->productTaxPresenter->applyTo($product, (float) $pricing['final_price'], $taxMap)
+            $this->productTaxPresenter->applyTo($product, (float) $pricing['final_price'])
         );
         $product->setAttribute('discount_active', $pricingService->isDiscountActive($product));
         $product->setAttribute('flash_sale_active', $flashSale !== null);
@@ -54,10 +51,9 @@ class ProductService
         if ($product->relationLoaded('variations')) {
             foreach ($product->variations as $variant) {
                 $variantPrice = $pricingService->calculateVariantCurrentPrice($product, $variant, $flashSale);
-                // Variants inherit the product's tax class. sale_price keeps
-                // its historical parity with current_price.
+                // Variants inherit the product's tax. sale_price keeps parity with current_price.
                 $variantCurrentPrice = $variantPrice !== null
-                    ? $this->productTaxPresenter->applyTo($product, (float) $variantPrice, $taxMap)
+                    ? $this->productTaxPresenter->applyTo($product, (float) $variantPrice)
                     : null;
                 $variant->setAttribute('current_price', $variantCurrentPrice);
                 $variant->setAttribute('sale_price', $variantCurrentPrice);
@@ -69,10 +65,7 @@ class ProductService
 
     public function enrichCollectionWithPricing(Collection $products): Collection
     {
-        // ONE tax_classes query per collection — never per product.
-        $taxMap = TaxClassMap::loadFromModels($products);
-
-        return $products->map(fn(Product $product) => $this->enrichProductWithPricing($product, $taxMap));
+        return $products->map(fn(Product $product) => $this->enrichProductWithPricing($product));
     }
 
     private function productRelations(): array
@@ -152,10 +145,8 @@ class ProductService
 
         $products = $query->orderBy('id', $order)->paginate($limit);
 
-        // ONE tax_classes query per page — never per product.
-        $taxMap = \App\Services\Tax\TaxClassMap::loadFromModels($products->getCollection());
         $products->setCollection(
-            $products->getCollection()->map(fn(Product $product) => $this->enrichProductWithPricing($product, $taxMap))
+            $products->getCollection()->map(fn(Product $product) => $this->enrichProductWithPricing($product))
         );
 
         return $products;
@@ -185,10 +176,8 @@ class ProductService
 
         $products = $query->orderBy('id', $order)->paginate($limit);
 
-        // ONE tax_classes query per page — never per product.
-        $taxMap = \App\Services\Tax\TaxClassMap::loadFromModels($products->getCollection());
         $products->setCollection(
-            $products->getCollection()->map(fn(Product $product) => $this->enrichProductWithPricing($product, $taxMap))
+            $products->getCollection()->map(fn(Product $product) => $this->enrichProductWithPricing($product))
         );
 
         return $products;

@@ -142,7 +142,6 @@ return [
     'update-settings' => 'تعديل الإعدادات',
     'delete-review' => 'حذف تقييم',
     'delete-question' => 'حذف سؤال',
-    'create-tax' => 'إنشاء ضريبة',
     'create-shipping' => 'إنشاء شحن',
     'add-points' => 'إضافة نقاط',
     'approve-coupon' => 'الموافقة على كوبون',

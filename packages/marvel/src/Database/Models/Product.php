@@ -58,7 +58,8 @@ class Product extends Model implements HasMedia
         'end_date',
         'price_after_discount',
         'price_after_flash_sale',
-        'tax_class_id',
+        'tax_enabled',
+        'tax_rate',
     ];
     public array $translatable = ['name', 'description'];
     public $hideMeta = true;
@@ -90,16 +91,9 @@ class Product extends Model implements HasMedia
         'reserved_quantity' => 'integer',
         'sold_quantity' => 'integer',
         'price' => 'float',
+        'tax_enabled' => 'boolean',
+        'tax_rate' => 'float',
     ];
-
-    /**
-     * Product-level tax class (soft reference). NULL means no product tax.
-     * The calculated tax is NEVER persisted on the product.
-     */
-    public function taxClass()
-    {
-        return $this->belongsTo(Tax::class, 'tax_class_id');
-    }
 
     protected $appends = [
         'current_price',

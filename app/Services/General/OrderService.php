@@ -9,8 +9,6 @@ use App\Events\OrderCreated;
 use App\Services\Checkout\OrderCreationService;
 use App\Services\General\CartInventoryService;
 use App\Services\Tax\TaxCalculator;
-use App\Services\Tax\TaxClassMap;
-use App\Services\Tax\TaxResolver;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -61,7 +59,6 @@ class OrderService
         private \App\Services\Inventory\InventoryRestoreService $inventoryRestoreService,
         private \App\Services\Invoice\InvoiceService $invoiceService,
         private CouponReservationService $couponReservationService,
-        private TaxResolver $taxResolver,
     ) {}
 
     public function paginateForUser(Request $request): LengthAwarePaginator
@@ -99,17 +96,9 @@ class OrderService
 
     private function enrichOrderItemsPricing(Order $order): void
     {
-        $products = $order->orderItems
-            ->map(fn ($item) => $item->relationLoaded('product') ? $item->product : null)
-            ->filter()
-            ->values();
-
-        // ONE tax_classes query for the whole order page — never per item.
-        $taxMap = TaxClassMap::loadFromModels($products);
-
-        $order->orderItems->each(function ($item) use ($taxMap) {
+        $order->orderItems->each(function ($item) {
             if ($item->relationLoaded('product') && $item->product) {
-                app(ProductService::class)->enrichProductWithPricing($item->product, $taxMap);
+                app(ProductService::class)->enrichProductWithPricing($item->product);
             }
         });
     }
@@ -266,18 +255,16 @@ class OrderService
             }
             $governorateId = $shippingInfo['governorate_id'];
 
-            // Authoritative tax calculation — once, after discounts + shipping.
+            // Authoritative tax calculation — once, after discounts.
+            // Shipping is NEVER taxable.
             $checkoutTotals = $this->withTaxes(
                 $checkoutTotals,
                 $cart,
                 $shippingPrice,
-                null,
-                $pendingOrder?->tax_override_type,
-                $pendingOrder?->tax_override_tax_class_id,
+                null
             );
 
             // Check for existing pending order (Rules 4-5: Payment retry reuses pending order)
-            // — already resolved (locked) before totals for tax-override precedence.
 
             if ($pendingOrder) {
                 // Reuse existing pending order: update with new cart data
@@ -539,23 +526,14 @@ class OrderService
 
     /**
      * THE single authoritative checkout tax calculation point.
-     *
-     * Runs AFTER promotion/coupon (taxable base known) and AFTER shipping
-     * resolution (applies_to_shipping may extend the base). Produces an
-     * immutable CheckoutTotals carrying the full TaxBreakdown.
-     *
-     * Product tax: per-line, on the effective line amount (post promotion,
-     * with the order-level coupon allocated proportionally).
-     * Order tax: resolved override → default → none, on finalTotal
-     * (+ shipping + fast fee only when the class applies tax to shipping).
+     * Product tax after discounts (per line, allocated coupon), order tax on
+     * SAME taxable base (Σ taxableLine), shipping NEVER taxable.
      */
     public function withTaxes(
         CheckoutTotals $totals,
         Cart $cart,
         ?float $shippingPrice = null,
         ?float $fastShippingFee = null,
-        ?string $taxOverrideType = null,
-        ?int $taxOverrideClassId = null,
     ): CheckoutTotals {
         $lines = $cart->items->reject(fn ($item) => (bool) ($item->is_gift ?? false));
 
@@ -567,9 +545,6 @@ class OrderService
             fn ($item) => [(int) $item->id => TaxCalculator::toCents((float) ($item->total_price ?? 0))]
         )->all();
 
-        // Allocate the order-level coupon across lines so the taxable line
-        // amounts sum exactly to finalTotal (largest remainder, like the
-        // promotion engine).
         $couponCents = TaxCalculator::toCents($totals->couponDiscount);
         $couponShares = TaxCalculator::allocate($lineNetCents, $couponCents);
 
@@ -580,65 +555,79 @@ class OrderService
 
         $finalTotalCents = max(0, TaxCalculator::toCents($totals->finalTotal));
 
-        // Product tax classes for the ordered products (+ the override class).
+        // Load products for direct tax rate
         $products = Product::query()
             ->whereIn('id', $lines->pluck('product_id')->filter()->unique()->values())
             ->get()
             ->keyBy('id');
 
-        $defaultId = $this->taxResolver->currentDefaultTaxClassId();
-        $map = TaxClassMap::load(
-            $products->pluck('tax_class_id')->merge([$taxOverrideClassId, $defaultId])
-        );
-
-        // Per-line product tax, grouped by rate with exact-sum reconciliation.
+        // Per-line product tax: taxableLineBase × product.tax_rate (only when enabled)
         $rateGroups = [];
         foreach ($lines as $item) {
             $product = $products->get($item->product_id);
-            $class = $product ? $map->active($product->tax_class_id) : null;
-
-            if ($class !== null) {
-                $rateGroups[$class['rate']][(int) $item->id] = $taxableLineCents[$item->id];
+            if ($product && !empty($product->tax_enabled) && $product->tax_rate !== null && (float)$product->tax_rate > 0) {
+                $rate = (float) $product->tax_rate;
+                $rateGroups[$rate][(int) $item->id] = $taxableLineCents[$item->id];
             }
         }
 
         $lineTaxes = [];
         $productTaxCents = 0;
+        $productTaxableCents = 0;
         foreach ($rateGroups as $rate => $groupLines) {
+            $groupTaxable = array_sum($groupLines);
+            $productTaxableCents += $groupTaxable;
             foreach (TaxCalculator::groupLineTaxes($groupLines, $rate) as $itemId => $cents) {
                 $lineTaxes[$itemId] = [
+                    'taxable' => TaxCalculator::fromCents($taxableLineCents[$itemId]),
                     'amount' => TaxCalculator::fromCents($cents),
                     'rate' => (float) $rate,
                 ];
                 $productTaxCents += $cents;
             }
         }
-
-        // Order-level tax resolution.
-        if ($taxOverrideType !== null) {
-            $resolution = $this->taxResolver->resolveForOrderState($taxOverrideType, $taxOverrideClassId, $map);
-        } else {
-            $resolution = $this->taxResolver->resolveForOrderState(null, null, $map);
+        // Ensure every taxable line has an entry even if no product tax
+        foreach ($taxableLineCents as $itemId => $taxable) {
+            if (!isset($lineTaxes[$itemId])) {
+                $lineTaxes[$itemId] = [
+                    'taxable' => TaxCalculator::fromCents($taxable),
+                    'amount' => 0.0,
+                    'rate' => null,
+                ];
+            }
         }
 
-        $shippingCents = TaxCalculator::toCents($shippingPrice ?? 0);
-        $fastFeeCents = TaxCalculator::toCents($fastShippingFee ?? 0);
-
-        $orderTaxBaseCents = $finalTotalCents;
-        if ($resolution->applies() && $resolution->appliesToShipping) {
-            $orderTaxBaseCents = $finalTotalCents + $shippingCents + $fastFeeCents;
+        // Order tax: same taxable base (Σ taxableLine), never productTax nor shipping
+        $orderTaxableCents = array_sum($taxableLineCents); // equals finalTotalCents when coupon allocation exact
+        // Fallback to finalTotalCents for safety if rounding drift (should be equal)
+        if ($orderTaxableCents !== $finalTotalCents) {
+            // Use sum of taxable lines as authoritative base per spec
         }
 
-        $orderTaxCents = $resolution->applies()
-            ? TaxCalculator::amountOn($orderTaxBaseCents, (float) $resolution->taxRate)
-            : 0;
+        $settings = null;
+        $orderTaxEnabled = false;
+        $orderTaxRate = null;
+        try {
+            if (Schema::hasColumn('settings', 'order_tax_enabled')) {
+                $settings = Settings::first();
+                $orderTaxEnabled = (bool) ($settings->order_tax_enabled ?? false);
+                $orderTaxRate = $settings->order_tax_rate !== null ? (float) $settings->order_tax_rate : null;
+            }
+        } catch (\Throwable $e) { report($e); }
+
+        $orderTaxCents = 0;
+        if ($orderTaxEnabled && $orderTaxRate !== null && $orderTaxRate > 0 && $orderTaxableCents > 0) {
+            $orderTaxCents = TaxCalculator::amountOn($orderTaxableCents, $orderTaxRate);
+        }
 
         $breakdown = new TaxBreakdown(
-            resolution: $resolution,
+            productTaxableAmount: TaxCalculator::fromCents($productTaxableCents),
             productTaxAmount: TaxCalculator::fromCents($productTaxCents),
+            orderTaxRate: $orderTaxRate,
+            orderTaxableAmount: TaxCalculator::fromCents($orderTaxableCents),
             orderTaxAmount: TaxCalculator::fromCents($orderTaxCents),
-            taxableBase: TaxCalculator::fromCents($orderTaxBaseCents),
             lineTaxes: $lineTaxes,
+            taxableBase: TaxCalculator::fromCents($orderTaxableCents),
         );
 
         return $totals->withTax($breakdown);

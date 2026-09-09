@@ -62,6 +62,7 @@ class InvoiceSnapshotService
                 'flash_sale_price' => $item->product_flash_sale_price ? (float) $item->product_flash_sale_price : null,
                 'promotion_discount_amount' => $item->promotion_discount_amount ? (float) $item->promotion_discount_amount : null,
                 'product_tax_rate' => $item->product_tax_rate !== null ? (float) $item->product_tax_rate : null,
+                'product_taxable_amount' => $item->product_taxable_amount !== null ? (float) $item->product_taxable_amount : null,
                 'product_tax_amount' => (float) ($item->product_tax_amount ?? 0),
                 'total_price' => (float) $item->product_total_price,
                 'is_gift' => (bool) $item->is_gift,
@@ -73,8 +74,11 @@ class InvoiceSnapshotService
                 'subtotal' => (float) $order->price,
                 'promotion_discount' => (float) $order->promotion_discount,
                 'coupon_discount' => (float) $order->coupon_discount,
+                'product_taxable_amount' => (float) ($order->product_taxable_amount ?? 0),
                 'product_tax_amount' => (float) ($order->product_tax_amount ?? 0),
-                'order_tax_amount' => (float) ($order->tax_amount ?? 0),
+                'order_tax_rate' => $order->order_tax_rate !== null ? (float) $order->order_tax_rate : null,
+                'order_taxable_amount' => (float) ($order->order_taxable_amount ?? 0),
+                'order_tax_amount' => (float) ($order->order_tax_amount ?? 0),
                 'shipping_price' => (float) $order->shipping_price,
                 'fast_shipping_fee' => (float) ($order->fast_shipping_fee ?? 0),
                 'total' => (float) $order->total_price,
@@ -104,14 +108,13 @@ class InvoiceSnapshotService
                 'gateway_response_summary' => null,
             ],
 
-            'taxes' => (($order->tax_amount ?? 0) > 0 || ($order->product_tax_amount ?? 0) > 0) ? [
+            'taxes' => (($order->order_tax_amount ?? 0) > 0 || ($order->product_tax_amount ?? 0) > 0) ? [
                 [
-                    'name' => $order->tax_name,
-                    'rate' => $order->tax_rate !== null ? (float) $order->tax_rate : null,
-                    'amount' => (float) ($order->tax_amount ?? 0),
+                    'product_taxable_amount' => (float) ($order->product_taxable_amount ?? 0),
                     'product_tax_amount' => (float) ($order->product_tax_amount ?? 0),
-                    'taxable_amount' => $order->taxable_amount !== null ? (float) $order->taxable_amount : null,
-                    'mode' => $order->tax_mode ?? 'none',
+                    'order_tax_rate' => $order->order_tax_rate !== null ? (float) $order->order_tax_rate : null,
+                    'order_taxable_amount' => (float) ($order->order_taxable_amount ?? 0),
+                    'order_tax_amount' => (float) ($order->order_tax_amount ?? 0),
                 ],
             ] : [],
 

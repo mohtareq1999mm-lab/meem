@@ -322,7 +322,7 @@ App\CurrencyController@select()
   +-- code = strtoupper("kwd") -> "KWD"
   +-- user = auth('sanctum')->user() ?? auth()->user()
   +-- if (user)  UserCurrencyPreferenceService::setUserPreference(user, code)
-  +-- UserCurrencyPreferenceService::setGuestCurrencyCode(code, request)   [guest_currency cookie]
+  +-- // Guest: no cookie — frontend owns X-Currency header; backend reads via UserCurrencyPreferenceService::getHeaderCurrencyCode()
   +-- app(CurrencyService::class)->forgetEffectiveCode()
   |
   v
@@ -345,10 +345,10 @@ CurrencyService::getEffectiveCode()
   +-- memoized? -> return
   |
   +-- isCurrencySelectionEnabled() ?      [settings.options.currency_selection_enabled, default false]
-  |     NO  -> effectiveCode = getCatalogCode()      [stored preference/cookie IGNORED]
+  |     NO  -> effectiveCode = getCatalogCode()      [stored preference/header IGNORED]
   |     YES v
   |       user preference (validated active)? -> effectiveCode = preference
-  |       guest cookie (validated active)?      -> effectiveCode = guest cookie
+  |       X-Currency header (validated active)? -> effectiveCode = header
   |       otherwise                              -> effectiveCode = catalog code
   |
   v

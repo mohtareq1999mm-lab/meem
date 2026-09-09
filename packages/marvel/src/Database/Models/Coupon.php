@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 use Marvel\Enums\DiscountType;
 use Spatie\MediaLibrary\HasMedia;
@@ -107,6 +108,22 @@ static::creating(function ($coupon) {
     public function assignments(): HasMany
     {
         return $this->hasMany(CouponAssignment::class, 'coupon_id');
+    }
+
+    /**
+     * @return HasOne
+     */
+    public function targeting(): HasOne
+    {
+        return $this->hasOne(CouponTargeting::class, 'coupon_id');
+    }
+
+    /**
+     * @return HasMany
+     */
+    public function claims(): HasMany
+    {
+        return $this->hasMany(CouponClaim::class, 'coupon_id');
     }
 
 

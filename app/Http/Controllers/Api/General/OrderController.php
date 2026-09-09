@@ -17,7 +17,6 @@ use App\Services\Payment\PaymentGatewayFactory;
 use App\Events\OrderCancelled;
 use App\Events\PaymentFailed;
 use App\Events\PaymentSucceeded;
-use App\Services\Tax\TaxService;
 use App\Traits\HasCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -152,32 +151,6 @@ class OrderController extends Controller
         }
 
         return $this->apiResponse(PAYMENT_SUCCESSFUL, 200, true);
-    }
-
-    /**
-     * Admin per-order tax override — pending orders only. The authoritative
-     * tax snapshot is recalculated via TaxService (same resolver/calculator
-     * used at checkout) and the pending transaction amount is refreshed.
-     */
-    public function applyTaxOverride(\App\Http\Requests\Tax\UpdateOrderTaxOverrideRequest $request, int $orderId): JsonResponse
-    {
-        $order = Order::query()->find($orderId);
-
-        if (!$order) {
-            return $this->apiResponse(NOT_FOUND, 404, false);
-        }
-
-        try {
-            $order = app(TaxService::class)->applyOrderOverride(
-                $order,
-                \App\Enums\TaxOverrideType::from($request->validated('type')),
-                $request->validated('tax_class_id') !== null ? (int) $request->validated('tax_class_id') : null,
-            );
-        } catch (\InvalidArgumentException $e) {
-            return $this->apiResponse($e->getMessage(), 422, false);
-        }
-
-        return $this->apiResponse(UPDATE_DATA_SUCCESSFULLY, 200, true, OrderResource::make($order->load('orderItems')));
     }
 
     public function markCashierPaid(int $orderId, Request $request): JsonResponse

@@ -115,16 +115,13 @@ class FastShippingService
             $shippingPrice = $this->orderService->resolveFreeShippingByThreshold($checkoutTotals->subtotal, $shippingInfo['free_shipping_over'], $shippingInfo['price']);
             $shippingPrice = $this->orderService->resolveFreeShippingByCoupon($checkoutTotals->couponDiscountType, $shippingPrice);
 
-            // Pending order resolved BEFORE tax so overrides take precedence.
             $pendingOrder = $this->orderCreationService->findPendingOrderForUser((int) $user->id);
 
             $checkoutTotals = $this->orderService->withTaxes(
                 $checkoutTotals,
                 $cart,
                 $shippingPrice,
-                $fastShippingFee,
-                $pendingOrder?->tax_override_type,
-                $pendingOrder?->tax_override_tax_class_id,
+                $fastShippingFee
             );
 
             $orderData = $request->only(['name', 'user_phone', 'user_email', 'address', 'notes',

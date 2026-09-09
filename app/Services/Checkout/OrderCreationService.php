@@ -79,16 +79,13 @@ class OrderCreationService
             'status' => Order::ORDER_STATUS_PENDING,
         ];
 
-        if (Schema::hasColumn('orders', 'tax_mode')) {
-            $taxResolution = $checkoutTotals->tax?->resolution;
+        if (Schema::hasColumn('orders', 'order_tax_rate')) {
             $orderDataForCreate = array_merge($orderDataForCreate, [
-                'tax_mode' => $taxResolution?->mode->value ?? \App\Enums\TaxMode::NONE->value,
-                'tax_class_id' => $taxResolution?->taxClassId,
-                'tax_name' => $taxResolution?->taxName,
-                'tax_rate' => $taxResolution?->taxRate,
-                'taxable_amount' => $checkoutTotals->tax?->taxableBase,
-                'tax_amount' => $checkoutTotals->orderTaxAmount(),
-                'product_tax_amount' => $checkoutTotals->productTaxAmount(),
+                'product_taxable_amount' => $this->snapshotTaxableAmount($checkoutTotals->tax?->productTaxableAmount ?? 0, $currencySnapshot['currency_code']),
+                'product_tax_amount' => $this->snapshotTaxAmount($checkoutTotals->productTaxAmount(), $currencySnapshot['currency_code']),
+                'order_tax_rate' => $checkoutTotals->tax?->orderTaxRate,
+                'order_taxable_amount' => $this->snapshotTaxableAmount($checkoutTotals->tax?->orderTaxableAmount ?? 0, $currencySnapshot['currency_code']),
+                'order_tax_amount' => $this->snapshotTaxAmount($checkoutTotals->orderTaxAmount(), $currencySnapshot['currency_code']),
             ]);
         }
 
@@ -175,16 +172,13 @@ class OrderCreationService
                 : $order->promotion_discount,
         ];
 
-        if (Schema::hasColumn('orders', 'tax_mode')) {
-            $taxResolution = $checkoutTotals->tax?->resolution;
+        if (Schema::hasColumn('orders', 'order_tax_rate')) {
             $updateData = array_merge($updateData, [
-                'tax_mode' => $taxResolution?->mode->value ?? \App\Enums\TaxMode::NONE->value,
-                'tax_class_id' => $taxResolution?->taxClassId,
-                'tax_name' => $taxResolution?->taxName,
-                'tax_rate' => $taxResolution?->taxRate,
-                'taxable_amount' => $checkoutTotals->tax?->taxableBase,
-                'tax_amount' => $checkoutTotals->orderTaxAmount(),
-                'product_tax_amount' => $checkoutTotals->productTaxAmount(),
+                'product_taxable_amount' => $this->snapshotTaxableAmount($checkoutTotals->tax?->productTaxableAmount ?? 0, $currencySnapshot['currency_code']),
+                'product_tax_amount' => $this->snapshotTaxAmount($checkoutTotals->productTaxAmount(), $currencySnapshot['currency_code']),
+                'order_tax_rate' => $checkoutTotals->tax?->orderTaxRate,
+                'order_taxable_amount' => $this->snapshotTaxableAmount($checkoutTotals->tax?->orderTaxableAmount ?? 0, $currencySnapshot['currency_code']),
+                'order_tax_amount' => $this->snapshotTaxAmount($checkoutTotals->orderTaxAmount(), $currencySnapshot['currency_code']),
             ]);
         }
 
@@ -263,11 +257,18 @@ $quantity = max(1, (int) ($item->quantity ?? 0));
                     'promotion_id' => $item->promotion_id,
                 ];
 
-                // Per-line product tax snapshot (rolling-deploy safe).
+                // Per-line product tax snapshot — in order (effective) currency.
                 if ($hasProductTaxColumns) {
                     $lineTax = $lineTaxes[(int) $item->id] ?? null;
-                    $orderItemData['product_tax_rate'] = $lineTax['rate'] ?? null;
-                    $orderItemData['product_tax_amount'] = $lineTax['amount'] ?? 0;
+                    $orderItemData['product_tax_rate'] = isset($lineTax['rate']) ? $lineTax['rate'] : null;
+                    $orderItemData['product_tax_amount'] = isset($lineTax['amount']) && $lineTax['amount'] !== null
+                        ? $this->snapshotTaxAmount((float) $lineTax['amount'], $order->currency_code)
+                        : 0;
+                    if (Schema::hasColumn('order_products', 'product_taxable_amount')) {
+                        $orderItemData['product_taxable_amount'] = isset($lineTax['taxable']) && $lineTax['taxable'] !== null
+                            ? $this->snapshotTaxableAmount((float) $lineTax['taxable'], $order->currency_code)
+                            : 0;
+                    }
                 }
 
                 // Rolling-deploy safety: only snapshot when the column exists.
@@ -330,6 +331,9 @@ $quantity = max(1, (int) ($item->quantity ?? 0));
                     if ($hasProductTaxColumns) {
                         $orderItemData['product_tax_rate'] = null;
                         $orderItemData['product_tax_amount'] = 0;
+                        if (Schema::hasColumn('order_products', 'product_taxable_amount')) {
+                            $orderItemData['product_taxable_amount'] = 0;
+                        }
                     }
 
                     if ($hasItemTypeColumn) {
@@ -447,6 +451,24 @@ $catalogCode = $this->currencyService->getCatalogCode();
                 $e
             );
         }
+    }
+
+    private function snapshotTaxAmount(float $catalogAmount, ?string $effectiveCode): float
+    {
+        if ($effectiveCode === null) {
+            return round($catalogAmount, 2);
+        }
+        $converted = $this->convertToEffective($catalogAmount, $effectiveCode);
+        return $converted === null ? 0.0 : round($converted, 2);
+    }
+
+    private function snapshotTaxableAmount(float $catalogAmount, ?string $effectiveCode): float
+    {
+        if ($effectiveCode === null) {
+            return round($catalogAmount, 2);
+        }
+        $converted = $this->convertToEffective($catalogAmount, $effectiveCode);
+        return $converted === null ? 0.0 : round($converted, 2);
     }
 
 

@@ -100,12 +100,13 @@ class CheckoutTotals
             'coupon_discount_type' => $this->couponDiscountType,
             'coupon_discount_max_amount' => $this->couponDiscountMaxAmount,
             'tax' => $this->tax === null ? null : [
-                'mode' => $this->tax->resolution->mode->value,
-                'name' => $this->tax->resolution->taxName,
-                'rate' => $this->tax->resolution->taxRate,
-                'taxable_base' => $this->tax->taxableBase,
+                'product_taxable_amount' => $this->tax->productTaxableAmount,
                 'product_tax_amount' => $this->tax->productTaxAmount,
+                'order_tax_rate' => $this->tax->orderTaxRate,
+                'order_taxable_amount' => $this->tax->orderTaxableAmount,
                 'order_tax_amount' => $this->tax->orderTaxAmount,
+                'taxable_base' => $this->tax->taxableBase,
+                'line_taxes' => $this->tax->lineTaxes,
             ],
         ];
     }

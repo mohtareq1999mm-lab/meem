@@ -161,8 +161,8 @@ After
 - New optional field `currency_selection_enabled` (`sometimes|boolean`). When sent, it is **merged** into `options` (existing keys like `fast_shipping` are preserved), the effective-currency cache is cleared, and the `settings` cache tag is flushed. Omitting it leaves the stored value untouched (old clients stay compatible).
 
 **Effective-currency resolution (`CurrencyService::getEffectiveCode()`)**
-- `currency_selection_enabled = false` (default) → effective currency is **always the catalog code** (user preference / guest cookie ignored).
-- `currency_selection_enabled = true` → `user preference > guest cookie > catalog code`.
+- `currency_selection_enabled = false` (default) → effective currency is **always the catalog code** (user preference / `X-Currency` header ignored).
+- `currency_selection_enabled = true` → `user preference > X-Currency header > catalog code`.
 
 **Frontend action**
 - On the admin settings form: read & write `currency_selection_enabled` (boolean).
@@ -191,12 +191,12 @@ Persist a storefront currency selection. **No auth required**, `throttle:public-
 
 **Behavior**
 1. Code is uppercased.
-2. If an authenticated user is present → stores the **user preference**.
-3. Always stores a `guest_currency` **cookie** for guests.
+2. If an authenticated user is present → stores the **user preference** (`user_preferences`).
+3. For guests, the frontend owns the value and sends it via `X-Currency` header on subsequent requests (no `guest_currency` cookie; backend reads `UserCurrencyPreferenceService::getHeaderCurrencyCode()`).
 4. Clears the effective-currency cache (`CurrencyService::forgetEffectiveCode()`).
 5. Returns `200` `CURRENCY_SELECTED_SUCCESSFULLY` with a `CurrencyResource` in `data`.
 
-**Note:** the selection only affects pricing/display when `currency_selection_enabled = true` (section D). While disabled, the preference/cookie is stored but **ignored** by `getEffectiveCode()`.
+**Note:** the selection only affects pricing/display when `currency_selection_enabled = true` (section D). While disabled, the preference/header is stored but **ignored** by `getEffectiveCode()`.
 
 **Frontend action**
 - When the user picks a currency in the storefront selector, call this endpoint with `{ currency_code }`.

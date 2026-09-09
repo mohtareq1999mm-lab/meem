@@ -228,4 +228,62 @@ class CouponController extends CoreController
             throw new MarvelException(SOMETHING_WENT_WRONG);
         }
     }
+
+    /**
+     * Claim a coupon for the authenticated user.
+     *
+     * @OA\Post(
+     *     path="/coupons/{id}/claim",
+     *     operationId="claimCoupon",
+     *     tags={"Coupons"},
+     *     summary="Claim a coupon",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=201, description="Coupon claimed successfully"),
+     *     @OA\Response(response=400, description="Validation error"),
+     *     @OA\Response(response=401, description="Unauthenticated"),
+     *     @OA\Response(response=409, description="Already claimed or not eligible")
+     * )
+     */
+    public function claim(\App\Http\Requests\Coupon\ClaimCouponRequest $request, int $id)
+    {
+        try {
+            $coupon = Coupon::findOrFail($id);
+            $user = $request->user();
+
+            $claimService = app(\App\Services\Coupon\CouponClaimService::class);
+            $claim = $claimService->claim($coupon, $user);
+
+            return $this->apiResponse(
+                COUPON_CLAIMED_SUCCESSFULLY,
+                201,
+                true,
+                \App\Http\Resources\Coupon\CouponClaimResource::make($claim)
+            );
+        } catch (\App\Exceptions\CouponClaimException $e) {
+            return $this->apiResponse(
+                $this->mapClaimExceptionMessage($e),
+                409,
+                false,
+                ['reason' => $e->reason, 'context' => $e->context]
+            );
+        } catch (ModelNotFoundException $e) {
+            return $this->apiResponse(COUPON_NOT_FOUND, 404, false);
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
+        }
+    }
+
+    private function mapClaimExceptionMessage(\App\Exceptions\CouponClaimException $e): string
+    {
+        return match ($e->reason) {
+            \App\Exceptions\CouponClaimException::REASON_ALREADY_CLAIMED => COUPON_ALREADY_CLAIMED,
+            \App\Exceptions\CouponClaimException::REASON_NOT_ELIGIBLE => COUPON_NOT_ELIGIBLE,
+            \App\Exceptions\CouponClaimException::REASON_CLAIM_NOT_REQUIRED => COUPON_CLAIM_NOT_REQUIRED,
+            \App\Exceptions\CouponClaimException::REASON_NO_TARGETING => COUPON_NO_TARGETING,
+            \App\Exceptions\CouponClaimException::REASON_MAX_CLAIMS_REACHED => COUPON_MAX_CLAIMS_REACHED,
+            default => SOMETHING_WENT_WRONG,
+        };
+    }
 }

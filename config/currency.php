@@ -5,9 +5,7 @@ return [
     'enabled' => filter_var(env('CURRENCY_RATE_SYNC_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
 
     'provider' => [
-        'name' => env('CURRENCY_RATE_PROVIDER', 'exchange_rate_api'),
-        'base_url' => env('EXCHANGE_RATE_API_BASE_URL', 'https://v6.exchangerate-api.com/v6'),
-        'api_key' => env('EXCHANGE_RATE_API_KEY'),
+        'base_url' => env('FRANKFURTER_BASE_URL', 'https://api.frankfurter.dev'),
         'timeout' => (int) env('CURRENCY_RATE_TIMEOUT', 10),
         'connect_timeout' => (int) env('CURRENCY_RATE_CONNECT_TIMEOUT', 3),
         'retries' => (int) env('CURRENCY_RATE_RETRIES', 2),

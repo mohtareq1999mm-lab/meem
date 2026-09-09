@@ -15,6 +15,38 @@ return new class extends Migration
         $driver = DB::connection()->getDriverName();
 
         if ($driver === 'mysql') {
+            // Resolve pre-existing duplicate pending orders before adding unique constraint.
+            // Keep the most recent pending order per user (highest id), cancel older ones.
+            $duplicateUserIds = DB::table('orders')
+                ->select('user_id', DB::raw('COUNT(*) as cnt'))
+                ->where('status', 'pending')
+                ->whereNotNull('user_id')
+                ->groupBy('user_id')
+                ->having('cnt', '>', 1)
+                ->pluck('user_id');
+
+            foreach ($duplicateUserIds as $userId) {
+                $pendingIds = DB::table('orders')
+                    ->where('user_id', $userId)
+                    ->where('status', 'pending')
+                    ->orderByDesc('id')
+                    ->pluck('id');
+
+                // Keep the latest (first), cancel the rest
+                $keepId = $pendingIds->first();
+                $toCancel = $pendingIds->slice(1);
+
+                if ($toCancel->isNotEmpty()) {
+                    DB::table('orders')
+                        ->whereIn('id', $toCancel->all())
+                        ->update([
+                            'status' => 'cancelled',
+                            'cancelled_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                }
+            }
+
             // MySQL does not support partial indexes (WHERE ...). Emulate with a virtual
             // generated column that is user_id only when status='pending', otherwise NULL.
             // UNIQUE allows multiple NULLs, so only pending rows are constrained.

@@ -260,12 +260,6 @@ final class Permission extends Enum
     public const UPDATE_SETTINGS = 'update-settings';
     public const DELETE_REVIEW = 'delete-review';
     public const DELETE_QUESTION = 'delete-question';
-    public const CREATE_TAX = 'create-tax';
-    public const VIEW_TAXES = 'view-taxes';
-    public const VIEW_TAX = 'view-tax';
-    public const UPDATE_TAX = 'update-tax';
-    public const DELETE_TAX = 'delete-tax';
-    public const OVERRIDE_ORDER_TAX = 'override-order-tax';
     public const CREATE_SHIPPING = 'create-shipping';
     public const ADD_POINTS = 'add-points';
     public const APPROVE_COUPON = 'approve-coupon';

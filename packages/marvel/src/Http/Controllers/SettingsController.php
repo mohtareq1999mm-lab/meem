@@ -62,7 +62,8 @@ class SettingsController extends CoreController
             'fast_shipping_page_publish',
             'options',
             "minimum_order_amount",
-            'default_tax_class_id',
+            'order_tax_enabled',
+            'order_tax_rate',
         ]);
 
         if ($request->has('currency_selection_enabled')) {

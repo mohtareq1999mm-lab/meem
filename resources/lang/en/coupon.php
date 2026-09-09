@@ -11,4 +11,5 @@ return [
     'not_assigned' => 'This coupon is not assigned to your account.',
     'assignment_expired' => 'This coupon assignment has expired.',
     'usage_quota_exceeded' => 'You have reached the usage limit for this coupon.',
+    'claim_required' => 'This coupon must be claimed before use.',
 ];
