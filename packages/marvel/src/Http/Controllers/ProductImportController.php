@@ -229,6 +229,26 @@ class ProductImportController extends Controller
         $successRows = $progressData['success_rows'] ?? $import->success_rows;
         $failedRows = $progressData['failed_rows'] ?? $import->failed_rows;
 
+        // Invariant enforcement (4104→4913 forensic): counters must not exceed total_rows
+        $totalRows = (int) $import->total_rows;
+        if ($totalRows > 0) {
+            $processedRows = min((int) $processedRows, $totalRows);
+            $successRows = min((int) $successRows, $totalRows);
+            $failedRows = min((int) $failedRows, $totalRows);
+            // Ensure processed = success + failed when possible
+            if ($processedRows !== ($successRows + $failedRows) && $import->status !== 'processing') {
+                $processedRows = $successRows + $failedRows;
+            }
+            // Derive honest progress from counters when total is known
+            if (in_array($import->status, ['processing'], true) && $totalRows > 0) {
+                $derived = ($processedRows / $totalRows) * 99.0;
+                // Use derived if it is more honest than signal (prevents 99 forever with inflated processed)
+                if ($derived < $progress || $processedRows > $totalRows) {
+                    $progress = round(min(max($derived, 0.0), 99.0), 2);
+                }
+            }
+        }
+
         return response()
             ->json([
                 'status' => 200,

@@ -30,7 +30,7 @@ class ProductsSheetImport implements ToCollection, WithTitle, WithHeadingRow, Wi
     public function collection(Collection $rows): void
     {
         foreach ($rows as $index => $row) {
-            $rowIndex = $this->rowOffset + $index + 3;
+            $rowIndex = $this->rowOffset + $index + 2;
             $this->service->processProductRow($row->toArray(), $rowIndex);
         }
     }

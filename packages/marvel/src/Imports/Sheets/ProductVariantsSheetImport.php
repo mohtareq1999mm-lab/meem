@@ -30,7 +30,7 @@ class ProductVariantsSheetImport implements ToCollection, WithTitle, WithHeading
     public function collection(Collection $rows): void
     {
         foreach ($rows as $index => $row) {
-            $rowIndex = $this->rowOffset + $index + 3;
+            $rowIndex = $this->rowOffset + $index + 2;
             $this->service->processVariantRow($row->toArray(), $rowIndex);
         }
     }

@@ -25,7 +25,7 @@ class ImportProductsJob implements ShouldQueue
 
     public int $tries = 3;
 
-    public int $timeout = 1200;
+    public int $timeout = 1800;
 
     public array $backoff = [60, 120, 240];
 
@@ -225,6 +225,19 @@ class ImportProductsJob implements ShouldQueue
 
             $failedRows = $service->getFailedRows();
             $successCount = $service->getSuccessCount();
+            $allErrors = $service->getAllErrors();
+
+            // Invariant enforcement: product-row counters must not exceed known total
+            // Reconcile total to actual product work (success+failed) like Brand/Category
+            $terminalTotal = $successCount + count($failedRows);
+            // If countRows was 0 (empty file), fallback to actual
+            if ($terminalTotal === 0 && $totalRows === 0) {
+                $terminalTotal = 0;
+            } elseif ($terminalTotal === 0) {
+                $terminalTotal = $totalRows;
+            }
+            // Ensure total = processed = success+failed at terminal
+            $finalTotal = $terminalTotal;
 
             $status = 'completed';
             if (!empty($failedRows) && $successCount > 0) {
@@ -233,13 +246,26 @@ class ImportProductsJob implements ShouldQueue
                 $status = ImportStatus::FAILED;
             }
 
+            // Persist product-row counters; errors include variant/image for download
             $import->update([
                 'status' => $status,
-                'total_rows' => $totalRows > 0 ? $totalRows : ($successCount + count($failedRows)),
+                'total_rows' => $finalTotal,
                 'processed_rows' => $successCount + count($failedRows),
                 'success_rows' => $successCount,
                 'failed_rows' => count($failedRows),
-                'errors' => $failedRows,
+                'errors' => $allErrors,
+            ]);
+
+            \Illuminate\Support\Facades\Log::info('product.import.' . $status, [
+                'operation_id' => $this->importId,
+                'total_rows' => $finalTotal,
+                'processed_rows' => $successCount + count($failedRows),
+                'successful_rows' => $successCount,
+                'failed_rows' => count($failedRows),
+                'variant_success' => $service->getVariantSuccessCount(),
+                'variant_failed' => count($service->getVariantErrors()),
+                'image_failed' => count($service->getImageErrors()),
+                'status' => $status,
             ]);
 
             $this->broadcastFileOperationTerminal(
@@ -247,10 +273,10 @@ class ImportProductsJob implements ShouldQueue
                 'product-import',
                 $this->importId,
                 $status,
-                !empty($failedRows),
+                !empty($allErrors),
                 [
                     'progress' => 100.0,
-                    'total_rows' => $totalRows > 0 ? $totalRows : ($successCount + count($failedRows)),
+                    'total_rows' => $finalTotal,
                     'processed_rows' => $successCount + count($failedRows),
                     'success_rows' => $successCount,
                     'failed_rows' => count($failedRows),
@@ -263,13 +289,19 @@ class ImportProductsJob implements ShouldQueue
             $service->rollbackCreatedData();
             $this->deleteImportFile($import);
             $this->cleanSignals();
+            $allErrors = $service->getAllErrors();
             $import->update([
                 'status' => 'cancelled',
                 'total_rows' => $service->getSuccessCount() + count($service->getFailedRows()),
                 'processed_rows' => $service->getSuccessCount() + count($service->getFailedRows()),
                 'success_rows' => $service->getSuccessCount(),
                 'failed_rows' => count($service->getFailedRows()),
-                'errors' => $service->getFailedRows(),
+                'errors' => $allErrors,
+            ]);
+
+            \Illuminate\Support\Facades\Log::info('product.import.cancelled', [
+                'operation_id' => $this->importId,
+                'total_rows' => $service->getSuccessCount() + count($service->getFailedRows()),
             ]);
 
             $this->broadcastFileOperationTerminal(
@@ -277,7 +309,7 @@ class ImportProductsJob implements ShouldQueue
                 'product-import',
                 $this->importId,
                 'cancelled',
-                !empty($service->getFailedRows()),
+                !empty($allErrors),
                 [
                     'progress' => 100.0,
                     'total_rows' => $service->getSuccessCount() + count($service->getFailedRows()),

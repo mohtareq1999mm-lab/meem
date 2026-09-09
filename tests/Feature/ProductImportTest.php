@@ -44,7 +44,9 @@ class ProductImportTest extends TestCase
     {
         $permissions = [
             PermissionEnum::CREATE_PRODUCT,
-            PermissionEnum::VIEW_PRODUCTS];
+            PermissionEnum::VIEW_PRODUCTS,
+            PermissionEnum::IMPORT_PRODUCT,
+            PermissionEnum::EXPORT_PRODUCT];
 
         foreach ($permissions as $perm) {
             Permission::findOrCreate($perm, self::GUARD);

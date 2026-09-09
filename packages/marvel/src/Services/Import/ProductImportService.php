@@ -38,6 +38,14 @@ class ProductImportService
 
     protected int $successCount = 0;
 
+    // Product is the canonical work unit (products sheet data rows).
+    // Variants and images are auxiliary: their failures must NOT inflate
+    // product-row counters (see BE-012, 4104→4913 forensic). They are
+    // tracked separately for error download but excluded from progress.
+    protected array $variantErrors = [];
+    protected int $variantSuccessCount = 0;
+    protected array $imageErrors = [];
+
     protected array $keptVariantIds = [];
 
     protected array $createdProductIds = [];
@@ -145,6 +153,31 @@ class ProductImportService
         return $this->successCount;
     }
 
+    public function getVariantErrors(): array
+    {
+        return $this->variantErrors;
+    }
+
+    public function getVariantSuccessCount(): int
+    {
+        return $this->variantSuccessCount;
+    }
+
+    public function getImageErrors(): array
+    {
+        return $this->imageErrors;
+    }
+
+    public function getAllErrors(): array
+    {
+        return array_merge($this->failedRows, $this->variantErrors, $this->imageErrors);
+    }
+
+    public function getAllErrorCount(): int
+    {
+        return count($this->failedRows) + count($this->variantErrors) + count($this->imageErrors);
+    }
+
     protected function flushProgress(): void
     {
         if ($this->importId === null) {
@@ -187,6 +220,34 @@ class ProductImportService
         if ($this->processedCount % self::FLUSH_THRESHOLD === 0) {
             $this->writeProgress();
         }
+    }
+
+    /**
+     * Heartbeat for auxiliary sheets (variants/images).
+     * Must NOT mutate product-row counters (see 4104→4913 forensic).
+     * Only checks cancellation and refreshes signal heartbeat.
+     */
+    protected function flushAuxProgress(): void
+    {
+        if ($this->importId === null) {
+            return;
+        }
+        if ($this->isCancelled()) {
+            $this->writeProgress(true);
+            throw new ImportCancelledException();
+        }
+        // Refresh heartbeat without inflating counters; keep product progress signal fresh
+        // Do NOT call writeProgress() here – auxiliary work is not counted.
+    }
+
+    protected function flushVariantProgress(): void
+    {
+        $this->flushAuxProgress();
+    }
+
+    protected function flushImageProgress(): void
+    {
+        $this->flushAuxProgress();
     }
 
     public function writeExplicitProgress(float $progress): void
@@ -244,10 +305,19 @@ class ProductImportService
                 $query->where('status', 'processing');
             }
 
+            // Invariant: processed = success + failed, must not exceed knownTotalRows
+            // Clamp in DB write to prevent runaway due to auxiliary sheets (see 4104→4913)
+            $processed = $this->successCount + count($this->failedRows);
+            if ($this->knownTotalRows > 0) {
+                $processed = min($processed, $this->knownTotalRows);
+            }
+
             $query->update([
-                'processed_rows' => $this->processedCount,
-                'success_rows' => $this->successCount,
-                'failed_rows' => count($this->failedRows),
+                'processed_rows' => $processed,
+                'success_rows' => min($this->successCount, $this->knownTotalRows > 0 ? $this->knownTotalRows : $this->successCount),
+                'failed_rows' => min(count($this->failedRows), $this->knownTotalRows > 0 ? $this->knownTotalRows : count($this->failedRows)),
+                // Persist errors incrementally so API does not return failed_rows>0 with errors=null (4104→4913)
+                'errors' => array_slice($this->getAllErrors(), 0, 1000),
             ]);
         } catch (\Throwable $e) {
             report($e);
@@ -271,6 +341,7 @@ class ProductImportService
                 'processed_rows' => $this->processedCount,
                 'success_rows' => $this->successCount,
                 'failed_rows' => count($this->failedRows),
+                'errors' => array_slice($this->getAllErrors(), 0, 1000),
             ]);
     }
 
@@ -393,13 +464,14 @@ class ProductImportService
 
         $product = Product::where('sku', $productSku)->first();
         if (!$product) {
-            $this->failedRows[] = [
+            $this->variantErrors[] = [
                 'sheet' => 'product_variants',
                 'row' => $rowIndex,
                 'sku' => $productSku,
                 'error_message' => "Product with SKU '{$productSku}' not found",
             ];
-            $this->flushProgress();
+            // Do not inflate product-row counters; still heartbeat for cancellation
+            $this->flushVariantProgress();
             return;
         }
 
@@ -439,10 +511,10 @@ class ProductImportService
             $product->product_type = ProductType::VARIABLE;
             $product->saveQuietly();
 
-            $this->successCount++;
+            $this->variantSuccessCount++;
         } catch (Exception $e) {
             DB::rollBack();
-            $this->failedRows[] = [
+            $this->variantErrors[] = [
                 'sheet' => 'product_variants',
                 'row' => $rowIndex,
                 'sku' => $productSku,
@@ -451,7 +523,7 @@ class ProductImportService
 
         }
 
-        $this->flushProgress();
+        $this->flushVariantProgress();
     }
 
     protected function findVariantByFields(int $productId, array $row): ?ProductVariant
@@ -569,13 +641,13 @@ class ProductImportService
 
         $product = Product::where('sku', $productSku)->first();
         if (!$product) {
-            $this->failedRows[] = [
+            $this->imageErrors[] = [
                 'sheet' => 'images',
                 'row' => $rowIndex ?? 0,
                 'sku' => $productSku,
                 'error_message' => "Product with SKU '{$productSku}' not found for image '{$imageUrl}'",
             ];
-            $this->flushProgress();
+            $this->flushImageProgress();
             return;
         }
 
@@ -588,7 +660,7 @@ class ProductImportService
                     $this->urlHandler->cleanup($downloaded);
                     $handled = true;
                 } else {
-                    $this->failedRows[] = [
+                    $this->imageErrors[] = [
                         'sheet' => 'images',
                         'row' => $rowIndex ?? 0,
                         'sku' => $productSku,
@@ -599,24 +671,24 @@ class ProductImportService
                 $product->addMedia($imageUrl)->toMediaCollection('products');
                 $handled = true;
             } else {
-                $this->failedRows[] = [
+                $this->imageErrors[] = [
                     'sheet' => 'images',
                     'row' => $rowIndex ?? 0,
                     'sku' => $productSku,
                     'error_message' => "Invalid image URL or file not found: '{$imageUrl}'",
                 ];
             }
-            // Success not counted separately for images; image failures are tracked, successes are silent
-            // Flush progress for heartbeat
-            $this->flushProgress();
+            // Images are auxiliary: success silent, failure non-fatal (see BrandImportService)
+            // Must NOT inflate product-row counters (4104→4913)
+            $this->flushImageProgress();
         } catch (Exception $e) {
-            $this->failedRows[] = [
+            $this->imageErrors[] = [
                 'sheet' => 'images',
                 'row' => $rowIndex ?? 0,
                 'sku' => $productSku,
                 'error_message' => "Image processing failed for '{$imageUrl}': " . $this->sanitizeErrorMessage($e),
             ];
-            $this->flushProgress();
+            $this->flushImageProgress();
         }
     }
 

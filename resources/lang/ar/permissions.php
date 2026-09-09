@@ -225,4 +225,64 @@ return [
     'manage-digital-licenses' => 'إدارة التراخيص الرقمية',
     'manage-digital-access' => 'إدارة الوصول الرقمي',
 
+    // الوسوم (جمع)
+    'create-tags' => 'إنشاء وسوم',
+    'update-tags' => 'تعديل وسوم',
+    'delete-tags' => 'حذف وسوم',
+
+    // العلامة التجارية (مفرد)
+    'view-brand' => 'عرض علامة تجارية',
+
+    // الشحن السريع
+    'view-fast-shipping' => 'عرض الشحن السريع',
+    'update-fast-shipping' => 'تحديث الشحن السريع',
+
+    // صفحات المحتوى
+    'view-content-pages' => 'عرض صفحات المحتوى',
+    'create-content-pages' => 'إنشاء صفحات محتوى',
+    'update-content-pages' => 'تحديث صفحات محتوى',
+    'delete-content-pages' => 'حذف صفحات محتوى',
+
+    // الأقسام
+    'view-sections' => 'عرض الأقسام',
+    'create-sections' => 'إنشاء أقسام',
+    'update-sections' => 'تحديث أقسام',
+    'delete-sections' => 'حذف أقسام',
+
+    // أنواع الأقسام
+    'view-section-types' => 'عرض أنواع الأقسام',
+    'create-section-types' => 'إنشاء أنواع الأقسام',
+    'update-section-types' => 'تحديث أنواع الأقسام',
+    'delete-section-types' => 'حذف أنواع الأقسام',
+
+    // المستخدم
+    'restore-user' => 'استعادة مستخدم',
+
+    // استيراد/تصدير المنتجات
+    'import-product' => 'استيراد المنتجات',
+    'export-product' => 'تصدير المنتجات',
+
+    // تعيينات الكوبونات
+    'view-coupon-assignments' => 'عرض تعيينات الكوبونات',
+    'create-coupon-assignment' => 'إنشاء تعيين كوبون',
+    'update-coupon-assignment' => 'تحديث تعيين كوبون',
+    'delete-coupon-assignment' => 'حذف تعيين كوبون',
+
+    // الفواتير
+    'view-invoices' => 'عرض الفواتير',
+    'view-invoice' => 'عرض فاتورة',
+    'regenerate-invoice' => 'إعادة إنشاء الفاتورة',
+    'correct-invoice' => 'تصحيح الفاتورة',
+    'cancel-invoice' => 'إلغاء الفاتورة',
+    'issue-debit-note' => 'إصدار إشعار مدين',
+
+    // الشحنات
+    'view-shipments' => 'عرض الشحنات',
+    'view-shipment' => 'عرض شحنة',
+    'create-shipment' => 'إنشاء شحنة',
+    'update-shipment' => 'تحديث شحنة',
+
+    // التحليلات
+    'export-analytics' => 'تصدير التحليلات',
+
 ];

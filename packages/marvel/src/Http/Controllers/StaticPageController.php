@@ -11,13 +11,12 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Marvel\Enums\Permission;
 use Marvel\Http\Requests\ReorderStaticSectionsRequest;
-use Marvel\Exports\src\Http\Requests\StoreStaticSectionRequest;
+use Marvel\Http\Requests\StoreStaticSectionRequest;
 use Marvel\Http\Requests\UpdateStaticPageRequest;
 use Marvel\Http\Requests\UpdateStaticSectionRequest;
 use Marvel\Traits\ApiResponse;
 use Marvel\Database\Models\StaticPage;
 use Marvel\Database\Models\StaticSection;
-
 class StaticPageController extends CoreController
 {
     use ApiResponse, HasCache;
@@ -51,7 +50,7 @@ class StaticPageController extends CoreController
         return $this->apiResponse(STATIC_PAGE_UPDATED_SUCCESSFULLY, 200, true, StaticPageResource::make($page));
     }
 
-    public function storeSection(StoreStaticSectionRequest $request, StaticPage $static_page)
+    public function storeSection( StoreStaticSectionRequest $request, StaticPage $static_page)
     {
         $section = $this->staticPageService->createSection($static_page, $request->validated());
         $this->flushTag(FrontendResource::STATIC_PAGES->value);
