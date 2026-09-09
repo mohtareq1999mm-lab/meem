@@ -35,6 +35,8 @@ class FileOperationEvent implements ShouldBroadcastNow
     use Dispatchable, InteractsWithSockets;
 
     public const PRODUCT_IMPORT_PROGRESS = 'product.import.progress';
+    public const PRODUCT_EXPORT_COMPLETED = 'product.export.completed';
+    public const PRODUCT_EXPORT_FAILED = 'product.export.failed';
     public const CATEGORY_IMPORT_PROGRESS = 'category.import.progress';
     public const BRAND_IMPORT_PROGRESS = 'brand.import.progress';
     public const CATEGORY_EXPORT_COMPLETED = 'category.export.completed';

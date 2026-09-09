@@ -159,7 +159,7 @@ class ProductImportTest extends TestCase
         $user = $this->createSuperAdminUser();
         Sanctum::actingAs($user);
 
-        Storage::fake('public');
+        Storage::fake('imports');
 
         $file = UploadedFile::fake()->create('products.xlsx', 100, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 
@@ -729,7 +729,7 @@ class ProductImportTest extends TestCase
         $user = $this->createSuperAdminUser();
         Sanctum::actingAs($user);
 
-        Storage::fake('public');
+        Storage::fake('imports');
 
         $file = UploadedFile::fake()->create('products.xlsx', 100, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 
@@ -1079,7 +1079,7 @@ class ProductImportTest extends TestCase
     public function test_cancelled_job_deletes_uploaded_file(): void
     {
         Queue::fake();
-        Storage::fake('public');
+        Storage::fake('imports');
 
         $user = $this->createSuperAdminUser();
         Sanctum::actingAs($user);
@@ -1090,14 +1090,14 @@ class ProductImportTest extends TestCase
         $importId = $response->json('data.import_id');
 
         $import = Import::find($importId);
-        Storage::disk('public')->assertExists($import->file_path);
+        Storage::disk('imports')->assertExists($import->file_path);
 
         $import->update(['status' => 'cancelled']);
 
         $job = new \Marvel\Jobs\ImportProductsJob($importId);
         $job->handle();
 
-        Storage::disk('public')->assertMissing($import->file_path);
+        Storage::disk('imports')->assertMissing($import->file_path);
 
         $this->assertDatabaseHas('imports', [
             'id' => $importId,

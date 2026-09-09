@@ -211,7 +211,7 @@ return [
     'ERROR.COUPON_NOT_ELIGIBLE' => 'You are not eligible for this coupon.',
     'ERROR.COUPON_CLAIM_NOT_REQUIRED' => 'This coupon does not require claiming.',
     'ERROR.COUPON_NO_TARGETING' => 'This coupon has no targeting configuration.',
-    'ERROR.COUPON_MAX_CLAIMS_REACHED' => 'You have reached the maximum number of claims for this coupon.',
+    'ERROR.COUPON_MAX_CLAIMS_REACHED' => 'This coupon has reached its claim limit.',
     'QUANTITY_MINIMUM' => 'Quantity must be at least 1.',
     'QUANTITY_EXCEEDS_STOCK' => 'Quantity exceeds available stock.',
 

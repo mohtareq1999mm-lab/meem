@@ -46,19 +46,12 @@ class CategoriesSheetExport implements FromCollection, WithTitle, WithHeadings
             $query->whereHas('brands', fn($q) => $q->where('brand_id', $this->filters['brand_id']));
         }
 
-        $products = $query->get();
-        $rows = [];
-
-        foreach ($products as $product) {
-            foreach ($product->categories as $category) {
-                $rows[] = [
-                    'product_sku' => $product->sku,
-                    'category_slug' => $category->slug,
-                ];
-            }
-        }
-
-        return collect($rows);
+        return $query->lazy(1000)->flatMap(function (Product $product) {
+            return $product->categories->map(fn($category) => [
+                'product_sku' => $product->sku,
+                'category_slug' => $category->slug,
+            ]);
+        });
     }
 
     public function headings(): array

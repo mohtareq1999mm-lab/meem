@@ -12,6 +12,7 @@ use Marvel\Http\Requests\ProductImportRequest;
 use Marvel\Jobs\ImportProductsJob;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Marvel\Enums\Permission;
 use Marvel\Traits\ApiResponse;
@@ -65,7 +66,65 @@ class ProductImportController extends Controller
 
     public function import(ProductImportRequest $request): JsonResponse
     {
+        $idempotencyKey = $request->header('Idempotency-Key') ?: $request->header('X-Idempotency-Key');
+        $idempotencyCacheKey = null;
+        $idempotencyLock = null;
+
+        if ($idempotencyKey) {
+            $idempotencyCacheKey = 'idempotency:product-import:' . $request->user()->id . ':' . $idempotencyKey;
+            $lockKey = 'lock:' . $idempotencyCacheKey;
+            try {
+                $idempotencyLock = Cache::lock($lockKey, 10);
+                $idempotencyLock->block(5);
+            } catch (\Throwable $e) {
+                $idempotencyLock = null;
+            }
+            if (Cache::has($idempotencyCacheKey)) {
+                $cachedId = Cache::get($idempotencyCacheKey);
+                $existing = Import::whereOperationType(FileOperationType::PRODUCT_IMPORT)->where('id', $cachedId)->first();
+                if ($existing) {
+                    if ($idempotencyLock) {
+                        try { $idempotencyLock->release(); } catch (\Throwable $e) {}
+                    }
+                    return $this->apiResponse(__('message.MESSAGE.IMPORT_STARTED_SUCCESSFULLY'), 202, true, [
+                        'import_id' => $existing->id,
+                        'status' => $existing->status,
+                    ]);
+                }
+            }
+        }
+
         $file = $request->file('file');
+
+        $fileHash = null;
+        try {
+            $fileHash = hash_file('sha256', $file->getRealPath());
+            $recentDuplicate = Import::whereOperationType(FileOperationType::PRODUCT_IMPORT)
+                ->where('created_by', $request->user()->id)
+                ->whereIn('status', ['pending', 'processing'])
+                ->where('created_at', '>', now()->subMinutes(10))
+                ->latest('id')
+                ->first();
+            if ($recentDuplicate) {
+                $hashCacheKey = 'product-import:hash:' . $request->user()->id . ':' . $fileHash;
+                if (Cache::has($hashCacheKey)) {
+                    $cachedId = Cache::get($hashCacheKey);
+                    if ((int) $cachedId === (int) $recentDuplicate->id) {
+                        if ($idempotencyKey) {
+                            Cache::put('idempotency:product-import:' . $request->user()->id . ':' . $idempotencyKey, $recentDuplicate->id, now()->addHours(24));
+                        }
+                        if ($idempotencyLock) {
+                            try { $idempotencyLock->release(); } catch (\Throwable $e) {}
+                        }
+                        return $this->apiResponse(__('message.MESSAGE.IMPORT_STARTED_SUCCESSFULLY'), 202, true, [
+                            'import_id' => $recentDuplicate->id,
+                            'status' => $recentDuplicate->status,
+                        ]);
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+        }
 
         $filePath = $file->store('imports', 'imports');
 
@@ -83,6 +142,19 @@ class ProductImportController extends Controller
             'success_rows' => 0,
             'failed_rows' => 0,
         ]);
+
+        if ($idempotencyKey && $idempotencyCacheKey) {
+            Cache::put($idempotencyCacheKey, $import->id, now()->addHours(24));
+            if ($idempotencyLock) {
+                try { $idempotencyLock->release(); } catch (\Throwable $e) {}
+            }
+        } elseif ($idempotencyLock) {
+            try { $idempotencyLock->release(); } catch (\Throwable $e) {}
+        }
+
+        if ($fileHash !== null) {
+            Cache::put('product-import:hash:' . $request->user()->id . ':' . $fileHash, $import->id, now()->addMinutes(10));
+        }
 
         ImportProductsJob::dispatch($import->id);
 

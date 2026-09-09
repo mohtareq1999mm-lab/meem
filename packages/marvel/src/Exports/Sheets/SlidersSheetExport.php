@@ -46,19 +46,12 @@ class SlidersSheetExport implements FromCollection, WithTitle, WithHeadings
             $query->whereHas('brands', fn($q) => $q->where('brand_id', $this->filters['brand_id']));
         }
 
-        $products = $query->get();
-        $rows = [];
-
-        foreach ($products as $product) {
-            foreach ($product->sliders as $slider) {
-                $rows[] = [
-                    'product_sku' => $product->sku,
-                    'slider_slug' => $slider->slug,
-                ];
-            }
-        }
-
-        return collect($rows);
+        return $query->lazy(1000)->flatMap(function (Product $product) {
+            return $product->sliders->map(fn($slider) => [
+                'product_sku' => $product->sku,
+                'slider_slug' => $slider->slug,
+            ]);
+        });
     }
 
     public function headings(): array

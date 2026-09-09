@@ -13,13 +13,13 @@ class CouponTargeting extends Model
         'coupon_id',
         'mode',
         'require_claim',
-        'max_claims_per_user',
+        'max_claims',
         'rule_tree',
     ];
 
     protected $casts = [
         'require_claim' => 'boolean',
-        'max_claims_per_user' => 'integer',
+        'max_claims' => 'integer',
         'rule_tree' => 'array',
     ];
 

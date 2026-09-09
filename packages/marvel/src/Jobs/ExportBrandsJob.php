@@ -22,7 +22,7 @@ class ExportBrandsJob implements ShouldQueue
 
     public int $tries = 2;
 
-    public int $timeout = 600;
+    public int $timeout = 900;
 
     protected int $importId;
 

@@ -46,19 +46,13 @@ class BrandsSheetExport implements FromCollection, WithTitle, WithHeadings
             $query->whereHas('brands', fn($q) => $q->where('brand_id', $this->filters['brand_id']));
         }
 
-        $products = $query->get();
-        $rows = [];
-
-        foreach ($products as $product) {
-            foreach ($product->brands as $brand) {
-                $rows[] = [
-                    'product_sku' => $product->sku,
-                    'brand_slug' => $brand->slug,
-                ];
-            }
-        }
-
-        return collect($rows);
+        // Bounded memory: lazy 1000, flatMap per product
+        return $query->lazy(1000)->flatMap(function (Product $product) {
+            return $product->brands->map(fn($brand) => [
+                'product_sku' => $product->sku,
+                'brand_slug' => $brand->slug,
+            ]);
+        });
     }
 
     public function headings(): array

@@ -226,6 +226,9 @@ Route::middleware(['auth:sanctum', 'throttle:admin'])->group(function () {
     // not captured by products/{product}.
     Route::get('products/import/sample', [ProductImportController::class, 'downloadSample'])->name('admin.products.import.sample');
     Route::get('products/export', [ProductExportController::class, 'export'])->name('admin.products.export');
+    Route::post('products/export', [ProductExportController::class, 'export'])->name('admin.products.export.post');
+    Route::get('products/export/{id}', [ProductExportController::class, 'status'])->whereNumber('id')->name('admin.products.export.status');
+    Route::get('products/export/{id}/download', [ProductExportController::class, 'download'])->whereNumber('id')->name('admin.products.export.download');
     Route::post('products/import', [ProductImportController::class, 'import'])->name('admin.products.import');
     Route::get('products/import/{id}', [ProductImportController::class, 'status'])->whereNumber('id')->name('admin.products.import.status');
     Route::post('products/import/{id}/cancel', [ProductImportController::class, 'cancel'])->whereNumber('id')->name('admin.products.import.cancel');

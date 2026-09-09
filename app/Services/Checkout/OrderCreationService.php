@@ -114,6 +114,31 @@ class OrderCreationService
             return null;
         }
 
+        // Record initial creation history (immutable audit). Guard for rolling deploy / tests without migration.
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('order_status_history')) {
+                $order->recordStatusChange(
+                    oldStatus: null,
+                    newStatus: $order->status,
+                    changedBy: $order->user_id,
+                    changedByType: 'user',
+                    notes: 'Order created',
+                    metadata: [
+                        'payment_method' => $order->payment_method,
+                        'total' => $order->total_price,
+                        'currency' => $order->currency_code,
+                        'governorate_id' => $order->governorate_id,
+                    ],
+                    oldPaymentStatus: null,
+                    newPaymentStatus: $order->payment_status ?? null,
+                    oldFulfillmentStatus: null,
+                    newFulfillmentStatus: $order->fulfillment_status ?? null
+                );
+            }
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
         return $order;
     }
 

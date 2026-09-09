@@ -24,6 +24,12 @@ use App\Http\Controllers\Api\General\SiteReviewController;
 use App\Http\Controllers\Api\General\SliderController;
 use App\Http\Controllers\Api\General\TagController;
 use App\Http\Controllers\Api\ShipmentController;
+use App\Http\Controllers\Api\General\OrderTrackingController;
+use App\Http\Controllers\Api\Admin\AdminOrderTrackingController;
+use App\Http\Controllers\Api\Admin\CouponConfigurationController;
+use App\Http\Controllers\Api\User\NotificationPreferencesController;
+use App\Http\Controllers\Api\Admin\AnalyticsController;
+use App\Http\Controllers\Api\Admin\AnalyticsExportController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -108,6 +114,8 @@ Route::prefix('v1/general')->group(function () {
         //======================== payment callbacks (gateway redirect, public) ========================/
         Route::any('checkout/callback', [OrderController::class, 'checkoutCallback'])->name('api.checkout.callback');
         Route::any('checkout/error-callback', [OrderController::class, 'checkoutErrorCallback'])->name('api.checkout.errorCallback');
+        //======================== public order tracking (no auth, verified by email/phone) ========================/
+        Route::post('track-order', [OrderTrackingController::class, 'trackByOrderNumber'])->name('api.tracking.public');
     });
 
     Route::middleware(['api', 'auth:sanctum', 'throttle:authenticated'])->group(function () {
@@ -125,6 +133,9 @@ Route::prefix('v1/general')->group(function () {
         Route::get('orders', [OrderController::class, 'index']);
         Route::get('orders/{orderId}/invoice', [OrderController::class, 'invoiceByOrderId'])->whereNumber('orderId');
         Route::get('orders/{id}', [OrderController::class, 'show'])->whereNumber('id');
+        //======================== order tracking (authenticated) ========================//
+        Route::get('my-orders', [OrderTrackingController::class, 'listUserOrders'])->name('api.tracking.my-orders');
+        Route::get('orders/{orderId}/track', [OrderTrackingController::class, 'trackAuthenticatedOrder'])->name('api.tracking.order');
         //======================== digital downloads ========================//
         Route::get('digital/downloads', [\App\Http\Controllers\Api\General\DigitalDownloadController::class, 'index']);
         // W5 — license/access credential reveal (auth-scoped, never signed:
@@ -170,6 +181,44 @@ Route::get('v1/general/digital/download/{entitlement}/{asset}', [\App\Http\Contr
     ->middleware(['signed', 'throttle:30,1'])
     ->whereUuid('entitlement')->whereUuid('asset')
     ->name('general.digital.download');
+
+// Admin tracking dashboard
+Route::prefix('v1/admin/tracking')->middleware(['api', 'auth:sanctum'])->group(function () {
+    Route::get('dashboard', [AdminOrderTrackingController::class, 'dashboard'])->name('api.admin.tracking.dashboard');
+    Route::get('orders', [AdminOrderTrackingController::class, 'listOrders'])->name('api.admin.tracking.orders');
+    Route::get('orders/{orderId}', [AdminOrderTrackingController::class, 'trackOrder'])->whereNumber('orderId')->name('api.admin.tracking.order');
+    Route::get('requires-attention', [AdminOrderTrackingController::class, 'requiresAttention'])->name('api.admin.tracking.attention');
+});
+
+// Admin coupon configuration helpers
+Route::prefix('v1/admin/coupons')->middleware(['api', 'auth:sanctum'])->group(function () {
+    Route::post('validate-configuration', [CouponConfigurationController::class, 'validateConfiguration'])->name('api.admin.coupons.validate-config');
+    Route::get('{id}/usage-info', [CouponConfigurationController::class, 'getUsageInfo'])->whereNumber('id')->name('api.admin.coupons.usage-info');
+    Route::post('{id}/suggest-fix', [CouponConfigurationController::class, 'suggestFix'])->whereNumber('id')->name('api.admin.coupons.suggest-fix');
+});
+
+Route::prefix('v1/user')->middleware(['api', 'auth:sanctum'])->group(function () {
+    Route::get('notification-preferences', [NotificationPreferencesController::class, 'index'])->name('api.user.notification-preferences.index');
+    Route::put('notification-preferences', [NotificationPreferencesController::class, 'update'])->name('api.user.notification-preferences.update');
+    Route::post('devices/register', [NotificationPreferencesController::class, 'registerDevice'])->name('api.user.devices.register');
+    Route::delete('devices/{deviceId}', [NotificationPreferencesController::class, 'unregisterDevice'])->whereNumber('deviceId')->name('api.user.devices.unregister');
+    Route::get('notifications/history', [NotificationPreferencesController::class, 'notificationHistory'])->name('api.user.notifications.history');
+});
+
+Route::prefix('v1/admin/analytics')->middleware(['api', 'auth:sanctum'])->group(function () {
+    Route::get('dashboard', [AnalyticsController::class, 'dashboard'])->name('api.admin.analytics.dashboard');
+    Route::get('time-series', [AnalyticsController::class, 'timeSeries'])->name('api.admin.analytics.time-series');
+    Route::get('top-customers', [AnalyticsController::class, 'topCustomers'])->name('api.admin.analytics.top-customers');
+    Route::get('customer-segmentation', [AnalyticsController::class, 'customerSegmentation'])->name('api.admin.analytics.segmentation');
+    Route::get('performance', [AnalyticsController::class, 'performance'])->name('api.admin.analytics.performance');
+    Route::post('clear-cache', [AnalyticsController::class, 'clearCache'])->name('api.admin.analytics.clear-cache');
+});
+
+Route::prefix('v1/admin/analytics/export')->middleware(['api', 'auth:sanctum'])->group(function () {
+    Route::post('orders', [AnalyticsExportController::class, 'exportOrders'])->name('api.admin.analytics.export.orders');
+    Route::post('customer-ltv', [AnalyticsExportController::class, 'exportCustomerLTV'])->name('api.admin.analytics.export.ltv');
+    Route::post('performance', [AnalyticsExportController::class, 'exportPerformance'])->name('api.admin.analytics.export.performance');
+});
         // //======================== shipments ========================/
         // Route::get('shipments/track/{trackingNumber}', [ShipmentController::class, 'trackShipment'])->name('shipments.track');
         // Route::get('shipments/{id}', [ShipmentController::class, 'show'])->middleware('auth:sanctum');

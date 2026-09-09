@@ -19,6 +19,7 @@ return new class extends Migration
             $table->boolean('require_claim')->default(false);
 
             // Maximum lifetime claims per user (null = unlimited)
+            // NOTE: This field is renamed to max_claims in migration 2026_09_10_000004
             $table->unsignedInteger('max_claims_per_user')->nullable();
 
             // Eligibility rule tree (JSON)

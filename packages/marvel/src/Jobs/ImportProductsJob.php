@@ -25,7 +25,7 @@ class ImportProductsJob implements ShouldQueue
 
     public int $tries = 3;
 
-    public int $timeout = 1500;
+    public int $timeout = 1200;
 
     public array $backoff = [60, 120, 240];
 
@@ -40,6 +40,7 @@ class ImportProductsJob implements ShouldQueue
     protected function removeSignalFile(string $type): void
     {
         $path = storage_path("app/imports/{$type}_{$this->importId}.json");
+        clearstatcache(true, $path);
         if (file_exists($path)) {
             @unlink($path);
         }
@@ -47,21 +48,105 @@ class ImportProductsJob implements ShouldQueue
 
     protected function cancelSignalFileExists(): bool
     {
-        return file_exists(storage_path("app/imports/cancel_{$this->importId}.json"));
+        $path = storage_path("app/imports/cancel_{$this->importId}.json");
+        clearstatcache(true, $path);
+        return file_exists($path);
     }
 
     protected function cleanSignals(): void
     {
         $this->removeSignalFile('cancel');
+        $this->removeSignalFile('progress');
+    }
+
+    protected function resolveImportFilePath(Import $import): ?string
+    {
+        if (empty($import->file_path)) {
+            return null;
+        }
+        if (Storage::disk('imports')->exists($import->file_path)) {
+            return Storage::disk('imports')->path($import->file_path);
+        }
+        if (Storage::disk('public')->exists($import->file_path)) {
+            return Storage::disk('public')->path($import->file_path);
+        }
+        if (Storage::disk('local')->exists($import->file_path)) {
+            return Storage::disk('local')->path($import->file_path);
+        }
+        try {
+            return Storage::disk('imports')->path($import->file_path);
+        } catch (Throwable $e) {
+            return null;
+        }
+    }
+
+    protected function deleteImportFile(Import $import): void
+    {
+        if (empty($import->file_path)) {
+            return;
+        }
+        try {
+            Storage::disk('imports')->delete($import->file_path);
+        } catch (Throwable $e) {
+            report($e);
+        }
+        try {
+            Storage::disk('public')->delete($import->file_path);
+        } catch (Throwable $e) {
+        }
+        try {
+            Storage::disk('local')->delete($import->file_path);
+        } catch (Throwable $e) {
+        }
+    }
+
+    protected function sanitizeExceptionMessage(Throwable $e): string
+    {
+        $message = $e->getMessage();
+        $message = preg_replace('#/[^ ]*storage[^ ]*#i', '[storage path]', $message) ?? $message;
+        $message = preg_replace('#SQLSTATE\[[^\]]+\].*#i', 'Internal processing error', $message) ?? $message;
+        if (strlen($message) > 500) {
+            $message = substr($message, 0, 500) . '...';
+        }
+        $message = trim($message);
+        return $message !== '' ? $message : 'Import failed due to an unexpected error';
     }
 
     public function handle(): void
     {
-        $import = Import::select(['id', 'status', 'file_path', 'file_name'])->findOrFail($this->importId);
+        $import = Import::select(['id', 'type', 'status', 'file_path', 'file_name'])->findOrFail($this->importId);
+
+        $normalizedType = \Marvel\Enums\FileOperationType::normalize($import->type);
+        if ($normalizedType !== \Marvel\Enums\FileOperationType::PRODUCT_IMPORT) {
+            $sanitized = 'Invalid operation type for Product import: ' . ($import->type ?? 'null');
+            report(new \RuntimeException($sanitized . ' (expected ' . \Marvel\Enums\FileOperationType::PRODUCT_IMPORT . ')'));
+            if (! $import->isTerminal()) {
+                $import->update([
+                    'status' => 'failed',
+                    'errors' => [[
+                        'sheet' => 'system',
+                        'row' => 0,
+                        'sku' => '',
+                        'error_message' => $sanitized,
+                    ]],
+                ]);
+                $this->broadcastFileOperationTerminal(
+                    FileOperationEvent::PRODUCT_IMPORT_PROGRESS,
+                    'product-import',
+                    $this->importId,
+                    'failed',
+                    true
+                );
+            }
+            return;
+        }
 
         if ($import->status === 'cancelled' || $this->cancelSignalFileExists()) {
-            Storage::disk('public')->delete($import->file_path);
+            $this->deleteImportFile($import);
             $this->removeSignalFile('cancel');
+            if ($import->status !== 'cancelled') {
+                Import::where('id', $import->id)->whereIn('status', ['pending', 'processing'])->update(['status' => 'cancelled']);
+            }
             return;
         }
 
@@ -69,19 +154,47 @@ class ImportProductsJob implements ShouldQueue
             return;
         }
 
-        $import->update([
+        $updated = Import::where('id', $import->id)->whereIn('status', ['pending', 'processing'])->update([
             'status' => 'processing',
             'processed_rows' => 0,
             'success_rows' => 0,
             'failed_rows' => 0,
         ]);
+        if ($updated === 0 && $import->status !== 'processing') {
+            $import->refresh();
+            if ($import->isTerminal()) {
+                return;
+            }
+        } else {
+            $import->refresh();
+        }
 
-        $filePath = Storage::disk('public')->path($import->file_path);
+        $filePath = $this->resolveImportFilePath($import);
+        if ($filePath === null || ! file_exists($filePath)) {
+            $import->update([
+                'status' => 'failed',
+                'errors' => [[
+                    'sheet' => 'system',
+                    'row' => 0,
+                    'sku' => '',
+                    'error_message' => 'Import file not found',
+                ]],
+            ]);
+            $this->broadcastFileOperationTerminal(
+                FileOperationEvent::PRODUCT_IMPORT_PROGRESS,
+                'product-import',
+                $this->importId,
+                'failed',
+                true
+            );
+            return;
+        }
 
         $service = new ProductImportService($this->importId);
         $service->writeExplicitProgress(1.0);
 
         $totalRows = $this->countRows();
+        $service->setTotalRows($totalRows);
 
         if ($import->total_rows !== $totalRows) {
             $import->update(['total_rows' => $totalRows]);
@@ -102,6 +215,8 @@ class ImportProductsJob implements ShouldQueue
 
             Excel::import($importObj, $filePath, null, $readerType);
 
+            $service->flushPendingSyncs();
+
             $service->finalizeVariants();
 
             $service->writeExplicitProgress(99.0);
@@ -120,7 +235,7 @@ class ImportProductsJob implements ShouldQueue
 
             $import->update([
                 'status' => $status,
-                'total_rows' => $successCount + count($failedRows),
+                'total_rows' => $totalRows > 0 ? $totalRows : ($successCount + count($failedRows)),
                 'processed_rows' => $successCount + count($failedRows),
                 'success_rows' => $successCount,
                 'failed_rows' => count($failedRows),
@@ -135,18 +250,18 @@ class ImportProductsJob implements ShouldQueue
                 !empty($failedRows),
                 [
                     'progress' => 100.0,
-                    'total_rows' => $successCount + count($failedRows),
+                    'total_rows' => $totalRows > 0 ? $totalRows : ($successCount + count($failedRows)),
                     'processed_rows' => $successCount + count($failedRows),
                     'success_rows' => $successCount,
                     'failed_rows' => count($failedRows),
                 ]
             );
 
-            Storage::disk('public')->delete($import->file_path);
+            $this->deleteImportFile($import);
             $this->removeSignalFile('progress');
         } catch (ImportCancelledException $e) {
             $service->rollbackCreatedData();
-            Storage::disk('public')->delete($import->file_path);
+            $this->deleteImportFile($import);
             $this->cleanSignals();
             $import->update([
                 'status' => 'cancelled',
@@ -172,15 +287,13 @@ class ImportProductsJob implements ShouldQueue
                 ]
             );
         } catch (Throwable $e) {
-            // P10: intermediate attempts must stay retryable. Only the terminal
-            // attempt may flip status to failed — otherwise the terminal-state
-            // guard at the top of handle() turns tries 2..N into silent no-ops.
+            $sanitized = $this->sanitizeExceptionMessage($e);
+            report($e);
             if ($this->attempts() >= $this->tries) {
                 $import->update([
                     'status' => 'failed',
-                    'errors' => [['sheet' => 'system', 'row' => 0, 'sku' => '', 'error_message' => $e->getMessage()]],
+                    'errors' => [['sheet' => 'system', 'row' => 0, 'sku' => '', 'error_message' => $sanitized]],
                 ]);
-
                 $this->broadcastFileOperationTerminal(
                     FileOperationEvent::PRODUCT_IMPORT_PROGRESS,
                     'product-import',
@@ -188,15 +301,15 @@ class ImportProductsJob implements ShouldQueue
                     'failed',
                     true
                 );
+                $this->deleteImportFile($import);
+                $this->removeSignalFile('progress');
             } else {
-                // Keep processing state so the retry proceeds; record diagnostics.
                 $import->update([
                     'errors' => array_merge($import->errors ?? [], [
-                        ['sheet' => 'system', 'row' => 0, 'sku' => '', 'error_message' => 'Attempt ' . $this->attempts() . ': ' . $e->getMessage()],
+                        ['sheet' => 'system', 'row' => 0, 'sku' => '', 'error_message' => 'Attempt ' . $this->attempts() . ': ' . $sanitized],
                     ]),
                 ]);
             }
-
             throw $e;
         }
     }
@@ -205,32 +318,36 @@ class ImportProductsJob implements ShouldQueue
     {
         try {
             $import = Import::find($this->importId);
-            if (!$import) {
+            if (!$import || empty($import->file_path)) {
                 return 0;
             }
-
-            $filePath = Storage::disk('public')->path($import->file_path);
-
-            if (!file_exists($filePath)) {
+            $filePath = $this->resolveImportFilePath($import);
+            if ($filePath === null || ! file_exists($filePath)) {
                 return 0;
             }
-
+            // Lightweight row count: read only dimensions without full style load
             $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile($filePath);
             $reader->setReadDataOnly(true);
-            $spreadsheet = $reader->load($filePath);
-
-            $total = 0;
-            foreach ($spreadsheet->getSheetNames() as $name) {
-                $sheet = $spreadsheet->getSheetByName($name);
-                if ($sheet) {
-                    $total += $sheet->getHighestDataRow();
+            // For product import, count only products sheet data rows (exclude header) to avoid inflated total
+            // Fallback to single sheet if multi-sheet inspect fails
+            try {
+                $spreadsheet = $reader->load($filePath);
+                $productsSheet = $spreadsheet->getSheetByName('products');
+                if ($productsSheet) {
+                    $total = max(0, $productsSheet->getHighestDataRow() - 1);
+                } else {
+                    // Fallback: first sheet
+                    $sheet = $spreadsheet->getSheetByName($spreadsheet->getSheetNames()[0] ?? 'products');
+                    $total = $sheet ? max(0, $sheet->getHighestDataRow() - 1) : 0;
                 }
+                $spreadsheet->disconnectWorksheets();
+                unset($spreadsheet, $reader);
+                return $total;
+            } catch (Throwable $inner) {
+                // Fallback to reading first sheet only
+                unset($reader);
+                return 0;
             }
-
-            $spreadsheet->disconnectWorksheets();
-            unset($spreadsheet, $reader);
-
-            return $total;
         } catch (Throwable $e) {
             return 0;
         }
@@ -241,7 +358,6 @@ class ImportProductsJob implements ShouldQueue
         $import = Import::find($this->importId);
         if ($import && $import->status === 'processing') {
             $import->update(['status' => 'failed']);
-
             $this->broadcastFileOperationTerminal(
                 FileOperationEvent::PRODUCT_IMPORT_PROGRESS,
                 'product-import',
@@ -249,6 +365,8 @@ class ImportProductsJob implements ShouldQueue
                 'failed',
                 true
             );
+            $this->deleteImportFile($import);
+            $this->removeSignalFile('progress');
         }
     }
 }

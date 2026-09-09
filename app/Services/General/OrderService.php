@@ -742,6 +742,69 @@ private function canTransitionOrderStatus(string $from, string $to): bool
                 return false;
             }
 
+            $actorId = null;
+            $actorType = 'system';
+            // Record immutable status history (guarded for tests without migration)
+            try {
+                if (\Illuminate\Support\Facades\Schema::hasTable('order_status_history')) {
+                    $oldPaymentStatus = $order->getOriginal('payment_status');
+                    $oldFulfillmentStatus = $order->getOriginal('fulfillment_status');
+                    // Determine actor type
+                    $actorId = null;
+                    $actorType = 'system';
+                    if (auth()->check()) {
+                        $actorId = auth()->id();
+                        try {
+                            $user = auth()->user();
+                            $isAdmin = method_exists($user, 'hasPermissionTo')
+                                ? $user->hasPermissionTo('update-order-status')
+                                : (method_exists($user, 'can') ? $user->can('update-order-status') : false);
+                            $actorType = $isAdmin ? 'admin' : 'user';
+                        } catch (\Throwable $e) {
+                            $actorType = 'user';
+                        }
+                    } elseif ($invoiceId !== null) {
+                        $actorType = 'payment_gateway';
+                    }
+
+                    // Only record if status actually changed or payment/fulfillment changed
+                    $shouldRecord = $previousStatus !== $order->status
+                        || ($oldPaymentStatus !== ($updateData['payment_status'] ?? $order->payment_status))
+                        || isset($updateData['fulfillment_status']);
+
+                    if ($shouldRecord) {
+                        $order->recordStatusChange(
+                            oldStatus: $previousStatus,
+                            newStatus: $order->status,
+                            changedBy: $actorId,
+                            changedByType: $actorType,
+                            notes: "Status changed from {$previousStatus} to {$order->status}",
+                            metadata: [
+                                'invoice_id' => $invoiceId,
+                                'old_payment_status' => $oldPaymentStatus,
+                                'new_payment_status' => $updateData['payment_status'] ?? $order->payment_status,
+                                'old_fulfillment_status' => $oldFulfillmentStatus,
+                                'new_fulfillment_status' => $updateData['fulfillment_status'] ?? $order->fulfillment_status,
+                            ],
+                            oldPaymentStatus: $oldPaymentStatus,
+                            newPaymentStatus: $updateData['payment_status'] ?? $order->payment_status,
+                            oldFulfillmentStatus: $oldFulfillmentStatus,
+                            newFulfillmentStatus: $updateData['fulfillment_status'] ?? $order->fulfillment_status
+                        );
+                    }
+                }
+            } catch (\Throwable $e) {
+                report($e);
+            }
+
+            // P2-5: Structured logging + metrics for observability
+            try {
+                \App\Services\Logging\OrderTrackingLogger::logStatusChange($order, $previousStatus, $order->status, $actorId ?? null, $actorType ?? 'system');
+                \App\Services\Metrics\OrderTrackingMetrics::incrementStatusChange($previousStatus, $order->status);
+            } catch (\Throwable $e) {
+                // logging must never break status transition
+            }
+
             // Business contract: an Invoice is generated exactly once, when the
             // Order performs its FIRST VALID transition AWAY from `pending` —
             // regardless of the target status (processing / completed /
@@ -803,7 +866,7 @@ private function canTransitionOrderStatus(string $from, string $to): bool
                 }
             }
 
-            event(new OrderStatusChanged($order));
+            event(new OrderStatusChanged($order, $previousStatus, $order->status, $actorId ?? null, $actorType ?? 'system'));
 
             if ($status === 'cancelled' && $previousStatus !== 'cancelled') {
                 event(new OrderCancelled($order));

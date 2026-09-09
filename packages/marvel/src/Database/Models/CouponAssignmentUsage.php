@@ -25,13 +25,35 @@ class CouponAssignmentUsage extends Model
         'used_at' => 'datetime',
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function (CouponAssignmentUsage $usage) {
+            if (empty($usage->order_id)) {
+                throw new \InvalidArgumentException('order_id is required for coupon assignment usage');
+            }
+        });
+
+        static::updating(function (CouponAssignmentUsage $usage) {
+            if (empty($usage->order_id)) {
+                throw new \InvalidArgumentException('order_id is required for coupon assignment usage');
+            }
+        });
+    }
+
     public function couponAssignment(): BelongsTo
     {
-        return $this->belongsTo(CouponAssignment::class);
+        return $this->belongsTo(CouponAssignment::class, 'coupon_assignment_id');
+    }
+
+    public function assignment(): BelongsTo
+    {
+        return $this->belongsTo(CouponAssignment::class, 'coupon_assignment_id');
     }
 
     public function order(): BelongsTo
     {
-        return $this->belongsTo(Order::class);
+        return $this->belongsTo(Order::class, 'order_id');
     }
 }

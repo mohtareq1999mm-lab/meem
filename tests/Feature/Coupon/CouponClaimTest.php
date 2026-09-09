@@ -200,39 +200,43 @@ class CouponClaimTest extends TestCase
             ]);
     }
 
-    public function test_max_claims_per_user_enforced()
+    public function test_max_claims_total_capacity_enforced()
     {
-        $user = User::factory()->create();
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
         $coupon = $this->createCoupon();
 
-        CustomerMetrics::create(['user_id' => $user->id]);
+        CustomerMetrics::create(['user_id' => $user1->id]);
+        CustomerMetrics::create(['user_id' => $user2->id]);
 
         CouponTargeting::create([
             'coupon_id' => $coupon->id,
             'mode' => 'dynamic',
             'require_claim' => true,
-            'max_claims_per_user' => 1,
+            'max_claims' => 1, // Total capacity: only 1 user can claim
             'rule_tree' => ['operator' => 'AND', 'rules' => []],
         ]);
 
-        // First claim succeeds
-        CouponClaim::create([
-            'coupon_id' => $coupon->id,
-            'user_id' => $user->id,
-            'claimed_at' => now(),
-        ]);
-
-        // Second claim should fail with already_claimed (checked before max_claims)
-        $response = $this->actingAs($user, 'sanctum')
+        // First user claims successfully
+        $response1 = $this->actingAs($user1, 'sanctum')
             ->postJson("/api/v1/general/coupons/{$coupon->id}/claim");
 
-        $response->assertStatus(409)
+        $response1->assertStatus(201);
+
+        // Second user should be rejected (total capacity reached)
+        $response2 = $this->actingAs($user2, 'sanctum')
+            ->postJson("/api/v1/general/coupons/{$coupon->id}/claim");
+
+        $response2->assertStatus(409)
             ->assertJson([
                 'success' => false,
                 'data' => [
-                    'reason' => 'already_claimed',
+                    'reason' => 'max_claims_reached',
                 ],
             ]);
+
+        // Verify exactly 1 claim exists
+        $this->assertEquals(1, CouponClaim::where('coupon_id', $coupon->id)->count());
     }
 
     public function test_coupon_not_found_returns_404()
@@ -321,5 +325,42 @@ class CouponClaimTest extends TestCase
             ->postJson("/api/v1/general/coupons/{$coupon->id}/claim");
 
         $response->assertStatus(201);
+    }
+
+    public function test_user_cannot_claim_same_coupon_twice()
+    {
+        $user = User::factory()->create();
+        $coupon = $this->createCoupon();
+
+        CustomerMetrics::create(['user_id' => $user->id]);
+
+        CouponTargeting::create([
+            'coupon_id' => $coupon->id,
+            'mode' => 'dynamic',
+            'require_claim' => true,
+            'max_claims' => 10, // High limit to focus on duplicate prevention
+            'rule_tree' => ['operator' => 'AND', 'rules' => []],
+        ]);
+
+        // First claim succeeds
+        $response1 = $this->actingAs($user, 'sanctum')
+            ->postJson("/api/v1/general/coupons/{$coupon->id}/claim");
+
+        $response1->assertStatus(201);
+
+        // Second claim by same user should fail with already_claimed
+        $response2 = $this->actingAs($user, 'sanctum')
+            ->postJson("/api/v1/general/coupons/{$coupon->id}/claim");
+
+        $response2->assertStatus(409)
+            ->assertJson([
+                'success' => false,
+                'data' => [
+                    'reason' => 'already_claimed',
+                ],
+            ]);
+
+        // Verify exactly 1 claim exists for this user
+        $this->assertEquals(1, CouponClaim::where('user_id', $user->id)->count());
     }
 }

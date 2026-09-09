@@ -24,7 +24,7 @@ class ImagesSheetExport implements FromCollection, WithTitle, WithHeadings
 
     public function collection()
     {
-        $query = Product::query();
+        $query = Product::query()->with('media');
 
         if (isset($this->filters['status'])) {
             $query->where('status', $this->filters['status']);
@@ -46,21 +46,13 @@ class ImagesSheetExport implements FromCollection, WithTitle, WithHeadings
             $query->whereHas('brands', fn($q) => $q->where('brand_id', $this->filters['brand_id']));
         }
 
-        $products = $query->get();
-        $rows = [];
-
-        foreach ($products as $product) {
+        return $query->lazy(1000)->flatMap(function (Product $product) {
             $mediaItems = $product->getMedia('products');
-
-            foreach ($mediaItems as $media) {
-                $rows[] = [
-                    'product_sku' => $product->sku,
-                    'image' => $media->getUrl(),
-                ];
-            }
-        }
-
-        return collect($rows);
+            return $mediaItems->map(fn($media) => [
+                'product_sku' => $product->sku,
+                'image' => $media->getUrl(),
+            ]);
+        });
     }
 
     public function headings(): array

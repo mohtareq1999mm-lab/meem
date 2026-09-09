@@ -42,6 +42,12 @@ class ProductImportService
 
     protected array $createdProductIds = [];
 
+    protected array $pendingCategorySlugs = [];
+    protected array $pendingBrandSlugs = [];
+    protected array $pendingFlashSaleSlugs = [];
+    protected array $pendingSliderSlugs = [];
+    protected array $pendingTagSlugs = [];
+
     protected ?int $importId = null;
 
     protected int $processedCount = 0;
@@ -53,6 +59,8 @@ class ProductImportService
     protected int $lastTickProcessedCount = 0;
 
     protected float $currentProgress = 0.0;
+
+    protected int $knownTotalRows = 0;
 
     protected const FLUSH_THRESHOLD = 10;
 
@@ -207,15 +215,23 @@ class ProductImportService
         );
     }
 
+    public function setTotalRows(int $total): void
+    {
+        $this->knownTotalRows = max(0, $total);
+    }
+
     protected function calculateSmoothProgress(): float
     {
         $processed = $this->successCount + count($this->failedRows);
+        if ($this->knownTotalRows > 0) {
+            // Honest progress: processed / total * 99, capped
+            $real = ($processed / $this->knownTotalRows) * 99.0;
+            return round(min(max($real, 0.0), 99.0), 2);
+        }
         $elapsed = max(microtime(true) - $this->startedAt, 0);
-
         $timeBased = 99.0 * (1 - exp(-$elapsed / 60));
         $rowBased = 99.0 * (2 / M_PI) * atan($processed / 200);
         $progress = max($timeBased, $rowBased);
-
         return round(min($progress, 99.0), 2);
     }
 
@@ -544,34 +560,73 @@ class ProductImportService
         }
     }
 
-    public function processProductImage(string $productSku, string $imageUrl): void
+    public function processProductImage(string $productSku, string $imageUrl, ?int $rowIndex = null): void
     {
-
-        $product = Product::where('sku', $productSku)->first();
-        if (!$product) {
-
-            return;
-        }
-
         $imageUrl = trim($imageUrl);
         if (empty($imageUrl)) {
             return;
         }
 
+        $product = Product::where('sku', $productSku)->first();
+        if (!$product) {
+            $this->failedRows[] = [
+                'sheet' => 'images',
+                'row' => $rowIndex ?? 0,
+                'sku' => $productSku,
+                'error_message' => "Product with SKU '{$productSku}' not found for image '{$imageUrl}'",
+            ];
+            $this->flushProgress();
+            return;
+        }
+
         try {
+            $handled = false;
             if ($this->urlHandler && $this->urlHandler->isValidUrl($imageUrl)) {
                 $downloaded = $this->urlHandler->download($imageUrl);
                 if ($downloaded) {
                     $this->urlHandler->attachToModel($product, $downloaded, 'products');
                     $this->urlHandler->cleanup($downloaded);
+                    $handled = true;
+                } else {
+                    $this->failedRows[] = [
+                        'sheet' => 'images',
+                        'row' => $rowIndex ?? 0,
+                        'sku' => $productSku,
+                        'error_message' => "Failed to download image '{$imageUrl}': invalid response or exceeds limits",
+                    ];
                 }
             } elseif (file_exists($imageUrl)) {
-                $product->addMedia($imageUrl)
-                    ->toMediaCollection('products');
+                $product->addMedia($imageUrl)->toMediaCollection('products');
+                $handled = true;
+            } else {
+                $this->failedRows[] = [
+                    'sheet' => 'images',
+                    'row' => $rowIndex ?? 0,
+                    'sku' => $productSku,
+                    'error_message' => "Invalid image URL or file not found: '{$imageUrl}'",
+                ];
             }
+            // Success not counted separately for images; image failures are tracked, successes are silent
+            // Flush progress for heartbeat
+            $this->flushProgress();
         } catch (Exception $e) {
-
+            $this->failedRows[] = [
+                'sheet' => 'images',
+                'row' => $rowIndex ?? 0,
+                'sku' => $productSku,
+                'error_message' => "Image processing failed for '{$imageUrl}': " . $this->sanitizeErrorMessage($e),
+            ];
+            $this->flushProgress();
         }
+    }
+
+    protected function sanitizeErrorMessage(Throwable $e): string
+    {
+        $msg = $e->getMessage();
+        $msg = preg_replace('#/[^ ]*storage[^ ]*#i', '[storage path]', $msg) ?? $msg;
+        $msg = preg_replace('#SQLSTATE\[[^\]]+\].*#i', 'Internal processing error', $msg) ?? $msg;
+        if (strlen($msg) > 300) $msg = substr($msg, 0, 300) . '...';
+        return trim($msg) !== '' ? trim($msg) : 'Unexpected error';
     }
 
     public function syncCategories(string $productSku, array $categorySlugs): void
@@ -637,6 +692,66 @@ class ProductImportService
         if (!empty($tagIds)) {
             $product->tags()->sync($tagIds);
         }
+    }
+
+    // Chunk-safe queue methods for large sheets (accumulate across chunks)
+    public function queueCategories(string $productSku, array $categorySlugs): void
+    {
+        if (empty($productSku) || empty($categorySlugs)) return;
+        $existing = $this->pendingCategorySlugs[$productSku] ?? [];
+        $this->pendingCategorySlugs[$productSku] = array_values(array_unique(array_merge($existing, $categorySlugs)));
+    }
+
+    public function queueBrands(string $productSku, array $brandSlugs): void
+    {
+        if (empty($productSku) || empty($brandSlugs)) return;
+        $existing = $this->pendingBrandSlugs[$productSku] ?? [];
+        $this->pendingBrandSlugs[$productSku] = array_values(array_unique(array_merge($existing, $brandSlugs)));
+    }
+
+    public function queueFlashSales(string $productSku, array $flashSaleSlugs): void
+    {
+        if (empty($productSku) || empty($flashSaleSlugs)) return;
+        $existing = $this->pendingFlashSaleSlugs[$productSku] ?? [];
+        $this->pendingFlashSaleSlugs[$productSku] = array_values(array_unique(array_merge($existing, $flashSaleSlugs)));
+    }
+
+    public function queueSliders(string $productSku, array $sliderSlugs): void
+    {
+        if (empty($productSku) || empty($sliderSlugs)) return;
+        $existing = $this->pendingSliderSlugs[$productSku] ?? [];
+        $this->pendingSliderSlugs[$productSku] = array_values(array_unique(array_merge($existing, $sliderSlugs)));
+    }
+
+    public function queueTags(string $productSku, array $tagSlugs): void
+    {
+        if (empty($productSku) || empty($tagSlugs)) return;
+        $existing = $this->pendingTagSlugs[$productSku] ?? [];
+        $this->pendingTagSlugs[$productSku] = array_values(array_unique(array_merge($existing, $tagSlugs)));
+    }
+
+    public function flushPendingSyncs(): void
+    {
+        foreach ($this->pendingCategorySlugs as $sku => $slugs) {
+            $this->syncCategories($sku, $slugs);
+        }
+        foreach ($this->pendingBrandSlugs as $sku => $slugs) {
+            $this->syncBrands($sku, $slugs);
+        }
+        foreach ($this->pendingFlashSaleSlugs as $sku => $slugs) {
+            $this->syncFlashSales($sku, $slugs);
+        }
+        foreach ($this->pendingSliderSlugs as $sku => $slugs) {
+            $this->syncSliders($sku, $slugs);
+        }
+        foreach ($this->pendingTagSlugs as $sku => $slugs) {
+            $this->syncTags($sku, $slugs);
+        }
+        $this->pendingCategorySlugs = [];
+        $this->pendingBrandSlugs = [];
+        $this->pendingFlashSaleSlugs = [];
+        $this->pendingSliderSlugs = [];
+        $this->pendingTagSlugs = [];
     }
 
     protected function buildProductData(array $row): array

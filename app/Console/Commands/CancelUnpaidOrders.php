@@ -107,7 +107,34 @@ class CancelUnpaidOrders extends Command
                 if (\Illuminate\Support\Facades\Schema::hasColumn('orders', 'cancelled_at')) {
                     $cancelUpdateData['cancelled_at'] = now();
                 }
+                $previousStatus = $lockedOrder->status;
+                $oldPaymentStatus = $lockedOrder->getOriginal('payment_status');
+                $oldFulfillmentStatus = $lockedOrder->getOriginal('fulfillment_status');
                 $lockedOrder->update($cancelUpdateData);
+
+                // Record history for system expiry (immutable audit)
+                try {
+                    if (\Illuminate\Support\Facades\Schema::hasTable('order_status_history')) {
+                        $lockedOrder->recordStatusChange(
+                            oldStatus: $previousStatus,
+                            newStatus: $lockedOrder->status,
+                            changedBy: null,
+                            changedByType: 'system',
+                            notes: 'Order cancelled due to reservation expiry',
+                            metadata: [
+                                'reservation_expires_at' => $lockedOrder->reservation_expires_at?->toIso8601String(),
+                                'old_payment_status' => $oldPaymentStatus,
+                                'new_payment_status' => $cancelUpdateData['payment_status'] ?? $lockedOrder->payment_status,
+                            ],
+                            oldPaymentStatus: $oldPaymentStatus,
+                            newPaymentStatus: $cancelUpdateData['payment_status'] ?? $lockedOrder->payment_status,
+                            oldFulfillmentStatus: $oldFulfillmentStatus,
+                            newFulfillmentStatus: $cancelUpdateData['fulfillment_status'] ?? $lockedOrder->fulfillment_status
+                        );
+                    }
+                } catch (\Throwable $e) {
+                    report($e);
+                }
 
                 // System-initiated pre-payment cancellation: the order was never
                 // paid, so promotion usage must NOT be decremented. We bypass

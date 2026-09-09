@@ -84,6 +84,11 @@ services:
       - key: MYSQL_ATTR_SSL_CA
         value: /etc/ssl/certs/ca-certificates.crt
       
+      # TiDB: Pessimistic transaction mode for FOR UPDATE locking
+      # Required for coupon claim concurrency (parent-row serialization)
+      - key: DB_INIT_COMMAND
+        value: "SET SESSION tidb_txn_mode = 'pessimistic'"
+      
       # =======================================================================
       # Redis (shared instance - meem-* queue prefix isolates this project)
       # =======================================================================

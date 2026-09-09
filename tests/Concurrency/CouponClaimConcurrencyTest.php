@@ -36,29 +36,48 @@ class CouponClaimConcurrencyTest extends TestCase
     }
 
     /**
-     * Test A: max_claims_per_user = 1, 100 concurrent users
+     * Test A: max_claims = 1 (total capacity), multiple concurrent users
      *
-     * Expected: Exactly 1 successful claim (NOT 2+)
+     * Expected: Exactly 1 successful claim total
      */
     public function test_single_slot_with_multiple_concurrent_users()
     {
-        // Create coupon with targeting: max 1 claim per user
+        // Create coupon with targeting: max 1 TOTAL claim
         $coupon = Coupon::factory()->create(['active' => true]);
         $targeting = CouponTargeting::create([
             'coupon_id' => $coupon->id,
             'mode' => 'assignment',
             'require_claim' => true,
-            'max_claims_per_user' => 1,
+            'max_claims' => 1, // Total capacity: only 1 user can claim
             'rule_tree' => null,
         ]);
 
-        // Create 10 users (reduced from 100 for test performance)
+        // Create 10 users (all attempting to claim)
         $users = User::factory()->count(10)->create();
+
+        // Assign all users
+        foreach ($users as $user) {
+            \Marvel\Database\Models\CouponAssignment::create([
+                'coupon_id' => $coupon->id,
+                'user_id' => $user->id,
+            ]);
+        }
 
         // Simulate concurrent claims using multiple connections
         $results = $this->executeConcurrentClaims($coupon, $users);
 
-        // Verify: Each user should have at most 1 claim
+        // Verify: Exactly 1 total claim (first user wins)
+        $totalClaims = CouponClaim::query()
+            ->where('coupon_id', $coupon->id)
+            ->count();
+
+        $this->assertEquals(
+            1,
+            $totalClaims,
+            "Total claims should be exactly 1, got {$totalClaims}"
+        );
+
+        // Verify: Each user has at most 1 claim
         foreach ($users as $user) {
             $claimCount = CouponClaim::query()
                 ->where('coupon_id', $coupon->id)
@@ -71,17 +90,6 @@ class CouponClaimConcurrencyTest extends TestCase
                 "User {$user->id} should have at most 1 claim, got {$claimCount}"
             );
         }
-
-        // Total successful claims should not exceed user count
-        $totalClaims = CouponClaim::query()
-            ->where('coupon_id', $coupon->id)
-            ->count();
-
-        $this->assertLessThanOrEqual(
-            count($users),
-            $totalClaims,
-            "Total claims should not exceed user count"
-        );
     }
 
     /**
@@ -96,7 +104,7 @@ class CouponClaimConcurrencyTest extends TestCase
             'coupon_id' => $coupon->id,
             'mode' => 'assignment',
             'require_claim' => true,
-            'max_claims_per_user' => 1,
+            'max_claims' =>1,
             'rule_tree' => null,
         ]);
 
@@ -134,9 +142,9 @@ class CouponClaimConcurrencyTest extends TestCase
     }
 
     /**
-     * Test C: max_claims_per_user = 10, 20 concurrent users
+     * Test C: max_claims = 5 (total capacity), 10 concurrent users
      *
-     * Expected: At most 10 claims per user
+     * Expected: Exactly 5 total claims (first 5 users win)
      */
     public function test_multiple_slots_enforcement()
     {
@@ -145,12 +153,12 @@ class CouponClaimConcurrencyTest extends TestCase
             'coupon_id' => $coupon->id,
             'mode' => 'assignment',
             'require_claim' => true,
-            'max_claims_per_user' => 5, // Reduced for test performance
+            'max_claims' => 5, // Total capacity: 5 users can claim
             'rule_tree' => null,
         ]);
 
-        // Create 5 users
-        $users = User::factory()->count(5)->create();
+        // Create 10 users (more than available slots)
+        $users = User::factory()->count(10)->create();
 
         // Assign all users
         foreach ($users as $user) {
@@ -160,14 +168,21 @@ class CouponClaimConcurrencyTest extends TestCase
             ]);
         }
 
-        // Each user attempts 10 claims concurrently
-        foreach ($users as $user) {
-            for ($i = 0; $i < 10; $i++) {
-                $this->executeConcurrentClaims($coupon, [$user]);
-            }
-        }
+        // All users attempt to claim concurrently
+        $this->executeConcurrentClaims($coupon, $users);
 
-        // Verify: No user has more than 5 claims
+        // Verify: Total claims = exactly 5 (not 10)
+        $totalClaims = CouponClaim::query()
+            ->where('coupon_id', $coupon->id)
+            ->count();
+
+        $this->assertEquals(
+            5,
+            $totalClaims,
+            "Total claims should be exactly 5, got {$totalClaims}"
+        );
+
+        // Verify: Each user has at most 1 claim
         foreach ($users as $user) {
             $claimCount = CouponClaim::query()
                 ->where('coupon_id', $coupon->id)
@@ -175,9 +190,9 @@ class CouponClaimConcurrencyTest extends TestCase
                 ->count();
 
             $this->assertLessThanOrEqual(
-                5,
+                1,
                 $claimCount,
-                "User {$user->id} should have at most 5 claims, got {$claimCount}"
+                "User {$user->id} should have at most 1 claim, got {$claimCount}"
             );
         }
     }
@@ -197,7 +212,7 @@ class CouponClaimConcurrencyTest extends TestCase
                 'coupon_id' => $coupon->id,
                 'mode' => 'assignment',
                 'require_claim' => true,
-                'max_claims_per_user' => 1,
+                'max_claims' =>1,
                 'rule_tree' => null,
             ]);
             $coupons[] = $coupon;
@@ -247,7 +262,7 @@ class CouponClaimConcurrencyTest extends TestCase
             'coupon_id' => $coupon->id,
             'mode' => 'assignment',
             'require_claim' => true,
-            'max_claims_per_user' => 1,
+            'max_claims' =>1,
             'rule_tree' => null,
         ]);
 
@@ -300,7 +315,7 @@ class CouponClaimConcurrencyTest extends TestCase
             'coupon_id' => $coupon->id,
             'mode' => 'assignment',
             'require_claim' => true,
-            'max_claims_per_user' => 1,
+            'max_claims' =>1,
             'rule_tree' => null,
         ]);
 
@@ -374,7 +389,7 @@ class CouponClaimConcurrencyTest extends TestCase
             'coupon_id' => $coupon->id,
             'mode' => 'assignment',
             'require_claim' => true,
-            'max_claims_per_user' => 100, // High limit to focus on locking
+            'max_claims' =>100, // High limit to focus on locking
             'rule_tree' => null,
         ]);
 

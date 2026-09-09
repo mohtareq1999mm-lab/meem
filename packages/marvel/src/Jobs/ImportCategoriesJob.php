@@ -24,7 +24,7 @@ class ImportCategoriesJob implements ShouldQueue
 
     public int $tries = 3;
 
-    public int $timeout = 1500;
+    public int $timeout = 1200;
 
     public array $backoff = [60, 120, 240];
 

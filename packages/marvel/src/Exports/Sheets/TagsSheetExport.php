@@ -2,9 +2,10 @@
 
 namespace Marvel\Exports\Sheets;
 
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithTitle;
 use Marvel\Database\Models\Product;
 
 class TagsSheetExport implements FromCollection, WithTitle, WithHeadings
@@ -21,10 +22,6 @@ class TagsSheetExport implements FromCollection, WithTitle, WithHeadings
         return 'tags';
     }
 
-    /**
-     * product_sku + tag_slug pairs — the exact contract consumed by
-     * Imports\Sheets\TagsSheetImport on re-import.
-     */
     public function collection()
     {
         $query = Product::query()->with('tags');
@@ -49,19 +46,12 @@ class TagsSheetExport implements FromCollection, WithTitle, WithHeadings
             $query->whereHas('brands', fn($q) => $q->where('brand_id', $this->filters['brand_id']));
         }
 
-        $products = $query->get();
-        $rows = [];
-
-        foreach ($products as $product) {
-            foreach ($product->tags as $tag) {
-                $rows[] = [
-                    'product_sku' => $product->sku,
-                    'tag_slug' => $tag->slug,
-                ];
-            }
-        }
-
-        return collect($rows);
+        return $query->lazy(1000)->flatMap(function (Product $product) {
+            return $product->tags->map(fn($tag) => [
+                'product_sku' => $product->sku,
+                'tag_slug' => $tag->slug,
+            ]);
+        });
     }
 
     public function headings(): array

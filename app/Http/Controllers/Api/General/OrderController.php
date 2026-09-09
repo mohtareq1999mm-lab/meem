@@ -199,6 +199,15 @@ class OrderController extends Controller
 
         $order = $transaction?->order;
 
+        // P2-5: Structured logging for payment verification
+        try {
+            if ($order) {
+                $verifyResult = $result->success ? 'success' : 'failed';
+                \App\Services\Logging\OrderTrackingLogger::logPaymentVerification($order, $verifyResult, is_array($result->rawResponse) ? $result->rawResponse : []);
+                \App\Services\Metrics\OrderTrackingMetrics::incrementPaymentVerification($verifyResult);
+            }
+        } catch (\Throwable $e) {}
+
         $callbackType = $this->getCallbackType($transaction, $request);
 
         if (!$result->success) {
@@ -448,6 +457,16 @@ class OrderController extends Controller
         }
 
         $order = $transaction?->order;
+
+        // P2-5: Structured logging for error callback verification
+        try {
+            if ($order) {
+                $verifyResult = $result->success ? 'success' : 'failed';
+                \App\Services\Logging\OrderTrackingLogger::logPaymentVerification($order, $verifyResult, is_array($result->rawResponse) ? $result->rawResponse : []);
+                \App\Services\Metrics\OrderTrackingMetrics::incrementPaymentVerification($verifyResult);
+            }
+        } catch (\Throwable $e) {}
+
         $errorCallbackType = $this->getCallbackType($transaction, $request);
 
         if ($result->success) {

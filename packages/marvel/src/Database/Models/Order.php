@@ -194,6 +194,44 @@ class Order extends Model
         return $this->hasMany(\App\Models\Invoice::class, 'order_id');
     }
 
+    public function statusHistory(): HasMany
+    {
+        return $this->hasMany(\App\Models\OrderStatusHistory::class, 'order_id')->orderBy('changed_at', 'desc');
+    }
+
+    /**
+     * Record a status change in the immutable order_status_history table.
+     * Safe to call inside or outside a transaction; ShouldDispatchAfterCommit
+     * events remain unaffected.
+     */
+    public function recordStatusChange(
+        ?string $oldStatus,
+        string $newStatus,
+        ?int $changedBy = null,
+        string $changedByType = 'user',
+        ?string $notes = null,
+        ?array $metadata = null,
+        ?string $oldPaymentStatus = null,
+        ?string $newPaymentStatus = null,
+        ?string $oldFulfillmentStatus = null,
+        ?string $newFulfillmentStatus = null
+    ): \App\Models\OrderStatusHistory {
+        return \App\Models\OrderStatusHistory::create([
+            'order_id' => $this->getKey(),
+            'old_status' => $oldStatus,
+            'new_status' => $newStatus,
+            'old_payment_status' => $oldPaymentStatus ?? $this->getOriginal('payment_status'),
+            'new_payment_status' => $newPaymentStatus ?? $this->payment_status,
+            'old_fulfillment_status' => $oldFulfillmentStatus ?? $this->getOriginal('fulfillment_status'),
+            'new_fulfillment_status' => $newFulfillmentStatus ?? $this->fulfillment_status,
+            'changed_by' => $changedBy ?? (auth()->check() ? auth()->id() : null),
+            'changed_by_type' => $changedByType,
+            'notes' => $notes,
+            'metadata' => $metadata,
+            'changed_at' => now(),
+        ]);
+    }
+
     public function scopeForUser(Builder $query, int $userId): Builder
     {
         return $query->where('user_id', $userId);

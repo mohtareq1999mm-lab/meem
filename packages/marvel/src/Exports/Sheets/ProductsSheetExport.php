@@ -48,7 +48,7 @@ class ProductsSheetExport implements FromQuery, WithTitle, WithHeadings, WithMap
             $query->whereHas('brands', fn($q) => $q->where('brand_id', $this->filters['brand_id']));
         }
 
-        return $query;
+        return $query->orderBy('id');
     }
 
     public function headings(): array

@@ -135,6 +135,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         OrderStatusChanged::class => [
             SendOrderStatusChangedNotification::class,
+            \App\Listeners\SendOrderStatusSMS::class,
+            \App\Listeners\SendOrderStatusEmail::class,
+            \App\Listeners\SendOrderPushNotification::class,
         ],
         PaymentFailed::class => [
             SendPaymentFailedNotification::class,

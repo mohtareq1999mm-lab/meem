@@ -35,18 +35,28 @@ class Kernel extends ConsoleKernel
         // Payment gateway reconciliation: dispatches the existing
         // PaymentReconciliationJob (meem-medium, tries=1). withoutOverlapping
         // prevents concurrent reconciliation runs.
-        $schedule->command('payments:reconcile')->hourly()->withoutOverlapping();
+        // P2-3: Increased from hourly to every 15 minutes to reduce
+        // pending → paid window from 60m to 15m for missed callbacks.
+        $schedule->command('payments:reconcile')
+            ->everyFifteenMinutes()
+            ->withoutOverlapping()
+            ->onOneServer();
 
         // Phase 0: prune permanently-failed jobs older than 30 days. The
         // failed_jobs table remains the failure record during that window;
         // HandleFailedQueueJob alerts on every final failure at occurrence time.
         $schedule->command('queue:prune-failed --hours=720')->dailyAt('03:15')->withoutOverlapping();
+        $schedule->command('imports:prune --days=14')->dailyAt('03:30')->withoutOverlapping();
         $schedule->command('currency:sync-rates')
             ->everySixHours()
             ->timezone('UTC')
             ->withoutOverlapping(60)
             ->onOneServer()
             ->when(fn () => (bool) config('currency.enabled', false));
+
+        $schedule->call(function () {
+            \App\Services\Metrics\OrderTrackingMetrics::reset();
+        })->daily()->name('reset-order-tracking-metrics');
     }
 
     /**

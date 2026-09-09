@@ -26,7 +26,7 @@ class BrandImportController extends Controller
     public function __construct()
     {
         $this->middleware('auth:sanctum');
-        $this->middleware('permission:' . Permission::IMPORT_BRAND . '|' . Permission::SUPER_ADMIN);
+        $this->middleware('permission:' . Permission::IMPORT_BRAND);
     }
 
     protected function readSignalFile(int $importId, string $signalType): ?array

@@ -47,7 +47,7 @@ class ProductVariantsSheetExport implements FromQuery, WithTitle, WithHeadings, 
             $query->whereHas('product.brands', fn($q) => $q->where('brand_id', $this->filters['brand_id']));
         }
 
-        return $query;
+        return $query->orderBy('id');
     }
 
     public function headings(): array

@@ -59,7 +59,7 @@ class CouponClaimException extends Exception
     public static function maxClaimsReached(int $couponId, int $userId, int $maxClaims): self
     {
         return new self(
-            "User {$userId} has reached max claims ({$maxClaims}) for coupon {$couponId}",
+            "Coupon {$couponId} has reached its total claim limit ({$maxClaims} claims across all users)",
             self::REASON_MAX_CLAIMS_REACHED,
             ['coupon_id' => $couponId, 'user_id' => $userId, 'max_claims' => $maxClaims],
         );

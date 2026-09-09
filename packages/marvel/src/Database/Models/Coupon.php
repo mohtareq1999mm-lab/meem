@@ -54,7 +54,7 @@ class Coupon extends Model implements HasMedia
             $builder->orderBy('updated_at', 'desc');
         });
 
-static::creating(function ($coupon) {
+        static::creating(function ($coupon) {
             if (!empty($coupon->code)) {
                 return;
             }
@@ -66,6 +66,76 @@ static::creating(function ($coupon) {
             $coupon->code = strtolower(preg_replace('/\s+/', '_',  'coupon' . "_" . $code));
         });
 
+        static::saving(function (Coupon $coupon) {
+            try {
+                $coupon->validateMultiUseConfiguration();
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Coupon validation warning: " . $e->getMessage());
+            }
+        });
+    }
+
+    /**
+     * Validate coupon configuration for multi-use scenarios
+     *
+     * Business Rules:
+     * - Public coupons (no assignments) are ALWAYS single-use per user
+     * - For multi-use per user, MUST use assignment flow
+     */
+    public function validateMultiUseConfiguration(): void
+    {
+        $hasAssignments = $this->assignments()->exists();
+
+        if (!$hasAssignments) {
+            return;
+        }
+
+        $assignmentsWithMultiUse = $this->assignments()
+            ->where('max_uses', '>', 1)
+            ->exists();
+
+        if ($assignmentsWithMultiUse) {
+            try {
+                $targeting = $this->targeting;
+                if (!$targeting) {
+                    \Illuminate\Support\Facades\Log::warning("Coupon {$this->code} has multi-use assignments but no targeting configuration");
+                }
+            } catch (\Throwable $e) {
+                // ignore if targeting table missing
+            }
+        }
+    }
+
+    /**
+     * Get user-friendly usage description
+     */
+    public function getUsageDescription(): string
+    {
+        $hasAssignments = $this->assignments()->exists();
+
+        if (!$hasAssignments) {
+            $limiter = $this->limiter ?? 'unlimited';
+            return "Public coupon: Single use per customer (global limit: {$limiter})";
+        }
+
+        $maxUses = $this->assignments()->max('max_uses') ?? 1;
+        return "Assigned coupon: Up to {$maxUses} uses per assigned customer";
+    }
+
+    /**
+     * Check if coupon is configured for multi-use
+     */
+    public function isMultiUsePerUser(): bool
+    {
+        return $this->assignments()->where('max_uses', '>', 1)->exists();
+    }
+
+    /**
+     * Check if coupon is public (no assignments)
+     */
+    public function isPublic(): bool
+    {
+        return !$this->assignments()->exists();
     }
 
     /**

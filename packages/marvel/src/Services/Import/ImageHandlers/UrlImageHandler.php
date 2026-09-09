@@ -17,24 +17,58 @@ class UrlImageHandler
 
     protected int $timeout = 30;
 
+    protected int $maxRedirects = 5;
+
     public function download(string $url): ?string
     {
         $url = $this->normalizeGoogleDriveUrl($url);
 
-        if (!$this->isValidUrl($url)) {
-            Log::warning("Invalid image URL skipped: {$url}");
+        try {
+            $this->assertSafeUrl($url);
+        } catch (Exception $e) {
+            Log::warning("Blocked image URL: {$url} — " . $e->getMessage());
             return null;
         }
 
         try {
             $this->ensureTempDirectoryExists();
 
-            $response = Http::timeout($this->timeout)
-                ->withOptions(['verify' => false])
-                ->get($url);
+            $currentUrl = $url;
+            $redirects = 0;
+            $response = null;
 
-            if (!$response->successful()) {
-                Log::warning("Failed to download image from {$url}: HTTP {$response->status()}");
+            while ($redirects <= $this->maxRedirects) {
+                $response = Http::timeout($this->timeout)
+                    ->withOptions(['verify' => false, 'allow_redirects' => false])
+                    ->get($currentUrl);
+
+                if ($response->status() >= 300 && $response->status() < 400) {
+                    $location = $response->header('Location');
+                    if (empty($location)) {
+                        Log::warning("Redirect without Location from {$currentUrl}");
+                        return null;
+                    }
+                    $nextUrl = $this->resolveRedirectUrl($currentUrl, $location);
+                    try {
+                        $this->assertSafeUrl($nextUrl);
+                    } catch (Exception $e) {
+                        Log::warning("Blocked redirect URL: {$nextUrl} — " . $e->getMessage());
+                        return null;
+                    }
+                    $currentUrl = $nextUrl;
+                    $redirects++;
+                    continue;
+                }
+                break;
+            }
+
+            if ($redirects > $this->maxRedirects) {
+                Log::warning("Too many redirects for {$url}");
+                return null;
+            }
+
+            if (!$response || !$response->successful()) {
+                Log::warning("Failed to download image from {$currentUrl}: HTTP " . ($response ? $response->status() : 'no response'));
                 return null;
             }
 
@@ -42,7 +76,7 @@ class UrlImageHandler
             $bodySize = strlen($body);
 
             if ($bodySize > $this->maxFileSize) {
-                Log::warning("Image too large from {$url}: {$bodySize} bytes");
+                Log::warning("Image too large from {$currentUrl}: {$bodySize} bytes");
                 return null;
             }
 
@@ -51,7 +85,7 @@ class UrlImageHandler
             finfo_close($finfo);
 
             if (!in_array($mimeType, $this->allowedMimes)) {
-                Log::warning("Invalid MIME type for {$url}: {$mimeType}");
+                Log::warning("Invalid MIME type for {$currentUrl}: {$mimeType}");
                 return null;
             }
 
@@ -60,7 +94,13 @@ class UrlImageHandler
 
             file_put_contents($tempPath, $body);
 
-            Log::info("Downloaded image from {$url} ({$mimeType}, {$bodySize} bytes)");
+            if (! $this->isActualImage($tempPath)) {
+                @unlink($tempPath);
+                Log::warning("File is not a valid image: {$currentUrl}");
+                return null;
+            }
+
+            Log::info("Downloaded image from {$currentUrl} ({$mimeType}, {$bodySize} bytes)");
 
             return $tempPath;
         } catch (Exception $e) {
@@ -88,21 +128,86 @@ class UrlImageHandler
 
     public function isValidUrl(string $url): bool
     {
+        try {
+            $this->assertSafeUrl($url);
+            return true;
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    protected function assertSafeUrl(string $url): void
+    {
         if (!filter_var($url, FILTER_VALIDATE_URL)) {
-            return false;
+            throw new Exception('Invalid URL format');
         }
-
-        $host = parse_url($url, PHP_URL_HOST);
-        if (!$host) {
-            return false;
+        $parts = parse_url($url);
+        $host = $parts['host'] ?? null;
+        $scheme = $parts['scheme'] ?? null;
+        if (!$host || !in_array(strtolower($scheme), ['http', 'https'], true)) {
+            throw new Exception('URL must be http/https with host');
         }
+        $ips = $this->resolveHost($host);
+        foreach ($ips as $ip) {
+            if ($this->isBlockedIp($ip)) {
+                throw new Exception('URL resolves to private/reserved IP');
+            }
+        }
+    }
 
-        $ip = gethostbyname($host);
+    protected function resolveHost(string $host): array
+    {
+        $ips = [];
+        $records = @dns_get_record($host, DNS_A | DNS_AAAA);
+        if (is_array($records)) {
+            foreach ($records as $rec) {
+                if (!empty($rec['ip'])) $ips[] = $rec['ip'];
+                if (!empty($rec['ipv6'])) $ips[] = $rec['ipv6'];
+            }
+        }
+        if (empty($ips)) {
+            $ip = gethostbyname($host);
+            if ($ip !== $host) $ips[] = $ip;
+        }
+        return array_unique(array_filter($ips));
+    }
+
+    protected function isBlockedIp(string $ip): bool
+    {
+        if (!filter_var($ip, FILTER_VALIDATE_IP)) return true;
+        // Block private, reserved, loopback, link-local, multicast, unspecified
         if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
-            return false;
+            return true;
         }
+        // Additional explicit blocks
+        $blockedPrefixes = ['0.', '169.254.', '192.0.2.', '198.51.100.', '203.0.113.', '::1', 'fe80:', 'fc00:', 'ff00:'];
+        foreach ($blockedPrefixes as $prefix) {
+            if (str_starts_with($ip, $prefix)) return true;
+        }
+        return false;
+    }
 
-        return true;
+    protected function resolveRedirectUrl(string $baseUrl, string $location): string
+    {
+        if (str_starts_with($location, 'http://') || str_starts_with($location, 'https://')) {
+            return $location;
+        }
+        $base = parse_url($baseUrl);
+        $scheme = $base['scheme'] ?? 'https';
+        $host = $base['host'] ?? '';
+        $port = isset($base['port']) ? ':' . $base['port'] : '';
+        if (str_starts_with($location, '/')) {
+            return $scheme . '://' . $host . $port . $location;
+        }
+        $path = $base['path'] ?? '/';
+        $dir = rtrim(dirname($path), '/');
+        return $scheme . '://' . $host . $port . $dir . '/' . $location;
+    }
+
+    protected function isActualImage(string $tempPath): bool
+    {
+        $info = @getimagesize($tempPath);
+        return $info !== false;
     }
 
     protected function normalizeGoogleDriveUrl(string $url): string

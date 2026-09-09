@@ -38,7 +38,7 @@ php artisan view:cache
 # =============================================================================
 echo ""
 echo "✅ Laravel ready! Starting Supervisor (web + meem-high + meem-medium) on port ${PORT:-8080}..."
-echo "   Workers: meem-high (1 proc, timeout 1200) + meem-medium (1 proc, timeout 900)"
+echo "   Workers: meem-high (1 proc, timeout 1300) + meem-medium (1 proc, timeout 1300)"
 echo "   Scheduler: via dcron (schedule:run every minute)"
 
 # Ensure log directory exists and is writable

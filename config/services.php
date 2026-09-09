@@ -35,6 +35,18 @@ return [
         'base_url' => env('MYFATOORAH_BASE_URL', 'https://apitest.myfatoorah.com/v2/'),
     ],
 
+    'twilio' => [
+        'sid' => env('TWILIO_SID'),
+        'token' => env('TWILIO_AUTH_TOKEN'),
+        'from' => env('TWILIO_FROM_NUMBER'),
+        'enabled' => env('TWILIO_ENABLED', false),
+    ],
+
+    'fcm' => [
+        'credentials' => env('FCM_CREDENTIALS_PATH'),
+        'enabled' => env('FCM_ENABLED', false),
+    ],
+
     'resend' => [
         'key' => env('RESEND_API_KEY'),
     ],

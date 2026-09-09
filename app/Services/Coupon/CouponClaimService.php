@@ -56,18 +56,19 @@ class CouponClaimService
                 throw CouponClaimException::alreadyClaimed($coupon->getKey(), $user->getKey());
             }
 
-            // Check max claims per user (lifetime limit)
-            if ($targeting->max_claims_per_user !== null) {
-                $userClaimCount = CouponClaim::query()
+            // Check TOTAL claims (coupon capacity across all users)
+            // max_claims = total slots available (e.g., "first 100 users")
+            // UNIQUE(coupon_id, user_id) = one claim per user
+            if ($targeting->max_claims !== null) {
+                $totalClaims = CouponClaim::query()
                     ->where('coupon_id', $coupon->getKey())
-                    ->where('user_id', $user->getKey())
                     ->count();
 
-                if ($userClaimCount >= $targeting->max_claims_per_user) {
+                if ($totalClaims >= $targeting->max_claims) {
                     throw CouponClaimException::maxClaimsReached(
                         $coupon->getKey(),
                         $user->getKey(),
-                        $targeting->max_claims_per_user
+                        $targeting->max_claims
                     );
                 }
             }

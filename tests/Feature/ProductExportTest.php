@@ -6,7 +6,10 @@ namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
+use Marvel\Database\Models\Import;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\User;
 use Marvel\Enums\Permission as PermissionEnum;
@@ -26,6 +29,7 @@ class ProductExportTest extends TestCase
     {
         $permissions = [
             PermissionEnum::SUPER_ADMIN,
+            PermissionEnum::EXPORT_PRODUCT,
             PermissionEnum::VIEW_PRODUCTS,
         ];
 
@@ -71,6 +75,8 @@ class ProductExportTest extends TestCase
 
     public function test_export_returns_excel_file(): void
     {
+        Queue::fake();
+        Storage::fake('imports');
         $user = $this->createSuperAdminUser();
         Sanctum::actingAs($user);
 
@@ -88,12 +94,29 @@ class ProductExportTest extends TestCase
 
         $response = $this->getJson(self::PREFIX . '/products/export');
 
-        $response->assertOk();
-        $response->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $response->assertStatus(202);
+        $response->assertJsonPath('success', true);
+        $response->assertJsonStructure(['data' => ['export_id', 'status']]);
+        $exportId = $response->json('data.export_id');
+        $this->assertDatabaseHas('imports', ['id' => $exportId]);
+        Queue::assertPushed(\Marvel\Jobs\ExportProductsJob::class);
+        // Process job manually (since queue faked)
+        (new \Marvel\Jobs\ExportProductsJob($exportId))->handle();
+        $import = Import::find($exportId);
+        $this->assertEquals('completed', $import->status);
+        $this->assertTrue(Storage::disk('imports')->exists($import->file_path));
+
+        // Download
+        $download = $this->getJson(self::PREFIX . "/products/export/{$exportId}/download");
+        // Download returns binary, but via JSON we check status endpoint
+        $status = $this->getJson(self::PREFIX . "/products/export/{$exportId}");
+        $status->assertOk();
+        $status->assertJsonPath('data.status', 'completed');
     }
 
     public function test_export_with_filters(): void
     {
+        Storage::fake('imports');
         $user = $this->createSuperAdminUser();
         Sanctum::actingAs($user);
 
@@ -123,7 +146,11 @@ class ProductExportTest extends TestCase
 
         $response = $this->getJson(self::PREFIX . '/products/export?status=1');
 
-        $response->assertOk();
+        $response->assertStatus(202);
+        $exportId = $response->json('data.export_id');
+        (new \Marvel\Jobs\ExportProductsJob($exportId, ['status' => 1]))->handle();
+        $import = Import::find($exportId);
+        $this->assertEquals('completed', $import->status);
     }
 
     public function test_export_validates_invalid_product_type(): void
@@ -135,5 +162,42 @@ class ProductExportTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['product_type']);
+    }
+
+    public function test_export_post_also_works(): void
+    {
+        Storage::fake('imports');
+        $user = $this->createSuperAdminUser();
+        Sanctum::actingAs($user);
+
+        $response = $this->postJson(self::PREFIX . '/products/export', ['status' => 1]);
+        $response->assertStatus(202);
+        $response->assertJsonPath('success', true);
+    }
+
+    public function test_export_status_forbidden_for_other_user(): void
+    {
+        Storage::fake('imports');
+        $owner = $this->createSuperAdminUser();
+        Sanctum::actingAs($owner);
+        $resp = $this->getJson(self::PREFIX . '/products/export');
+        $exportId = $resp->json('data.export_id');
+
+        // Other user without super admin
+        $other = User::create([
+            'name' => 'Other',
+            'email' => 'other-' . uniqid() . '@test.local',
+            'password' => Hash::make('password'),
+            'is_active' => true,
+            'type' => 'admin',
+        ]);
+        $perm = Permission::findOrCreate(PermissionEnum::EXPORT_PRODUCT, self::GUARD);
+        $role = Role::create(['name' => 'r' . uniqid(), 'guard_name' => self::GUARD, 'display_name' => 'r']);
+        $role->givePermissionTo($perm);
+        $other->assignRole($role);
+        $other->givePermissionTo($perm);
+        Sanctum::actingAs($other);
+        $resp2 = $this->getJson(self::PREFIX . "/products/export/{$exportId}");
+        $this->assertEquals(404, $resp2->getStatusCode(), 'Other user must get 404 for export status');
     }
 }
