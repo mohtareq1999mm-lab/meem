@@ -198,7 +198,7 @@ private function cacheKey(string $key): string
 
     public function getDiscountEndingTodayOrLowStockProducts(): Collection
     {
-        $products = Product::query()
+        $products = Product::query()->active()
             ->when(true, fn($q) => $this->applyChannelHomeFilter($q))
             ->select([
                 'id',
@@ -234,7 +234,7 @@ private function cacheKey(string $key): string
 
     public function getNewArrivals(int $limit = 10): Collection
     {
-        $products = Product::query()
+        $products = Product::query()->active()
             ->when(true, fn($q) => $this->applyChannelHomeFilter($q))
             ->select([
                 'id',
@@ -265,7 +265,7 @@ private function cacheKey(string $key): string
     {
         $weekEnd = now()->endOfWeek();
 
-        $products = Product::query()
+        $products = Product::query()->active()
             ->when(true, fn($q) => $this->applyChannelHomeFilter($q))
             ->select([
                 'id',
@@ -306,7 +306,7 @@ private function cacheKey(string $key): string
     {
         $categoryIds = $categoryTree->pluck('id')->all();
 
-        $products = Product::query()
+        $products = Product::query()->active()
             ->when(true, fn($q) => $this->applyChannelHomeFilter($q))
             ->select([
                 'id',
@@ -343,7 +343,7 @@ private function cacheKey(string $key): string
 
     public function getAllDiscountProducts(): Collection
     {
-        $products = Product::query()
+        $products = Product::query()->active()
             ->when(true, fn($q) => $this->applyChannelHomeFilter($q))
             ->select([
                 'id',
