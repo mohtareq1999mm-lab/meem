@@ -50,6 +50,7 @@ public function paginateFlashSales($request)
         $FlashSale = FlashSale::valid()->search('slug', $slug, app()->getLocale())->first();
         if ($FlashSale) {
             $FlashSale->load(['products' => function ($q) {
+                $q->active();
                 $this->applyChannelHomeFilter($q);
                 $q->with(['media'])->withAvg(['reviews' => fn($q) => $q->approved()], 'rating');
             }]);
@@ -72,6 +73,7 @@ public function paginateFlashSales($request)
             })
             ->with([
                 'products' => function ($query) use ($qty) {
+                    $query->active();
                     $this->applyChannelHomeFilter($query);
                     $query->with([
                         'media',
@@ -91,7 +93,7 @@ public function paginateFlashSales($request)
         $limit = $this->capLimit($request->query('limit', 10), 10);
         $weekEnd = now()->endOfWeek();
 
-        $products = Product::query()
+        $products = Product::query()->active()
             ->with(['categories', 'variations', 'brands', 'media', 'flash_sales' => fn($q) => $q->valid()])
             ->withAvg(['reviews' => fn($q) => $q->approved()], 'rating')
             ->select([
@@ -101,7 +103,6 @@ public function paginateFlashSales($request)
                 'start_date', 'end_date',
             ])
             ->whereNull('deleted_at')
-            ->activeStatus()
             ->where('has_flash_sale', true)
             ->whereExists(function ($query) use ($weekEnd) {
                 $query->select(DB::raw(1))
@@ -123,7 +124,7 @@ public function paginateFlashSales($request)
     {
         $limit = $this->capLimit($request->query('limit', 10), 10);
 
-        $products = Product::query()
+        $products = Product::query()->active()
             ->with(['categories', 'variations', 'brands', 'media', 'flash_sales' => fn($q) => $q->valid()])
             ->withAvg(['reviews' => fn($q) => $q->approved()], 'rating')
             ->select([
@@ -133,7 +134,6 @@ public function paginateFlashSales($request)
                 'start_date', 'end_date',
             ])
             ->whereNull('deleted_at')
-            ->activeStatus()
             ->where('has_flash_sale', true)
             ->whereExists(function ($query) {
                 $query->select(DB::raw(1))

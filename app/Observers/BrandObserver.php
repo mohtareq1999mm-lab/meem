@@ -8,8 +8,13 @@ use Marvel\Database\Models\Brand;
 
 class BrandObserver
 {
+    private function flushBrandCaches(): void
+    {
+        app(\App\Services\Cache\FrontendCacheInvalidator::class)->invalidateBrand();
+    }
     public function created(Brand $brand): void
     {
+        $this->flushBrandCaches();
         LogActivityJob::dispatch(
             get_class($brand),
             $brand->id,
@@ -28,6 +33,8 @@ class BrandObserver
         if (empty($dirty)) {
             return;
         }
+
+        $this->flushBrandCaches();
 
         $statusChanged = array_key_exists('status', $dirty);
         $hasOtherChanges = count($dirty) > ($statusChanged ? 1 : 0);
@@ -74,6 +81,7 @@ class BrandObserver
 
     public function deleted(Brand $brand): void
     {
+        $this->flushBrandCaches();
         LogActivityJob::dispatch(
             get_class($brand),
             $brand->id,

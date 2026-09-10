@@ -198,7 +198,7 @@ private function cacheKey(string $key): string
 
     public function getDiscountEndingTodayOrLowStockProducts(): Collection
     {
-        $products = Product::query()
+        $products = Product::query()->active()
             ->when(true, fn($q) => $this->applyChannelHomeFilter($q))
             ->select([
                 'id',
@@ -216,7 +216,6 @@ private function cacheKey(string $key): string
             ->with(['reviews', 'media', 'flash_sales' => fn($q) => $q->valid()])
             ->withAvg(['reviews' => fn($q) => $q->approved()], 'rating')
             ->whereNull('deleted_at')
-            ->activeStatus()
             ->where('has_discount', true)
             ->where('has_flash_sale', false)
             ->where(function ($query) {
@@ -234,7 +233,7 @@ private function cacheKey(string $key): string
 
     public function getNewArrivals(int $limit = 10): Collection
     {
-        $products = Product::query()
+        $products = Product::query()->active()
             ->when(true, fn($q) => $this->applyChannelHomeFilter($q))
             ->select([
                 'id',
@@ -252,7 +251,6 @@ private function cacheKey(string $key): string
             ->with(['reviews', 'media', 'flash_sales' => fn($q) => $q->valid()])
             ->withAvg(['reviews' => fn($q) => $q->approved()], 'rating')
             ->whereNull('deleted_at')
-            ->activeStatus()
             ->where('has_flash_sale', false)
             ->whereDate('created_at', '>=', now()->subDays(15))
             ->orderByDesc('created_at')
@@ -265,7 +263,7 @@ private function cacheKey(string $key): string
     {
         $weekEnd = now()->endOfWeek();
 
-        $products = Product::query()
+        $products = Product::query()->active()
             ->when(true, fn($q) => $this->applyChannelHomeFilter($q))
             ->select([
                 'id',
@@ -283,7 +281,6 @@ private function cacheKey(string $key): string
             ->with(['reviews', 'media', 'flash_sales' => fn($q) => $q->valid()])
             ->withAvg(['reviews' => fn($q) => $q->approved()], 'rating')
             ->whereNull('deleted_at')
-            ->activeStatus()
             ->where('has_flash_sale', true)
             ->whereExists(function ($query) use ($weekEnd) {
                 $query->select(DB::raw(1))
@@ -306,7 +303,7 @@ private function cacheKey(string $key): string
     {
         $categoryIds = $categoryTree->pluck('id')->all();
 
-        $products = Product::query()
+        $products = Product::query()->active()
             ->when(true, fn($q) => $this->applyChannelHomeFilter($q))
             ->select([
                 'id',
@@ -324,7 +321,6 @@ private function cacheKey(string $key): string
             ->with(['reviews', 'media', 'flash_sales' => fn($q) => $q->valid()])
             ->withAvg(['reviews' => fn($q) => $q->approved()], 'rating')
             ->whereNull('deleted_at')
-            ->activeStatus()
             ->where('has_discount', true)
             ->whereExists(function ($query) use ($categoryIds) {
                 $query->select(DB::raw(1))
@@ -343,7 +339,7 @@ private function cacheKey(string $key): string
 
     public function getAllDiscountProducts(): Collection
     {
-        $products = Product::query()
+        $products = Product::query()->active()
             ->when(true, fn($q) => $this->applyChannelHomeFilter($q))
             ->select([
                 'id',
@@ -361,7 +357,6 @@ private function cacheKey(string $key): string
             ->with(['reviews', 'media', 'flash_sales' => fn($q) => $q->valid()])
             ->withAvg(['reviews' => fn($q) => $q->approved()], 'rating')
             ->whereNull('deleted_at')
-            ->activeStatus()
             ->where('has_discount', true)
             ->orderByDesc('id')
             ->limit(10)
@@ -377,7 +372,7 @@ private function cacheKey(string $key): string
         $parent = Category::query()->active()
             ->whereNull('parent_id')
             ->where('id', '=', $id)
-            ->withCount('products')
+            ->withCount(['products' => fn($q) => $q->active()])
             ->first();
 
         if (!$parent) {
@@ -386,7 +381,7 @@ private function cacheKey(string $key): string
 
         return $parent->children()
             ->active()
-            ->withCount('products')
+            ->withCount(['products' => fn($q) => $q->active()])
             ->orderBy('id')
             ->get();
     }
@@ -395,7 +390,7 @@ private function cacheKey(string $key): string
     private function getCategories(): Collection
     {
         $categories = Category::query()->active()
-            ->withCount('products')
+            ->withCount(['products' => fn($q) => $q->active()])
             ->orderByDesc('products_count')
             ->limit(20)
             ->get();
@@ -409,7 +404,7 @@ private function cacheKey(string $key): string
         return Category::query()
             ->active()
             ->whereNull('parent_id')
-            ->withCount('products')
+            ->withCount(['products' => fn($q) => $q->active()])
             ->with($this->categoryChildrenWith($maxDepth))
             ->orderByDesc('products_count')
             ->get();
@@ -423,7 +418,7 @@ private function cacheKey(string $key): string
 
         return [
             'children' => function ($query) use ($remainingDepth) {
-                $query->active()->withCount('products');
+                $query->active()->withCount(['products' => fn($q) => $q->active()]);
                 $query->with($this->categoryChildrenWith($remainingDepth - 1));
             },
         ];

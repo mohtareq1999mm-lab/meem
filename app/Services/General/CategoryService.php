@@ -60,7 +60,7 @@ class CategoryService
             ->with([
                 'products' => fn($q) => $q->active()->tap(fn($qq) => $this->applyChannelHomeFilter($qq)),
                 'children' => function ($query) {
-                    $query->active()->withCount('products');
+                    $query->active()->withCount(['products' => fn($q) => $q->active()]);
                 },
             ])
             ->withCount(['products' => fn($q) => $q->active()->tap(fn($qq) => $this->applyChannelHomeFilter($qq))])

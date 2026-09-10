@@ -273,6 +273,10 @@ class ImportBrandsJob implements ShouldQueue
                 'errors' => $failedRows,
             ]);
 
+            if ($successCount > 0) {
+                try { app(\App\Services\Cache\FrontendCacheInvalidator::class)->invalidateBrand(); } catch (\Throwable $e) { report($e); }
+            }
+
             $this->broadcastFileOperationTerminal(
                 FileOperationEvent::BRAND_IMPORT_PROGRESS,
                 'brand-import',

@@ -17,7 +17,8 @@ use Tests\TestCase;
  */
 class MultiConnectionLockTest extends TestCase
 {
-    use RefreshDatabase;
+    // REMOVED RefreshDatabase to avoid automatic transaction wrapping
+    // use RefreshDatabase;
 
     private function createCoupon(array $overrides = []): Coupon
     {
@@ -41,6 +42,25 @@ class MultiConnectionLockTest extends TestCase
         if (DB::getDriverName() !== 'mysql') {
             $this->markTestSkipped('Multi-connection test requires MySQL/TiDB');
         }
+
+        // Manually truncate tables instead of using RefreshDatabase
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        DB::table('coupon_claims')->truncate();
+        DB::table('coupon_targetings')->truncate();
+        DB::table('coupons')->truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+    }
+
+    protected function tearDown(): void
+    {
+        // Clean up after each test
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        DB::table('coupon_claims')->truncate();
+        DB::table('coupon_targetings')->truncate();
+        DB::table('coupons')->truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+
+        parent::tearDown();
     }
 
     /**
@@ -52,6 +72,8 @@ class MultiConnectionLockTest extends TestCase
     public function test_for_update_blocks_second_connection()
     {
         // Setup: Create coupon and targeting
+        // NOTE: Must commit this data so independent PDO connections can see it
+        DB::beginTransaction();
         $coupon = $this->createCoupon();
         $targeting = CouponTargeting::create([
             'coupon_id' => $coupon->id,
@@ -60,6 +82,7 @@ class MultiConnectionLockTest extends TestCase
             'max_claims' => 5,
             'rule_tree' => null,
         ]);
+        DB::commit();
 
         // Create two independent PDO connections
         $connectionA = $this->createIndependentConnection();
@@ -129,15 +152,18 @@ class MultiConnectionLockTest extends TestCase
             // Connection A: Release lock
             $connectionA->commit();
 
-            // Now Connection B should be able to acquire
-            $connectionB->rollBack(); // Clean up B's failed transaction
-            $connectionB->beginTransaction();
+            // Connection B: Rollback the timed-out transaction first
+            if ($connectionB->inTransaction()) {
+                $connectionB->rollBack();
+            }
 
-            $stmtB2 = $connectionB->prepare(
+            // Now Connection B should be able to acquire
+            $connectionB->beginTransaction();
+            $stmtB = $connectionB->prepare(
                 "SELECT * FROM coupon_targetings WHERE coupon_id = ? FOR UPDATE"
             );
-            $stmtB2->execute([$coupon->id]);
-            $resultB = $stmtB2->fetch(\PDO::FETCH_ASSOC);
+            $stmtB->execute([$coupon->id]);
+            $resultB = $stmtB->fetch(\PDO::FETCH_ASSOC);
 
             $this->assertNotNull($resultB, 'Connection B should acquire lock after A releases');
 
@@ -161,6 +187,9 @@ class MultiConnectionLockTest extends TestCase
      */
     public function test_rollback_releases_for_update_lock()
     {
+        // Setup: Create coupon and targeting
+        // NOTE: Must commit this data so independent PDO connections can see it
+        DB::beginTransaction();
         $coupon = $this->createCoupon();
         $targeting = CouponTargeting::create([
             'coupon_id' => $coupon->id,
@@ -169,6 +198,7 @@ class MultiConnectionLockTest extends TestCase
             'max_claims' => 5,
             'rule_tree' => null,
         ]);
+        DB::commit();
 
         $connectionA = $this->createIndependentConnection();
         $connectionB = $this->createIndependentConnection();
@@ -193,10 +223,10 @@ class MultiConnectionLockTest extends TestCase
                 "SELECT * FROM coupon_targetings WHERE coupon_id = ? FOR UPDATE"
             );
             $stmtB->execute([$coupon->id]);
-            $resultB = $stmtB->fetch(\PDO::FETCH_ASSOC);
             $duration = microtime(true) - $startTime;
 
-            $this->assertNotNull($resultB, 'Connection B should acquire lock after A rolls back');
+            $resultB = $stmtB->fetch(\PDO::FETCH_ASSOC);
+            $this->assertNotNull($resultB, 'Connection B should acquire lock');
 
             // Should be very fast (< 0.5s) since lock was released
             $this->assertLessThan(

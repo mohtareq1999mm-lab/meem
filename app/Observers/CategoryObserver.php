@@ -15,8 +15,7 @@ class CategoryObserver
 
     public function created(Category $category): void
     {
-        HomeService::clearCache();
-        $this->flushTag(FrontendResource::CATEGORIES->value);
+        app(\App\Services\Cache\FrontendCacheInvalidator::class)->invalidateCategory();
 
         LogActivityJob::dispatch(
             get_class($category),
@@ -37,8 +36,7 @@ class CategoryObserver
             return;
         }
 
-        HomeService::clearCache();
-        $this->flushTag(FrontendResource::CATEGORIES->value);
+        app(\App\Services\Cache\FrontendCacheInvalidator::class)->invalidateCategory();
 
         $statusChanged = array_key_exists('status', $dirty);
         $hasOtherChanges = count($dirty) > ($statusChanged ? 1 : 0);
@@ -85,8 +83,7 @@ class CategoryObserver
 
     public function deleted(Category $category): void
     {
-        HomeService::clearCache();
-        $this->flushTag(FrontendResource::CATEGORIES->value);
+        app(\App\Services\Cache\FrontendCacheInvalidator::class)->invalidateCategory();
 
         LogActivityJob::dispatch(
             get_class($category),
@@ -100,7 +97,6 @@ class CategoryObserver
 
     public function restored(Category $category): void
     {
-        HomeService::clearCache();
-        $this->flushTag(FrontendResource::CATEGORIES->value);
+        app(\App\Services\Cache\FrontendCacheInvalidator::class)->invalidateCategory();
     }
 }

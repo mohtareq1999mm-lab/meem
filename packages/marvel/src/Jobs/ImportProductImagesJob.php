@@ -60,6 +60,11 @@ class ImportProductImagesJob implements ShouldQueue
                 $merged = array_merge($existing, $newErrors);
                 $import->update(['errors' => array_slice($merged, 0, 2000)]);
             }
+            // Images affect product detail/listing media URLs — invalidate.
+            // HasCache tags ensure Home/Category/Brand embeddings also refreshed.
+            try {
+                app(\App\Services\Cache\FrontendCacheInvalidator::class)->invalidateProduct();
+            } catch (\Throwable $e) { report($e); }
         } catch (Throwable $e) {
             report($e);
         }

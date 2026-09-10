@@ -280,6 +280,16 @@ class ImportProductsJob implements ShouldQueue
                 'errors' => $allErrors,
             ]);
 
+            // Invalidate frontend caches that depend on products (including
+            // categories/brands/home that embed product counts/listings).
+            // Must happen AFTER DB committed and BEFORE broadcast so next
+            // public request rebuilds fresh. Uses targeted tags, not global flush.
+            if ($successCount > 0) {
+                try {
+                    app(\App\Services\Cache\FrontendCacheInvalidator::class)->invalidateProduct();
+                } catch (\Throwable $e) { report($e); }
+            }
+
             \Illuminate\Support\Facades\Log::info('product.import.' . $status, [
                 'operation_id' => $this->importId,
                 'total_rows' => $finalTotal,

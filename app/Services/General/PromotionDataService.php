@@ -39,7 +39,7 @@ class PromotionDataService
     {
         $Promotion = Promotion::search('slug', $slug, app()->getLocale())->first();
         if ($Promotion) {
-            $Promotion->load(['products' => fn($q) => $this->applyChannelHomeFilter($q)]);
+            $Promotion->load(['products' => fn($q) => $q->active()->tap(fn($qq) => $this->applyChannelHomeFilter($qq))]);
             app(ProductService::class)->enrichCollectionWithPricing($Promotion->products);
         }
         return $Promotion;

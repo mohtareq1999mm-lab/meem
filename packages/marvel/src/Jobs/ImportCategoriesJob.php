@@ -269,6 +269,10 @@ class ImportCategoriesJob implements ShouldQueue
                 'errors' => $failedRows,
             ]);
 
+            if ($successCount > 0) {
+                try { app(\App\Services\Cache\FrontendCacheInvalidator::class)->invalidateCategory(); } catch (\Throwable $e) { report($e); }
+            }
+
             $this->broadcastCategoryImportTerminal($status, !empty($failedRows), [
                 'progress' => 100.0,
                 'total_rows' => $successCount + count($failedRows),

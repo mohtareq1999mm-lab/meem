@@ -180,15 +180,12 @@ class ProductObserver
     }
 
     /**
-     * Invalidate every product listing cache variant so the next request
-     * rebuilds from the database.
+     * Invalidate every public cache that can contain stale Product data.
+     * Delegates to centralized invalidator so import and observer share
+     * the same dependency map.
      */
     private function flushProductCaches(): void
     {
-        $this->flushTag(FrontendResource::PRODUCTS->value);
-
-        foreach (app(ProductStrategyResolver::class)->supportedTypes() as $type) {
-            $this->flushTag(FrontendResource::PRODUCTS->value . '_' . $type);
-        }
+        app(\App\Services\Cache\FrontendCacheInvalidator::class)->invalidateProduct();
     }
 }
