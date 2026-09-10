@@ -40,6 +40,7 @@ class BrandService
         $brand = Brand::active()->search('slug', $slug, app()->getLocale())->first();
         if ($brand) {
             $brand->load(['products' => function ($q) {
+                $q->active();
                 $this->applyChannelHomeFilter($q);
                 $q->withAvg(['reviews' => fn($q) => $q->approved()], 'rating');
             }]);
@@ -62,6 +63,7 @@ class BrandService
                 $query->where('created_at', '<=', $end_date);
             })
             ->with(['products' => function ($query) use ($qty) {
+                $query->active();
                 $this->applyChannelHomeFilter($query);
                 $query->with(['media'])->withAvg(['reviews' => fn($q) => $q->approved()], 'rating')->limit($qty);
             }])

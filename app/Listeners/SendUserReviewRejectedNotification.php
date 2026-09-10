@@ -12,7 +12,7 @@ class SendUserReviewRejectedNotification implements ShouldQueue
 {
     use InteractsWithQueue;
 
-    public $queue = 'meem-medium';
+    public $queue = 'meem-high';
 
     public function handle(ReviewRejected $event): void
     {

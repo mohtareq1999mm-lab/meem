@@ -14,7 +14,7 @@ class RestoreInventoryOnRefund implements ShouldQueue
 {
     public $afterCommit = true;
 
-    public $queue = 'meem-medium';
+    public $queue = 'meem-high';
 
     public function handle(RefundApproved $event)
     {

@@ -9,7 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 
 class SendUserOrderCancelledNotification implements ShouldQueue
 {
-    public $queue = 'meem-medium';
+    public $queue = 'meem-high';
 
     public function handle(OrderCancelled $event): void
     {

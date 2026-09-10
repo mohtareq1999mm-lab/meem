@@ -3,10 +3,13 @@
 namespace App\Listeners;
 
 use App\Events\InvoiceCreated;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
 
-class LogInvoiceCreated
+class LogInvoiceCreated implements ShouldQueue
 {
+    public $queue = 'meem-high';
+
     public function handle(InvoiceCreated $event): void
     {
         $invoice = $event->invoice;

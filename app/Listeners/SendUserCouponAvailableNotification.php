@@ -9,7 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 
 class SendUserCouponAvailableNotification implements ShouldQueue
 {
-    public $queue = 'meem-medium';
+    public $queue = 'meem-high';
 
     public function handle(CouponCreated $event): void
     {

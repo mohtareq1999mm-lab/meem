@@ -7,9 +7,12 @@ namespace App\Listeners;
 use App\DTOs\FrontendCachePayload;
 use App\Events\FrontendCacheInvalidation;
 use App\Jobs\SendFrontendWebhookJob;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
-class DispatchFrontendCacheInvalidation
+class DispatchFrontendCacheInvalidation implements ShouldQueue
 {
+    public $queue = 'meem-high';
+
     public function handle(FrontendCacheInvalidation $event): void
     {
         $payload = new FrontendCachePayload(

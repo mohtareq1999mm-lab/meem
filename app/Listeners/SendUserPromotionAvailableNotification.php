@@ -9,7 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 
 class SendUserPromotionAvailableNotification implements ShouldQueue
 {
-    public $queue = 'meem-medium';
+    public $queue = 'meem-high';
 
     public function handle(PromotionActivated $event): void
     {

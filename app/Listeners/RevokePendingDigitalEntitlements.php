@@ -9,7 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 
 class RevokePendingDigitalEntitlements implements ShouldQueue
 {
-    public $queue = 'meem-medium';
+    public $queue = 'meem-high';
     public $afterCommit = true;
 
     public function __construct(private DigitalFulfillmentService $fulfillmentService) {}
