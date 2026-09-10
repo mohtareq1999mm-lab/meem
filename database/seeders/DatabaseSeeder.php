@@ -89,6 +89,7 @@ class DatabaseSeeder extends Seeder
 //            NotificationSeeder::class,
 //            ActivityLogSeeder::class,
             PickupLocationSeeder::class,
+
         ]);
     }
 }
