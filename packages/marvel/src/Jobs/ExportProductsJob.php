@@ -21,9 +21,11 @@ class ExportProductsJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     use BroadcastsFileOperationProgress;
 
-    public int $tries = 2;
+    public int $tries = 3;
 
-    public int $timeout = 900;
+    public int $timeout = 1200;
+
+    public array $backoff = [60, 120, 240];
 
     protected int $importId;
 

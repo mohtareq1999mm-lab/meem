@@ -46,8 +46,8 @@ class BrandsSheetExport implements FromCollection, WithTitle, WithHeadings
             $query->whereHas('brands', fn($q) => $q->where('brand_id', $this->filters['brand_id']));
         }
 
-        // Bounded memory: lazy 1000, flatMap per product
-        return $query->lazy(1000)->flatMap(function (Product $product) {
+        // Bounded memory: lazy 1000, flatMap per product — orderBy id for deterministic chunking
+        return $query->orderBy('id')->lazy(1000)->flatMap(function (Product $product) {
             return $product->brands->map(fn($brand) => [
                 'product_sku' => $product->sku,
                 'brand_slug' => $brand->slug,

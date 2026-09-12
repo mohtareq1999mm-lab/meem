@@ -74,8 +74,6 @@ class ProductsSheetExport implements FromQuery, WithTitle, WithHeadings, WithMap
             'width',
             'length',
             'weight',
-            'tax_enabled',
-            'tax_rate',
         ];
     }
 
@@ -94,19 +92,17 @@ class ProductsSheetExport implements FromQuery, WithTitle, WithHeadings, WithMap
             'product_type' => $product->product_type,
             'item_type' => $product->item_type ?? \Marvel\Enums\ItemType::PHYSICAL,
             'quantity' => $product->stock_quantity,
-            'status' => $product->status ? '1' : '0',
+            'status' => $product->status ? 'active' : 'inactive',
             'in_stock' => $product->in_stock ? '1' : '0',
             'has_discount' => $product->has_discount ? '1' : '0',
             'discount_type' => $product->discount_type,
             'discount_amount' => $product->discount_amount,
-            'start_date' => $product->start_date,
-            'end_date' => $product->end_date,
-            'height' => $product->height,
-            'width' => $product->width,
-            'length' => $product->length,
-            'weight' => $product->weight,
-            'tax_enabled' => $product->tax_enabled ? '1' : '0',
-            'tax_rate' => $product->tax_rate,
+            'start_date' => $product->start_date ? \Carbon\Carbon::parse($product->start_date)->format('Y-m-d') : '',
+            'end_date' => $product->end_date ? \Carbon\Carbon::parse($product->end_date)->format('Y-m-d') : '',
+            'height' => $product->height ?? '0',
+            'width' => $product->width ?? '0',
+            'length' => $product->length ?? '0',
+            'weight' => $product->weight ?? '0',
         ];
     }
 }

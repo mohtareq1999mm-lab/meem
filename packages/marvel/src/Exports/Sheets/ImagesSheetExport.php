@@ -46,7 +46,7 @@ class ImagesSheetExport implements FromCollection, WithTitle, WithHeadings
             $query->whereHas('brands', fn($q) => $q->where('brand_id', $this->filters['brand_id']));
         }
 
-        return $query->lazy(1000)->flatMap(function (Product $product) {
+        return $query->orderBy('id')->lazy(1000)->flatMap(function (Product $product) {
             $mediaItems = $product->getMedia('products');
             return $mediaItems->map(fn($media) => [
                 'product_sku' => $product->sku,

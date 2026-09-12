@@ -46,7 +46,7 @@ class TagsSheetExport implements FromCollection, WithTitle, WithHeadings
             $query->whereHas('brands', fn($q) => $q->where('brand_id', $this->filters['brand_id']));
         }
 
-        return $query->lazy(1000)->flatMap(function (Product $product) {
+        return $query->orderBy('id')->lazy(1000)->flatMap(function (Product $product) {
             return $product->tags->map(fn($tag) => [
                 'product_sku' => $product->sku,
                 'tag_slug' => $tag->slug,

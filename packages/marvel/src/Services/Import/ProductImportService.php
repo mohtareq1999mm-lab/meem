@@ -1001,7 +1001,15 @@ class ProductImportService
             return (int) $value === 1;
         }
         if (is_string($value)) {
-            return in_array(strtolower($value), ['1', 'true', 'yes', 'publish', 'approved']);
+            $lower = strtolower(trim($value));
+            if (in_array($lower, ['1', 'true', 'yes', 'publish', 'approved', 'active'], true)) {
+                return true;
+            }
+            if (in_array($lower, ['0', 'false', 'no', 'draft', 'inactive', 'inactive ', 'archived'], true)) {
+                return false;
+            }
+            // fallback strict
+            return in_array($lower, ['1', 'true', 'yes', 'publish', 'approved', 'active'], true);
         }
         return false;
     }
